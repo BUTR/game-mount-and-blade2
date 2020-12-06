@@ -6,26 +6,26 @@ import { getElementValue } from './old-xml';
 
 
 export function testRootMod(files, gameId) {
-    const notSupported = { supported: false, requiredFiles: [] };
-    if (gameId !== GAME_ID) {
-      // Different game.
-      return Promise.resolve(notSupported);
-    }
-  
-    const lowered = files.map(file => file.toLowerCase());
-    const modsFile = lowered.find(file => file.split(path.sep).indexOf(MODULES.toLowerCase()) !== -1);
-    if (modsFile === undefined) {
-      // There's no Modules folder.
-      return Promise.resolve(notSupported);
-    }
-  
-    const idx = modsFile.split(path.sep).indexOf(MODULES.toLowerCase());
-    const rootFolderMatches = lowered.filter(file => {
-      const segments = file.split(path.sep);
-      return (((segments.length - 1) > idx) && ROOT_FOLDERS.has(segments[idx]));
-    }) || [];
-  
-    return Promise.resolve({ supported: (rootFolderMatches.length > 0), requiredFiles: [] });
+  const notSupported = { supported: false, requiredFiles: [] };
+  if (gameId !== GAME_ID) {
+    // Different game.
+    return Promise.resolve(notSupported);
+  }
+
+  const lowered = files.map(file => file.toLowerCase());
+  const modsFile = lowered.find(file => file.split(path.sep).indexOf(MODULES.toLowerCase()) !== -1);
+  if (modsFile === undefined) {
+    // There's no Modules folder.
+    return Promise.resolve(notSupported);
+  }
+
+  const idx = modsFile.split(path.sep).indexOf(MODULES.toLowerCase());
+  const rootFolderMatches = lowered.filter(file => {
+    const segments = file.split(path.sep);
+    return (((segments.length - 1) > idx) && ROOT_FOLDERS.has(segments[idx]));
+  }) || [];
+
+  return Promise.resolve({ supported: (rootFolderMatches.length > 0), requiredFiles: [] });
 }
 
 export function installRootMod(files, destinationPath) {
@@ -55,7 +55,7 @@ export function installRootMod(files, destinationPath) {
   return Promise.resolve({ instructions });
 }
 
-export function testForSubmodules(files, gameId): Promise<{ supported: boolean; requiredFiles: any[]; }> {
+export function testForSubmodules(files, gameId) {
   // Check this is a mod for Bannerlord and it contains a SubModule.xml
   const supported = ((gameId === GAME_ID) 
     && files.find(file => path.basename(file).toLowerCase() === SUBMOD_FILE) !== undefined);
@@ -66,7 +66,7 @@ export function testForSubmodules(files, gameId): Promise<{ supported: boolean; 
   })
 }
 
-export async function installSubModules(files, destinationPath): Promise<{ instructions: any[]; }> {
+export async function installSubModules(files, destinationPath) {
   // Remove directories straight away.
   const filtered = files.filter(file => { 
     const segments = file.split(path.sep);
