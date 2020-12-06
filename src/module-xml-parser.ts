@@ -1,9 +1,7 @@
-import Promise from 'bluebird';
 import { fs } from "vortex-api";
 import * as xmlParser from "fast-xml-parser";
 import { ModuleInfo, DependedModule, DependedModuleMetadata, LoadOrder, SubModuleInfo }  from "./types";
-//let { fs } = require('vortex-api');
-//if (fs == null) {  fs = require('fs'); } // for internal testing
+
 
 export function ParseModule(path: string): ModuleInfo {
     interface XmlModuleRoot {

@@ -1,5 +1,3 @@
-/*
-import Promise from 'bluebird';
 import { ModuleInfo, LoadOrder }  from "./types";
 
 export function TopologySort(modules: ModuleInfo[]): ModuleInfo[] {
@@ -55,4 +53,3 @@ function GetDependentModulesOf(source: ModuleInfo[], module: ModuleInfo): Module
 
     return dependencies;
 }
-*/
