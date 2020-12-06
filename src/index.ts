@@ -1,22 +1,29 @@
+import Promise from 'bluebird';
+import * as path from 'path';
+import { actions, fs, log, selectors, util } from "vortex-api";
+import { IDiscoveryResult, IExtensionContext, IProfile } from 'vortex-api/lib/types/api';
+
 //import { ParseModule } from './module-xml-parser'
 //import { TopologySort } from './module-topology-sorter'
-import { findGame, prepareForModding, getValidationInfo, refreshCacheOnEvent } from './utils'
+import { findGame, getDeployedSubModPaths, prepareForModding, refreshCacheOnEvent, refreshGameParams } from './utils'
 import { infoComponent } from './ui'
 import { testRootMod, installRootMod, testForSubmodules, installSubModules } from './module-installer'
 import ConstantStorage from './constants';
+import { CACHE, getDeployedModData, preSort, tSort } from './old-xml';
+import { ModuleDataCache } from './types';
+import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 
-import Promise from 'bluebird';
-import * as path from 'path';
-import { fs, log, selectors, util } from "vortex-api";
-import { IExtensionContext } from 'vortex-api/lib/types/api';
 
+const CustomItemRenderer = require('./customItemRenderer');
 
 const constants = new ConstantStorage();
-const { GAME_ID, BANNERLORD_EXEC, STEAMAPP_ID, EPICAPP_ID, MODULES } = constants;
+const { GAME_ID, BANNERLORD_EXEC, STEAMAPP_ID, EPICAPP_ID, MODULES, I18N_NAMESPACE } = constants;
+
+let _IS_SORTING: boolean;
 
 //This is the main function Vortex will run when detecting the game extension. 
 function main(context: IExtensionContext): boolean {
-    context.registerGame({
+  context.registerGame({
         id: GAME_ID,
         name: 'Mount & Blade II: Bannerlord',
         mergeMods: true,
@@ -40,7 +47,7 @@ function main(context: IExtensionContext): boolean {
         },
       });
     
-      let refreshFunc;
+      let refreshFunc: { (): void; };
       // Register the LO page.
       context.registerLoadOrderPage({
         gameId: GAME_ID,
@@ -49,9 +56,9 @@ function main(context: IExtensionContext): boolean {
           return infoComponent(context, props);
         },
         gameArtURL: `${__dirname}/gameart.jpg`,
-        //preSort: (items, direction) => preSort(context, items, direction),
-        //callback: (loadOrder) => refreshGameParams(context, loadOrder),
-        //itemRenderer: CustomItemRenderer.default,
+        preSort: (items, direction) => preSort(context, items, direction),
+        callback: (loadOrder) => refreshGameParams(context, loadOrder),
+        itemRenderer: CustomItemRenderer.default,
       });
     
       // We currently have only one mod on NM and it is a root mod.
@@ -60,9 +67,8 @@ function main(context: IExtensionContext): boolean {
       // Installs one or more submodules.
       context.registerInstaller('bannerlordsubmodules', 25, testForSubmodules, installSubModules);
     
-      /*
       context.registerAction('generic-load-order-icons', 200,
-        _IS_SORTING ? 'spinner' : 'loot-sort', {}, 'Auto Sort', async () => {
+        _IS_SORTING ? 'spinner' : 'loot-sort', {}, 'Auto Sort', async (): Promise => {
           if (_IS_SORTING) {
             // Already sorting - don't do anything.
             return Promise.resolve();
@@ -71,9 +77,11 @@ function main(context: IExtensionContext): boolean {
           _IS_SORTING = true;
     
           try {
-            CACHE = {};
+            CACHE.clear();
             const deployedSubModules = await getDeployedSubModPaths(context);
-            CACHE = await getDeployedModData(context, deployedSubModules);
+            (await getDeployedModData(context, deployedSubModules) as ModuleDataCache).forEach((value, key) => {
+              CACHE.set(key, value);
+            });
           } catch (err) {
             context.api.showErrorNotification('Failed to resolve submodule file data', err);
             _IS_SORTING = false;
@@ -81,8 +89,8 @@ function main(context: IExtensionContext): boolean {
           }
     
           const modIds = Object.keys(CACHE);
-          const lockedIds = modIds.filter(id => CACHE[id].isLocked);
-          const subModIds = modIds.filter(id => !CACHE[id].isLocked);
+          const lockedIds = modIds.filter(id => CACHE.get(id).isLocked);
+          const subModIds = modIds.filter(id => !CACHE.get(id).isLocked);
     
           let sortedLocked = [];
           let sortedSubMods = [];
@@ -97,7 +105,7 @@ function main(context: IExtensionContext): boolean {
             return;
           }
     
-          const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+          const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {} as ILoadOrder);
     
           try {
             sortedLocked = tSort(lockedIds, true);
@@ -108,10 +116,10 @@ function main(context: IExtensionContext): boolean {
           }
     
           const newOrder = [].concat(sortedLocked, sortedSubMods).reduce((accum, id, idx) => {
-            const vortexId = CACHE[id].vortexId;
+            const vortexId = CACHE.get(id).vortexId;
             const newEntry = {
               pos: idx,
-              enabled: CACHE[id].isOfficial
+              enabled: CACHE.get(id).isOfficial
                 ? true
                 : (!!loadOrder[vortexId])
                   ? loadOrder[vortexId].enabled
@@ -136,34 +144,33 @@ function main(context: IExtensionContext): boolean {
         const gameId = selectors.activeGameId(state);
         return (gameId === GAME_ID);
       });
-      */
     
       context.once(() => {
-        context.api.onAsync('did-deploy', async (profileId, deployment) =>
+        context.api.onAsync('did-deploy', async (profileId: string) =>
           refreshCacheOnEvent(context, refreshFunc, profileId));
     
-        context.api.onAsync('did-purge', async (profileId) =>
+        context.api.onAsync('did-purge', async (profileId: string) =>
           refreshCacheOnEvent(context, refreshFunc, profileId));
     
-        context.api.events.on('profile-did-change', (profileId) =>
+        context.api.events.on('profile-did-change', (profileId: string) =>
           refreshCacheOnEvent(context, refreshFunc, profileId));
     
-        context.api.onAsync('added-files', async (profileId, files) => {
+        context.api.onAsync('added-files', async (profileId: string, files) => {
           const state = context.api.store.getState();
-          const profile = selectors.profileById(state, profileId);
+          const profile: IProfile = selectors.profileById(state, profileId);
           if (profile.gameId !== GAME_ID) {
             // don't care about any other games
             return;
           }
           const game = util.getGame(GAME_ID);
-          const discovery = selectors.discoveryByGame(state, GAME_ID);
+          const discovery: IDiscoveryResult = selectors.discoveryByGame(state, GAME_ID);
           const modPaths = game.getModPaths(discovery.path);
-          const installPath = selectors.installPathForGame(state, GAME_ID);
+          const installPath: string = selectors.installPathForGame(state, GAME_ID);
     
           await Promise.map(files, async entry => {
             // only act if we definitively know which mod owns the file
             if (entry.candidates.length === 1) {
-              const mod = util.getSafe(state.persistent.mods, [GAME_ID, entry.candidates[0]], undefined);
+              const mod = util.getSafe(state.persistent.mods, [GAME_ID, entry.candidates[0]], undefined); // TODO
               if (mod === undefined) {
                 return Promise.resolve();
               }

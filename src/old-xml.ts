@@ -1,19 +1,29 @@
 import Promise from 'bluebird';
 import * as path from 'path';
 import { fs, log, selectors, util } from "vortex-api";
-import { IExtensionContext } from 'vortex-api/lib/types/api';
-import { parseXmlString } from 'libxmljs';
+import { IExtensionContext, IMod, IProfile, IProfileMod } from 'vortex-api/lib/types/api';
+import { parseXmlString, Document } from 'libxmljs';
 
 import ConstantStorage from './constants';
-import { CACHE, LAUNCHER_DATA } from './utils';
+import { LauncherData, ModuleDataCache, ModuleData } from './types';
+import { ILoadOrder, ILoadOrderDisplayItem } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+
+
+export const CACHE = new ModuleDataCache();
+export const LAUNCHER_DATA = {
+  singlePlayerSubMods: [] as ModuleData[],
+  multiplayerSubMods: [] as ModuleData[],
+} as LauncherData
 
 
 const constants = new ConstantStorage();
 const { GAME_ID, OFFICIAL_MODULES, SUBMOD_FILE, XML_EL_MULTIPLAYER } = constants;
 
-const LOCKED_MODULES = new Set([]);
+const LOCKED_MODULES = new Set([] as string[]);
 
-export async function preSort(context: IExtensionContext, items, direction) {
+export { Document, Node } from 'libxmljs';
+
+export async function preSort(context: IExtensionContext, items: ILoadOrderDisplayItem[], direction: 'ascending' | 'descending') {
   const state = context.api.store.getState();
   const activeProfile = selectors.activeProfile(state);
   if (activeProfile?.id === undefined || activeProfile?.gameId !== GAME_ID) {
@@ -21,11 +31,11 @@ export async function preSort(context: IExtensionContext, items, direction) {
     return items;
   }
 
-  const modIds = Object.keys(CACHE);
+  const modIds = Array.from(CACHE.keys());
 
   // Locked ids are always at the top of the list as all
   //  other modules depend on these.
-  let lockedIds = modIds.filter(id => CACHE[id].isLocked);
+  let lockedIds = modIds.filter(id => CACHE.get(id).isLocked);
 
   try {
     // Sort the locked ids amongst themselves to ensure
@@ -36,17 +46,17 @@ export async function preSort(context: IExtensionContext, items, direction) {
   }
 
   // Create the locked entries.
-  const lockedItems = lockedIds.map(id => ({
-    id: CACHE[id].vortexId,
-    name: CACHE[id].subModName,
+  const lockedItems: ILoadOrderDisplayItem[] = lockedIds.map(id => ({
+    id: CACHE.get(id).vortexId,
+    name: CACHE.get(id).subModName,
     imgUrl: `${__dirname}/gameart.jpg`,
     locked: true,
     official: OFFICIAL_MODULES.has(id),
   }));
   
   // External ids will include official modules as well but not locked entries.
-  const externalIds = modIds.filter(id => (!CACHE[id].isLocked) && (CACHE[id].vortexId === id));
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+  const externalIds = modIds.filter(id => (!CACHE.get(id).isLocked) && (CACHE.get(id).vortexId === id));
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {}) as ILoadOrder;
   const LOkeys = ((Object.keys(loadOrder).length > 0)
     ? Object.keys(loadOrder)
     : LAUNCHER_DATA.singlePlayerSubMods.map(mod => mod.subModId));
@@ -63,14 +73,14 @@ export async function preSort(context: IExtensionContext, items, direction) {
     //  cache, this may mean that the submod xml file failed
     //  parse-ing and therefore should not be displayed.
     const isLocked = lockedIds.includes(item.id);
-    const hasCacheEntry = Object.keys(CACHE).find(key =>
-      CACHE[key].vortexId === item.id) !== undefined;
+    const hasCacheEntry = Array.from(CACHE.keys()).find(key =>
+      CACHE.get(key).vortexId === item.id) !== undefined;
     return !isLocked && hasCacheEntry;
   });
 
-  const posMap = {};
+  const posMap = {} as { [x: string]: number; };
   let nextAvailable = LOkeys.length;
-  const getNextPos = (loId) => {
+  const getNextPos = (loId: string) => {
     if (LOCKED_MODULES.has(loId)) {
       return Array.from(LOCKED_MODULES).indexOf(loId);
     }
@@ -84,12 +94,12 @@ export async function preSort(context: IExtensionContext, items, direction) {
   }
 
   knownExt.map(key => ({
-    id: CACHE[key].vortexId,
-    name: CACHE[key].subModName,
+    id: CACHE.get(key).vortexId,
+    name: CACHE.get(key).subModName,
     imgUrl: `${__dirname}/gameart.jpg`,
     external: true,
     official: OFFICIAL_MODULES.has(key),
-  }))
+  } as ILoadOrderDisplayItem))
     .sort((a, b) => (loadOrder[a.id]?.pos || getNextPos(a.id)) - (loadOrder[b.id]?.pos || getNextPos(b.id)))
     .forEach(known => {
       // If this a known external module and is NOT in the item list already
@@ -105,31 +115,32 @@ export async function preSort(context: IExtensionContext, items, direction) {
       }
     });
 
-  const unknownItems = [].concat(unknownExt)
+  const unknownItems = ([] as string[]).concat(unknownExt)
     .map(key => ({
-      id: CACHE[key].vortexId,
-      name: CACHE[key].subModName,
+      id: CACHE.get(key).vortexId,
+      name: CACHE.get(key).subModName,
       imgUrl: `${__dirname}/gameart.jpg`,
       external: unknownExt.includes(key),
       official: OFFICIAL_MODULES.has(key),
-    }));
+    } as ILoadOrderDisplayItem));
 
-  const preSorted = [].concat(lockedItems, items, unknownItems);
+  const preSorted = ([] as ILoadOrderDisplayItem[]).concat(lockedItems, items, unknownItems);
   return (direction === 'descending')
     ? Promise.resolve(preSorted.reverse())
     : Promise.resolve(preSorted);
 }
 
-export async function walkAsync(dir, levelsDeep = 2) {
-  let entries = [];
-  return fs.readdirAsync(dir).then(files => {
+export async function walkAsync(dir: string , levelsDeep: number = 2): Promise<string[]> {
+  let entries: string[] = [];
+  return fs.readdirAsync(dir).then((files: string[]) => {
     const filtered = files.filter(file => !file.endsWith('.vortex_backup'));
-    return Promise.each(filtered, file => {
+    return Promise.each(filtered, (file: string) => {
       const fullPath = path.join(dir, file);
-      return fs.statAsync(fullPath).then(stats => {
-        if (stats.isDirectory() && levelsDeep > 0) {
+      return fs.statAsync(fullPath).then((stats: fs.Stats) => {
+        if (stats.isDirectory() && levelsDeep > 0)
+        {
           return walkAsync(fullPath, levelsDeep - 1)
-            .then(nestedFiles => {
+            .then((nestedFiles: string[])=> {
               entries = entries.concat(nestedFiles);
               return Promise.resolve();
             })
@@ -151,13 +162,13 @@ export async function walkAsync(dir, levelsDeep = 2) {
   .then(() => Promise.resolve(entries))
 }
 
-export async function getElementValue(subModuleFilePath, elementName) {
-  const logAndContinue = () => {
+export async function getElementValue(subModuleFilePath: string, elementName: string): Promise<string> {
+  const logAndContinue: Promise = () => {
     log('error', 'Unable to parse xml element', elementName);
     return Promise.resolve(undefined);
   }
   return fs.readFileAsync(subModuleFilePath, { encoding: 'utf-8' })
-    .then(xmlData => {
+    .then((xmlData: string) => {
       try {
         const modInfo = parseXmlString(xmlData);
         const element = modInfo.get(`//${elementName}`);
@@ -165,15 +176,15 @@ export async function getElementValue(subModuleFilePath, elementName) {
           ? Promise.resolve(element.attr('value').value())
           : logAndContinue();
       } catch (err) {
-        const errorMessage = 'Vortex was unable to parse: ' + subModuleFilePath + '; please inform the mod author'; 
+        const errorMessage = `Vortex was unable to parse: ${subModuleFilePath}; please inform the mod author`; 
         return Promise.reject(new util.DataInvalid(errorMessage));
       }
     });
 }
 
-export async function getXMLData(xmlFilePath) {
+export async function getXMLData(xmlFilePath: string): Promise<Document> {
   return fs.readFileAsync(xmlFilePath)
-    .then(data => {
+    .then((data: string) => {
       try {
         const xmlData = parseXmlString(data);
         return Promise.resolve(xmlData);
@@ -195,25 +206,25 @@ async function getManagedIds(context: IExtensionContext) {
     return Promise.resolve([]);
   }
 
-  const modState = util.getSafe(state, ['persistent', 'profiles', activeProfile.id, 'modState'], {});
-  const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+  const modState = util.getSafe(state, ['persistent', 'profiles', activeProfile.id, 'modState'], {} as { [id: string]: IProfileMod; });
+  const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {} as { [id: string]: IMod; });
   const enabledMods = Object.keys(modState)
     .filter(key => !!mods[key] && modState[key].enabled)
     .map(key => mods[key]);
 
-  const invalidMods = [];
-  const installationDir = selectors.installPathForGame(state, GAME_ID);
+  const invalidMods = [] as string[];
+  const installationDir: string = selectors.installPathForGame(state, GAME_ID);
   if (installationDir === undefined) {
     log('error', 'failed to get managed ids', 'undefined staging folder');
-    return Promise.resolve([]);
+    return Promise.resolve([] as string[]);
   }
-  return Promise.reduce(enabledMods, async (accum, entry) => {
+  return Promise.reduce(enabledMods, async (accum: ModuleData[], entry: IMod) => {
     if (entry?.installationPath === undefined) {
       // Invalid mod entry - skip it.
       return Promise.resolve(accum);
     }
     const modInstallationPath = path.join(installationDir, entry.installationPath);
-    let files;
+    let files: string[];
     try {
       files = await walkAsync(modInstallationPath, 3);
     } catch (err) {
@@ -231,7 +242,7 @@ async function getManagedIds(context: IExtensionContext) {
       return Promise.resolve(accum);
     }
 
-    let subModId;
+    let subModId: string;
     try {
       subModId = await getElementValue(subModFile, 'Id');
     } catch (err) {
@@ -252,7 +263,7 @@ async function getManagedIds(context: IExtensionContext) {
     });
 
     return Promise.resolve(accum)
-  }, [])
+  }, [] as ModuleData[])
   .tap((res) => {
     if (invalidMods.length > 0) {
       const errMessage = 'The following mods are inaccessible or are missing '
@@ -267,16 +278,16 @@ async function getManagedIds(context: IExtensionContext) {
   });
 }
 
-export async function getDeployedModData(context: IExtensionContext, subModuleFilePaths) {
+export async function getDeployedModData(context: IExtensionContext, subModuleFilePaths: string[]): Promise<ModuleDataCache> {
   const managedIds = await getManagedIds(context);
-  return Promise.reduce(subModuleFilePaths, async (accum, subModFile) => {
+  return Promise.reduce(subModuleFilePaths, async (accum: ModuleDataCache, subModFile: string) => {
     try {
-      const subModData = await getXMLData(subModFile);
+      const subModData: Document = await getXMLData(subModFile);
       const subModId = subModData.get('//Id').attr('value').value();
-      const managedEntry = managedIds.find(entry => entry.subModId === subModId);
+      const managedEntry: ModuleData = managedIds.find((entry: ModuleData) => entry.subModId === subModId);
       const isMultiplayer = (!!subModData.get(`//${XML_EL_MULTIPLAYER}`));
       const depNodes = subModData.find('//DependedModule');
-      let dependencies = [];
+      let dependencies = [] as string[];
       try {
         dependencies = depNodes.map(depNode => depNode.attr('Id').value());
       } catch (err) {
@@ -294,8 +305,8 @@ export async function getDeployedModData(context: IExtensionContext, subModuleFi
         isMultiplayer,
         dependencies,
         invalid: {
-          cyclic: [], // Will hold the submod ids of any detected cyclic dependencies.
-          missing: [], // Will hold the submod ids of any missing dependencies.
+          cyclic: [] as string[], // Will hold the submod ids of any detected cyclic dependencies.
+          missing: [] as string[], // Will hold the submod ids of any missing dependencies.
         },
       };
     } catch(err) {
@@ -311,16 +322,16 @@ export async function getDeployedModData(context: IExtensionContext, subModuleFi
     }
     
     return Promise.resolve(accum);
-  }, {});
+  }, new ModuleDataCache());
 }
 
-function isInvalid(subModId) {
-  const cyclicErrors = util.getSafe(CACHE[subModId], ['invalid', 'cyclic'], []);
-  const missingDeps = util.getSafe(CACHE[subModId], ['invalid', 'missing'], []);
+function isInvalid(subModId: string) {
+  const cyclicErrors = util.getSafe(CACHE.get(subModId), ['invalid', 'cyclic'], [] as string[]);
+  const missingDeps = util.getSafe(CACHE.get(subModId), ['invalid', 'missing'], [] as string[]);
   return ((cyclicErrors.length > 0) || (missingDeps.length > 0));
 }
 
-export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
+export function tSort(subModIds: string[], allowLocked: boolean = false, loadOrder: ILoadOrder = undefined) {
   // Topological sort - we need to:
   //  - Identify cyclic dependencies.
   //  - Identify missing dependencies.
@@ -328,7 +339,7 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
   // These are manually locked mod entries.
   const lockedSubMods = (!!loadOrder)
     ? subModIds.filter(subModId => {
-      const entry = CACHE[subModId];
+      const entry = CACHE.get(subModId);
       return (!!entry)
         ? !!loadOrder[entry.vortexId]?.locked
         : false;
@@ -336,9 +347,9 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
     : [];
   const alphabetical = subModIds.filter(subMod => !lockedSubMods.includes(subMod))
                                 .sort();
-  const graph = alphabetical.reduce((accum, entry) => {
+  const graph = alphabetical.reduce((accum: { [x: string]: string[]; }, entry) => {
     // Create the node graph.
-    accum[entry] = CACHE[entry].dependencies.sort();
+    accum[entry] = CACHE.get(entry).dependencies.sort();
     return accum;
   }, {});
 
@@ -351,7 +362,7 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
   // The nodes which are still processing.
   let processing = [];
 
-  const topSort = (node) => {
+  const topSort = (node: string) => {
     processing[node] = true;
     const dependencies = (!!allowLocked)
       ? graph[node]
@@ -362,8 +373,8 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
       if (processing[dep]) {
         // Cyclic dependency detected - highlight both mods as invalid
         //  within the cache itself - we also need to highlight which mods.
-        CACHE[node].invalid.cyclic.push(dep);
-        CACHE[dep].invalid.cyclic.push(node);
+        CACHE.get(node).invalid.cyclic.push(dep);
+        CACHE.get(dep).invalid.cyclic.push(node);
 
         visited[node] = true;
         processing[node] = false;
@@ -372,7 +383,7 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
 
       if (!visited[dep]) {
         if (!Object.keys(graph).includes(dep)) {
-          CACHE[node].invalid.missing.push(dep);
+          CACHE.get(node).invalid.missing.push(dep);
         } else {
           topSort(dep);
         }
@@ -405,7 +416,7 @@ export function tSort(subModIds, allowLocked = false, loadOrder = undefined) {
     || (graph[dep].find(d => !LOCKED_MODULES.has(d)) === undefined)).sort() || [];
   let tamperedResult = [].concat(subModsWithNoDeps, result.filter(entry => !subModsWithNoDeps.includes(entry)));
   lockedSubMods.forEach(subModId => {
-    const pos = loadOrder[CACHE[subModId].vortexId].pos;
+    const pos = loadOrder[CACHE.get(subModId).vortexId].pos;
     tamperedResult.splice(pos, 0, [subModId]);
   });
   return tamperedResult;

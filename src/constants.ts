@@ -1,13 +1,9 @@
 import * as path from 'path';
 //import { app, remote } from 'electron';
 
-//interface App { getPath: (arg0: string) => string; }
-//const app: App = require('electron');
-//const remote: { app: App; } = require('electron');
-const { app, remote } = require('electron');
 
 export default class ConstantStorage {
-    APPUNI = app || remote.app;
+    APPUNI = require('electron').app || require('electron').remote.app;
     LAUNCHER_EXEC = path.join('bin', 'Win64_Shipping_Client', 'TaleWorlds.MountAndBlade.Launcher.exe');
     MODDING_KIT_EXEC = path.join('bin', 'Win64_Shipping_wEditor', 'TaleWorlds.MountAndBlade.Launcher.exe');
     LAUNCHER_DATA_PATH = path.join(this.APPUNI.getPath('documents'), 'Mount and Blade II Bannerlord', 'Configs', 'LauncherData.xml');

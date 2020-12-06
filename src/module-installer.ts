@@ -1,5 +1,6 @@
 import Promise from 'bluebird';
 import * as path from 'path';
+import { IInstallResult, IInstruction, ISupportedResult } from 'vortex-api/lib/types/api';
 
 import ConstantStorage from './constants';
 import { getElementValue } from './old-xml';
@@ -8,8 +9,8 @@ import { getElementValue } from './old-xml';
 const constants = new ConstantStorage();
 const { GAME_ID, MODULES, ROOT_FOLDERS, SUBMOD_FILE } = constants;
 
-export function testRootMod(files, gameId) {
-  const notSupported = { supported: false, requiredFiles: [] };
+export function testRootMod(files: string[], gameId: string): ISupportedResult {
+  const notSupported: ISupportedResult = { supported: false, requiredFiles: [] as string[] };
   if (gameId !== GAME_ID) {
     // Different game.
     return Promise.resolve(notSupported);
@@ -31,7 +32,7 @@ export function testRootMod(files, gameId) {
   return Promise.resolve({ supported: (rootFolderMatches.length > 0), requiredFiles: [] });
 }
 
-export function installRootMod(files, destinationPath) {
+export function installRootMod(files: string[], destinationPath: string): IInstallResult {
   const moduleFile = files.find(file => file.split(path.sep).indexOf(MODULES) !== -1);
   const idx = moduleFile.split(path.sep).indexOf(MODULES);
   const filtered = files.filter(file => {
@@ -40,8 +41,7 @@ export function installRootMod(files, destinationPath) {
 
     // Ignore directories and ensure that the file contains a known root folder at
     //  the expected index.
-    return (ROOT_FOLDERS.has(segments[idx])
-      && (path.extname(segments[lastElementIdx]) !== ''));
+    return (ROOT_FOLDERS.has(segments[idx]) && (path.extname(segments[lastElementIdx]) !== ''));
   });
 
   const instructions = filtered.map(file => {
@@ -52,33 +52,32 @@ export function installRootMod(files, destinationPath) {
       type: 'copy',
       source: file,
       destination,
-    }
+    } as IInstruction
   });
 
-  return Promise.resolve({ instructions });
+  return Promise.resolve({ instructions } as IInstallResult);
 }
 
-export function testForSubmodules(files, gameId) {
+export function testForSubmodules(files: string[], gameId: string) : ISupportedResult {
   // Check this is a mod for Bannerlord and it contains a SubModule.xml
-  const supported = ((gameId === GAME_ID) 
-    && files.find(file => path.basename(file).toLowerCase() === SUBMOD_FILE) !== undefined);
+  const supported = ((gameId === GAME_ID) && files.find(file => path.basename(file).toLowerCase() === SUBMOD_FILE) !== undefined);
 
   return Promise.resolve({
     supported,
-    requiredFiles: []
-  })
+    requiredFiles: [] as string[]
+  } as ISupportedResult)
 }
 
-export async function installSubModules(files, destinationPath) {
+export async function installSubModules(files: string[], destinationPath: string): Promise<IInstallResult> {
   // Remove directories straight away.
   const filtered = files.filter(file => { 
     const segments = file.split(path.sep);
     return path.extname(segments[segments.length - 1]) !== '';
   });
   const subMods = filtered.filter(file => path.basename(file).toLowerCase() === SUBMOD_FILE);
-  return Promise.reduce(subMods, async (accum, modFile) => {
+  return Promise.reduce(subMods, async (accum: IInstruction[], modFile: string) => {
     const segments = modFile.split(path.sep).filter(seg => !!seg);
-    const modName = (segments.length > 1)
+    const modName: string = (segments.length > 1)
       ? segments[segments.length - 2]
       : await getElementValue(modFile, 'Id');
 
@@ -89,8 +88,8 @@ export async function installSubModules(files, destinationPath) {
       type: 'copy',
       source: modFile,
       destination: path.join(MODULES, modName, modFile.slice(idx)),
-    }));
+    } as IInstruction));
     return accum.concat(instructions);
-  }, [])
-  .then(merged => Promise.resolve({ instructions: merged }));
+  }, [] as IInstruction[])
+  .then((merged: IInstruction[]) => Promise.resolve({ instructions: merged } as IInstallResult));
 }

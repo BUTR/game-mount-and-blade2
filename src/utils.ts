@@ -1,32 +1,28 @@
 import Promise from 'bluebird';
 import * as path from 'path';
 import { actions, fs, selectors, util } from "vortex-api";
-import { IExtensionContext, IDiscoveryResult } from 'vortex-api/lib/types/api';
+import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { IExtensionContext, IDiscoveryResult, IProfile, IDiscoveredTool } from 'vortex-api/lib/types/api';
 
 import ConstantStorage from './constants';
-import { tSort, getDeployedModData, walkAsync, getXMLData } from './old-xml';
+import { tSort, getDeployedModData, walkAsync, getXMLData, Document, Node, CACHE, LAUNCHER_DATA } from './old-xml';
+import { ModuleData, ModuleDataCache } from './types';
 
 
 const constants = new ConstantStorage();
 const { GAME_ID, LAUNCHER_EXEC, STEAMAPP_ID, EPICAPP_ID, MODDING_KIT_EXEC, SUBMOD_FILE } = constants;
 const { LAUNCHER_DATA_PATH, BANNERLORD_EXEC, PARAMS_TEMPLATE, MODULES, OFFICIAL_MODULES } = constants;
 
-export const LAUNCHER_DATA = {
-  singlePlayerSubMods: [],
-  multiplayerSubMods: [],
-}
-
 let STORE_ID: string;
-export let CACHE = {};
 
-export async function refreshCacheOnEvent(context: IExtensionContext, refreshFunc, profileId): Promise<void> {
-  CACHE = {};
+export async function refreshCacheOnEvent(context: IExtensionContext, refreshFunc: () => void, profileId: string): Promise<void> {
+  CACHE.clear();
   if (profileId === undefined) {
     return Promise.resolve();
   }
   const state = context.api.store.getState();
-  const activeProfile = selectors.activeProfile(state);
-  const deployProfile = selectors.profileById(state, profileId);
+  const activeProfile: IProfile = selectors.activeProfile(state);
+  const deployProfile: IProfile = selectors.profileById(state, profileId);
   if (!!activeProfile && !!deployProfile && (deployProfile.id !== activeProfile.id)) {
     // Deployment event seems to be executed for a profile other
     //  than the currently active one. Not going to continue.
@@ -39,8 +35,11 @@ export async function refreshCacheOnEvent(context: IExtensionContext, refreshFun
   }
 
   try {
-    const deployedSubModules = await getDeployedSubModPaths(context);
-    CACHE = await getDeployedModData(context, deployedSubModules);
+    CACHE.clear();
+    const deployedSubModules: string[] = await getDeployedSubModPaths(context);
+    (await getDeployedModData(context, deployedSubModules) as ModuleDataCache).forEach((value, key) => {
+      CACHE.set(key, value);
+    });
   } catch (err) {
     // ProcessCanceled means that we were unable to scan for deployed
     //  subModules, probably because game discovery is incomplete.
@@ -51,12 +50,12 @@ export async function refreshCacheOnEvent(context: IExtensionContext, refreshFun
       : Promise.reject(err);
   }
 
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {} as ILoadOrder);
 
   // We're going to do a quick tSort at this point - not going to
   //  change the user's load order, but this will highlight any
   //  cyclic or missing dependencies.
-  const modIds = Object.keys(CACHE);
+  const modIds = Array.from(CACHE.keys());
   const sorted = tSort(modIds, true, loadOrder);
 
   if (!!refreshFunc) {
@@ -66,31 +65,31 @@ export async function refreshCacheOnEvent(context: IExtensionContext, refreshFun
   return refreshGameParams(context, loadOrder);
 }
 
-export function getValidationInfo(modVortexId) {
+export function getValidationInfo(modVortexId: string) {
   // We expect the method caller to provide the vortexId of the subMod, as 
   //  this is how we store this information in the load order object.
   //  Reason why we need to search the cache by vortexId rather than subModId.
-  const subModId = Object.keys(CACHE).find(key => CACHE[key].vortexId === modVortexId);
-  const cyclic = util.getSafe(CACHE[subModId], ['invalid', 'cyclic'], []);
-  const missing = util.getSafe(CACHE[subModId], ['invalid', 'missing'], []);
+  const subModId = Array.from(CACHE.keys()).find(key => CACHE.get(key).vortexId === modVortexId);
+  const cyclic = util.getSafe(CACHE.get(subModId), ['invalid', 'cyclic'], [] as string[]);
+  const missing = util.getSafe(CACHE.get(subModId), ['invalid', 'missing'], [] as string[]);
   return {
     cyclic,
     missing,
   }
 }
 
-export function findGame() {
+export function findGame(): Promise<string> {
   return util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString()])
-    .then(game =>{
+    .then((game: { gameStoreId: string; gamePath: string; }) => {
       STORE_ID = game.gameStoreId;
       return Promise.resolve(game.gamePath);
     });
 }
 
-function setModdingTool(context: IExtensionContext, discovery: IDiscoveryResult, hidden: any = null): void {
-  const toolId = 'bannerlord-sdk';
-  const exec = path.basename(MODDING_KIT_EXEC);
-  const tool = {
+function setModdingTool(context: IExtensionContext, discovery: IDiscoveryResult, hidden: boolean = false): void {
+  const toolId: string = 'bannerlord-sdk';
+  const exec: string = path.basename(MODDING_KIT_EXEC);
+  const tool: IDiscoveredTool = {
     id: toolId,
     name: 'Modding Kit',
     logo: 'twlauncher.png',
@@ -100,9 +99,11 @@ function setModdingTool(context: IExtensionContext, discovery: IDiscoveryResult,
     relative: true,
     exclusive: true,
     workingDirectory: path.join(discovery.path, path.dirname(MODDING_KIT_EXEC)),
-    hidden,
+    hidden: hidden,
+    custom: true
   };
 
+  // TODO: WTF
   context.api.store.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool));
 }
 
@@ -118,18 +119,18 @@ function ensureOfficialLauncher(context: IExtensionContext, discovery: IDiscover
     path: path.join(discovery.path, LAUNCHER_EXEC),
     relative: true,
     workingDirectory: path.join(discovery.path, 'bin', 'Win64_Shipping_Client'),
-  }));
+  } as IDiscoveredTool));
 }
 
-async function refreshGameParams(context: IExtensionContext, loadOrder): Promise<void> {
+export async function refreshGameParams(context: IExtensionContext, loadOrder: ILoadOrder): Promise<void> {
   // Go through the enabled entries so we can form our game parameters.
   const enabled = (!!loadOrder && Object.keys(loadOrder).length > 0)
     ? Object.keys(loadOrder)
         .filter(key => loadOrder[key].enabled)
         .sort((lhs, rhs) => loadOrder[lhs].pos - loadOrder[rhs].pos)
-        .reduce((accum, key) => {
-          const cacheKeys = Object.keys(CACHE);
-          const entry = cacheKeys.find(cacheElement => CACHE[cacheElement].vortexId === key);
+        .reduce((accum: string[], key) => {
+          const cacheKeys = Array.from(CACHE.keys());
+          const entry = cacheKeys.find(cacheElement => CACHE.get(cacheElement).vortexId === key);
           if (!!entry) {
             accum.push(entry);
           }
@@ -157,28 +158,26 @@ async function refreshGameParams(context: IExtensionContext, loadOrder): Promise
   return Promise.resolve();
 }
 
-async function getDeployedSubModPaths(context: IExtensionContext): Promise<any> {
+export async function getDeployedSubModPaths(context: IExtensionContext): Promise<string[]> {
   const state = context.api.store.getState();
-  const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined);
+  const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined as IDiscoveryResult);
   if (discovery?.path === undefined) {
     return Promise.reject(new util.ProcessCanceled('game discovery is incomplete'));
   }
-  const modulePath = path.join(discovery.path, MODULES);
-  let moduleFiles;
+  const modulePath: string = path.join(discovery.path, MODULES);
+  let moduleFiles: string[];
   try {
     moduleFiles = await walkAsync(modulePath);
   } catch (err) {
     if (err instanceof util.UserCanceled) {
-      return Promise.resolve([]);
+      return Promise.resolve([] as string[]);
     }
-    const isMissingOfficialModules = ((err.code === 'ENOENT')
-      && ([].concat([ MODULES ], Array.from(OFFICIAL_MODULES)))
-            .indexOf(path.basename(err.path)) !== -1);
+    const isMissingOfficialModules = ((err.code === 'ENOENT') && (([] as string[]).concat([ MODULES ], Array.from(OFFICIAL_MODULES))).indexOf(path.basename(err.path)) !== -1);
     const errorMsg = isMissingOfficialModules
       ? 'Game files are missing - please re-install the game'
-      : err.message;
+      : err.message as string;
     context.api.showErrorNotification(errorMsg, err);
-    return Promise.resolve([]);
+    return Promise.resolve([] as string[]);
   }
   const subModules = moduleFiles.filter(file => path.basename(file).toLowerCase() === SUBMOD_FILE);
   return Promise.resolve(subModules);
@@ -192,8 +191,7 @@ export async function prepareForModding(context: IExtensionContext, discovery: I
     setModdingTool(context, discovery);
   } catch (err) {
     const tools = discovery?.tools;
-    if ((tools !== undefined)
-    && (util.getSafe(tools, ['bannerlord-sdk'], undefined) !== undefined)) {
+    if ((tools !== undefined) && (util.getSafe(tools, ['bannerlord-sdk'], undefined) !== undefined)) {
       setModdingTool(context, discovery, true);
     }
   }
@@ -209,8 +207,8 @@ export async function prepareForModding(context: IExtensionContext, discovery: I
   const idRegexp = /\<Id\>(.*?)\<\/Id\>/gm;
   const enabledRegexp = /\<IsSelected\>(.*?)\<\/IsSelected\>/gm;
   const trimTagsRegexp = /<[^>]*>?/gm;
-  const createDataElement = (xmlNode) => {
-    const nodeString = xmlNode.toString({ whitespace: false }).replace(/[ \t\r\n]/gm, '');
+  const createDataElement = (xmlNode: Node): ModuleData | null => {
+    const nodeString = xmlNode.toString({ declaration: false, selfCloseEmpty: false, whitespace: false, type: 'xml' }).replace(/[ \t\r\n]/gm, '');
     if (!!nodeString) {
       return {
         subModId: nodeString.match(idRegexp)[0].replace(trimTagsRegexp, ''),
@@ -219,41 +217,44 @@ export async function prepareForModding(context: IExtensionContext, discovery: I
           .replace(trimTagsRegexp, '') === 'true',
       };
     } else {
-      return undefined;
+      return null;
     }
   };
 
   // Check if we've already set the load order object for this profile
   //  and create it if we haven't.
-  return startSteam().then(() => getXMLData(LAUNCHER_DATA_PATH)).then(launcherData => {
+  return startSteam().then(() => getXMLData(LAUNCHER_DATA_PATH)).then((launcherData: Document) => {
     try {
       const singlePlayerMods = launcherData.get('//UserData/SingleplayerData/ModDatas').childNodes();
       const multiPlayerMods = launcherData.get('//UserData/MultiplayerData/ModDatas').childNodes();
       LAUNCHER_DATA.singlePlayerSubMods = singlePlayerMods.reduce((accum, spm) => {
         const dataElement = createDataElement(spm);
-        if (!!dataElement) {
+        if (dataElement !== null) {
           accum.push(dataElement);
         }
         return accum;
-      }, []);
+      }, [] as ModuleData[]);
       LAUNCHER_DATA.multiplayerSubMods = multiPlayerMods.reduce((accum, mpm) => {
         const dataElement = createDataElement(mpm);
-        if (!!dataElement) {
+        if (dataElement !== null) {
           accum.push(dataElement);
         }
         return accum;
-      }, []);
+      }, [] as ModuleData[]);
     } catch (err) {
       return Promise.reject(new util.DataInvalid(err.message));
     }
   }).then(async () => {
-    const deployedSubModules = await getDeployedSubModPaths(context);
-    CACHE = await getDeployedModData(context, deployedSubModules);
+    CACHE.clear();
+    const deployedSubModules: string[] = await getDeployedSubModPaths(context);
+    (await getDeployedModData(context, deployedSubModules) as ModuleDataCache).forEach((value, key) => {
+      CACHE.set(key, value);
+    });
 
     // We're going to do a quick tSort at this point - not going to
     //  change the user's load order, but this will highlight any
     //  cyclic or missing dependencies.
-    const modIds = Object.keys(CACHE);
+    const modIds = Array.from(CACHE.keys());
     const sorted = tSort(modIds, true);
   })
   .catch(err => {
@@ -277,7 +278,7 @@ export async function prepareForModding(context: IExtensionContext, discovery: I
       //  Bannerlord without any active profile.
       return refreshGameParams(context, {});
     }
-    const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+    const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {} as ILoadOrder);
     return refreshGameParams(context, loadOrder);
   });
 }
