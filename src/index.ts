@@ -14,7 +14,7 @@ import { IExtensionContext } from 'vortex-api/lib/types/api';
 function main(context: IExtensionContext): boolean {
     context.registerGame({
         id: GAME_ID,
-        name: 'Mount & Blade II:\tBannerlord',
+        name: 'Mount & Blade II: Bannerlord',
         mergeMods: true,
         queryPath: findGame,
         queryModPath: () => '.',
