@@ -2,6 +2,7 @@ import Promise from 'bluebird';
 import * as path from 'path';
 import { actions, fs, log, selectors, util } from "vortex-api";
 import { IDiscoveryResult, IExtensionContext, IProfile } from 'vortex-api/lib/types/api';
+import { ILoadOrder, ILoadOrderEntry } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 
 //import { ParseModule } from './module-xml-parser'
 //import { TopologySort } from './module-topology-sorter'
@@ -11,10 +12,8 @@ import { testRootMod, installRootMod, testForSubmodules, installSubModules } fro
 import ConstantStorage from './constants';
 import { CACHE, getDeployedModData, preSort, tSort } from './old-xml';
 import { ModuleDataCache } from './types';
-import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-
-
-const CustomItemRenderer = require('./customItemRenderer');
+import CustomItemRenderer from './customItemRenderer';
+import CustomItemRendererJS = require('./customItemRenderer-old');
 
 const constants = new ConstantStorage();
 const { GAME_ID, BANNERLORD_EXEC, STEAMAPP_ID, EPICAPP_ID, MODULES, I18N_NAMESPACE } = constants;
@@ -58,7 +57,8 @@ function main(context: IExtensionContext): boolean {
         gameArtURL: `${__dirname}/gameart.jpg`,
         preSort: (items, direction) => preSort(context, items, direction),
         callback: (loadOrder) => refreshGameParams(context, loadOrder),
-        itemRenderer: CustomItemRenderer.default,
+        //itemRenderer: CustomItemRenderer,
+        itemRenderer: CustomItemRendererJS.default,
       });
     
       // We currently have only one mod on NM and it is a root mod.
@@ -92,8 +92,8 @@ function main(context: IExtensionContext): boolean {
           const lockedIds = modIds.filter(id => CACHE.get(id).isLocked);
           const subModIds = modIds.filter(id => !CACHE.get(id).isLocked);
     
-          let sortedLocked = [];
-          let sortedSubMods = [];
+          let sortedLocked = [] as string[];
+          let sortedSubMods = [] as string[];
     
           const state = context.api.store.getState();
           const activeProfile = selectors.activeProfile(state);
@@ -115,7 +115,7 @@ function main(context: IExtensionContext): boolean {
             return;
           }
     
-          const newOrder = [].concat(sortedLocked, sortedSubMods).reduce((accum, id, idx) => {
+          const newOrder = ([] as string[]).concat(sortedLocked, sortedSubMods).reduce((accum, id, idx) => {
             const vortexId = CACHE.get(id).vortexId;
             const newEntry = {
               pos: idx,
@@ -125,11 +125,11 @@ function main(context: IExtensionContext): boolean {
                   ? loadOrder[vortexId].enabled
                   : true,
               locked: (loadOrder[vortexId]?.locked === true),
-            }
+            } as ILoadOrderEntry
     
             accum[vortexId] = newEntry;
             return accum;
-          }, {});
+          }, {} as ILoadOrder);
     
           context.api.store.dispatch(actions.setLoadOrder(activeProfile.id, newOrder));
           return refreshGameParams(context, newOrder)

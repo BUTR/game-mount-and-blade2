@@ -1,17 +1,46 @@
-/*
 import * as React from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
+import { connect } from 'react-redux';
 import { actions, ContextMenu, FlexLayout, tooltip, selectors, util } from "vortex-api";
-import Promise from 'bluebird';
+import { IFlexLayoutProps } from 'vortex-api/lib/controls/FlexLayout';
 import * as path from 'path';
+import { ReactNode } from 'react';
+import { IMod, IProfile } from 'vortex-api/lib/types/api';
+import { ILoadOrder, ILoadOrderDisplayItem, ILoadOrderEntry } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 
-const { connect } = require('react-redux');
-import * as mnb2extension from './index';
+import { getValidationInfo } from './utils';
+
+//const { dynreq } = require('vortex-run');
+
 
 const TWLOGO = path.join(__dirname, 'TWLogo.png');
 
 class CustomItemRenderer extends React.Component {
-  constructor(props) {
+  mMounted: boolean;
+
+  //props: Readonly<{ item; order; mods; className; }>;
+  readonly props: Readonly<{
+    children?: ReactNode;
+    item: ILoadOrderDisplayItem;
+    order: ILoadOrder;
+    mods: { [id: string]: IMod; };
+    className: string;
+    modsPath: string;
+    installPath: string;
+    profile: IProfile;
+    onSetLoadOrderEntry: (profileId: string, itemId: string, entry: ILoadOrderEntry) => void;
+    onRef: (ref: any) => any;
+  }>;
+
+  state: Readonly<{
+    contextMenuVisible: boolean;
+    offset: {
+      x: number;
+      y: number
+    };
+  }>;
+
+  constructor(props: {} | Readonly<{}>) {
     super(props);
     this.state = {
       contextMenuVisible: false,
@@ -28,7 +57,7 @@ class CustomItemRenderer extends React.Component {
     this.mMounted = false;
   }
 
-  renderAddendum(props) {
+  renderAddendum(props: Readonly<{ item: ILoadOrderDisplayItem; order: ILoadOrder; mods: { [id: string]: IMod; }; modsPath: string; installPath: string; }>) {
     // Extra stuff we want to add to the LO entry.
     //  Currently renders the open directory button for
     const { item, order, mods } = props;
@@ -53,7 +82,7 @@ class CustomItemRenderer extends React.Component {
   }
 
   // TODO: move all style configuration into a stylesheet
-  renderOfficialEntry(item) {
+  renderOfficialEntry(item: ILoadOrderDisplayItem) {
     return React.createElement('div', { style: { display: 'flex', alignItems: 'center' } }, 
       React.createElement('img', {
       src: TWLOGO,
@@ -67,7 +96,7 @@ class CustomItemRenderer extends React.Component {
     React.createElement('p', {}, item.name));
   }
 
-  renderEntry(props) {
+  renderEntry(props: Readonly<{ profile: IProfile; order: ILoadOrder; item: ILoadOrderDisplayItem; onSetLoadOrderEntry: (profileId: string, itemId: string, entry: ILoadOrderEntry) => void; }>) {
     const { item, order } = props;
     const isEnabled = !!order[item.id]?.locked || order[item.id].enabled;
     return React.createElement(Checkbox, {
@@ -76,7 +105,7 @@ class CustomItemRenderer extends React.Component {
       onChange: (evt) => this.onStatusChange(evt, props)}, item.name);
   }
 
-  renderInvalidEntry(item) {
+  renderInvalidEntry(item: ILoadOrderDisplayItem): React.CElement<Checkbox.CheckboxProps, Checkbox> {
     const invalidReason = this.itemInvalidReason(item);
     const reasonElement = () => (invalidReason !== undefined) 
       ? React.createElement(tooltip.Icon, { style: {color: 'red'}, name: 'feedback-error', tooltip: invalidReason })
@@ -86,18 +115,18 @@ class CustomItemRenderer extends React.Component {
       disabled: true }, item.name, ' ', reasonElement());
   }
 
-  onLock(props, lock) {
+  onLock(props: { profile: IProfile; order: ILoadOrder; item: ILoadOrderDisplayItem; onSetLoadOrderEntry: (profileId: string, itemId: string, entry: ILoadOrderEntry) => void; }, lock: boolean) {
     const { profile, order, item, onSetLoadOrderEntry } = props;
     const entry = {
       pos: order[item.id].pos,
       enabled: order[item.id].enabled,
       locked: lock,
-    }
+    } as ILoadOrderEntry
 
     onSetLoadOrderEntry(profile.id, item.id, entry);
   }
 
-  renderContextMenu(state, props) {
+  renderContextMenu(state: Readonly<{ contextMenuVisible: boolean; offset: { x: number; y: number; }; }>, props: { profile: IProfile; order: ILoadOrder; item: ILoadOrderDisplayItem; onSetLoadOrderEntry: (profileId: string, itemId: string, entry: ILoadOrderEntry) => void; }) {
     const { order, item } = props;
     const { contextMenuVisible, offset } = state;
     return React.createElement(ContextMenu, {
@@ -134,12 +163,14 @@ class CustomItemRenderer extends React.Component {
       ref: (ref) => this.setRef(ref, this.props),
       key,
       style: { height: '48px' },
-      onContextMenu: (evt) => this.setState({
-        contextMenuVisible: !this.state.contextMenuVisible,
-        offset: { x: evt.clientX, y: evt.clientY },
-      }),
+      onContextMenu: (evt) => {
+        return this.setState({
+          contextMenuVisible: !this.state.contextMenuVisible,
+          offset: { x: evt.clientX, y: evt.clientY },
+        });
+      },
     },
-    React.createElement(FlexLayout, { type: 'row', height: '20px' },
+    React.createElement(FlexLayout, { type: 'row', height: '20px' } as IFlexLayoutProps,
       React.createElement(FlexLayout.Flex, {
         style: {
           display: 'flex',
@@ -165,16 +196,18 @@ class CustomItemRenderer extends React.Component {
     return result;
   }
 
-  isItemInvalid(item) {
+  isItemInvalid(item: ILoadOrderDisplayItem): boolean {
     const indexPath = path.join(__dirname, 'index.js');
-    const validFunc = mnb2extension.dynreq(indexPath).getValidationInfo;
+    //const validFunc = dynreq(indexPath).getValidationInfo;
+    const validFunc = getValidationInfo;
     const infoObj = validFunc(item.id);
     return ((infoObj.missing.length > 0) || (infoObj.cyclic.length > 0));
   }
 
-  itemInvalidReason(item) {
+  itemInvalidReason(item: ILoadOrderDisplayItem): string | undefined {
     const indexPath = path.join(__dirname, 'index.js');
-    const validFunc = mnb2extension.dynreq(indexPath).getValidationInfo;
+    //const validFunc = dynreq(indexPath).getValidationInfo;
+    const validFunc = getValidationInfo;
     const infoObj = validFunc(item.id);
 
     if (infoObj.missing.length > 0) {
@@ -190,7 +223,7 @@ class CustomItemRenderer extends React.Component {
     return undefined;
   }
 
-  renderOpenDirButton(props) {
+  renderOpenDirButton(props: Readonly<{ item: ILoadOrderDisplayItem; mods: { [id: string]: IMod; }; modsPath: string; installPath: string; }>) {
     const { item, mods, modsPath, installPath } = props;
     const managedModKeys = Object.keys(mods);
     const itemPath = managedModKeys.includes(item.id)
@@ -203,7 +236,7 @@ class CustomItemRenderer extends React.Component {
       onClick: () => util.opn(itemPath).catch(err => null) });
   }
 
-  onStatusChange(evt, props) {
+  onStatusChange(evt, props: { profile: IProfile; order: ILoadOrder; item: ILoadOrderDisplayItem; onSetLoadOrderEntry: (profileId: string, itemId: string, entry: ILoadOrderEntry) => void; }) {
     const { profile, order, item, onSetLoadOrderEntry } = props;
     const entry = {
       pos: order[item.id].pos,
@@ -214,12 +247,13 @@ class CustomItemRenderer extends React.Component {
     onSetLoadOrderEntry(profile.id, item.id, entry);
   }
 
-  setRef (ref, props) {
+  setRef (ref: any, props: Readonly<{ onRef: (ref: any) => any; }>) {
     return props.onRef(ref);
   }
 }
 
-function mapStateToProps(state) {
+/*
+function mapStateToProps(state: any) {
   const profile = selectors.activeProfile(state);
   const game = util.getGame(profile.gameId);
   const discovery = selectors.discoveryByGame(state, profile.gameId);
@@ -234,16 +268,14 @@ function mapStateToProps(state) {
   };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps(dispatch: (arg0: any) => any) {
   return {
-    onSetLoadOrderEntry: (profileId, modId, entry) =>
+    onSetLoadOrderEntry: (profileId: string, modId: string, entry: ILoadOrderEntry) =>
       dispatch(actions.setLoadOrderEntry(profileId, modId, entry)),
     onSetDeploymentRequired: () =>
       dispatch(actions.setDeploymentNecessary('mountandblade2bannerlord', true)),
   };
 }
-
-module.exports = {
-  default : connect(mapStateToProps, mapDispatchToProps)(CustomItemRenderer),
-}
 */
+
+export default CustomItemRenderer;

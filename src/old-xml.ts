@@ -331,7 +331,7 @@ function isInvalid(subModId: string) {
   return ((cyclicErrors.length > 0) || (missingDeps.length > 0));
 }
 
-export function tSort(subModIds: string[], allowLocked: boolean = false, loadOrder: ILoadOrder = undefined) {
+export function tSort(subModIds: string[], allowLocked: boolean = false, loadOrder: ILoadOrder = undefined): string[] {
   // Topological sort - we need to:
   //  - Identify cyclic dependencies.
   //  - Identify missing dependencies.
@@ -354,7 +354,7 @@ export function tSort(subModIds: string[], allowLocked: boolean = false, loadOrd
   }, {});
 
   // Will store the final LO result
-  const result = [];
+  const result = [] as string[];
   
   // The nodes we have visited/processed.
   let visited = [];
