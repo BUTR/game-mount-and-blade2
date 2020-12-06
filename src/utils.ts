@@ -76,10 +76,12 @@ export function getValidationInfo(modVortexId) {
   }
 }
 
-export async function findGame(): Promise<string> {
-  const game = await util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString()]);
-  STORE_ID = game.gameStoreId;
-  return Promise.resolve(game.gamePath);
+export function findGame() {
+  return util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString()])
+    .then(game =>{
+      STORE_ID = game.gameStoreId;
+      return Promise.resolve(game.gamePath);
+    });
 }
 
 function setModdingTool(context: IExtensionContext, discovery: IDiscoveryResult, hidden: any = null): void {
