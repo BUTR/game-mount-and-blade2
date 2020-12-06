@@ -3,12 +3,16 @@
 import { findGame, prepareForModding, getValidationInfo, refreshCacheOnEvent } from './utils'
 import { infoComponent } from './ui'
 import { testRootMod, installRootMod, testForSubmodules, installSubModules } from './module-installer'
-import { GAME_ID, BANNERLORD_EXEC, STEAMAPP_ID, EPICAPP_ID, MODULES } from './constants';
+import ConstantStorage from './constants';
 
 import Promise from 'bluebird';
 import * as path from 'path';
 import { fs, log, selectors, util } from "vortex-api";
 import { IExtensionContext } from 'vortex-api/lib/types/api';
+
+
+const constants = new ConstantStorage();
+const { GAME_ID, BANNERLORD_EXEC, STEAMAPP_ID, EPICAPP_ID, MODULES } = constants;
 
 //This is the main function Vortex will run when detecting the game extension. 
 function main(context: IExtensionContext): boolean {
@@ -19,7 +23,7 @@ function main(context: IExtensionContext): boolean {
         queryPath: findGame,
         queryModPath: () => '.',
         logo: 'gameart.jpg',
-        executable: () => BANNERLORD_EXEC,
+        executable: () => constants.BANNERLORD_EXEC,
         setup: (discovery) => prepareForModding(context, discovery),
         requiredFiles: [
           BANNERLORD_EXEC

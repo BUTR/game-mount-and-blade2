@@ -4,9 +4,12 @@ import { fs, log, selectors, util } from "vortex-api";
 import { IExtensionContext } from 'vortex-api/lib/types/api';
 import { parseXmlString } from 'libxmljs';
 
-import { GAME_ID, OFFICIAL_MODULES, SUBMOD_FILE, XML_EL_MULTIPLAYER } from './constants';
+import ConstantStorage from './constants';
 import { CACHE, LAUNCHER_DATA } from './utils';
 
+
+const constants = new ConstantStorage();
+const { GAME_ID, OFFICIAL_MODULES, SUBMOD_FILE, XML_EL_MULTIPLAYER } = constants;
 
 const LOCKED_MODULES = new Set([]);
 

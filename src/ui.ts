@@ -4,8 +4,11 @@ import { FlexLayout, util } from "vortex-api";
 import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { IExtensionContext } from 'vortex-api/lib/types/api';
 
-import { I18N_NAMESPACE } from './constants';
+import ConstantStorage from './constants';
 
+
+const constants = new ConstantStorage();
+const { I18N_NAMESPACE } = constants;
 
 export function infoComponent(context: IExtensionContext, props: IInfoPanelProps): React.Component {
   const t = context.api.translate;

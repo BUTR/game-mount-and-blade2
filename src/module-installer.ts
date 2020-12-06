@@ -1,9 +1,12 @@
 import Promise from 'bluebird';
 import * as path from 'path';
 
-import { GAME_ID, MODULES, ROOT_FOLDERS, SUBMOD_FILE } from './constants';
+import ConstantStorage from './constants';
 import { getElementValue } from './old-xml';
 
+
+const constants = new ConstantStorage();
+const { GAME_ID, MODULES, ROOT_FOLDERS, SUBMOD_FILE } = constants;
 
 export function testRootMod(files, gameId) {
   const notSupported = { supported: false, requiredFiles: [] };

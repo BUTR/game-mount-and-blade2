@@ -3,17 +3,20 @@ import * as path from 'path';
 import { actions, fs, selectors, util } from "vortex-api";
 import { IExtensionContext, IDiscoveryResult } from 'vortex-api/lib/types/api';
 
-import { GAME_ID, LAUNCHER_EXEC, STEAMAPP_ID, EPICAPP_ID, MODDING_KIT_EXEC, SUBMOD_FILE } from './constants';
-import { LAUNCHER_DATA_PATH, BANNERLORD_EXEC, PARAMS_TEMPLATE, MODULES, OFFICIAL_MODULES } from './constants';
+import ConstantStorage from './constants';
 import { tSort, getDeployedModData, walkAsync, getXMLData } from './old-xml';
 
+
+const constants = new ConstantStorage();
+const { GAME_ID, LAUNCHER_EXEC, STEAMAPP_ID, EPICAPP_ID, MODDING_KIT_EXEC, SUBMOD_FILE } = constants;
+const { LAUNCHER_DATA_PATH, BANNERLORD_EXEC, PARAMS_TEMPLATE, MODULES, OFFICIAL_MODULES } = constants;
 
 export const LAUNCHER_DATA = {
   singlePlayerSubMods: [],
   multiplayerSubMods: [],
 }
 
-let STORE_ID;
+let STORE_ID: string;
 export let CACHE = {};
 
 export async function refreshCacheOnEvent(context: IExtensionContext, refreshFunc, profileId): Promise<void> {
