@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Panel } from 'react-bootstrap';
 import { FlexLayout, util } from "vortex-api";
 import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';

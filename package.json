@@ -1,5 +1,5 @@
 {
-  "name": "extension-game-mount-and-blade2",
+  "name": "game-mount-and-blade2",
   "version": "0.3.0",
   "description": "Vortex extension",
   "main": "./dist/index.js",

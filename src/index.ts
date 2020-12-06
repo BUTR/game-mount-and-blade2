@@ -187,6 +187,4 @@ function main(context: IExtensionContext): boolean {
       return true;
 }
 
-module.exports = {
-    default: main,
-};
+export default main;
