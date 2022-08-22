@@ -25,6 +25,8 @@ jobs:
     - run: npm ci
 
     - run: npm run build
+    
+    - run: tree
 
     - run: npm run bundle7z
 
