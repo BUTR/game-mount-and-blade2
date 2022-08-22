@@ -8,7 +8,7 @@
   "repository": "",
   "scripts": {
     "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --display-error-details --progress --profile --color",
-    "bundle7z": "7z a -t7z game-mount-and-blade2.7z .\\dist\\*.*",
+    "bundle7z": "7z a -t7z game-mount-and-blade2.7z ./dist/*.*",
     "build": "npm run webpack && extractInfo"
   },
   "devDependencies": {
