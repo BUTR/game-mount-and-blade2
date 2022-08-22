@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
   "author": "Black Tree Gaming Ltd. & BUTR Team",
-  "license": "GPL-3.0+"",
+  "license": "GPL-3.0+",
   "main": "./dist/index.js",
   "repository": "",
   "scripts": {
