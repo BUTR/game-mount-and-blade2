@@ -26,8 +26,6 @@ jobs:
 
     - run: npm run build
     
-    - run: tree
-
     - run: npm run bundle7z
 
     - uses: actions/upload-artifact@v3
