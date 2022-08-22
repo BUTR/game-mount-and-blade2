@@ -24,7 +24,7 @@
     "bluebird": "^3.7.2",
     "copy-webpack-plugin": "^6.4.1",
     "copyfiles": "^2.3.0",
-    "electron": "^19.0.13",
+    "electron": "^6.1.12",
     "i18next": "^19.0.1",
     "node-loader": "^1.0.3",
     "react": "^16.12.0",
