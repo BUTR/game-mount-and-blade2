@@ -1,61 +1,36 @@
-// old xml
-export interface LauncherData {
-    singlePlayerSubMods: ModuleData[];
-    multiplayerSubMods: ModuleData[];
-}
-export class ModuleDataCache extends Map<string, ModuleData> {
-}
+import { types } from 'vortex-api';
 
-export interface ModuleData {
-    subModId: string;
-    subModName?: string;
-    subModFile?: string;
-    vortexId?: string;
-    isOfficial?: boolean;
-    isLocked?: boolean;
-    isMultiplayer?: boolean;
-    dependencies?: string[];
-    invalid?: {
-      cyclic: string[]; // Will hold the submod ids of any detected cyclic dependencies.
-      missing: string[];
-    };
-    enabled?: boolean;
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib/BannerlordModuleManager';
+import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib/types';
+
+export interface IProps {
+  state: types.IState;
+  profile: types.IProfile;
+  discovery: types.IDiscoveryResult;
+  enabledMods: { [modId: string]: types.IMod };
 }
 
-
-// nex xml
-export interface ModuleInfo {
-    readonly Name: string;
-    readonly Id: string;
-    readonly Version: string;
-    readonly Official: boolean;
-    readonly SingleplayerModule: boolean;
-    readonly MultiplayerModule: boolean;
-    readonly Url: string;
-    readonly DependedModules?: DependedModule[];
-    readonly DependedModuleMetadatas?: DependedModuleMetadata[];
-    readonly SubModules?: SubModuleInfo[];
+export interface ISortProps {
+  bmm: BannerlordModuleManager;
+  loadOrder?: any;
 }
 
-export interface DependedModule {
-    readonly Id: string;
+export interface ILoadOrderEntry<T = any> {
+  pos: number;
+  enabled: boolean;
+  prefix?: string;
+  data?: T;
+  locked?: boolean;
+  external?: boolean;
 }
 
-export enum LoadOrder {
-    LoadBeforeThis,
-    LoadAfterThis
+export interface ILoadOrder {
+  [modId: string]: ILoadOrderEntry;
 }
 
-export interface DependedModuleMetadata extends DependedModule {
-    readonly Id: string;
-    readonly Order: LoadOrder;
-    readonly Optional?: boolean;
+export interface IModuleInfoExtendedExt extends bmmTypes.ModuleInfoExtended {
+  vortexId?: string;
 }
-
-export interface SubModuleInfo {
-    readonly Name: string;
-    readonly DLLName: string;
-    readonly SubModuleClassType: string;
-    readonly Assemblies?: string[];
-    readonly Tags?: Map<string, string>;
+export interface IModuleCache {
+  [subModId: string]: IModuleInfoExtendedExt;
 }
