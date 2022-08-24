@@ -22,6 +22,8 @@ jobs:
       with:
         node-version: 16.x
 
+    - run: npm install -g autogypi
+
     - run: npm ci
 
     - run: npm run build
