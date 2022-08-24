@@ -10,11 +10,11 @@ import getVersion from 'exe-version';
 import path from 'path';
 import semver from 'semver';
 import { actions, FlexLayout, fs, log, selectors, types, util } from 'vortex-api';
-import { getElementValue, getXMLData, refreshGameParams } from './util';
+import { getXMLData, refreshGameParams } from './util';
 
 import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
-  MODULES, SUBMOD_FILE, ROOT_FOLDERS
+  MODULES
 } from './common';
 import CustomItemRenderer from './CustomItemRenderer';
 
@@ -25,6 +25,8 @@ import { ILoadOrder, IModuleCache, IModuleInfoExtendedExt, ISortProps } from './
 import CollectionsDataView from './views/CollectionsDataView';
 import { migrate026, migrate045 } from './migrations';
 import { testRootMod, installRootMod } from './installers/rootmod';
+import { testForSubmodules, installSubModules } from './installers/submodules';
+import LoadOrderInfo from './views/LoadOrderInfo';
 
 import { createAction } from 'redux-act';
 
@@ -57,56 +59,6 @@ function findGame() {
       STORE_ID = game.gameStoreId;
       return Promise.resolve(game.gamePath);
     });
-}
-
-function testForSubmodules(files, gameId) {
-  // Check this is a mod for Bannerlord and it contains a SubModule.xml
-  const supported = ((gameId === GAME_ID)
-    && files.find(file => path.basename(file).toLowerCase() === SUBMOD_FILE) !== undefined);
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-async function installSubModules(files, destinationPath) {
-  // Remove directories straight away.
-  const filtered = files.filter(file => {
-    const segments = file.split(path.sep);
-    return path.extname(segments[segments.length - 1]) !== '';
-  });
-  const subModIds = [];
-  const subMods = filtered.filter(file => path.basename(file).toLowerCase() === SUBMOD_FILE);
-  return Bluebird.reduce(subMods, async (accum, modFile: string) => {
-    const segments = modFile.split(path.sep).filter(seg => !!seg);
-    const subModId = await getElementValue(path.join(destinationPath, modFile), 'Id');
-    const modName = (segments.length > 1)
-      ? segments[segments.length - 2]
-      : subModId;
-    if (modName === undefined) {
-      return Promise.reject(new util.DataInvalid('Invalid Submodule.xml file - inform the mod author'));
-    }
-    subModIds.push(subModId);
-    const idx = modFile.toLowerCase().indexOf(SUBMOD_FILE);
-    // Filter the mod files for this specific submodule.
-    const subModFiles: string[]
-      = filtered.filter(file => file.slice(0, idx) === modFile.slice(0, idx));
-    const instructions = subModFiles.map((modFile: string) => ({
-      type: 'copy',
-      source: modFile,
-      destination: path.join(MODULES, modName, modFile.slice(idx)),
-    }));
-    return accum.concat(instructions);
-  }, [])
-  .then(merged => {
-    const subModIdsAttr = {
-      type: 'attribute',
-      key: 'subModIds',
-      value: subModIds,
-    };
-    return Promise.resolve({ instructions: [].concat(merged, [subModIdsAttr]) });
-  });
 }
 
 function ensureOfficialLauncher(context, discovery) {
@@ -287,42 +239,6 @@ async function preSort(context, items, direction, updateType, bmm) {
   }
 }
 
-function infoComponent(context, props) {
-  const t = context.api.translate;
-  return React.createElement(BS.Panel, { id: 'loadorderinfo' },
-    React.createElement('h2', {}, t('Managing your load order', { ns: I18N_NAMESPACE })),
-    React.createElement(FlexLayout.Flex, {},
-    React.createElement('div', {},
-    React.createElement('p', {}, t('You can adjust the load order for Bannerlord by dragging and dropping mods up or down on this page. '
-                                 + 'Please keep in mind that Bannerlord is still in Early Access, which means that there might be significant '
-                                 + 'changes to the game as time goes on. Please notify us of any Vortex related issues you encounter with this '
-                                 + 'extension so we can fix it. For more information and help see: ', { ns: I18N_NAMESPACE }),
-    React.createElement('a', { onClick: () => util.opn('https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex') }, t('Modding Bannerlord with Vortex.', { ns: I18N_NAMESPACE }))))),
-    React.createElement('div', {},
-      React.createElement('p', {}, t('How to use:', { ns: I18N_NAMESPACE })),
-      React.createElement('ul', {},
-        React.createElement('li', {}, t('Check the box next to the mods you want to be active in the game.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('Click Auto Sort in the toolbar. (See below for details).', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('Make sure to run the game directly via the Play button in the top left corner '
-                                      + '(on the Bannerlord tile). Your Vortex load order may not be loaded if you run the Single Player game through the game launcher.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('Optional: Manually drag and drop mods to different positions in the load order (for testing different overrides). Mods further down the list override mods further up.', { ns: I18N_NAMESPACE })))),
-    React.createElement('div', {},
-      React.createElement('p', {}, t('Please note:', { ns: I18N_NAMESPACE })),
-      React.createElement('ul', {},
-        React.createElement('li', {}, t('The load order reflected here will only be loaded if you run the game via the play button in '
-                                      + 'the top left corner. Do not run the Single Player game through the launcher, as that will ignore '
-                                      + 'the Vortex load order and go by what is shown in the launcher instead.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('For Bannerlord, mods sorted further towards the bottom of the list will override mods further up (if they conflict). '
-                                      + 'Note: Harmony patches may be the exception to this rule.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('Auto Sort uses the SubModule.xml files (the entries under <DependedModules>) to detect '
-                                      + 'dependencies to sort by. ', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('If you cannot see your mod in this load order, Vortex may have been unable to find or parse its SubModule.xml file. '
-                                      + 'Most - but not all mods - come with or need a SubModule.xml file.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('Hit the deploy button whenever you install and enable a new mod.', { ns: I18N_NAMESPACE })),
-        React.createElement('li', {}, t('The game will not launch unless the game store (Steam, Epic, etc) is started beforehand. If you\'re getting the '
-                                      + '"Unable to Initialize Steam API" error, restart Steam.', { ns: I18N_NAMESPACE })))));
-}
-
 async function resolveGameVersion(discoveryPath: string) {
   if (process.env.NODE_ENV !== 'development' && semver.satisfies(util.getApplication().version, '<1.4.0')) {
     return Promise.reject(new util.ProcessCanceled('not supported in older Vortex versions'));
@@ -389,7 +305,7 @@ async function sortImpl(context: types.IExtensionContext, bmm: BannerlordModuleM
     })).finally(() => _IS_SORTING = false);
 }
 
-function main(context) {
+function main(context: types.IExtensionContext) {
   context.registerReducer(['settings', 'mountandblade2'], reducer);
   let bmm: BannerlordModuleManager;
   (context.registerSettings as any)('Interface', Settings, () => ({
@@ -442,10 +358,8 @@ function main(context) {
   // Register the LO page.
   context.registerLoadOrderPage({
     gameId: GAME_ID,
-    createInfoPanel: (props) => {
-      refreshFunc = props.refresh;
-      return infoComponent(context, props);
-    },
+    //Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
+    createInfoPanel: LoadOrderInfo as any, 
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
     preSort: (items, direction, updateType) =>
