@@ -358,7 +358,8 @@ function main(context: types.IExtensionContext) {
   // Register the LO page.
   context.registerLoadOrderPage({
     gameId: GAME_ID,
-    createInfoPanel: LoadOrderInfo as any,
+    //Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
+    createInfoPanel: LoadOrderInfo as any, 
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
     preSort: (items, direction, updateType) =>
