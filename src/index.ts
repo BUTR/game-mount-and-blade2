@@ -3,7 +3,7 @@ import { Promise as Bluebird } from 'bluebird';
 import * as React from 'react';
 import * as BS from 'react-bootstrap';
 
-import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib/BannerlordModuleManager';
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
 
 import getVersion from 'exe-version';
 

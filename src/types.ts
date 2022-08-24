@@ -1,7 +1,7 @@
 import { types } from 'vortex-api';
 
-import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib/BannerlordModuleManager';
-import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib/types';
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
+import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib';
 
 export interface IProps {
   state: types.IState;
