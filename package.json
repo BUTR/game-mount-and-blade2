@@ -21,6 +21,7 @@
     "@types/react-bootstrap": "^0.32.20",
     "@types/redux": "^3.6.0",
     "@types/semver": "^7.3.12",
+    "@types/xml2js": "^0.4.11",
     "7z-bin": "github:Nexus-Mods/7z-bin",
     "autogypi": "^0.2.2",
     "bluebird": "^3.7.2",

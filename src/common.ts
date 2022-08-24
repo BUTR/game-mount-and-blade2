@@ -15,3 +15,10 @@ export const OFFICIAL_MODULES = new Set(['Native', 'CustomBattle', 'SandBoxCore'
 export const LOCKED_MODULES = new Set([]);
 
 export const I18N_NAMESPACE = 'game-mount-and-blade2';
+
+// A set of folder names (lowercased) which are available alongside the
+//  game's modules folder. We could've used the fomod installer stop patterns
+//  functionality for this, but it's better if this extension is self contained;
+//  especially given that the game's modding pattern changes quite often.
+export const ROOT_FOLDERS = new Set(['bin', 'data', 'gui', 'icons', 'modules',
+  'music', 'shaders', 'sounds', 'xmlschemas']);

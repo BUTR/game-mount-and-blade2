@@ -8,15 +8,13 @@ import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module
 import getVersion from 'exe-version';
 
 import path from 'path';
-import semver, { sort } from 'semver';
+import semver from 'semver';
 import { actions, FlexLayout, fs, log, selectors, types, util } from 'vortex-api';
-import { getElementValue, getXMLData, refreshGameParams, walkAsync } from './util';
-
-import { migrate045, migrate026 } from './migrations';
+import { getElementValue, getXMLData, refreshGameParams } from './util';
 
 import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
-  MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
+  MODULES, SUBMOD_FILE, ROOT_FOLDERS
 } from './common';
 import CustomItemRenderer from './CustomItemRenderer';
 
@@ -25,6 +23,8 @@ import { ICollectionsData } from './collections/types';
 import { getCache, refreshCache } from './subModCache';
 import { ILoadOrder, IModuleCache, IModuleInfoExtendedExt, ISortProps } from './types';
 import CollectionsDataView from './views/CollectionsDataView';
+import { migrate026, migrate045 } from './migrations';
+import { testRootMod, installRootMod } from './installers/rootmod';
 
 import { createAction } from 'redux-act';
 
@@ -38,13 +38,6 @@ let STORE_ID;
 const GOG_IDS = ['1802539526', '1564781494'];
 const STEAMAPP_ID = 261550;
 const EPICAPP_ID = 'Chickadee';
-
-// A set of folder names (lowercased) which are available alongside the
-//  game's modules folder. We could've used the fomod installer stop patterns
-//  functionality for this, but it's better if this extension is self contained;
-//  especially given that the game's modding pattern changes quite often.
-const ROOT_FOLDERS = new Set(['bin', 'data', 'gui', 'icons', 'modules',
-  'music', 'shaders', 'sounds', 'xmlschemas']);
 
 const setSortOnDeploy = createAction('MNB2_SET_SORT_ON_DEPLOY',
   (profileId: string, sort: boolean) => ({ profileId, sort }));
@@ -64,71 +57,6 @@ function findGame() {
       STORE_ID = game.gameStoreId;
       return Promise.resolve(game.gamePath);
     });
-}
-
-function testRootMod(files, gameId) {
-  const notSupported = { supported: false, requiredFiles: [] };
-  if (gameId !== GAME_ID) {
-    // Different game.
-    return Promise.resolve(notSupported);
-  }
-
-  const lowered = files.map(file => file.toLowerCase());
-  const modsFile = lowered.find(file => file.split(path.sep).indexOf(MODULES.toLowerCase()) !== -1);
-  if (modsFile === undefined) {
-    // There's no Modules folder.
-    return Promise.resolve(notSupported);
-  }
-
-  const idx = modsFile.split(path.sep).indexOf(MODULES.toLowerCase());
-  const rootFolderMatches = lowered.filter(file => {
-    const segments = file.split(path.sep);
-    return (((segments.length - 1) > idx) && ROOT_FOLDERS.has(segments[idx]));
-  }) || [];
-
-  return Promise.resolve({ supported: (rootFolderMatches.length > 0), requiredFiles: [] });
-}
-
-function installRootMod(files, destinationPath) {
-  const moduleFile = files.find(file => file.split(path.sep).indexOf(MODULES) !== -1);
-  const idx = moduleFile.split(path.sep).indexOf(MODULES);
-  const subMods = files.filter(file => path.basename(file).toLowerCase() === SUBMOD_FILE);
-  return Bluebird.map(subMods, async (modFile: string) => {
-    const subModId = await getElementValue(path.join(destinationPath, modFile), 'Id');
-    return Bluebird.resolve(subModId);
-  })
-  .then((subModIds: string[]) => {
-    const filtered = files.filter(file => {
-      const segments = file.split(path.sep).map(seg => seg.toLowerCase());
-      const lastElementIdx = segments.length - 1;
-
-      // Ignore directories and ensure that the file contains a known root folder at
-      //  the expected index.
-      return (ROOT_FOLDERS.has(segments[idx])
-        && (path.extname(segments[lastElementIdx]) !== ''));
-      });
-    const attributes = subModIds.length > 0
-      ? [
-          {
-            type: 'attribute',
-            key: 'subModIds',
-            value: subModIds,
-          },
-        ]
-      : [];
-    const instructions = attributes.concat(filtered.map(file => {
-      const destination = file.split(path.sep)
-                              .slice(idx)
-                              .join(path.sep);
-      return {
-        type: 'copy',
-        source: file,
-        destination,
-      };
-    }));
-
-    return Bluebird.resolve({ instructions });
-  });
 }
 
 function testForSubmodules(files, gameId) {
@@ -476,7 +404,7 @@ function main(context) {
 
   context.registerGame({
     id: GAME_ID,
-    name: 'Mount & Blade II:\tBannerlord Test',
+    name: 'Mount & Blade II:\tBannerlord',
     mergeMods: true,
     queryPath: findGame,
     queryModPath: () => '.',
