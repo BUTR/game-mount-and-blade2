@@ -1,14 +1,13 @@
 import { withTranslation } from "react-i18next";
-import { ComponentEx } from "vortex-api";
+import { ComponentEx, actions, FlexLayout, tooltip, selectors, util } from "vortex-api";
 import { IExtendedInterfaceProps } from "./collections/types";
 
-const React = require('react');
-const BS = require('react-bootstrap');
-const { connect } = require('react-redux');
-const path = require('path');
-const { actions, FlexLayout, tooltip, selectors, util } = require('vortex-api');
+import React from 'react';
+import BS from 'react-bootstrap';
+import { connect } from 'react-redux';
+import path from 'path';
 
-const { getValidationInfo } = require('./subModCache');
+import { getValidationInfo } from './subModCache';
 
 const TWLOGO = path.join(__dirname, 'TWLogo.png');
 
@@ -140,7 +139,7 @@ class CustomItemRenderer extends ComponentEx<IProps, IComponentState> {
       key,
       style: { height: '48px' },
     },
-    React.createElement(FlexLayout, { type: 'row', height: '20px' },
+    React.createElement(FlexLayout, { type: 'row'/*, height: '20px'*/ },
       React.createElement(FlexLayout.Flex, {
         style: {
           display: 'flex',
@@ -166,10 +165,10 @@ class CustomItemRenderer extends ComponentEx<IProps, IComponentState> {
     return result;
   }
 
-  isIncompabile(item) {
-    const infoObj = getValidationInfo(this.props.moduleManager, item.id);
-    return (infoObj.incompatibleDeps.length > 0);
-  }
+  //isIncompabile(item) {
+  //  const infoObj = getValidationInfo(this.props.moduleManager, item.id);
+  //  return (infoObj.incompatibleDeps.length > 0);
+  //}
 
   isItemInvalid(item) {
     const infoObj = getValidationInfo(this.props.moduleManager, item.id);

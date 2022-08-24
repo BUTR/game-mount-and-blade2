@@ -20,18 +20,22 @@
     "@types/react": "^16.9.43",
     "@types/react-bootstrap": "^0.32.20",
     "@types/redux": "^3.6.0",
+    "@types/semver": "^7.3.12",
     "7z-bin": "github:Nexus-Mods/7z-bin",
     "bluebird": "^3.7.2",
     "copy-webpack-plugin": "^6.4.1",
     "copyfiles": "^2.3.0",
     "electron": "^19.0.13",
+    "exe-version": "github:Nexus-Mods/node-exe-version",
     "i18next": "^19.0.1",
+    "libxmljs": "github:TanninOne/libxmljs#sambacha",
     "node-loader": "^1.0.3",
     "react": "^16.12.0",
     "react-i18next": "^11.11.0",
     "react-redux": "^7.1.3",
     "redux-act": "^1.7.7",
     "ts-loader": "^8.4.0",
+    "turbowalk": "github:Nexus-Mods/node-turbowalk",
     "typescript": "^4.4.3",
     "vortex-api": "github:Nexus-Mods/vortex-api",
     "webpack": "^4.46.0",
@@ -40,6 +44,6 @@
     "xml2js": "^0.4.23"
   },
   "dependencies": {
-    "@butr/blmodulemanagernative": "^4.0.133"
+    "@butr/blmodulemanagernative": "^4.0.140"
   }
 }

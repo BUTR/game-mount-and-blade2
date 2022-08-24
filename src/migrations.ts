@@ -1,16 +1,16 @@
-const Promise = require('bluebird');
-const path = require('path');
-const semver = require('semver');
-const { parseXmlString } = require('libxmljs');
-const walk = require('turbowalk').default;
+import { Promise as Bluebird } from 'bluebird';
+import path from 'path';
+import semver from 'semver';
+import { parseXmlString, Element } from 'libxmljs';
+import walk from 'turbowalk';
 
-const { actions, fs, selectors, util } = require('vortex-api');
+import { actions, fs, selectors, util } from 'vortex-api';
 
-const { GAME_ID, SUBMOD_FILE, I18N_NAMESPACE } = require('./common');
+import { GAME_ID, SUBMOD_FILE, I18N_NAMESPACE } from './common';
 
-function migrate045(api, oldVersion) {
+export function migrate045(api, oldVersion) {
   if (semver.gte(oldVersion, '0.4.5')) {
-    return Promise.resolve();
+    return Bluebird.resolve();
   }
 
   return api.awaitUI()
@@ -18,7 +18,7 @@ function migrate045(api, oldVersion) {
       const state = api.getState();
       const activeGameId = selectors.activeGameId(state);
       if (activeGameId !== GAME_ID) {
-        return Promise.resolve();
+        return Bluebird.resolve();
       }
       api.sendNotification({
         id: 'mnb2-045-migration',
@@ -44,24 +44,24 @@ function migrate045(api, oldVersion) {
           },
         ],
       });
-      return Promise.resolve();
+      return Bluebird.resolve();
     })
 }
 
-function migrate026(api, oldVersion) {
+export function migrate026(api, oldVersion) {
   if (semver.gte(oldVersion, '0.2.6')) {
-    return Promise.resolve();
+    return Bluebird.resolve();
   }
 
   const state = api.getState();
   const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
-  return Promise.each(Object.keys(mods), iter => addSubModsAttrib(api, mods[iter]));
+  return Bluebird.each(Object.keys(mods), iter => addSubModsAttrib(api, mods[iter]));
 }
 
 function addSubModsAttrib(api, mod) {
   if (mod === undefined) {
     // Weird, but we don't care.
-    return Promise.resolve();
+    return Bluebird.resolve();
   }
   const state = api.getState();
   const stagingFolder = selectors.installPathForGame(state, GAME_ID);
@@ -70,25 +70,25 @@ function addSubModsAttrib(api, mod) {
   return walk(modPath, entries => {
     allEntries = allEntries.concat(entries.filter(entry => path.basename(entry.filePath).toLowerCase() === SUBMOD_FILE));
   }, { skipInaccessible: true, recurse: true, skipLinks: true })
-  .catch(err => Promise.resolve()) // We don't care for errors.
+  .catch(err => Bluebird.resolve()) // We don't care for errors.
   .then(() => {
     return (allEntries.length > 1)
-      ? Promise.reduce(allEntries, async (accum, entry) => {
+      ? Bluebird.reduce(allEntries, async (accum, entry) => {
         try {
           const data = await getXMLData(entry.filePath);
-          const subModId = data.get('//Id').attr('value').value();
+          const subModId = data.get<Element>('//Id').attr('value').value();
           accum.push(subModId);
         } catch (err) {
           // nop - we don't care for errors - this is supposed to be
           //  a noninvasive "migration".
         }
-        return Promise.resolve(accum);
+        return Bluebird.resolve(accum);
       }, [])
         .then(subModIds => {
           api.store.dispatch(actions.setModAttribute(GAME_ID, mod.id, 'subModIds', subModIds))
-          return Promise.resolve();
+          return Bluebird.resolve();
         })
-      : Promise.resolve();
+      : Bluebird.resolve();
     });
 }
 
@@ -97,14 +97,9 @@ async function getXMLData(xmlFilePath) {
     .then(data => {
       try {
         const xmlData = parseXmlString(data);
-        return Promise.resolve(xmlData);
+        return Bluebird.resolve(xmlData);
       } catch (err) {
-        return Promise.reject(err);
+        return Bluebird.reject(err);
       }
     })
-}
-
-module.exports = {
-  migrate026,
-  migrate045,
 }
