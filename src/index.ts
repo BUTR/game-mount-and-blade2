@@ -10,11 +10,11 @@ import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module
 import path from 'path';
 import semver, { sort } from 'semver';
 import { actions, FlexLayout, fs, log, selectors, types, util } from 'vortex-api';
-import { getElementValue, getXMLData, refreshGameParams, walkAsync } from './util';
+import { getElementValue, getXMLData, refreshGameParams } from './util';
 
 import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
-  MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
+  MODULES, SUBMOD_FILE,
 } from './common';
 import CustomItemRenderer from './CustomItemRenderer';
 
@@ -23,6 +23,7 @@ import { ICollectionsData } from './collections/types';
 import { getCache, refreshCache } from './subModCache';
 import { ILoadOrder, IModuleCache, IModuleInfoExtendedExt, ISortProps } from './types';
 import CollectionsDataView from './views/CollectionsDataView';
+import { migrate026, migrate045 } from './migrations';
 
 import { createAction } from 'redux-act';
 
