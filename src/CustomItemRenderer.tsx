@@ -1,13 +1,12 @@
 import { withTranslation } from "react-i18next";
 import { ComponentEx, actions, FlexLayout, tooltip, selectors, util } from "vortex-api";
 import { IExtendedInterfaceProps } from "./collections/types";
-
-import React from 'react';
-import BS from 'react-bootstrap';
-import { connect } from 'react-redux';
 import path from 'path';
-
 import { getValidationInfo } from './subModCache';
+import * as React from 'react';
+import * as BS from 'react-bootstrap';
+import { connect } from 'react-redux';
+
 
 const TWLOGO = path.join(__dirname, 'TWLogo.png');
 
@@ -164,11 +163,6 @@ class CustomItemRenderer extends ComponentEx<IProps, IComponentState> {
       }, this.renderAddendum())));
     return result;
   }
-
-  //isIncompabile(item) {
-  //  const infoObj = getValidationInfo(this.props.moduleManager, item.id);
-  //  return (infoObj.incompatibleDeps.length > 0);
-  //}
 
   isItemInvalid(item) {
     const infoObj = getValidationInfo(this.props.moduleManager, item.id);

@@ -1,8 +1,8 @@
 import Bluebird from 'bluebird';
 import path from 'path';
 import { fs, log, selectors, types, util } from 'vortex-api';
-import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib/BannerlordModuleManager';
-import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib/types';
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
+import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib';
 import { GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE } from './common';
 import { IModuleCache, IModuleInfoExtendedExt } from './types';
 import { getCleanVersion, getElementValue, getXMLData, walkAsync } from './util';
