@@ -1,11 +1,10 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import * as React from 'react';
 import { Button, ListGroup, ListGroupItem } from 'react-bootstrap';
 import { withTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 
-import { ComponentEx, EmptyPlaceholder, FlexLayout,
-  selectors, types, Icon, util } from 'vortex-api';
+import { ComponentEx, EmptyPlaceholder, FlexLayout, selectors, types, Icon, util } from 'vortex-api';
 
 import { IExtendedInterfaceProps } from '../collections/types';
 import { genCollectionLoadOrder } from '../collections/collectionUtil';

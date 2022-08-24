@@ -92,7 +92,7 @@ async function getDeployedModData(api: types.IExtensionApi,
 export function missingDependencies(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
   const depsFulfilled = bmm.areAllDependenciesOfModulePresent(Object.values(CACHE), subMod);
   if (depsFulfilled) {
-    return false;
+    return [];
   }
 
   const subModIds = Object.keys(CACHE);
@@ -107,7 +107,7 @@ function versionToDisplay(ver: bmmTypes.ApplicationVersion) {
 
 export function getIncompatibilities(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
   const dependencies = subMod.dependentModules;
-  const incorrectVersions = [] as { currentVersion: string, requiredVersion: string }[];
+  const incorrectVersions = [] as { id: string, currentVersion: string, requiredVersion: string }[];
   for (const dep of dependencies) {
     const depMod = CACHE[dep.id];
     if (!depMod) {
@@ -118,6 +118,7 @@ export function getIncompatibilities(bmm: BannerlordModuleManager, subMod: IModu
     if (comparisonRes !== 1) {
       incorrectVersions.push(
         {
+          id: dep.id,
           currentVersion: versionToDisplay(depMod.version),
           requiredVersion: versionToDisplay(dep.version),
         });

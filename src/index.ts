@@ -5,12 +5,14 @@ import * as BS from 'react-bootstrap';
 
 import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib/BannerlordModuleManager';
 
-//import getVersion from 'exe-version';
+import getVersion from 'exe-version';
 
 import path from 'path';
 import semver, { sort } from 'semver';
 import { actions, FlexLayout, fs, log, selectors, types, util } from 'vortex-api';
 import { getElementValue, getXMLData, refreshGameParams } from './util';
+
+import { migrate045, migrate026 } from './migrations';
 
 import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
@@ -406,7 +408,7 @@ async function resolveGameVersion(discoveryPath: string) {
       .split('.')
       .slice(0, 3)
       .join('.');
-    return (semver.valid(value)) ? Promise.resolve(value) : "1.0.0"//getVersion(exePath);
+    return (semver.valid(value)) ? Promise.resolve(value) : getVersion(exePath);
   } catch (err) {
     return Promise.reject(err);
   }
