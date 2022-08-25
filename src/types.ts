@@ -3,6 +3,14 @@ import { types } from 'vortex-api';
 import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
 import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib';
 
+
+export interface IItemRendererProps {
+  className: string;
+  item: types.ILoadOrderDisplayItem;
+  onRef: (ref: any) => any;
+  moduleManager: BannerlordModuleManager;
+}
+
 export interface IProps {
   state: types.IState;
   profile: types.IProfile;

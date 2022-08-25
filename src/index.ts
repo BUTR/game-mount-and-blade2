@@ -16,7 +16,7 @@ import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
   MODULES
 } from './common';
-import CustomItemRenderer from './CustomItemRenderer';
+import CustomItemRenderer from './views/CustomItemRenderer';
 
 import { genCollectionsData, parseCollectionsData } from './collections/collections';
 import { ICollectionsData } from './collections/types';
@@ -359,7 +359,9 @@ function main(context: types.IExtensionContext) {
   context.registerLoadOrderPage({
     gameId: GAME_ID,
     //Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
-    createInfoPanel: LoadOrderInfo as any, 
+    createInfoPanel: (props) => React.createElement(LoadOrderInfo, {
+      ...props,
+    }), 
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
     preSort: (items, direction, updateType) =>

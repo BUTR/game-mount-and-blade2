@@ -116,3 +116,4 @@ dist
 .pnp.*
 
 game-mount-and-blade2.7z
+!typings/*.tgz
