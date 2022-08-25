@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import path from 'path';
 
 export const GAME_ID = 'mountandblade2bannerlord';

@@ -1,14 +1,18 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import { actions, selectors, types, util } from 'vortex-api';
 import { GAME_ID } from '../common';
 import { ILoadOrder } from '../types';
-import { ICollectionsData } from './types';
 
 import { CollectionGenerateError, CollectionParseError, genCollectionLoadOrder } from './collectionUtil';
+import { ICollectionMB } from "./types";
 
-export async function exportLoadOrder(state: types.IState,
-                                      modIds: string[],
-                                      mods: { [modId: string]: types.IMod })
-                                      : Promise<ILoadOrder> {
+export const exportLoadOrder = toBluebird(async (state: types.IState,
+                                                 modIds: string[],
+                                                 mods: { [modId: string]: types.IMod })
+                                                 : Promise<ILoadOrder> => {
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
     return Promise.reject(new CollectionGenerateError('Invalid profile id'));
@@ -34,10 +38,9 @@ export async function exportLoadOrder(state: types.IState,
   }, {});
   const filteredLO: ILoadOrder = genCollectionLoadOrder(loadOrder, includedMods);
   return Promise.resolve(filteredLO);
-}
+});
 
-export async function importLoadOrder(api: types.IExtensionApi,
-                                      collection: ICollectionsData): Promise<void> {
+export const importLoadOrder = toBluebird(async(api: types.IExtensionApi, collection: ICollectionMB): Promise<void> => {
   const state = api.getState();
 
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
@@ -57,4 +60,4 @@ export async function importLoadOrder(api: types.IExtensionApi,
       }
     });
   });
-}
+});

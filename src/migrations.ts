@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import path from 'path';
 import semver from 'semver';
 import { types } from 'vortex-api';
@@ -8,55 +12,53 @@ const { actions, fs, selectors, util } = require('vortex-api');
 
 const { GAME_ID, SUBMOD_FILE, I18N_NAMESPACE } = require('./common');
 
-function migrate045(api: types.IExtensionApi, oldVersion: string): Promise<any> {
+export const migrate045 = toBluebird(async (api: types.IExtensionApi, oldVersion: string): Promise<any> => {
   if (semver.gte(oldVersion, '0.4.5')) {
     return Promise.resolve();
   }
 
-  return api.awaitUI()
-    .then(() => {
-      const state = api.getState();
-      const activeGameId = selectors.activeGameId(state);
-      if (activeGameId !== GAME_ID) {
-        return Promise.resolve();
-      }
-      api.sendNotification?.({
-        id: 'mnb2-045-migration',
-        type: 'info',
-        message: api.translate('Bannerlord - Important Information', { ns: I18N_NAMESPACE }),
-        noDismiss: true,
-        actions: [
-          {
-            title: 'More',
-            action: (dismiss) => {
-              dismiss();
-              api.showDialog?.('info', 'Mount and Blade II: Bannerlord', {
-                  bbcode: api.translate('We\'ve added the option to auto sort your modules whenever '
-                        + 'a deployment event occurrs - this functionality is configured to '
-                        + 'function on a per profile basis and should ensure that the modules '
-                        + 'are always sorted correctly when you launch the game.[br][/br][br][/br]'
-                        + 'Please note: this new feature is enabled by default; if for any reason '
-                        + 'you wish to disable it, you can do so from the Interface tab in the Settings page'),
-              }, [
-                  { label: 'Close' },
-              ]);
-            },
-          },
-        ],
-      });
-      return Promise.resolve();
-    })
-}
-
-function migrate026(api: types.IExtensionApi, oldVersion: string): Promise<any> {
-  if (semver.gte(oldVersion, '0.2.6')) {
+  await api.awaitUI();
+  const state = api.getState();
+  const activeGameId = selectors.activeGameId(state);
+  if (activeGameId !== GAME_ID) {
     return Promise.resolve();
+  }
+  api.sendNotification?.({
+    id: 'mnb2-045-migration',
+    type: 'info',
+    message: api.translate('Bannerlord - Important Information', { ns: I18N_NAMESPACE }),
+    noDismiss: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss_1) => {
+          dismiss_1();
+          api.showDialog?.('info', 'Mount and Blade II: Bannerlord', {
+            bbcode: api.translate('We\'ve added the option to auto sort your modules whenever '
+              + 'a deployment event occurrs - this functionality is configured to '
+              + 'function on a per profile basis and should ensure that the modules '
+              + 'are always sorted correctly when you launch the game.[br][/br][br][/br]'
+              + 'Please note: this new feature is enabled by default; if for any reason '
+              + 'you wish to disable it, you can do so from the Interface tab in the Settings page'),
+          }, [
+            { label: 'Close' },
+          ]);
+        },
+      },
+    ],
+  });
+  return await Promise.resolve();
+});
+
+export const migrate026 = toBluebird(async (api: types.IExtensionApi, oldVersion: string): Promise<any> => {
+  if (semver.gte(oldVersion, '0.2.6')) {
+    return;
   }
 
   const state = api.getState();
   const mods: { [key: string]: types.IMod } = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
-  return Promise.all(Object.values(mods).map(mod => addSubModsAttrib(api, mod)));
-}
+  await Promise.all(Object.values(mods).map(mod => addSubModsAttrib(api, mod)));
+});
 
 async function addSubModsAttrib(api: types.IExtensionApi, mod: types.IMod): Promise<void> {
   // Not sure how this would happen.
@@ -98,9 +100,4 @@ async function getXMLData(xmlFilePath: string): Promise<any> {
   catch(err) {
     throw err;
   }
-}
-
-export {
-  migrate026,
-  migrate045,
 }

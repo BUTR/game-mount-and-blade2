@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import * as React from 'react';
 import { Panel } from 'react-bootstrap';
 import { util, FlexLayout } from 'vortex-api';

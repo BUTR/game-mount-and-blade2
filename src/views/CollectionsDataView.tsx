@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import _ from 'lodash';
 import * as React from 'react';
 import { Button, ListGroup, ListGroupItem } from 'react-bootstrap';
@@ -6,37 +10,40 @@ import { connect } from 'react-redux';
 
 import { ComponentEx, EmptyPlaceholder, FlexLayout, selectors, types, Icon, util } from 'vortex-api';
 
-import { IExtendedInterfaceProps } from '../collections/types';
 import { genCollectionLoadOrder } from '../collections/collectionUtil';
 import { ILoadOrder, ILoadOrderEntry } from '../types';
+import { Dispatch } from 'redux';
+import { IExtendedInterfaceProps } from "collections/src/types/IExtendedInterfaceProps";
 
 const NAMESPACE: string = 'mnb2-collections-data';
 
-interface IBaseState {
-  sortedMods: ILoadOrder;
-}
-
-interface IConnectedProps {
+interface IStateProps {
   gameId: string;
   mods: { [modId: string]: types.IMod };
   loadOrder: ILoadOrder;
   profile: types.IProfile;
 }
+interface IDispatchProps {
 
-interface IActionProps {
+}
+interface IOwnProps {
+
 }
 
-type IProps = IActionProps & IExtendedInterfaceProps & IConnectedProps;
-type IComponentState = IBaseState;
+interface IBaseState {
+  sortedMods: ILoadOrder;
+}
 
-class CollectionsDataView extends ComponentEx<IProps, IComponentState> {
-  public static getDerivedStateFromProps(newProps: IProps, state: IComponentState) {
+type IComponentProps = IStateProps & IDispatchProps & IOwnProps & IExtendedInterfaceProps;
+type IComponentState = IBaseState;
+class CollectionsDataView extends ComponentEx<IComponentProps, IComponentState> {
+  public static getDerivedStateFromProps(newProps: IComponentProps, state: IComponentState) {
     const { loadOrder, mods, collection } = newProps;
     const sortedMods = genCollectionLoadOrder(loadOrder, mods, collection);
     return (sortedMods !== state.sortedMods) ? { sortedMods } : null;
   }
 
-  constructor(props: IProps) {
+  constructor(props: IComponentProps) {
     super(props);
     const { loadOrder, mods, collection } = props;
     this.initState({
@@ -136,12 +143,11 @@ class CollectionsDataView extends ComponentEx<IProps, IComponentState> {
   }
 }
 
-const empty = {};
-function mapStateToProps(state: types.IState, ownProps: IProps): IConnectedProps {
+function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
   const profile = selectors.activeProfile(state) || undefined;
   let loadOrder: ILoadOrder = {};
   if (!!profile?.gameId) {
-    loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile.id], empty);
+    loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile.id], {});
   }
 
   return {
@@ -152,10 +158,8 @@ function mapStateToProps(state: types.IState, ownProps: IProps): IConnectedProps
   };
 }
 
-function mapDispatchToProps(dispatch: any): IActionProps {
+function mapDispatch(dispatch: Dispatch): IDispatchProps {
   return {};
 }
 
-export default withTranslation(['common', NAMESPACE])(
-  connect(mapStateToProps, mapDispatchToProps)(
-    CollectionsDataView) as any) as React.ComponentClass<IExtendedInterfaceProps>;
+export default withTranslation(['common', NAMESPACE])(connect(mapState, mapDispatch)(CollectionsDataView));

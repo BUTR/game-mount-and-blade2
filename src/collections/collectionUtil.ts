@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import { types, util } from 'vortex-api';
 import { ILoadOrder, ILoadOrderEntry } from '../types';
 

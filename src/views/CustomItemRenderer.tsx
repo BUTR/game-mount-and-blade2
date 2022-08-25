@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import { withTranslation } from "react-i18next";
 import { ComponentEx, actions, FlexLayout, tooltip, selectors, util, types } from "vortex-api";
 import path from 'path';
@@ -7,6 +11,10 @@ import { Dispatch } from 'redux';
 import * as BS from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { IItemRendererProps, ILoadOrderEntry } from "../types";
+import { ILoadOrderDisplayItem } from "vortex-api/lib/types/api";
+
+const TWLOGO = path.join(__dirname, 'TWLogo.png');
+const NAMESPACE: string = 'mnb2-customrenderer';
 
 interface IStateProps {
   profile: types.IProfile;
@@ -27,9 +35,6 @@ interface IBaseState {
   offset: { x: number, y: number };
 }
 
-const TWLOGO = path.join(__dirname, 'TWLogo.png');
-const NAMESPACE: string = 'mnb2-customrenderer';
-
 type IComponentProps = IStateProps & IDispatchProps & IOwnProps;
 type IComponentState = IBaseState;
 class CustomItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
@@ -37,7 +42,7 @@ class CustomItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
     super(props);
     this.state = {
       offset: { x: 0, y: 0 },
-    }
+    };
 
     this.renderAddendum = this.renderAddendum.bind(this);
     this.renderInvalidEntry = this.renderInvalidEntry.bind(this);
@@ -236,7 +241,7 @@ class CustomItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
   }
 }
 
-function mapState(state: types.IState): IStateProps {
+function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
   const profile: types.IProfile = selectors.activeProfile(state);
   const game: types.IGame = util.getGame(profile.gameId);
   const discovery: types.IDiscoveryResult = selectors.discoveryByGame(state, profile.gameId);
@@ -259,8 +264,6 @@ function mapDispatch(dispatch: Dispatch): IDispatchProps {
   };
 };
 
-;
-
 export default
   withTranslation(['common', NAMESPACE])
-  (connect<IStateProps, IDispatchProps, IOwnProps>(mapState, mapDispatch)(CustomItemRenderer));
+  (connect<IStateProps, IDispatchProps, IOwnProps>(mapState, mapDispatch)(CustomItemRenderer)) as React.ComponentClass<{ className?: string; item: ILoadOrderDisplayItem; onRef: (ref: any) => any;}>;

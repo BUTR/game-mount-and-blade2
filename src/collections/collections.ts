@@ -1,17 +1,21 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import { selectors, types, util } from 'vortex-api';
 
 import { GAME_ID } from '../common';
 
 import { ILoadOrder } from '../types';
-import { ICollectionsData  } from './types';
+import { ICollectionMB  } from './types';
 
 import { exportLoadOrder, importLoadOrder } from './loadOrder';
 
 import { CollectionParseError } from './collectionUtil';
 
-export async function genCollectionsData(context: types.IExtensionContext,
+export const genCollectionsData = toBluebird(async(context: types.IExtensionContext,
                                          gameId: string,
-                                         includedMods: string[]) {
+                                         includedMods: string[]): Promise<ICollectionMB> => {
   const api = context.api;
   const state = api.getState();
   const profile = selectors.activeProfile(state);
@@ -19,16 +23,16 @@ export async function genCollectionsData(context: types.IExtensionContext,
     ['persistent', 'mods', gameId], {});
   try {
     const loadOrder: ILoadOrder = await exportLoadOrder(api.getState(), includedMods, mods);
-    const collectionData: ICollectionsData = { loadOrder };
+    const collectionData: ICollectionMB = { loadOrder };
     return Promise.resolve(collectionData);
   } catch (err) {
     return Promise.reject(err);
   }
-}
+});
 
-export async function parseCollectionsData(context: types.IExtensionContext,
+export const parseCollectionsData = toBluebird(async (context: types.IExtensionContext,
                                            gameId: string,
-                                           collection: ICollectionsData) {
+                                           collection: ICollectionMB): Promise<void> => {
   const api = context.api;
   const state = api.getState();
   const profileId = selectors.lastActiveProfileForGame(state, gameId);
@@ -43,4 +47,4 @@ export async function parseCollectionsData(context: types.IExtensionContext,
   } catch (err) {
     return Promise.reject(err);
   }
-}
+});

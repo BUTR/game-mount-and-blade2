@@ -1,3 +1,7 @@
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import I18next from 'i18next';
 import * as React from 'react';
 import { withTranslation } from 'react-i18next';

@@ -1,4 +1,7 @@
-import Bluebird from 'bluebird';
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import path from 'path';
 import { fs, log, selectors, types, util } from 'vortex-api';
 import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
@@ -12,8 +15,7 @@ export function getCache() {
   return CACHE;
 }
 
-export async function refreshCache(context: types.IExtensionContext,
-                                   bmm: BannerlordModuleManager) {
+export async function refreshCache(context: types.IExtensionContext, bmm: BannerlordModuleManager) {
   try {
     const subModuleFilePaths: string[] = await getDeployedSubModPaths(context);
     CACHE = await getDeployedModData(context.api, subModuleFilePaths, bmm);
@@ -49,12 +51,9 @@ async function getDeployedSubModPaths(context: types.IExtensionContext) {
   return Promise.resolve(subModules);
 }
 
-async function getDeployedModData(api: types.IExtensionApi,
-                                  subModuleFilePaths: string[],
-                                  bmm: BannerlordModuleManager) {
+async function getDeployedModData(api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager) {
   const state = api.getState();
-  const mods: { [modId: string]: types.IMod } = util.getSafe(state,
-    ['persistent', 'mods', GAME_ID], {});
+  const mods: { [modId: string]: types.IMod } = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
   const getVortexId = (subModId: string) => {
     for (const mod of Object.values(mods)) {
       const subModIds = util.getSafe(mod, ['attributes', 'subModIds'], []);
@@ -89,7 +88,7 @@ async function getDeployedModData(api: types.IExtensionApi,
   return modules;
 }
 
-export function missingDependencies(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
+function missingDependencies(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
   const depsFulfilled = bmm.areAllDependenciesOfModulePresent(Object.values(CACHE), subMod);
   if (depsFulfilled) {
     return [];
@@ -128,8 +127,7 @@ export function getIncompatibilities(bmm: BannerlordModuleManager, subMod: IModu
 }
 
 export function getValidationInfo(bmm: BannerlordModuleManager, id: string) {
-  const subModule = Object.values(CACHE)
-    .find(entry => (entry.vortexId === id) || (entry.id === id));
+  const subModule = Object.values(CACHE).find(entry => (entry.vortexId === id) || (entry.id === id));
   if (!subModule) {
     // Probably not deployed yet
     return { missing: [], incompatible: [] };

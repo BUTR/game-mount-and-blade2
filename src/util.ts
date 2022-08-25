@@ -1,4 +1,7 @@
-import Bluebird from 'bluebird';
+//@ts-ignore
+import { Promise } from "bluebird";
+import { method as toBluebird } from "bluebird"
+
 import path from 'path';
 import semver from 'semver';
 import { actions, fs, log, selectors, types, util } from 'vortex-api';
@@ -128,11 +131,11 @@ export function getCleanVersion(subModId: string, unsanitized: string): string {
   }
 }
 
-export async function walkAsync(dir, levelsDeep = 2) {
+export const walkAsync = toBluebird(async (dir, levelsDeep = 2) => {
   let entries = [];
   return fs.readdirAsync(dir).then(files => {
     const filtered = files.filter(file => !file.endsWith('.vortex_backup'));
-    return Bluebird.each(filtered, file => {
+    return Promise.each(filtered, file => {
       const fullPath = path.join(dir, file);
       return fs.statAsync(fullPath).then(stats => {
         if (stats.isDirectory() && levelsDeep > 0) {
@@ -157,4 +160,5 @@ export async function walkAsync(dir, levelsDeep = 2) {
     });
   })
   .then(() => Promise.resolve(entries));
-}
+});
+
