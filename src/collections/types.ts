@@ -1,6 +1,6 @@
 //@ts-ignore
-import Bluebird, { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import { types } from 'vortex-api';
 

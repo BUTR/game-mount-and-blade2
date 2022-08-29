@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import * as React from 'react';
 
@@ -22,11 +22,11 @@ import CustomItemRenderer from './views/CustomItemRenderer';
 import { genCollectionsData, parseCollectionsData } from './collections/collections';
 import { getCache, refreshCache } from './subModCache';
 import { ILoadOrder, IModuleCache, IModuleInfoExtendedExt, ISortProps } from './types';
-import CollectionsDataView from './views/CollectionsDataView';
 import { migrate026, migrate045 } from './migrations';
 import { testRootMod, installRootMod } from './installers/rootmod';
 import { testForSubmodules, installSubModules } from './installers/submodules';
 import LoadOrderInfo from './views/LoadOrderInfo';
+import CollectionsDataView from './views/CollectionsDataView';
 
 import { createAction } from 'redux-act';
 
@@ -34,8 +34,7 @@ import Settings from './views/Settings';
 import { IDiscoveryResult, IExtensionContext, ILoadOrderDisplayItem, IReducerSpec, SortType, TFunction, UpdateType } from 'vortex-api/lib/types/api';
 import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { IExtendedInterfaceProps } from "collections/src/types/IExtendedInterfaceProps";
-import { ICollection } from "collections/src/types/ICollection";
-import { IExtensionContextCollectionFeature } from "./collections/types";
+import { ICollectionMB, IExtensionContextCollectionFeature } from "./collections/types";
 
 const LAUNCHER_EXEC = path.join('bin', 'Win64_Shipping_Client', 'TaleWorlds.MountAndBlade.Launcher.exe');
 const MODDING_KIT_EXEC = path.join('bin', 'Win64_Shipping_wEditor', 'TaleWorlds.MountAndBlade.Launcher.exe');
@@ -203,7 +202,7 @@ async function refreshCacheOnEvent(context: IExtensionContext, profileId: string
   }
 }
 
-async function preSort(context: IExtensionContext, items: ILoadOrderDisplayItem[], updateType?: UpdateType): Promise<ILoadOrderDisplayItem[]> {
+const preSort = toBluebird<types.ILoadOrderDisplayItem[], types.IExtensionContext, types.ILoadOrderDisplayItem[], types.UpdateType | void>(async (context: IExtensionContext, items: ILoadOrderDisplayItem[], updateType?: UpdateType): Promise<ILoadOrderDisplayItem[]> => {
   const state = context.api.store.getState();
   const activeProfile = selectors.activeProfile(state);
   if (activeProfile?.id === undefined || activeProfile?.gameId !== GAME_ID) {
@@ -212,7 +211,7 @@ async function preSort(context: IExtensionContext, items: ILoadOrderDisplayItem[
   }
   const CACHE = getCache();
   if (Object.keys(CACHE).length !== items.length) {
-    const displayItems = Object.values(CACHE).map(iter => ({
+    const displayItems: ILoadOrderDisplayItem[] = Object.values(CACHE).map(iter => ({
       id: iter.id,
       name: iter.name,
       imgUrl: `${__dirname}/gameart.jpg`,
@@ -221,7 +220,7 @@ async function preSort(context: IExtensionContext, items: ILoadOrderDisplayItem[
     }));
     return displayItems;
   } else {
-    let ordered = [];
+    let ordered: ILoadOrderDisplayItem[] = [];
     if (updateType !== 'drag-n-drop') {
       const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
       ordered = items
@@ -234,7 +233,7 @@ async function preSort(context: IExtensionContext, items: ILoadOrderDisplayItem[
     }
     return ordered;
   }
-}
+});
 
 async function resolveGameVersion(discoveryPath: string) {
   if (process.env.NODE_ENV !== 'development' && semver.satisfies(util.getApplication().version, '<1.4.0')) {
@@ -293,13 +292,19 @@ async function sortImpl(context: types.IExtensionContext, bmm: BannerlordModuleM
   }, {});
 
   context.api.store.dispatch(actions.setLoadOrder(activeProfile.id, newOrder as any));
-  return refreshGameParams(context, newOrder)
-    .then(() => context.api.sendNotification({
+
+  try {
+    await refreshGameParams(context, newOrder);
+
+    context.api.sendNotification({
       id: 'mnb2-sort-finished',
       type: 'info',
       message: context.api.translate('Finished sorting', { ns: I18N_NAMESPACE }),
       displayMS: 3000,
-    })).finally(() => _IS_SORTING = false);
+    });
+  }  finally {
+    _IS_SORTING = false;
+  }
 }
 
 function main(context: types.IExtensionContext) {
@@ -321,12 +326,12 @@ function main(context: types.IExtensionContext) {
     id: GAME_ID,
     name: 'Mount & Blade II:\tBannerlord',
     mergeMods: true,
-    queryPath: toBluebird(findGame),
+    queryPath: toBluebird<string>(findGame),
     queryModPath: () => '.',
     getGameVersion: resolveGameVersion,
     logo: 'gameart.jpg',
     executable: () => BANNERLORD_EXEC,
-    setup: toBluebird((discovery: IDiscoveryResult) => prepareForModding(context, discovery, bmm)),
+    setup: toBluebird<void, types.IDiscoveryResult>((discovery: IDiscoveryResult) => prepareForModding(context, discovery, bmm)),
     requiredFiles: [
       BANNERLORD_EXEC,
     ],
@@ -347,7 +352,7 @@ function main(context: types.IExtensionContext) {
     collectionFeature.registerCollectionFeature(
       'mountandblade2_collection_data',
       (gameId: string, includedMods: string[]) => genCollectionsData(context, gameId, includedMods),
-      (gameId: string, collection: ICollection) => parseCollectionsData(context, gameId, collection),
+      (gameId: string, collection: ICollectionMB) => parseCollectionsData(context, gameId, collection),
       () => Promise.resolve(),
       (t: TFunction) => t('Mount and Blade 2 Data'),
       (_state: types.IState, gameId: string) => gameId === GAME_ID,
@@ -365,9 +370,9 @@ function main(context: types.IExtensionContext) {
     }),
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
-    preSort: toBluebird((items: ILoadOrderDisplayItem[], _sortDir: SortType, updateType?: UpdateType) => preSort(context, items, updateType)),
+    preSort: (items, _sortDir, updateType?) => preSort(context, items, updateType),
     callback: (loadOrder) => refreshGameParams(context, loadOrder),
-    itemRenderer: (props) => React.createElement(CustomItemRenderer, {
+    itemRenderer: (props: any) => React.createElement(CustomItemRenderer, {
       ...props,
       moduleManager: bmm
     }), 
@@ -385,24 +390,22 @@ function main(context: types.IExtensionContext) {
   context.registerMigration((oldVersion: string) => migrate026(context.api, oldVersion));
   context.registerMigration((oldVersion: string) => migrate045(context.api, oldVersion));
 
-  context.registerAction('generic-load-order-icons', 200,
-    _IS_SORTING ? 'spinner' : 'loot-sort', {}, 'Auto Sort', () => {
-      sortImpl(context, bmm);
-  }, () => {
+  context.registerAction('generic-load-order-icons', 200, _IS_SORTING ? 'spinner' : 'loot-sort', {}, 'Auto Sort', () => { sortImpl(context, bmm); }, () => {
     const state = context.api.store.getState();
     const gameId = selectors.activeGameId(state);
     return (gameId === GAME_ID);
   });
 
-  context.once(toBluebird(async () => {
+  context.once(toBluebird<void>(async () => {
     bmm = await BannerlordModuleManager.createAsync();
-    context.api.onAsync('did-deploy', async (profileId, deployment) =>
+
+    context.api.onAsync('did-deploy', async (profileId, _deployment) =>
       refreshCacheOnEvent(context, profileId, bmm));
 
     context.api.onAsync('did-purge', async (profileId) =>
       refreshCacheOnEvent(context, profileId, bmm));
 
-    context.api.events.on('gamemode-activated', (gameMode) => {
+    context.api.events.on('gamemode-activated', (_gameMode) => {
       const state = context.api.getState();
       const prof = selectors.activeProfile(state);
       refreshCacheOnEvent(context, prof?.id, bmm);

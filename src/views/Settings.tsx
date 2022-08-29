@@ -1,12 +1,14 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import I18next from 'i18next';
 import * as React from 'react';
 import { withTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { More, Toggle, selectors, util } from 'vortex-api';
+
+const NAMESPACE = 'mnb2-settings';
 
 interface IBaseProps {
   t: typeof I18next.t;
@@ -20,7 +22,7 @@ interface IConnectedProps {
 
 type IProps = IBaseProps & IConnectedProps;
 
-function Settings(props: IProps) {
+const Settings = (props: IProps) => {
   const { t, autoSortOnDeploy, onSetSortOnDeploy, profileId } = props;
   const onSetSort = React.useCallback((value) => {
     if (profileId !== undefined) {
@@ -46,7 +48,7 @@ function Settings(props: IProps) {
   );
 }
 
-function mapStateToProps(state: any): IConnectedProps {
+const mapState = (state: any): IConnectedProps => {
   const profileId: string = selectors.activeProfile(state)?.id;
   return {
     profileId,
@@ -56,6 +58,4 @@ function mapStateToProps(state: any): IConnectedProps {
 }
 
 export default 
-  withTranslation(['common', 'mnb2-settings'])(
-    connect(mapStateToProps)(
-      Settings) as any) as React.ComponentClass<{}>;
+  withTranslation(['common', NAMESPACE])(connect(mapState)(Settings)) as React.ComponentType<IProps>;

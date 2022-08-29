@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import path from 'path';
 import semver from 'semver';
@@ -16,7 +16,7 @@ import { ILoadOrder, IProps } from './types';
 //  subModIds: the mod ids we want to load into the game.
 const PARAMS_TEMPLATE = ['/{{gameMode}}', '_MODULES_{{subModIds}}*_MODULES_'];
 
-export async function getXMLData(xmlFilePath: string) {
+export const getXMLData = async (xmlFilePath: string) => {
   return fs.readFileAsync(xmlFilePath)
     .then(async data => {
       try {
@@ -31,7 +31,7 @@ export async function getXMLData(xmlFilePath: string) {
       : Promise.reject(new util.DataInvalid(err.message)));
 }
 
-export function genProps(api: types.IExtensionApi, profileId?: string): IProps {
+export const genProps = (api: types.IExtensionApi, profileId?: string): IProps => {
   const state = api.getState();
   const profile = (profileId !== undefined)
     ? selectors.profileById(state, profileId)
@@ -60,7 +60,7 @@ export function genProps(api: types.IExtensionApi, profileId?: string): IProps {
   return { state, profile, discovery, enabledMods };
 }
 
-export async function getElementValue(subModuleFilePath: string, elementName: string) {
+export const getElementValue = async (subModuleFilePath: string, elementName: string) => {
   const logAndContinue = () => {
     log('error', 'Unable to parse xml element', elementName);
     return Promise.resolve(undefined);
@@ -80,7 +80,7 @@ export async function getElementValue(subModuleFilePath: string, elementName: st
     });
 }
 
-export async function refreshGameParams(context: types.IExtensionContext, loadOrder: ILoadOrder) {
+export const refreshGameParams = async(context: types.IExtensionContext, loadOrder: ILoadOrder) => {
   // Go through the enabled entries so we can form our game parameters.
   const enabled = (!!loadOrder && Object.keys(loadOrder).length > 0)
     ? Object.keys(loadOrder)
@@ -115,7 +115,7 @@ export async function refreshGameParams(context: types.IExtensionContext, loadOr
   return Promise.resolve();
 }
 
-export function getCleanVersion(subModId: string, unsanitized: string): string {
+export const getCleanVersion = (subModId: string, unsanitized: string): string => {
   if (!unsanitized) {
     log('debug', 'failed to sanitize/coerce version', { subModId, unsanitized });
     return undefined;
@@ -131,34 +131,28 @@ export function getCleanVersion(subModId: string, unsanitized: string): string {
   }
 }
 
-export const walkAsync = toBluebird(async (dir, levelsDeep = 2) => {
-  let entries = [];
-  return fs.readdirAsync(dir).then(files => {
-    const filtered = files.filter(file => !file.endsWith('.vortex_backup'));
-    return Promise.each(filtered, file => {
-      const fullPath = path.join(dir, file);
-      return fs.statAsync(fullPath).then(stats => {
-        if (stats.isDirectory() && levelsDeep > 0) {
-          return walkAsync(fullPath, levelsDeep - 1)
-            .then(nestedFiles => {
-              entries = entries.concat(nestedFiles);
-              return Promise.resolve();
-            });
-        } else {
-          entries.push(fullPath);
-          return Promise.resolve();
-        }
-      }).catch(err => {
-        // This is a valid use case, particularly if the file
-        //  is deployed by Vortex using symlinks, and the mod does
-        //  not exist within the staging folder.
-        log('error', 'MnB2: invalid symlink', err);
-        return (err.code === 'ENOENT')
-          ? Promise.resolve()
-          : Promise.reject(err);
-      });
-    });
-  })
-  .then(() => Promise.resolve(entries));
+export const walkAsync = toBluebird<string[], string, number | void>(async(dir: string, levelsDeep: number = 2) => {
+  let entries: string[] = [];
+  const files = await fs.readdirAsync(dir);
+  const filtered = files.filter(file => !file.endsWith('.vortex_backup'));
+  await Promise.each(filtered, async (file_1) => {
+    const fullPath = path.join(dir, file_1);
+    try {
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory() && levelsDeep > 0) {
+        const nestedFiles = await walkAsync(fullPath, levelsDeep - 1)
+        entries = entries.concat(nestedFiles);
+      } else {
+        entries.push(fullPath);
+      }
+    } catch (err) {
+      // This is a valid use case, particularly if the file
+      //  is deployed by Vortex using symlinks, and the mod does
+      //  not exist within the staging folder.
+      log('error', 'MnB2: invalid symlink', err);
+      if (err.code !== 'ENOENT')
+        throw err;
+    }
+  });
+  return entries;
 });
-

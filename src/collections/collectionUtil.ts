@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import { types, util } from 'vortex-api';
 import { ILoadOrder, ILoadOrderEntry } from '../types';
@@ -21,11 +21,11 @@ export class CollectionParseError extends Error {
   }
 }
 
-export function isValidMod(mod: types.IMod) {
+export const isValidMod = (mod: types.IMod) => {
   return (mod?.type !== 'collection');
 }
 
-export function isModInCollection(collectionMod: types.IMod, mod: types.IMod) {
+export const isModInCollection = (collectionMod: types.IMod, mod: types.IMod) => {
   if (collectionMod.rules === undefined) {
     return false;
   }
@@ -34,9 +34,9 @@ export function isModInCollection(collectionMod: types.IMod, mod: types.IMod) {
     util.testModReference(mod, rule.reference)) !== undefined;
 }
 
-export function genCollectionLoadOrder(loadOrder: { [modId: string]: ILoadOrderEntry },
+export const genCollectionLoadOrder = (loadOrder: { [modId: string]: ILoadOrderEntry },
                                        mods: { [modId: string]: types.IMod },
-                                       collection?: types.IMod): ILoadOrder {
+                                       collection?: types.IMod): ILoadOrder => {
   const filteredMods = (collection !== undefined)
     ? Object.keys(mods)
         .filter(id => isValidMod(mods[id]) && isModInCollection(collection, mods[id]))
@@ -59,7 +59,7 @@ export function genCollectionLoadOrder(loadOrder: { [modId: string]: ILoadOrderE
   return sortedMods;
 }
 
-function isValidSubMod(subModId: string, mods: { [modId: string]: types.IMod }) {
+const isValidSubMod = (subModId: string, mods: { [modId: string]: types.IMod }) => {
   if (OFFICIAL_MODULES.has(subModId)) {
     // official modules are always included.
     return true;

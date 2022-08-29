@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import path from 'path';
 

@@ -1,21 +1,21 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import path from 'path';
-import { fs, log, selectors, types, util } from 'vortex-api';
+import { fs, types, util } from 'vortex-api';
 import { BannerlordModuleManager } from '@butr/blmodulemanagernative/dist/module/lib';
 import * as bmmTypes from '@butr/blmodulemanagernative/dist/module/lib';
 import { GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE } from './common';
 import { IModuleCache, IModuleInfoExtendedExt } from './types';
-import { getCleanVersion, getElementValue, getXMLData, walkAsync } from './util';
+import { walkAsync } from './util';
 
 let CACHE: IModuleCache = {};
-export function getCache() {
+export const getCache = () => {
   return CACHE;
 }
 
-export async function refreshCache(context: types.IExtensionContext, bmm: BannerlordModuleManager) {
+export const refreshCache = async (context: types.IExtensionContext, bmm: BannerlordModuleManager) => {
   try {
     const subModuleFilePaths: string[] = await getDeployedSubModPaths(context);
     CACHE = await getDeployedModData(context.api, subModuleFilePaths, bmm);
@@ -24,14 +24,14 @@ export async function refreshCache(context: types.IExtensionContext, bmm: Banner
   }
 }
 
-async function getDeployedSubModPaths(context: types.IExtensionContext) {
+const getDeployedSubModPaths = async (context: types.IExtensionContext) => {
   const state = context.api.store?.getState();
   const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined);
   if (discovery?.path === undefined) {
     return Promise.reject(new util.ProcessCanceled('game discovery is incomplete'));
   }
   const modulePath = path.join(discovery.path, MODULES);
-  let moduleFiles;
+  let moduleFiles: string[];
   try {
     moduleFiles = await walkAsync(modulePath);
   } catch (err) {
@@ -51,7 +51,7 @@ async function getDeployedSubModPaths(context: types.IExtensionContext) {
   return Promise.resolve(subModules);
 }
 
-async function getDeployedModData(api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager) {
+const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager) => {
   const state = api.getState();
   const mods: { [modId: string]: types.IMod } = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
   const getVortexId = (subModId: string) => {
@@ -88,7 +88,7 @@ async function getDeployedModData(api: types.IExtensionApi, subModuleFilePaths: 
   return modules;
 }
 
-function missingDependencies(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
+const missingDependencies = (bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) => {
   const depsFulfilled = bmm.areAllDependenciesOfModulePresent(Object.values(CACHE), subMod);
   if (depsFulfilled) {
     return [];
@@ -100,11 +100,11 @@ function missingDependencies(bmm: BannerlordModuleManager, subMod: IModuleInfoEx
   return missing;
 }
 
-function versionToDisplay(ver: bmmTypes.ApplicationVersion) {
+const versionToDisplay = (ver: bmmTypes.ApplicationVersion) => {
   return `${ver.major}.${ver.minor}.${ver.revision}`;
 }
 
-export function getIncompatibilities(bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) {
+export const getIncompatibilities = (bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt) => {
   const dependencies = subMod.dependentModules;
   const incorrectVersions = [] as { id: string, currentVersion: string, requiredVersion: string }[];
   for (const dep of dependencies) {
@@ -126,7 +126,7 @@ export function getIncompatibilities(bmm: BannerlordModuleManager, subMod: IModu
   return incorrectVersions;
 }
 
-export function getValidationInfo(bmm: BannerlordModuleManager, id: string) {
+export const getValidationInfo = (bmm: BannerlordModuleManager, id: string) => {
   const subModule = Object.values(CACHE).find(entry => (entry.vortexId === id) || (entry.id === id));
   if (!subModule) {
     // Probably not deployed yet

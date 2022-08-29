@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import * as React from 'react';
 import { Panel } from 'react-bootstrap';
@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from '../common';
 
 
-function LoadOrderInfo() {
+const LoadOrderInfo = () => {
 
     const [t] = useTranslation(I18N_NAMESPACE);
 

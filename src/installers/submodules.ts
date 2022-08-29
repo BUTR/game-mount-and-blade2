@@ -1,14 +1,13 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import * as path from 'path';
 import { types, util } from 'vortex-api';
 import { getElementValue } from '../util';
 import { GAME_ID, SUBMOD_FILE, MODULES } from '../common';
 
-
-export const testForSubmodules = toBluebird(async (files: string[], gameId: string): Promise<types.ISupportedResult> => {
+export const testForSubmodules = toBluebird<types.ISupportedResult, string[], string>(async (files: string[], gameId: string): Promise<types.ISupportedResult> => {
     // Check this is a mod for Bannerlord and it contains a SubModule.xml
     const supported = ((gameId === GAME_ID)
       && files.find(file => path.basename(file).toLowerCase() === SUBMOD_FILE) !== undefined);
@@ -19,7 +18,7 @@ export const testForSubmodules = toBluebird(async (files: string[], gameId: stri
     };
 });
 
-export const installSubModules = toBluebird(async (files: string[], destinationPath: string): Promise<types.IInstallResult> => {
+export const installSubModules = toBluebird<types.IInstallResult, string[], string>(async (files: string[], destinationPath: string): Promise<types.IInstallResult> => {
   // Remove directories straight away.
   const filtered = files.filter(file => {
     const segments = file.split(path.sep);

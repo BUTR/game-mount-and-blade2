@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import { withTranslation } from "react-i18next";
 import { ComponentEx, actions, FlexLayout, tooltip, selectors, util, types } from "vortex-api";
@@ -14,7 +14,7 @@ import { IItemRendererProps, ILoadOrderEntry } from "../types";
 import { ILoadOrderDisplayItem } from "vortex-api/lib/types/api";
 
 const TWLOGO = path.join(__dirname, 'TWLogo.png');
-const NAMESPACE: string = 'mnb2-customrenderer';
+const NAMESPACE = 'mnb2-customrenderer';
 
 interface IStateProps {
   profile: types.IProfile;
@@ -241,7 +241,7 @@ class CustomItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
   }
 }
 
-function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
+const mapState = (state: types.IState, ownProps: IOwnProps): IStateProps => {
   const profile: types.IProfile = selectors.activeProfile(state);
   const game: types.IGame = util.getGame(profile.gameId);
   const discovery: types.IDiscoveryResult = selectors.discoveryByGame(state, profile.gameId);
@@ -255,7 +255,7 @@ function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
     order: util.getSafe(state, ['persistent', 'loadOrder', profile.id], []),
   };
 };
-function mapDispatch(dispatch: Dispatch): IDispatchProps {
+const mapDispatch = (dispatch: Dispatch): IDispatchProps => {
   return {
     onSetLoadOrderEntry: (profileId, modId, entry) =>
       dispatch(actions.setLoadOrderEntry(profileId, modId, entry)),

@@ -1,27 +1,24 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import path from 'path';
 import semver from 'semver';
-import { types } from 'vortex-api';
+import { types, actions, fs, selectors, util } from 'vortex-api';
 import { parseStringPromise } from 'xml2js';
 import walk, { IEntry } from 'turbowalk';
+import { GAME_ID, SUBMOD_FILE, I18N_NAMESPACE } from './common';
 
-const { actions, fs, selectors, util } = require('vortex-api');
-
-const { GAME_ID, SUBMOD_FILE, I18N_NAMESPACE } = require('./common');
-
-export const migrate045 = toBluebird(async (api: types.IExtensionApi, oldVersion: string): Promise<any> => {
+export const migrate045 = toBluebird<void, types.IExtensionApi, string>(async (api: types.IExtensionApi, oldVersion: string): Promise<void> => {
   if (semver.gte(oldVersion, '0.4.5')) {
-    return Promise.resolve();
+    return;
   }
 
   await api.awaitUI();
   const state = api.getState();
   const activeGameId = selectors.activeGameId(state);
   if (activeGameId !== GAME_ID) {
-    return Promise.resolve();
+    return;
   }
   api.sendNotification?.({
     id: 'mnb2-045-migration',
@@ -47,10 +44,10 @@ export const migrate045 = toBluebird(async (api: types.IExtensionApi, oldVersion
       },
     ],
   });
-  return await Promise.resolve();
+  return;
 });
 
-export const migrate026 = toBluebird(async (api: types.IExtensionApi, oldVersion: string): Promise<any> => {
+export const migrate026 = toBluebird<void, types.IExtensionApi, string>(async (api: types.IExtensionApi, oldVersion: string): Promise<void> => {
   if (semver.gte(oldVersion, '0.2.6')) {
     return;
   }
@@ -60,7 +57,7 @@ export const migrate026 = toBluebird(async (api: types.IExtensionApi, oldVersion
   await Promise.all(Object.values(mods).map(mod => addSubModsAttrib(api, mod)));
 });
 
-async function addSubModsAttrib(api: types.IExtensionApi, mod: types.IMod): Promise<void> {
+const addSubModsAttrib = async (api: types.IExtensionApi, mod: types.IMod): Promise<void> => {
   // Not sure how this would happen.
   if (!mod) return Promise.resolve();
 
@@ -91,7 +88,7 @@ async function addSubModsAttrib(api: types.IExtensionApi, mod: types.IMod): Prom
   else return Promise.resolve();
 }
 
-async function getXMLData(xmlFilePath: string): Promise<any> {
+const getXMLData = async (xmlFilePath: string): Promise<any> => {
   try {
     const raw = await fs.readFileAsync(xmlFilePath);
     const data = await parseStringPromise(raw);

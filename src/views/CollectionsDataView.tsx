@@ -1,6 +1,6 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import _ from 'lodash';
 import * as React from 'react';
@@ -143,7 +143,7 @@ class CollectionsDataView extends ComponentEx<IComponentProps, IComponentState> 
   }
 }
 
-function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
+const mapState = (state: types.IState, ownProps: IOwnProps): IStateProps => {
   const profile = selectors.activeProfile(state) || undefined;
   let loadOrder: ILoadOrder = {};
   if (!!profile?.gameId) {
@@ -158,7 +158,7 @@ function mapState(state: types.IState, ownProps: IOwnProps): IStateProps {
   };
 }
 
-function mapDispatch(dispatch: Dispatch): IDispatchProps {
+const mapDispatch = (dispatch: Dispatch): IDispatchProps => {
   return {};
 }
 

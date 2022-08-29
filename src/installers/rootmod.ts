@@ -1,13 +1,13 @@
 //@ts-ignore
-import { Promise } from "bluebird";
-import { method as toBluebird } from "bluebird"
+import Bluebird, { Promise } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 
 import { GAME_ID, MODULES, SUBMOD_FILE, ROOT_FOLDERS } from '../common';
 import { getElementValue } from '../util';
 import path from 'path';
 import { types } from 'vortex-api';
 
-export const testRootMod = toBluebird(async (files: string[], gameId: string): Promise<types.ISupportedResult> => {
+export const testRootMod = toBluebird<types.ISupportedResult, string[], string>(async (files: string[], gameId: string): Promise<types.ISupportedResult> => {
     const notSupported = { supported: false, requiredFiles: [] };
     if (gameId !== GAME_ID) {
         // Different game.
@@ -30,7 +30,7 @@ export const testRootMod = toBluebird(async (files: string[], gameId: string): P
     return { supported: (rootFolderMatches.length > 0), requiredFiles: [] };
 });
 
-export const installRootMod = toBluebird(async (files: string[], destinationPath: string): Promise<types.IInstallResult> => {
+export const installRootMod = toBluebird<types.IInstallResult, string[], string>(async (files: string[], destinationPath: string): Promise<types.IInstallResult> => {
   const moduleFile = files.find(file => file.split(path.sep).indexOf(MODULES) !== -1);
   const idx = moduleFile.split(path.sep).indexOf(MODULES);
   const subMods = files.filter(file => path.basename(file).toLowerCase() === SUBMOD_FILE);
