@@ -1,109 +1,121 @@
-//@ts-ignore
-import Bluebird, { Promise } from 'bluebird';
-import { method as toBluebird } from 'bluebird';
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import * as React from 'react';
-
-import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative/dist/module/lib';
-
-import getVersion from 'exe-version';
+import { createAction } from 'redux-act';
 
 import path from 'path';
 import semver from 'semver';
-import { actions, fs, log, selectors, types, util } from 'vortex-api';
-import { getXMLData, refreshGameParams } from './util';
+import getVersion from 'exe-version';
+import {
+  actions, fs, log, selectors, types, util,
+} from 'vortex-api';
+import {
+  IDiscoveryResult, IExtensionContext, ILoadOrderDisplayItem, IMod, IReducerSpec, TFunction, UpdateType,
+} from 'vortex-api/lib/types/api';
+import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+
+import { IExtendedInterfaceProps } from "collections/src/types/IExtendedInterfaceProps";
+import { ICollection } from 'collections/src/types/ICollection';
 
 import {
   BANNERLORD_EXEC, GAME_ID, I18N_NAMESPACE,
-  MODULES
+  MODULES,
 } from './common';
-import CustomItemRenderer from './views/CustomItemRenderer';
 
-import { genCollectionsData, parseCollectionsData } from './collections/collections';
-import { getCache, refreshCache } from './subModCache';
-import { ILoadOrder, IModuleCache, IModuleInfoExtendedExt, ISortProps } from './types';
-import { migrate026, migrate045 } from './migrations';
-import { testRootMod, installRootMod } from './installers/rootmod';
-import { testForSubmodules, installSubModules } from './installers/submodules';
-import LoadOrderInfo from './views/LoadOrderInfo';
-import CollectionsDataView from './views/CollectionsDataView';
-
-import { createAction } from 'redux-act';
-
-import Settings from './views/Settings';
-import { IDiscoveryResult, IExtensionContext, ILoadOrderDisplayItem, IReducerSpec, SortType, TFunction, UpdateType } from 'vortex-api/lib/types/api';
-import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-import { IExtendedInterfaceProps } from "collections/src/types/IExtendedInterfaceProps";
 import { ICollectionMB, IExtensionContextCollectionFeature } from "./collections/types";
 
-const LAUNCHER_EXEC = path.join('bin', 'Win64_Shipping_Client', 'TaleWorlds.MountAndBlade.Launcher.exe');
-const MODDING_KIT_EXEC = path.join('bin', 'Win64_Shipping_wEditor', 'TaleWorlds.MountAndBlade.Launcher.exe');
+import CustomItemRenderer from './views/CustomItemRenderer';
+import LoadOrderInfo from './views/LoadOrderInfo';
+import CollectionsDataView from './views/CollectionsDataView';
+import Settings from './views/Settings';
+
+import { genCollectionsData, parseCollectionsData } from './collections/collections';
+import { getCache, refreshCache } from './utils/subModCache';
+import { getXMLData, refreshGameParams } from './utils/util';
+import {
+  ILoadOrder, IMods, IModuleCache, IModuleInfoExtendedExt, ISortProps,
+} from './types';
+import { migrate026, migrate045 } from './utils/migrations';
+
+import { installRootMod } from './installers/rootmodinstaller';
+import { testRootMod } from './installers/rootmodtester';
+import { installSubModules } from './installers/submoduleinstaller';
+import { testForSubmodules } from './installers/submoduletester';
+import { createBannerlordModuleManager, BannerlordModuleManager, ModuleInfoExtended } from './utils/bmm';
+
+const LAUNCHER_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `TaleWorlds.MountAndBlade.Launcher.exe`);
+const MODDING_KIT_EXEC = path.join(`bin`, `Win64_Shipping_wEditor`, `TaleWorlds.MountAndBlade.Launcher.exe`);
 
 let STORE_ID: string;
 
-const GOG_IDS = ['1802539526', '1564781494'];
+const EXTENSION_BASE_ID = `MAB2B`;
+const GOG_IDS = [`1802539526`, `1564781494`];
 const STEAMAPP_ID = 261550;
-const EPICAPP_ID = 'Chickadee';
+const EPICAPP_ID = `Chickadee`;
 
-const setSortOnDeploy = createAction('MNB2_SET_SORT_ON_DEPLOY', (profileId: string, sort: boolean) => ({ profileId, sort }));
+const setSortOnDeploy = createAction(`${EXTENSION_BASE_ID}_SET_SORT_ON_DEPLOY`, (profileId: string, sort: boolean) => ({ profileId, sort }));
 
 const reducer: IReducerSpec = {
   reducers: {
-    [setSortOnDeploy as any]: (state, payload) =>
-      util.setSafe(state, ['sortOnDeploy', payload.profileId], payload.sort),
+    [setSortOnDeploy as any]: (state, payload) => util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
   },
   defaults: {
     sortOnDeploy: {},
   },
 };
 
-async function findGame(): Promise<string> {
+const findGame = async (): Promise<string> => {
   const game = await util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString(), ...GOG_IDS]);
   STORE_ID = game.gameStoreId;
   return game.gamePath;
-}
+};
 
-function ensureOfficialLauncher(context: IExtensionContext, discovery: IDiscoveryResult): void {
-  context.api.store.dispatch(actions.addDiscoveredTool(GAME_ID, 'TaleWorldsBannerlordLauncher', {
-    id: 'TaleWorldsBannerlordLauncher',
-    name: 'Official Launcher',
-    logo: 'twlauncher.png',
+const ensureOfficialLauncher = (context: IExtensionContext, discovery: IDiscoveryResult): void => {
+  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
+
+  context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, `TaleWorldsBannerlordLauncher`, {
+    id: `TaleWorldsBannerlordLauncher`,
+    name: `Official Launcher`,
+    logo: `twlauncher.png`,
     executable: () => path.basename(LAUNCHER_EXEC),
     requiredFiles: [
       path.basename(LAUNCHER_EXEC),
     ],
     path: path.join(discovery.path, LAUNCHER_EXEC),
     relative: true,
-    workingDirectory: path.join(discovery.path, 'bin', 'Win64_Shipping_Client'),
+    workingDirectory: path.join(discovery.path, `bin`, `Win64_Shipping_Client`),
     hidden: false,
     custom: false,
   }, false));
-}
+};
 
-function setModdingTool(context: IExtensionContext, discovery: IDiscoveryResult, hidden?: boolean): void {
-  const toolId = 'bannerlord-sdk';
+const setModdingTool = (context: IExtensionContext, discovery: IDiscoveryResult, hidden?: boolean): void => {
+  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
+
+  const toolId = `bannerlord-sdk`;
   const exec = path.basename(MODDING_KIT_EXEC);
-  const tool = {
+  const tool: types.IDiscoveredTool = {
     id: toolId,
-    name: 'Modding Kit',
-    logo: 'twlauncher.png',
+    name: `Modding Kit`,
+    logo: `twlauncher.png`,
     executable: () => exec,
-    requiredFiles: [ exec ],
+    requiredFiles: [exec],
     path: path.join(discovery.path, MODDING_KIT_EXEC),
     relative: true,
     exclusive: true,
     workingDirectory: path.join(discovery.path, path.dirname(MODDING_KIT_EXEC)),
-    hidden,
+    hidden: hidden || false,
     custom: false,
   };
 
-  context.api.store.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
-}
+  context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
+};
 
-async function prepareForModding(context: IExtensionContext, discovery: IDiscoveryResult, bmm: BannerlordModuleManager): Promise<void> {
-  if (bmm === undefined) {
-    bmm = await BannerlordModuleManager.createAsync();
-  }
+const prepareForModding = async (context: IExtensionContext, discovery: IDiscoveryResult): Promise<void> => {
+  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
+
+  const bmm = await createBannerlordModuleManager();
   // Quickly ensure that the official Launcher is added.
   ensureOfficialLauncher(context, discovery);
   try {
@@ -111,66 +123,62 @@ async function prepareForModding(context: IExtensionContext, discovery: IDiscove
     setModdingTool(context, discovery);
   } catch (err) {
     const tools = discovery?.tools;
-    if ((tools !== undefined) && (util.getSafe(tools, ['bannerlord-sdk'], undefined) !== undefined)) {
+    if (tools !== undefined && util.getSafe<any | undefined>(tools, [`bannerlord-sdk`], undefined) !== undefined) {
       setModdingTool(context, discovery, true);
     }
   }
 
   // If game store not found, location may be set manually - allow setup
   //  function to continue.
-  const findStoreId = () => findGame().catch(err => Promise.resolve());
-  const startSteam = () => findStoreId().then(() => (STORE_ID === 'steam')
-      ? util.GameStoreHelper.launchGameStore(context.api, STORE_ID, undefined, true)
-      : Promise.resolve());
+  const findStoreId = (): Promise<string | void> => findGame().catch((_err) => Promise.resolve());
+  const startSteam = (): Promise<void> => findStoreId().then(() => ((STORE_ID === `steam`)
+    ? util.GameStoreHelper.launchGameStore(context.api, STORE_ID, undefined, true)
+    : Promise.resolve()));
 
   // Check if we've already set the load order object for this profile
   //  and create it if we haven't.
   return startSteam().then(async () => {
-    try {
-      await refreshCache(context, bmm);
-    } catch (err) {
-      return Promise.reject(err);
-    }
+    await refreshCache(context, bmm);
   }).finally(() => {
-    const state = context.api.store.getState();
+    const state = context.api.store?.getState();
     const activeProfile = selectors.activeProfile(state);
     if (activeProfile === undefined) {
       // Valid use case when attempting to switch to
       //  Bannerlord without any active profile.
       return refreshGameParams(context, {});
     }
-    const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+    const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
     return refreshGameParams(context, loadOrder);
   });
-}
+};
 
-function tSort(sortProps: ISortProps): ModuleInfoExtended[] {
+const tSort = (sortProps: ISortProps): ModuleInfoExtended[] => {
   const { bmm } = sortProps;
   const CACHE: IModuleCache = getCache();
   const sorted = bmm.sort(Object.values(CACHE));
   return sorted;
-}
+};
 
-function isExternal(context: IExtensionContext, subModId: string): boolean {
+const isExternal = (context: IExtensionContext, subModId: string): boolean => {
   const state = context.api.getState();
-  const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+  const mods = util.getSafe<IMods>(state, [`persistent`, `mods`, GAME_ID], {});
   const modIds = Object.keys(mods);
-  modIds.forEach(modId => {
-    const subModIds = util.getSafe(mods[modId], ['attributes', 'subModIds'], []);
+  for (const modId of modIds) {
+    const subModIds = util.getSafe<string[]>(mods[modId], [`attributes`, `subModIds`], []);
     if (subModIds.includes(subModId)) {
       return false;
     }
-  });
+  }
   return true;
-}
+};
 
 let refreshFunc: () => void;
-async function refreshCacheOnEvent(context: IExtensionContext, profileId: string, bmm: BannerlordModuleManager) {
+const refreshCacheOnEvent = async (context: IExtensionContext, profileId: string, bmm: BannerlordModuleManager): Promise<void> => {
   if (profileId === undefined) {
     return;
   }
 
-  const state = context.api.store.getState();
+  const state = context.api.store?.getState();
   const activeProfile = selectors.activeProfile(state);
   const deployProfile = selectors.profileById(state, profileId);
   if ((activeProfile?.gameId !== deployProfile?.gameId) || (activeProfile?.gameId !== GAME_ID)) {
@@ -185,25 +193,22 @@ async function refreshCacheOnEvent(context: IExtensionContext, profileId: string
     //  subModules, probably because game discovery is incomplete.
     // It's beyond the scope of this function to report discovery
     //  related issues.
-    return (err instanceof util.ProcessCanceled)
-      ? Promise.resolve()
-      : Promise.reject(err);
+    if (!(err instanceof util.ProcessCanceled)) throw err;
   }
 
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profileId], {});
+  const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, profileId], {});
 
-  if (util.getSafe(state, ['settings', 'mountandblade2', 'sortOnDeploy', activeProfile.id], true)) {
-    return sortImpl(context, bmm);
-  } else {
-    if (refreshFunc !== undefined) {
-      refreshFunc();
-    }
-    return refreshGameParams(context, loadOrder);
+  if (util.getSafe<boolean>(state, [`settings`, `mountandblade2`, `sortOnDeploy`, activeProfile.id], true)) {
+    await sortImpl(context, bmm);
   }
-}
+  if (refreshFunc !== undefined) {
+    refreshFunc();
+  }
+  await refreshGameParams(context, loadOrder);
+};
 
-const preSort = toBluebird<types.ILoadOrderDisplayItem[], types.IExtensionContext, types.ILoadOrderDisplayItem[], types.UpdateType | void>(async (context: IExtensionContext, items: ILoadOrderDisplayItem[], updateType?: UpdateType): Promise<ILoadOrderDisplayItem[]> => {
-  const state = context.api.store.getState();
+const preSort = toBluebird(async (context: IExtensionContext, items: ILoadOrderDisplayItem[], updateType: UpdateType | undefined): Promise<ILoadOrderDisplayItem[]> => {
+  const state = context.api.store?.getState();
   const activeProfile = selectors.activeProfile(state);
   if (activeProfile?.id === undefined || activeProfile?.gameId !== GAME_ID) {
     // Race condition ?
@@ -211,7 +216,7 @@ const preSort = toBluebird<types.ILoadOrderDisplayItem[], types.IExtensionContex
   }
   const CACHE = getCache();
   if (Object.keys(CACHE).length !== items.length) {
-    const displayItems: ILoadOrderDisplayItem[] = Object.values(CACHE).map(iter => ({
+    const displayItems = Object.values(CACHE).map<ILoadOrderDisplayItem>((iter) => ({
       id: iter.id,
       name: iter.name,
       imgUrl: `${__dirname}/gameart.jpg`,
@@ -219,66 +224,59 @@ const preSort = toBluebird<types.ILoadOrderDisplayItem[], types.IExtensionContex
       official: iter.isOfficial,
     }));
     return displayItems;
-  } else {
-    let ordered: ILoadOrderDisplayItem[] = [];
-    if (updateType !== 'drag-n-drop') {
-      const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
-      ordered = items
-        .filter(item => loadOrder[item.id] !== undefined)
-        .sort((lhs, rhs) => loadOrder[lhs.id].pos - loadOrder[rhs.id].pos);
-      const unOrdered = items.filter(item => loadOrder[item.id] === undefined);
-      ordered = [].concat(ordered, unOrdered);
-    } else {
-      ordered = items;
-    }
-    return ordered;
   }
+  let ordered = Array<ILoadOrderDisplayItem>();
+  if (updateType !== `drag-n-drop`) {
+    const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
+    ordered = items
+      .filter((item) => loadOrder[item.id] !== undefined)
+      .sort((lhs, rhs) => loadOrder[lhs.id].pos - loadOrder[rhs.id].pos);
+    const unOrdered = items.filter((item) => loadOrder[item.id] === undefined);
+    ordered = Array<types.ILoadOrderDisplayItem>().concat(ordered, unOrdered);
+  } else {
+    ordered = items;
+  }
+  return ordered;
 });
 
-async function resolveGameVersion(discoveryPath: string) {
-  if (process.env.NODE_ENV !== 'development' && semver.satisfies(util.getApplication().version, '<1.4.0')) {
-    return Promise.reject(new util.ProcessCanceled('not supported in older Vortex versions'));
+const resolveGameVersion = toBluebird<string, string, string>(async (discoveryPath: string): Promise<string> => {
+  if (process.env.NODE_ENV !== `development` && semver.satisfies(util.getApplication().version, `<1.4.0`)) {
+    throw new util.ProcessCanceled(`not supported in older Vortex versions`);
   }
-  try {
-    const data = await getXMLData(path.join(discoveryPath, 'bin', 'Win64_Shipping_Client', 'Version.xml'));
-    const exePath = path.join(discoveryPath, BANNERLORD_EXEC);
-    const value = data?.Version?.Singleplayer?.[0]?.$?.Value
-      .slice(1)
-      .split('.')
-      .slice(0, 3)
-      .join('.');
-    return (semver.valid(value)) ? value : getVersion(exePath);
-  } catch (err) {
-    return Promise.reject(err);
-  }
-}
+  const data = await getXMLData(path.join(discoveryPath, `bin`, `Win64_Shipping_Client`, `Version.xml`));
+  const exePath = path.join(discoveryPath, BANNERLORD_EXEC);
+  const value = data?.Version?.Singleplayer?.[0]?.$?.Value
+    .slice(1)
+    .split(`.`)
+    .slice(0, 3)
+    .join(`.`);
+  return (semver.valid(value)) ? value : getVersion(exePath);
+});
 
-let _IS_SORTING = false;
-async function sortImpl(context: types.IExtensionContext, bmm: BannerlordModuleManager) {
-  const state = context.api.store.getState();
+let IS_SORTING = false;
+const sortImpl = async (context: types.IExtensionContext, bmm: BannerlordModuleManager): Promise<void> => {
+  const state = context.api.store?.getState();
   const activeProfile = selectors.activeProfile(state);
   if (activeProfile?.id === undefined) {
     // Probably best that we don't report this via notification as a number
     //  of things may have occurred that caused this issue. We log it instead.
-    log('error', 'Failed to sort mods', { reason: 'No active profile' });
-    _IS_SORTING = false;
+    log(`error`, `Failed to sort mods`, { reason: `No active profile` });
+    IS_SORTING = false;
     return;
   }
 
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', activeProfile.id], {});
+  const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
 
   let sorted: IModuleInfoExtendedExt[];
   try {
     await refreshCache(context, bmm);
     sorted = tSort({ loadOrder, bmm });
   } catch (err) {
-    context.api.showErrorNotification('Failed to sort mods', err);
+    if (context.api.showErrorNotification) context.api.showErrorNotification(`Failed to sort mods`, err);
     return;
   }
 
-  const newOrder: ILoadOrder = sorted.reduce((accum: ILoadOrder,
-                                              mod: IModuleInfoExtendedExt,
-                                              idx: number) => {
+  const newOrder = sorted.reduce((accum: ILoadOrder, mod: IModuleInfoExtendedExt, idx: number) => {
     if (mod === undefined) {
       return accum;
     }
@@ -291,31 +289,30 @@ async function sortImpl(context: types.IExtensionContext, bmm: BannerlordModuleM
     return accum;
   }, {});
 
-  context.api.store.dispatch(actions.setLoadOrder(activeProfile.id, newOrder as any));
+  context.api.store?.dispatch(actions.setLoadOrder(activeProfile.id, newOrder as any));
 
   try {
     await refreshGameParams(context, newOrder);
 
-    context.api.sendNotification({
-      id: 'mnb2-sort-finished',
-      type: 'info',
-      message: context.api.translate('Finished sorting', { ns: I18N_NAMESPACE }),
+    context.api.sendNotification?.({
+      id: `mnb2-sort-finished`,
+      type: `info`,
+      message: context.api.translate(`Finished sorting`, { ns: I18N_NAMESPACE }),
       displayMS: 3000,
     });
-  }  finally {
-    _IS_SORTING = false;
+  } finally {
+    IS_SORTING = false;
   }
-}
+};
 
-function main(context: types.IExtensionContext) {
-  context.registerReducer(['settings', 'mountandblade2'], reducer);
+const main = (context: types.IExtensionContext): boolean => {
+  context.registerReducer([`settings`, `mountandblade2`], reducer);
 
   let bmm: BannerlordModuleManager;
 
-  context.registerSettings('Interface', Settings, () => ({
+  context.registerSettings(`Interface`, Settings, () => ({
     t: context.api.translate,
-    onSetSortOnDeploy: (profileId: string, sort: boolean) =>
-      context.api.store.dispatch(setSortOnDeploy(profileId, sort)),
+    onSetSortOnDeploy: (profileId: string, sort: boolean) => context.api.store?.dispatch(setSortOnDeploy(profileId, sort)),
   }), () => {
     const state = context.api.getState();
     const profile = selectors.activeProfile(state);
@@ -324,14 +321,14 @@ function main(context: types.IExtensionContext) {
 
   context.registerGame({
     id: GAME_ID,
-    name: 'Mount & Blade II:\tBannerlord',
+    name: `Mount & Blade II:\tBannerlord BUTR`,
     mergeMods: true,
     queryPath: toBluebird<string>(findGame),
-    queryModPath: () => '.',
+    queryModPath: () => `.`,
     getGameVersion: resolveGameVersion,
-    logo: 'gameart.jpg',
+    logo: `gameart.jpg`,
     executable: () => BANNERLORD_EXEC,
-    setup: toBluebird<void, types.IDiscoveryResult>((discovery: IDiscoveryResult) => prepareForModding(context, discovery, bmm)),
+    setup: toBluebird((discovery: IDiscoveryResult) => prepareForModding(context, discovery)),
     requiredFiles: [
       BANNERLORD_EXEC,
     ],
@@ -350,38 +347,37 @@ function main(context: types.IExtensionContext) {
   const collectionFeature: IExtensionContextCollectionFeature = context.optional;
   if (collectionFeature.registerCollectionFeature) {
     collectionFeature.registerCollectionFeature(
-      'mountandblade2_collection_data',
+      `mountandblade2_collection_data`,
       (gameId: string, includedMods: string[]) => genCollectionsData(context, gameId, includedMods),
-      (gameId: string, collection: ICollectionMB) => parseCollectionsData(context, gameId, collection),
+      (gameId: string, collection: ICollection) => parseCollectionsData(context, gameId, collection as ICollectionMB),
       () => Promise.resolve(),
-      (t: TFunction) => t('Mount and Blade 2 Data'),
+      (t: TFunction) => t(`Mount and Blade 2 Data`),
       (_state: types.IState, gameId: string) => gameId === GAME_ID,
       CollectionsDataView as React.ComponentType<IExtendedInterfaceProps>,
     );
   }
 
-
   // Register the LO page.
   context.registerLoadOrderPage({
     gameId: GAME_ID,
-    //Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
+    // Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
     createInfoPanel: (props: IInfoPanelProps) => React.createElement(LoadOrderInfo, {
       ...props,
-    }),
+    }) as any,
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
-    preSort: (items, _sortDir, updateType?) => preSort(context, items, updateType),
+    preSort: (items, _sortDir, updateType?) => preSort(context, items, updateType) as any,
     callback: (loadOrder) => refreshGameParams(context, loadOrder),
-    itemRenderer: (props: any) => React.createElement(CustomItemRenderer, {
+    itemRenderer: ((props: any) => React.createElement(CustomItemRenderer, {
       ...props,
-      moduleManager: bmm
-    }), 
+      moduleManager: bmm,
+    })) as unknown as React.ComponentClass<{ className?: string; item: ILoadOrderDisplayItem; onRef: (ref: any) => any; }>,
   });
 
-  context.registerInstaller('bannerlordrootmod', 20, testRootMod, installRootMod);
+  context.registerInstaller(`bannerlordrootmod`, 20, testRootMod, installRootMod);
 
   // Installs one or more submodules.
-  context.registerInstaller('bannerlordsubmodules', 25, testForSubmodules, installSubModules);
+  context.registerInstaller(`bannerlordsubmodules`, 25, testForSubmodules, installSubModules);
 
   // A very simple migration that intends to add the subModIds attribute
   //  to mods that act as "mod packs". This migration is non-invasive and will
@@ -390,48 +386,45 @@ function main(context: types.IExtensionContext) {
   context.registerMigration((oldVersion: string) => migrate026(context.api, oldVersion));
   context.registerMigration((oldVersion: string) => migrate045(context.api, oldVersion));
 
-  context.registerAction('generic-load-order-icons', 200, _IS_SORTING ? 'spinner' : 'loot-sort', {}, 'Auto Sort', () => { sortImpl(context, bmm); }, () => {
-    const state = context.api.store.getState();
+  context.registerAction(`generic-load-order-icons`, 200, IS_SORTING ? `spinner` : `loot-sort`, {}, `Auto Sort`, () => { sortImpl(context, bmm); }, () => {
+    const state = context.api.store?.getState();
     const gameId = selectors.activeGameId(state);
     return (gameId === GAME_ID);
   });
 
   context.once(toBluebird<void>(async () => {
-    bmm = await BannerlordModuleManager.createAsync();
+    bmm = await createBannerlordModuleManager();
 
-    context.api.onAsync('did-deploy', async (profileId, _deployment) =>
-      refreshCacheOnEvent(context, profileId, bmm));
+    context.api.onAsync(`did-deploy`, async (profileId, _deployment) => refreshCacheOnEvent(context, profileId, bmm));
 
-    context.api.onAsync('did-purge', async (profileId) =>
-      refreshCacheOnEvent(context, profileId, bmm));
+    context.api.onAsync(`did-purge`, async (profileId) => refreshCacheOnEvent(context, profileId, bmm));
 
-    context.api.events.on('gamemode-activated', (_gameMode) => {
+    context.api.events.on(`gamemode-activated`, (_gameMode) => {
       const state = context.api.getState();
       const prof = selectors.activeProfile(state);
       refreshCacheOnEvent(context, prof?.id, bmm);
     });
 
-    context.api.onAsync('added-files', async (profileId, files) => {
-      const state = context.api.store.getState();
+    context.api.onAsync(`added-files`, async (profileId, files) => {
+      const state = context.api.store?.getState();
       const profile = selectors.profileById(state, profileId);
-        // don't care about any other games - or if the profile is no longer valid.
+      // don't care about any other games - or if the profile is no longer valid.
       if (profile.gameId !== GAME_ID) {
         return;
       }
       const game = util.getGame(GAME_ID);
       const discovery = selectors.discoveryByGame(state, GAME_ID);
-      const modPaths = game.getModPaths(discovery.path);
+      const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : { };
       const installPath = selectors.installPathForGame(state, GAME_ID);
 
       await Promise.map(files, async (entry: { filePath: string, candidates: string[] }) => {
         // only act if we definitively know which mod owns the file
         if (entry.candidates.length === 1) {
-          const mod = util.getSafe(state.persistent.mods,
-            [GAME_ID, entry.candidates[0]], undefined);
+          const mod = util.getSafe<IMod | undefined>(state.persistent.mods, [GAME_ID, entry.candidates[0]], undefined);
           if (mod === undefined) {
-            return Promise.resolve();
+            return;
           }
-          const relPath = path.relative(modPaths[mod.type ?? ''], entry.filePath);
+          const relPath = path.relative(modPaths[mod.type ?? ``], entry.filePath);
           const targetPath = path.join(installPath, mod.id, relPath);
           // copy the new file back into the corresponding mod, then delete it.
           //  That way, vortex will create a link to it with the correct
@@ -441,19 +434,19 @@ function main(context: types.IExtensionContext) {
           // Remove the target destination file if it exists.
           //  this is to completely avoid a scenario where we may attempt to
           //  copy the same file onto itself.
-          return fs.removeAsync(targetPath)
-            .catch(err => (err.code === 'ENOENT')
-              ? Promise.resolve()
-              : Promise.reject(err))
-            .then(() => fs.copyAsync(entry.filePath, targetPath))
-            .then(() => fs.removeAsync(entry.filePath))
-            .catch(err => log('error', 'failed to import added file to mod', err.message));
+          await fs.removeAsync(targetPath);
+          try {
+            await fs.copyAsync(entry.filePath, targetPath);
+            await fs.removeAsync(entry.filePath);
+          } catch (err: any) {
+            log(`error`, `failed to import added file to mod`, err.message);
+          }
         }
       });
     });
   }));
 
   return true;
-}
+};
 
 export default main;

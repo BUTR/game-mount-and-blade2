@@ -1,6 +1,5 @@
-//@ts-ignore
-import Bluebird, { Promise } from 'bluebird';
-import { method as toBluebird } from 'bluebird';
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import { types } from 'vortex-api';
 
@@ -16,7 +15,7 @@ export interface IExtensionContextCollectionFeature {
   registerCollectionFeature:
   (
     id: string,
-    
+
     generate: (gameId: string, includedMods: string[]) => Bluebird<any>,
 
     parse: (gameId: string, collection: ICollection) => Bluebird<void>,

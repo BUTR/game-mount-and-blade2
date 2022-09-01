@@ -1,13 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const webpack = require('vortex-api/bin/webpack').default;
+const webpack = require('vortex-api/bin/webpack');
 const CopyPlugin = require("copy-webpack-plugin");
 
-const config = webpack('game-mount-and-blade2', __dirname, 5);
+const config = webpack.default('game-mount-and-blade2', __dirname, 5);
 config.plugins.push(new CopyPlugin({
     patterns: [
         { from: "**/Bannerlord.ModuleManager.Native.dll", to: "[name].[ext]" },
-        { from: "src/assets/*.jpg", to: "[name].[ext]" },
-        { from: "src/assets/*.png", to: "[name].[ext]" },
+        { from: "assets/*.jpg", to: "[name].[ext]" },
+        { from: "assets/*.png", to: "[name].[ext]" },
     ],
 }));
 config.module.rules.push({

@@ -1,23 +1,22 @@
-//@ts-ignore
-import Bluebird, { Promise } from 'bluebird';
-import { method as toBluebird } from 'bluebird';
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
-import { actions, selectors, util } from 'vortex-api';
-import { IExtensionApi, IMod, IState } from "vortex-api/lib/types/api";
+import {
+  actions, selectors, util, types,
+} from 'vortex-api';
 import { GAME_ID } from '../common';
-import { ILoadOrder } from '../types';
+import { ILoadOrder, IMods } from '../types';
 
 import { CollectionGenerateError, CollectionParseError, genCollectionLoadOrder } from './collectionUtil';
 import { ICollectionMB } from "./types";
 
-export const exportLoadOrder = toBluebird<ILoadOrder, IState, string[], { [modId: string]: IMod }>(async (state: IState, modIds: string[], mods: { [modId: string]: IMod }) : Promise<ILoadOrder> => {
+export const exportLoadOrder = toBluebird(async (state: types.IState, modIds: string[], mods: IMods) : Promise<ILoadOrder | undefined> => {
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
-    return Promise.reject(new CollectionGenerateError('Invalid profile id'));
+    throw new CollectionGenerateError(`Invalid profile id`);
   }
 
-  const loadOrder: ILoadOrder = util.getSafe(state,
-    ['persistent', 'loadOrder', profileId], undefined);
+  const loadOrder = util.getSafe<ILoadOrder | undefined>(state, [`persistent`, `loadOrder`, profileId], undefined);
   if (loadOrder === undefined) {
     // This is theoretically "fine" - the user may have simply
     //  downloaded the mods and immediately created the collection
@@ -25,37 +24,37 @@ export const exportLoadOrder = toBluebird<ILoadOrder, IState, string[], { [modId
     //  the game extension itself might be handling the presort functionality
     //  erroneously. Regardless, the collection creation shouldn't be blocked
     //  by the inexistance of a loadOrder.
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
-  const includedMods = modIds.reduce((accum, iter) => {
+  const includedMods = modIds.reduce<IMods>((accum, iter) => {
     if (mods[iter] !== undefined) {
       accum[iter] = mods[iter];
     }
     return accum;
   }, {});
-  const filteredLO: ILoadOrder = genCollectionLoadOrder(loadOrder, includedMods);
-  return Promise.resolve(filteredLO);
+
+  const filteredLO = genCollectionLoadOrder(loadOrder, includedMods);
+  return filteredLO;
 });
 
-export const importLoadOrder = toBluebird<void, IExtensionApi, ICollectionMB>(async(api: IExtensionApi, collection: ICollectionMB): Promise<void> => {
+export const importLoadOrder = toBluebird(async (api: types.IExtensionApi, collection: ICollectionMB) : Promise<void> => {
   const state = api.getState();
 
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
-    return Promise.reject(new CollectionParseError(collection?.['info']?.['name'] || '', 'Invalid profile id'));
+    throw new CollectionParseError(collection?.info?.name || ``, `Invalid profile id`);
   }
 
-  // The mods need to be deployed in order for the load order to be imported
-  //  correctly.
+  // The mods need to be deployed in order for the load order to be imported correctly.
   return new Promise<void>((resolve, reject) => {
-    api.events.emit('deploy-mods', (err) => {
-      if (!!err) {
-        return reject(err);
-      } else {
-        api.store.dispatch(actions.setLoadOrder(profileId, collection.loadOrder as any));
-        return resolve();
+    api.events.emit(`deploy-mods`, (err: any) => {
+      if (err) {
+        reject(err);
+        return;
       }
+      api.store?.dispatch(actions.setLoadOrder(profileId, [collection.loadOrder]));
+      resolve();
     });
   });
 });

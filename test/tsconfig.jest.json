@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.json",
+  "references": [
+    {
+      "name": "game-mount-and-blade-2-bannerlord",
+      "path": "../tsconfig.json"
+    }
+  ],
+  "compilerOptions": {
+    "types": ["jest", "jest-expect-message", "jest-mock-extended", "node"],
+    "rootDir": "..",
+    "noEmit": true,
+    "sourceMap": true,
+    "baseUrl": "..",
+    "paths": {
+      "*": ["../node_modules/vortex-api/lib/types/*"]
+    }
+  },
+  "include": [".", "../node_modules/vortex-api"]
+}

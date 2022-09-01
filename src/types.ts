@@ -1,11 +1,6 @@
-//@ts-ignore
-import Bluebird, { Promise } from 'bluebird';
-import { method as toBluebird } from 'bluebird';
-
 import { types } from 'vortex-api';
 
 import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative/dist/module/lib';
-
 
 export interface IItemRendererProps {
   className: string;
@@ -14,11 +9,15 @@ export interface IItemRendererProps {
   moduleManager: BannerlordModuleManager;
 }
 
+export interface IMods {
+  [modId: string]: types.IMod;
+}
+
 export interface IProps {
   state: types.IState;
   profile: types.IProfile;
   discovery: types.IDiscoveryResult;
-  enabledMods: { [modId: string]: types.IMod };
+  enabledMods: IMods;
 }
 
 export interface ISortProps {
@@ -44,4 +43,10 @@ export interface IModuleInfoExtendedExt extends ModuleInfoExtended {
 }
 export interface IModuleCache {
   [subModId: string]: IModuleInfoExtendedExt;
+}
+
+export interface IIncompatibleModule {
+  id: string,
+  currentVersion: string,
+  requiredVersion: string
 }
