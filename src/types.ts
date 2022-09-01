@@ -50,3 +50,8 @@ export interface IIncompatibleModule {
   currentVersion: string,
   requiredVersion: string
 }
+
+export interface IValidationResult {
+  missing: string[];
+  incompatible: IIncompatibleModule[];
+}

@@ -1,4 +1,3 @@
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import path from 'path';
@@ -8,7 +7,7 @@ import {
   GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
 } from '../common';
 import {
-  IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt,
+  IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt, IValidationResult,
 } from '../types';
 import { walkAsync } from './util';
 
@@ -39,7 +38,7 @@ const getDeployedSubModPaths = async (context: types.IExtensionContext): Promise
   return subModules;
 };
 
-const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager) => {
+const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager): Promise<IModuleCache> => {
   const state = api.getState();
   const mods = util.getSafe<IMods>(state, [`persistent`, `mods`, GAME_ID], {});
   const getVortexId = (subModId: string): string | undefined => {
@@ -118,7 +117,7 @@ export const getIncompatibilities = (bmm: BannerlordModuleManager, subMod: IModu
   return incorrectVersions;
 };
 
-export const getValidationInfo = (bmm: BannerlordModuleManager, id: string) => {
+export const getValidationInfo = (bmm: BannerlordModuleManager, id: string): IValidationResult => {
   const subModule = Object.values(CACHE).find((entry) => (entry.vortexId === id) || (entry.id === id));
   if (!subModule) {
     // Probably not deployed yet

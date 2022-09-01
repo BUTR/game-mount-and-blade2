@@ -1,4 +1,3 @@
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import * as React from 'react';
