@@ -41,7 +41,7 @@ import { installRootMod } from './installers/rootmodinstaller';
 import { testRootMod } from './installers/rootmodtester';
 import { installSubModules } from './installers/submoduleinstaller';
 import { testForSubmodules } from './installers/submoduletester';
-import { createBannerlordModuleManager, BannerlordModuleManager, ModuleInfoExtended } from './utils/bmm';
+import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative';
 
 const LAUNCHER_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `TaleWorlds.MountAndBlade.Launcher.exe`);
 const MODDING_KIT_EXEC = path.join(`bin`, `Win64_Shipping_wEditor`, `TaleWorlds.MountAndBlade.Launcher.exe`);
@@ -114,7 +114,7 @@ const setModdingTool = (context: IExtensionContext, discovery: IDiscoveryResult,
 const prepareForModding = async (context: IExtensionContext, discovery: IDiscoveryResult): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
-  const bmm = await createBannerlordModuleManager();
+  const bmm = await BannerlordModuleManager.createAsync();
   // Quickly ensure that the official Launcher is added.
   ensureOfficialLauncher(context, discovery);
   try {
@@ -122,7 +122,7 @@ const prepareForModding = async (context: IExtensionContext, discovery: IDiscove
     setModdingTool(context, discovery);
   } catch (err) {
     const tools = discovery?.tools;
-    if (tools !== undefined && util.getSafe<any | undefined>(tools, [`bannerlord-sdk`], undefined) !== undefined) {
+    if (tools !== undefined && util.getSafe(tools, [`bannerlord-sdk`], undefined) !== undefined) {
       setModdingTool(context, discovery, true);
     }
   }
@@ -392,7 +392,7 @@ const main = (context: types.IExtensionContext): boolean => {
   });
 
   context.once(toBluebird<void>(async () => {
-    bmm = await createBannerlordModuleManager();
+    bmm = await BannerlordModuleManager.createAsync();
 
     context.api.onAsync(`did-deploy`, async (profileId, _deployment) => refreshCacheOnEvent(context, profileId, bmm));
 

@@ -2,7 +2,7 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import path from 'path';
 import { fs, types, util } from 'vortex-api';
-import { createBannerlordModuleManager, BannerlordModuleManager, ApplicationVersion } from './bmm';
+import { BannerlordModuleManager, ApplicationVersion } from '@butr/blmodulemanagernative';
 import {
   GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
 } from '../common';

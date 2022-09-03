@@ -3,11 +3,11 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { fs } from 'vortex-api';
 import { IInstallResult, IInstruction } from 'vortex-api/lib/types/api';
-import { createBannerlordModuleManager } from '../utils/bmm';
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative';
 import { MODULES, SUBMOD_FILE, ROOT_FOLDERS } from '../common';
 
 export const installRootMod = toBluebird(async (files: string[], destinationPath: string): Promise<IInstallResult> => {
-  const bmm = await createBannerlordModuleManager();
+  const bmm = await BannerlordModuleManager.createAsync();
 
   const moduleFile = files.find((file) => file.split(path.sep).indexOf(MODULES) !== -1) || ``;
   const idx = moduleFile.split(path.sep).indexOf(MODULES);

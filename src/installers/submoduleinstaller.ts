@@ -3,11 +3,11 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { fs, util } from 'vortex-api';
 import { IInstallResult, IInstruction } from 'vortex-api/lib/types/api';
-import { createBannerlordModuleManager } from '../utils/bmm';
+import { BannerlordModuleManager } from '@butr/blmodulemanagernative';
 import { SUBMOD_FILE, MODULES } from '../common';
 
 export const installSubModules = toBluebird(async (files: string[], destinationPath: string) : Promise<IInstallResult> => {
-  const bmm = await createBannerlordModuleManager();
+  const bmm = await BannerlordModuleManager.createAsync();
 
   // Remove directories straight away.
   const filtered = files.filter((file) => {

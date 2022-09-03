@@ -1,6 +1,6 @@
 import { types } from 'vortex-api';
 
-import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative/dist/module/lib';
+import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative';
 
 export interface IItemRendererProps {
   className: string;
