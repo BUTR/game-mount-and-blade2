@@ -2,16 +2,19 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import path from 'path';
 import { fs, types, util } from 'vortex-api';
-import { BannerlordModuleManager, ApplicationVersion } from '@butr/blmodulemanagernative';
+import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextensionnative';
+
+import { walkAsync } from './traverseUtils';
 import {
   GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
 } from '../common';
 import {
-  IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt, IValidationResult,
+  IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt, IValidationCache, IValidationResult,
 } from '../types';
-import { walkAsync } from './util';
+import { IValidationManager } from '@butr/blmodulemanagernative';
 
 let CACHE: IModuleCache = { };
+let VALIDATIONCACHE: IValidationCache = { };
 export const getCache = (): Readonly<IModuleCache> => CACHE;
 
 const getDeployedSubModPaths = async (context: types.IExtensionContext): Promise<string[]> => {
@@ -38,7 +41,7 @@ const getDeployedSubModPaths = async (context: types.IExtensionContext): Promise
   return subModules;
 };
 
-const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: string[], bmm: BannerlordModuleManager): Promise<IModuleCache> => {
+const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: string[]): Promise<IModuleCache> => {
   const state = api.getState();
   const mods = util.getSafe<IMods>(state, [`persistent`, `mods`, GAME_ID], {});
   const getVortexId = (subModId: string): string | undefined => {
@@ -56,7 +59,7 @@ const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: 
   /* eslint-disable no-await-in-loop */
   for (const subMod of subModuleFilePaths) {
     const data = await fs.readFileAsync(subMod, { encoding: `utf8` });
-    const module = bmm.getModuleInfo(data.trim());
+    const module = BannerlordModuleManager.getModuleInfo(data.trim());
     if (module) {
       const vortexId = getVortexId(module.id);
       modules[module.id] = {
@@ -80,31 +83,32 @@ const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: 
   return modules;
 };
 
-export const refreshCache = async (context: types.IExtensionContext, bmm: BannerlordModuleManager): Promise<void> => {
+export const refreshCache = async (context: types.IExtensionContext): Promise<void> => {
   const subModuleFilePaths = await getDeployedSubModPaths(context);
-  CACHE = await getDeployedModData(context.api, subModuleFilePaths, bmm);
+  CACHE = await getDeployedModData(context.api, subModuleFilePaths);
+
+  const modules = Object.values(CACHE);
+  VALIDATIONCACHE = modules.reduce((map, moduleInfo) => {
+    const module = modules.find((entry) => (entry.vortexId === moduleInfo.id) || (entry.id === moduleInfo.id));
+    const validationManager: IValidationManager = {
+      isSelected: function (moduleId: string): boolean {
+        return true;
+      }
+    };
+    map[moduleInfo.id] = BannerlordModuleManager.validateModule(modules, module!, validationManager);
+    return map;
+  }, {} as IValidationCache);
 };
 
-const missingDependencies = (bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt): string[] => {
-  const depsFulfilled = bmm.areAllDependenciesOfModulePresent(Object.values(CACHE), subMod);
-  if (depsFulfilled) {
-    return Array<string>();
-  }
+const versionToDisplay = (ver: vetypes.ApplicationVersion): string => `${ver.major}.${ver.minor}.${ver.revision}`;
 
-  const subModIds = Object.keys(CACHE);
-  const missing = subMod.dependentModules.filter((dep) => !subModIds.includes(dep.id)).map((dep) => dep.id);
-  return missing;
-};
-
-const versionToDisplay = (ver: ApplicationVersion): string => `${ver.major}.${ver.minor}.${ver.revision}`;
-
-export const getIncompatibilities = (bmm: BannerlordModuleManager, subMod: IModuleInfoExtendedExt): IIncompatibleModule[] => {
+export const getIncompatibilities = (subMod: IModuleInfoExtendedExt): IIncompatibleModule[] => {
   const dependencies = subMod.dependentModules;
   const incorrectVersions = Array<IIncompatibleModule>();
   for (const dep of dependencies) {
     const depMod = CACHE[dep.id];
     if (depMod) {
-      const comparisonRes = bmm.compareVersions(depMod.version, dep.version);
+      const comparisonRes = BannerlordModuleManager.compareVersions(depMod.version, dep.version);
       if (comparisonRes !== 1) {
         incorrectVersions.push({
           id: dep.id,
@@ -117,13 +121,6 @@ export const getIncompatibilities = (bmm: BannerlordModuleManager, subMod: IModu
   return incorrectVersions;
 };
 
-export const getValidationInfo = (bmm: BannerlordModuleManager, id: string): IValidationResult => {
-  const subModule = Object.values(CACHE).find((entry) => (entry.vortexId === id) || (entry.id === id));
-  if (!subModule) {
-    // Probably not deployed yet
-    return { missing: Array<string>(), incompatible: Array<IIncompatibleModule>() };
-  }
-  const missing = missingDependencies(bmm, subModule);
-  const incompatible = getIncompatibilities(bmm, subModule);
-  return { missing, incompatible };
+export const getModuleIssues = (id: string): vetypes.ModuleIssue[] => {
+  return VALIDATIONCACHE[id];
 };

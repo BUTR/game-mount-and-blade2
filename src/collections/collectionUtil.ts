@@ -1,3 +1,4 @@
+/*
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import { types, util } from 'vortex-api';
@@ -65,3 +66,4 @@ export const genCollectionLoadOrder = (loadOrder: ILoadOrder, mods: IMods, colle
     }, {});
   return sortedMods;
 };
+*/

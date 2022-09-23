@@ -135,3 +135,4 @@ dist
 *.zip
 
 !typings/*.tgz
+!butr-vortexextensionnative-1.0.0.tgz

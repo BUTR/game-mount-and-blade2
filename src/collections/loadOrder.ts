@@ -1,3 +1,4 @@
+/*
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import {
@@ -57,3 +58,4 @@ export const importLoadOrder = toBluebird(async (api: types.IExtensionApi, colle
     });
   });
 });
+*/

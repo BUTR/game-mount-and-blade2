@@ -1,3 +1,4 @@
+/*
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import { types } from 'vortex-api';
@@ -28,3 +29,4 @@ export interface IExtensionContextCollectionFeature {
     editComponent?: React.ComponentType<IExtendedInterfaceProps>
   ) => void;
 }
+*/

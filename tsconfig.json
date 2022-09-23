@@ -46,6 +46,6 @@
     "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
   },
   "exclude": ["test", "node_modules"],
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/views/LoadOrderInfoPanel/index.tsx", "src/views/helper.tsx"],
   "compileOnSave": false
 }

@@ -1,12 +1,11 @@
 import { types } from 'vortex-api';
 
-import { BannerlordModuleManager, ModuleInfoExtended } from '@butr/blmodulemanagernative';
+import { types as vetypes } from '@butr/vortexextensionnative/';
 
 export interface IItemRendererProps {
   className: string;
   item: types.ILoadOrderDisplayItem;
   onRef: (ref: any) => any;
-  moduleManager: BannerlordModuleManager;
 }
 
 export interface IMods {
@@ -20,11 +19,13 @@ export interface IProps {
   enabledMods: IMods;
 }
 
+/*
 export interface ISortProps {
-  bmm: BannerlordModuleManager;
   loadOrder?: any;
 }
+*/
 
+/*
 export interface ILoadOrderEntry<T = any> {
   pos: number;
   enabled: boolean;
@@ -37,12 +38,16 @@ export interface ILoadOrderEntry<T = any> {
 export interface ILoadOrder {
   [modId: string]: ILoadOrderEntry;
 }
+*/
 
-export interface IModuleInfoExtendedExt extends ModuleInfoExtended {
+export interface IModuleInfoExtendedExt extends vetypes.ModuleInfoExtended {
   vortexId?: string;
 }
 export interface IModuleCache {
   [subModId: string]: IModuleInfoExtendedExt;
+}
+export interface IValidationCache {
+  [subModId: string]: vetypes.ModuleIssue[];
 }
 
 export interface IIncompatibleModule {
@@ -54,4 +59,13 @@ export interface IIncompatibleModule {
 export interface IValidationResult {
   missing: string[];
   incompatible: IIncompatibleModule[];
+}
+
+export interface IDeployment {
+  [modType: string]: types.IDeployedFile[];
+}
+
+export interface IAddedFiles {
+  filePath: string,
+  candidates: string[]
 }
