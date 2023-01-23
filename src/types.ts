@@ -69,3 +69,49 @@ export interface IAddedFiles {
   filePath: string,
   candidates: string[]
 }
+
+export type Dirent = {
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a regular file.
+   * @since v10.10.0
+   */
+  isFile(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a file system
+   * directory.
+   * @since v10.10.0
+   */
+  isDirectory(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a block device.
+   * @since v10.10.0
+   */
+  isBlockDevice(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a character device.
+   * @since v10.10.0
+   */
+  isCharacterDevice(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a symbolic link.
+   * @since v10.10.0
+   */
+  isSymbolicLink(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a first-in-first-out
+   * (FIFO) pipe.
+   * @since v10.10.0
+   */
+  isFIFO(): boolean;
+  /**
+   * Returns `true` if the `fs.Dirent` object describes a socket.
+   * @since v10.10.0
+   */
+  isSocket(): boolean;
+  /**
+   * The file name that this `fs.Dirent` object refers to. The type of this
+   * value is determined by the `options.encoding` passed to {@link readdir} or {@link readdirSync}.
+   * @since v10.10.0
+   */
+  name: string;
+}

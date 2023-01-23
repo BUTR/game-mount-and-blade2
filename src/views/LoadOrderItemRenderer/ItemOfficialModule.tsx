@@ -3,7 +3,7 @@ import * as BS from 'react-bootstrap';
 import { types } from "vortex-api";
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { TWLOGO } from '../../common';
+import { TW_LOGO } from '../../common';
 
 export type ItemOfficialModuleProps = {
   item: types.ILoadOrderDisplayItem,
@@ -27,7 +27,7 @@ export const ItemOfficialModule = (props: ItemOfficialModuleProps): JSX.Element 
         onChange={evt => onStatusChange(evt, item)}
         >
         <img
-            src={TWLOGO}
+            src={TW_LOGO}
             className='official-submodule-logo'
             style={{
             width: `1.5em`,

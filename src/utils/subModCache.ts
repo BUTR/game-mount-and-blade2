@@ -6,7 +6,7 @@ import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextension
 
 import { walkAsync } from './traverseUtils';
 import {
-  GAME_ID, MODULES, OFFICIAL_MODULES, SUBMOD_FILE,
+  GAME_ID, MODULES, OFFICIAL_MODULES, SUBMODULE_FILE,
 } from '../common';
 import {
   IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt, IValidationCache, IValidationResult,
@@ -14,7 +14,7 @@ import {
 import { IValidationManager } from '@butr/blmodulemanagernative';
 
 let CACHE: IModuleCache = { };
-let VALIDATIONCACHE: IValidationCache = { };
+let VALIDATION_CACHE: IValidationCache = { };
 export const getCache = (): Readonly<IModuleCache> => CACHE;
 
 const getDeployedSubModPaths = async (context: types.IExtensionContext): Promise<string[]> => {
@@ -37,7 +37,7 @@ const getDeployedSubModPaths = async (context: types.IExtensionContext): Promise
     if (context.api.showErrorNotification) context.api.showErrorNotification(errorMsg, err);
     return [];
   }
-  const subModules = moduleFiles.filter((file) => path.basename(file).toLowerCase() === SUBMOD_FILE);
+  const subModules = moduleFiles.filter((file) => path.basename(file).toLowerCase() === SUBMODULE_FILE);
   return subModules;
 };
 
@@ -88,7 +88,7 @@ export const refreshCache = async (context: types.IExtensionContext): Promise<vo
   CACHE = await getDeployedModData(context.api, subModuleFilePaths);
 
   const modules = Object.values(CACHE);
-  VALIDATIONCACHE = modules.reduce((map, moduleInfo) => {
+  VALIDATION_CACHE = modules.reduce((map, moduleInfo) => {
     const module = modules.find((entry) => (entry.vortexId === moduleInfo.id) || (entry.id === moduleInfo.id));
     const validationManager: IValidationManager = {
       isSelected: function (moduleId: string): boolean {
@@ -122,5 +122,5 @@ export const getIncompatibilities = (subMod: IModuleInfoExtendedExt): IIncompati
 };
 
 export const getModuleIssues = (id: string): vetypes.ModuleIssue[] => {
-  return VALIDATIONCACHE[id];
+  return VALIDATION_CACHE[id];
 };

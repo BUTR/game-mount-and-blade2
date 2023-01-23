@@ -39,7 +39,7 @@ export const parseCollectionsData = toBluebird(async (context: IExtensionContext
   const profileId: string = selectors.lastActiveProfileForGame(state, gameId);
   const profile = selectors.profileById(state, profileId);
   if (profile?.gameId !== gameId) {
-    const collectionName = collection.info?.name !== undefined ? collection.info.name : `Witcher 3 Collection`;
+    const collectionName = collection.info?.name !== undefined ? collection.info.name : `Bannerlord Collection`;
     throw new CollectionParseError(collectionName, `Last active profile is missing`);
   }
   await importLoadOrder(api, collection);

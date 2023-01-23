@@ -1,9 +1,11 @@
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { actions, fs, selectors, types, util } from "vortex-api";
+import path from 'path';
 import { IExtensionContext } from "vortex-api/lib/types/api";
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { Dirent } from "../types";
 
-export const registerNativeCallbacks = (context: IExtensionContext, manager: vetypes.VortexExtensionManager) =>{
+export const registerNativeCallbacks = (context: IExtensionContext, manager: vetypes.VortexExtensionManager) => {
     // Set Native callbacks
     const getActiveProfile = (): types.IProfile => {
         const state = context.api.store?.getState();
@@ -60,10 +62,31 @@ export const registerNativeCallbacks = (context: IExtensionContext, manager: vet
         //return util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], "");
     };
     const readFileContent = (filePath: string): string | null => {
-        return fs.readFileSync(filePath, 'utf8');
+        function removeBom(input: string) {
+            // All alternatives found on https://en.wikipedia.org/wiki/Byte_order_mark
+            switch (input[0].charCodeAt(0).toString(16)) {
+                case 'efbbbf': // UTF-8
+                case 'feff': // UTF-16 (BE) + UTF-32 (BE)
+                case 'fffe': // UTF-16 (LE)
+                case 'fffe0000': // UTF-32 (LE)
+                case '2B2F76': // UTF-7
+                case 'f7644c': // UTF-1
+                case 'dd736673': // UTF-EBCDIC
+                case 'efeff': // SCSU
+                case 'fbee28': // BOCU-1
+                case '84319533': // GB-18030
+                  return input.slice(1);
+                default: 
+                  return input;
+              }
+        };
+        return removeBom(fs.readFileSync(filePath, 'utf8'));
     };
     const readDirectoryFileList = (directoryPath: string): string[] | null => {
-        return fs.readdirSync(directoryPath);
+        return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isFile()).map((x: Dirent) => path.join(directoryPath, x.name));
+    };
+    const readDirectoryList = (directoryPath: string): string[] | null => {
+        return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isDirectory()).map((x: Dirent) => path.join(directoryPath, x.name));
     };
     manager.registerCallbacks(
         getActiveProfile,
@@ -76,5 +99,6 @@ export const registerNativeCallbacks = (context: IExtensionContext, manager: vet
         sendNotification,
         getInstallPath,
         readFileContent,
-        readDirectoryFileList);
+        readDirectoryFileList,
+        readDirectoryList);
 }

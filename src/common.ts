@@ -1,13 +1,13 @@
 import path from 'path';
 
-export const TWLOGO = path.join(__dirname, `TWLogo.png`);
-export const MODULELOGO = path.join(__dirname, `Module.png`);
+export const TW_LOGO = path.join(__dirname, `TWLogo.png`);
+export const MODULE_LOGO = path.join(__dirname, `Module.png`);
 
 export const GAME_ID = `mountandblade2bannerlord-butr`;
 
 // Bannerlord mods have this file in their root.
 //  Casing is actually "SubModule.xml"
-export const SUBMOD_FILE = `submodule.xml`;
+export const SUBMODULE_FILE = `submodule.xml`;
 
 // The relative path to the actual game executable, not the launcher.
 export const BANNERLORD_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `Bannerlord.exe`);

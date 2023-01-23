@@ -10,9 +10,9 @@ export type IconIssuesProps = {
 export const IconIssues = (props: IconIssuesProps): JSX.Element | null => {
   const { item, issues } = props;
 
-  const incomp = issues.map((issue) => issue.reason).join(`\n`);
+  const incompatible = issues.map((issue) => issue.reason).join(`\n`);
   
   return (issues.length > 0)
-    ? <tooltip.Icon name='feedback-warning' tooltip={incomp} style={{ color: `red`, marginRight: `10` }} />
+    ? <tooltip.Icon name='feedback-warning' tooltip={incompatible} style={{ color: `red`, marginRight: `10` }} />
     : null;
 };
