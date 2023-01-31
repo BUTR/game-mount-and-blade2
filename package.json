@@ -15,7 +15,6 @@
         "lint-fix": "eslint -c .eslintrc.build.json --fix src test && prettier --write",
         "pre-commit": "lint-staged",
         "repl": "ts-node -r tsconfig-paths/register",
-        "postinstall": "patch-package",
         "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --color",
         "build": "npm run webpack && extractInfo",
         "bundle7z": "7z a -t7z game-mount-and-blade2.7z ./dist/*.*"
