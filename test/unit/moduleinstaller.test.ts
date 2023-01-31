@@ -38,7 +38,10 @@ const readFileContent = (_filePath: string): string => {
   //const result = fs.readFileSync(filePath, { encoding: `utf8` });;
   //return fs.readFileSync(filePath).toString();
 };
-const readDirectoryFileList = (directoryPath: string): string[] | null => {
+const readDirectoryList = (_: string): string[] | null => {
+  return [];
+};
+const readDirectoryFileList = (_: string): string[] | null => {
   return [];
 };
 manager.registerCallbacks(
@@ -52,6 +55,7 @@ manager.registerCallbacks(
   sendNotification,
   getInstallPath,
   readFileContent,
+  readDirectoryList,
   readDirectoryFileList);
 
 describe(`moduleinstaller`, () => {
