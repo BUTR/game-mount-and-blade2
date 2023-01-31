@@ -8,7 +8,7 @@ export type IconIssuesProps = {
 };
 
 export const IconIssues = (props: IconIssuesProps): JSX.Element | null => {
-  const { item, issues } = props;
+  const { issues } = props;
 
   const incompatible = issues.map((issue) => issue.reason).join(`\n`);
   

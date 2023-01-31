@@ -18,6 +18,7 @@ export const ItemOfficialModule = (props: ItemOfficialModuleProps): JSX.Element 
   const index = Array.isArray(order) ? order.indexOf(item.id) : -1;
   const isInvalid = issues.length !== 0;
   const isEnabled = !isInvalid && index !== -1;
+  const text = `${item.name} (${item.version})`
 
   return (
     <div style={{ display: `flex`, alignItems: `center` }}>
@@ -35,7 +36,7 @@ export const ItemOfficialModule = (props: ItemOfficialModuleProps): JSX.Element 
             marginRight: `5px`,
             }}
         />
-        <span style={isInvalid ? { color: `red`, textDecoration: `line-through` } : {} }>{item.name}</span>
+        <span style={isInvalid ? { color: `red`, textDecoration: `line-through` } : {} }>{text}</span>
       </BS.Checkbox>
     </div>
   );

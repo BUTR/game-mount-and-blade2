@@ -27,6 +27,9 @@ export const registerNativeCallbacks = (context: IExtensionContext, manager: vet
 
         const state = context.api.getState();
         const activeProfile = selectors.activeProfile(state);
+        if (activeProfile === undefined) {
+            return {};
+        }
         const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
         if (Array.isArray(loadOrder)) {
             return {};
@@ -41,6 +44,9 @@ export const registerNativeCallbacks = (context: IExtensionContext, manager: vet
         }
         const state = context.api.store?.getState();
         const activeProfile = selectors.activeProfile(state);
+        if (activeProfile === undefined) {
+            return;
+        }
         context.api.store?.dispatch(actions.setLoadOrder(activeProfile.id, loadOrder as any));
     };
     const translateString = (text: string, ns: string): string => {
@@ -100,5 +106,6 @@ export const registerNativeCallbacks = (context: IExtensionContext, manager: vet
         getInstallPath,
         readFileContent,
         readDirectoryFileList,
-        readDirectoryList);
+        readDirectoryList
+    );
 }

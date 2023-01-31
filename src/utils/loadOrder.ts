@@ -4,6 +4,7 @@ import { types as vetypes } from '@butr/vortexextensionnative';
 import { getCache } from './subModCache';
 import { GAME_ID } from '../common';
 import { IMods } from '../types';
+import { versionToString } from './util';
 
 const isNonVortexIcon = (context: types.IExtensionContext, subModId: string): boolean => {
     const state = context.api.getState();
@@ -30,6 +31,8 @@ export const preSort = toBluebird(async (context: types.IExtensionContext, manag
       const displayItems = Object.values(CACHE).map<types.ILoadOrderDisplayItem>((iter) => ({
         id: iter.id,
         name: iter.name,
+        version: versionToString(iter.version),
+        moduleInfo: iter,
         imgUrl: `${__dirname}/gameart.jpg`,
         external: isNonVortexIcon(context, iter.id),
         official: iter.isOfficial,

@@ -1,9 +1,9 @@
 import path from 'path';
 
-export const TW_LOGO = path.join(__dirname, `TWLogo.png`);
+export const TW_LOGO = path.join(__dirname, `TW_Logo.png`);
 export const MODULE_LOGO = path.join(__dirname, `Module.png`);
 
-export const GAME_ID = `mountandblade2bannerlord-butr`;
+export const GAME_ID = `mountandblade2bannerlord`;
 
 // Bannerlord mods have this file in their root.
 //  Casing is actually "SubModule.xml"

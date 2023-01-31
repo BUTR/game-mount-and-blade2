@@ -10,6 +10,7 @@ import { IItemRendererProps, IMods } from "../../types";
 
 import { IconNonVortex } from './IconNonVortex';
 import { IconIssues } from './IconIssues';
+import { IconDependencies } from './IconDependencies';
 import { ItemOfficialModule } from './ItemOfficialModule';
 import { ItemValidModule } from './ItemValidModule';
 import { ButtonOpenDir } from './ButtonOpenDir';
@@ -85,6 +86,7 @@ class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState
     return (
       <React.Fragment>
         {IconIssues({ item: item, issues: issues })}
+        {IconDependencies({ item: item })}
         {IconNonVortex({ item: item, mods: mods })}
         {ButtonOpenDir({ item: item, mods: mods, modsPath: modsPath, installPath: installPath })}
       </React.Fragment>
@@ -108,11 +110,11 @@ class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState
         style={{ height: `48px` }}
       >
         <FlexLayout type='row'>
-          <FlexLayout.Flex
+          {/* TODO: How to FlexLayout.Flex? */}
+          <div
             style={{
               display: `flex`,
-              justifyContent: `flex-start`,
-              alignItems: `center`,
+              justifyContent: `stretch`,
               height: `20px`,
               overflow: `hidden`,
               whiteSpace: `nowrap`,
@@ -120,11 +122,12 @@ class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState
             }}
           >
             {this.renderItem(item) }
-          </FlexLayout.Flex>
+          </div>
           <FlexLayout.Flex
             style={{
               display: `flex`,
               justifyContent: `flex-end`,
+              minWidth: 0,
             }}
           >
             {this.renderAddendum()}

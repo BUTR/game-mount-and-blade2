@@ -34,7 +34,7 @@ const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.
   const tool: types.IDiscoveredTool = {
     id: launcherId,
     name: `Official Launcher`,
-    logo: `twlauncher.png`,
+    logo: `tw_launcher.png`,
     executable: () => exec,
     requiredFiles: [exec],
     path: path.join(discovery.path, LAUNCHER_EXEC),
@@ -54,7 +54,7 @@ const addModdingTool = (context: types.IExtensionContext, discovery: types.IDisc
   const tool: types.IDiscoveredTool = {
     id: toolId,
     name: `Modding Kit`,
-    logo: `twlauncher.png`,
+    logo: `tw_launcher.png`,
     executable: () => exec,
     requiredFiles: [exec],
     path: path.join(discovery.path, MODDING_KIT_EXEC),
@@ -104,7 +104,7 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register Game
   context.registerGame({
     id: GAME_ID,
-    name: `Mount & Blade II:\tBannerlord BUTR`,
+    name: `Mount & Blade II: Bannerlord (BUTR)`,
     mergeMods: true,
     queryPath: findGame,
     queryModPath: () => `.`,
@@ -147,7 +147,7 @@ const main = (context: types.IExtensionContext): boolean => {
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
     preSort: (items, _sortDir, updateType?) => preSort(context, manager, items, updateType) as any,
-    callback: (loadOrder) => manager.setLoadOrder(loadOrder),
+    callback: (loadOrder) => manager.refreshGameParameters(loadOrder),
     itemRenderer: ((props: any) => React.createElement(LoadOrderItemRenderer, {...props, manager})) as any,
   });
 
@@ -175,10 +175,9 @@ const main = (context: types.IExtensionContext): boolean => {
     context.api.onAsync(`did-purge`, async (_profileId: string) => manager.setLoadOrder(manager.getLoadOrder()));
 
     context.api.events.on(`gamemode-activated`, (_gameMode: string) => {
-      const state = context.api.getState();
-      const profile = selectors.activeProfile(state);
       manager.setLoadOrder(manager.getLoadOrder());
-
+      //const state = context.api.getState();
+      //const profile = selectors.activeProfile(state);
       //manager.refreshModules(profile?.id);
     });
 

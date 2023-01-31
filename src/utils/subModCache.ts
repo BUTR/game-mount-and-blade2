@@ -1,7 +1,7 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import path from 'path';
-import { fs, types, util } from 'vortex-api';
+import { fs, selectors, types, util } from 'vortex-api';
 import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextensionnative';
 
 import { walkAsync } from './traverseUtils';
@@ -11,7 +11,8 @@ import {
 import {
   IIncompatibleModule, IMods, IModuleCache, IModuleInfoExtendedExt, IValidationCache, IValidationResult,
 } from '../types';
-import { IValidationManager } from '@butr/blmodulemanagernative';
+import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { versionToString } from './util';
 
 let CACHE: IModuleCache = { };
 let VALIDATION_CACHE: IValidationCache = { };
@@ -84,23 +85,38 @@ const getDeployedModData = async (api: types.IExtensionApi, subModuleFilePaths: 
 };
 
 export const refreshCache = async (context: types.IExtensionContext): Promise<void> => {
+  const getLoadOrder = (): ILoadOrder => {
+    const state = context.api.getState();
+    const activeProfile = selectors.activeProfile(state);
+    const loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
+    if (Array.isArray(loadOrder)) {
+        return {};
+    }
+    return loadOrder;
+  };
+  
   const subModuleFilePaths = await getDeployedSubModPaths(context);
   CACHE = await getDeployedModData(context.api, subModuleFilePaths);
 
   const modules = Object.values(CACHE);
+  const loadOrder = getLoadOrder();
   VALIDATION_CACHE = modules.reduce((map, moduleInfo) => {
-    const module = modules.find((entry) => (entry.vortexId === moduleInfo.id) || (entry.id === moduleInfo.id));
-    const validationManager: IValidationManager = {
-      isSelected: function (moduleId: string): boolean {
-        return true;
+    const module = modules.find((x) => (x.vortexId === moduleInfo.id) || (x.id === moduleInfo.id));
+    if (module === undefined) return map;
+
+    const validationManager: vetypes.IValidationManager = {
+      isSelected: (moduleId: string): boolean => {
+        const loadedModule = loadOrder[moduleId];
+        if (loadedModule !== undefined) {
+          return loadedModule.enabled;
+        }
+        return false;
       }
     };
-    map[moduleInfo.id] = BannerlordModuleManager.validateModule(modules, module!, validationManager);
+    map[moduleInfo.id] = BannerlordModuleManager.validateModule(modules, module, validationManager);
     return map;
   }, {} as IValidationCache);
 };
-
-const versionToDisplay = (ver: vetypes.ApplicationVersion): string => `${ver.major}.${ver.minor}.${ver.revision}`;
 
 export const getIncompatibilities = (subMod: IModuleInfoExtendedExt): IIncompatibleModule[] => {
   const dependencies = subMod.dependentModules;
@@ -112,8 +128,8 @@ export const getIncompatibilities = (subMod: IModuleInfoExtendedExt): IIncompati
       if (comparisonRes !== 1) {
         incorrectVersions.push({
           id: dep.id,
-          currentVersion: versionToDisplay(depMod.version),
-          requiredVersion: versionToDisplay(dep.version),
+          currentVersion: versionToString(depMod.version),
+          requiredVersion: versionToString(dep.version),
         });
       }
     }

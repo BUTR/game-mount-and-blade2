@@ -17,6 +17,7 @@ export const ItemValidModule = (props: ItemValidModuleProps): JSX.Element => {
 
   const isInvalid = issues.length !== 0;
   const isEnabled = !isInvalid && order[item.id].enabled;
+  const text = `${item.name} (${item.version})`
 
   return (
     <BS.Checkbox
@@ -33,7 +34,7 @@ export const ItemValidModule = (props: ItemValidModuleProps): JSX.Element => {
         marginRight: `5px`,
         }}
       />
-      <span style={isInvalid ? { color: `red`, textDecoration: `line-through` } : {} }>{item.name}</span>
+      <span style={isInvalid ? { color: `red`, textDecoration: `line-through` } : {} }>{text}</span>
     </BS.Checkbox>
   );
 };

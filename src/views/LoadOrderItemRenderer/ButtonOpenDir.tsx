@@ -2,7 +2,6 @@ import Bluebird from "bluebird";
 import * as React from "react";
 import path from "path";
 import { tooltip, types, util } from "vortex-api";
-import { types as vetypes } from '@butr/vortexextensionnative';
 import { IMods } from "../../types";
 
 export type ButtonOpenDirProps = {
