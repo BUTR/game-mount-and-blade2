@@ -15,6 +15,7 @@ import { ItemOfficialModule } from './ItemOfficialModule';
 import { ItemValidModule } from './ItemValidModule';
 import { ButtonOpenDir } from './ButtonOpenDir';
 import { getModuleIssues } from '../../utils/subModCache';
+import { GAME_ID } from '../../common';
 
 const NAMESPACE = `mnb2-customrenderer`;
 
@@ -155,7 +156,7 @@ const mapState = (state: types.IState, ownProps: IOwnProps): IStateProps => {
 };
 const mapDispatch = (dispatch: Dispatch, _ownProps: IOwnProps): IDispatchProps => ({
   onSetLoadOrderEntry: (profileId, modId, entry) => dispatch(actions.setLoadOrderEntry(profileId, modId, entry)),
-  onSetDeploymentRequired: () => dispatch(actions.setDeploymentNecessary(`mountandblade2bannerlord`, true)),
+  onSetDeploymentRequired: () => dispatch(actions.setDeploymentNecessary(GAME_ID, true)),
 });
 
 export default withTranslation([`common`, NAMESPACE])(connect(mapState, mapDispatch)(LoadOrderItemRenderer));

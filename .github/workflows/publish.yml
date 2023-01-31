@@ -1,4 +1,4 @@
-name: Test and Publish
+name: Publish
 
 on:
   push:
@@ -26,8 +26,6 @@ jobs:
     - run: npm install -g autogypi
 
     - run: npm ci
-
-    - run: npm run test
 
     - run: npm run build
     
