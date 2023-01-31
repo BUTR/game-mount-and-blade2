@@ -24,7 +24,7 @@
         "bundle7z": "7z a -t7z game-mount-and-blade2.7z ./dist/*.*"
     },
     "devDependencies": {
-        "@jest/types": "^27.5.1",
+        "@jest/types": "^29.4.1",
         "@types/bluebird": "^3.5.20",
         "@types/glob": "^7.2.0",
         "@types/jest": "^27.5.2",
