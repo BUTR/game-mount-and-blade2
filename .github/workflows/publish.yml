@@ -1,6 +1,8 @@
 name: Publish
 
 on:
+  repository_dispatch:
+    types: [vortex_extension_update]
   push:
     branches:
       - '**'
