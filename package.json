@@ -33,7 +33,7 @@
         "@types/semver": "^7.3.12",
         "@types/webpack": "^4.41.32",
         "@types/xml2js": "^0.4.11",
-        "@typescript-eslint/eslint-plugin": "^5.15.0",
+        "@typescript-eslint/eslint-plugin": "^5.51.0",
         "@typescript-eslint/parser": "^5.15.0",
         "7z-bin": "github:Nexus-Mods/7z-bin",
         "bluebird": "^3.7.2",
