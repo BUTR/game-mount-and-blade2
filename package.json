@@ -1,10 +1,14 @@
 {
-    "name": "game-mount-and-blade-2-bannerlord",
+    "name": "game-mount-and-blade-ii-bannerlord-butr",
     "version": "0.5.0",
     "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
-    "author": "Black Tree Gaming Ltd. & BUTR Team",
+    "author": "BUTR Team & Black Tree Gaming Ltd.",
     "license": "GPL-3.0+",
     "main": "./dist/index.js",
+    "config": {
+        "extensionName": "Game: Mount and Blade II: Bannerlord (BUTR)",
+        "issueTracker": "https://github.com/BUTR/game-mount-and-blade2/issues"
+    },
     "scripts": {
         "build-full": "pwsh ./build.ps1",
         "build-full-debug": "pwsh ./build.ps1",
@@ -14,6 +18,7 @@
         "lint": "eslint -c .eslintrc.build.json src test",
         "lint-fix": "eslint -c .eslintrc.build.json --fix src test && prettier --write",
         "pre-commit": "lint-staged",
+        "test-debug": "jest --clearCache && node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --verbose=true --silent=false --no-cache",
         "repl": "ts-node -r tsconfig-paths/register",
         "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --color",
         "build": "npm run webpack && extractInfo",

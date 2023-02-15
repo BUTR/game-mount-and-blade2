@@ -1,10 +1,12 @@
 import * as React from 'react';
-import { types, tooltip } from "vortex-api";
-import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextensionnative';
+import { tooltip } from "vortex-api";
+import { types as vetypes } from '@butr/vortexextensionnative';
+import { BannerlordModuleManager } from '@butr/vortexextensionnative';
 import { getVersion } from '../../utils/util';
+import { VortexViewModel } from '../../types';
 
 export type IconDependenciesProps = {
-  item: types.ILoadOrderDisplayItem,
+  item: VortexViewModel,
 };
 
 const moduleInfoString = (metadata : vetypes.DependentModuleMetadata): string => {

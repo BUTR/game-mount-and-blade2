@@ -1,10 +1,10 @@
 import { GAME_ID } from '../../src/common';
-import { createVortexExtensionManager, types as vetypes } from '@butr/vortexextensionnative';
+import { createLauncherManager, types as vetypes } from '@butr/vortexextensionnative';
 import { uiExtenderEx } from './data';
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { IProfile } from 'vortex-api/lib/types/IState';
 
-const manager = createVortexExtensionManager();
+const manager = createLauncherManager();
 let loadOrder: ILoadOrder = { };
 
 const getActiveProfile = (): IProfile => {

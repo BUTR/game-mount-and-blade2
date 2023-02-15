@@ -4,21 +4,14 @@ export const TW_LOGO = path.join(__dirname, `TW_Logo.png`);
 export const MODULE_LOGO = path.join(__dirname, `Module.png`);
 
 export const GAME_ID = `mountandblade2bannerlord`;
-
-// Bannerlord mods have this file in their root.
-//  Casing is actually "SubModule.xml"
-export const SUBMODULE_FILE = `submodule.xml`;
+export const I18N_NAMESPACE = `game-mount-and-blade2`;
 
 // The relative path to the actual game executable, not the launcher.
 export const BANNERLORD_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `Bannerlord.exe`);
 
 export const MODULES = `Modules`;
 
-export const OFFICIAL_MODULES = new Set([`Native`, `CustomBattle`, `SandBoxCore`, `Sandbox`, `StoryMode`]);
-export const LOCKED_MODULES = new Set(Array<string>());
-
-export const I18N_NAMESPACE = `game-mount-and-blade2`;
-
+export const OFFICIAL_MODULES = new Set([`Native`, `CustomBattle`, `SandBoxCore`, `Sandbox`, `StoryMode`, `BirthAndDeath`]);
 
 export const LAUNCHER_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `TaleWorlds.MountAndBlade.Launcher.exe`);
 export const MODDING_KIT_EXEC = path.join(`bin`, `Win64_Shipping_wEditor`, `TaleWorlds.MountAndBlade.Launcher.exe`);

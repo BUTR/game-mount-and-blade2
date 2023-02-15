@@ -1,53 +1,60 @@
 import { types } from 'vortex-api';
+import { ILoadOrder, ILoadOrderEntry } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { types as vetypes } from '@butr/vortexextensionnative';
 
-import { types as vetypes } from '@butr/vortexextensionnative/';
+// Vortex Load Order
+export interface VortexLoadOrderEntryData {
+  id: string;
+  name: string;
+  isSelected: boolean;
+  index: number;
+}
+export interface VortexLoadOrderEntry extends ILoadOrderEntry<VortexLoadOrderEntryData> {
+
+}
+export interface VortexLoadOrderStorage extends ILoadOrder {
+  [moduleId: string]: VortexLoadOrderEntry;
+}
+// Vortex Load Order
+
+// Vortex Display Item
+export interface VortexViewModel extends types.ILoadOrderDisplayItem {
+  moduleInfo: vetypes.ModuleInfoExtendedWithPath;
+  index: number;
+  isSelected: boolean;
+  isDisabled: boolean;
+  isValid: boolean;
+}
+export interface VortexViewModelStorage extends Array<VortexViewModel> {
+
+}
+// Vortex Display Item
+
+// Map for ModuleViewModel
+export interface ModuleViewModelStorage {
+  [moduleId: string]: vetypes.ModuleViewModel;
+}
+// Map for ModuleViewModel
 
 export interface IItemRendererProps {
   className: string;
-  item: types.ILoadOrderDisplayItem;
+  item: VortexViewModel;
   onRef: (ref: any) => any;
 }
 
-export interface IMods {
-  [modId: string]: types.IMod;
+export interface ModsStorage {
+  [moduleId: string]: types.IMod;
 }
 
-export interface IProps {
-  state: types.IState;
-  profile: types.IProfile;
-  discovery: types.IDiscoveryResult;
-  enabledMods: IMods;
-}
 
-/*
-export interface ISortProps {
-  loadOrder?: any;
-}
-*/
-
-/*
-export interface ILoadOrderEntry<T = any> {
-  pos: number;
-  enabled: boolean;
-  prefix?: string;
-  data?: T;
-  locked?: boolean;
-  external?: boolean;
-}
-
-export interface ILoadOrder {
-  [modId: string]: ILoadOrderEntry;
-}
-*/
-
-export interface IModuleInfoExtendedExt extends vetypes.ModuleInfoExtended {
+export interface ModuleInfoExtendedWithPathWithVortexMetadata extends vetypes.ModuleInfoExtendedWithPath {
   vortexId?: string;
 }
 export interface IModuleCache {
-  [subModId: string]: IModuleInfoExtendedExt;
+  [moduleId: string]: ModuleInfoExtendedWithPathWithVortexMetadata;
 }
 export interface IValidationCache {
-  [subModId: string]: vetypes.ModuleIssue[];
+  [moduleId: string]: vetypes.ModuleIssue[];
 }
 
 export interface IIncompatibleModule {
@@ -70,6 +77,9 @@ export interface IAddedFiles {
   candidates: string[]
 }
 
+/**
+ * Bindings for FS
+ */
 export type Dirent = {
   /**
    * Returns `true` if the `fs.Dirent` object describes a regular file.
@@ -82,32 +92,6 @@ export type Dirent = {
    * @since v10.10.0
    */
   isDirectory(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a block device.
-   * @since v10.10.0
-   */
-  isBlockDevice(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a character device.
-   * @since v10.10.0
-   */
-  isCharacterDevice(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a symbolic link.
-   * @since v10.10.0
-   */
-  isSymbolicLink(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a first-in-first-out
-   * (FIFO) pipe.
-   * @since v10.10.0
-   */
-  isFIFO(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a socket.
-   * @since v10.10.0
-   */
-  isSocket(): boolean;
   /**
    * The file name that this `fs.Dirent` object refers to. The type of this
    * value is determined by the `options.encoding` passed to {@link readdir} or {@link readdirSync}.

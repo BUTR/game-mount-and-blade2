@@ -1,12 +1,12 @@
 import Bluebird from "bluebird";
 import * as React from "react";
 import path from "path";
-import { tooltip, types, util } from "vortex-api";
-import { IMods } from "../../types";
+import { tooltip, util } from "vortex-api";
+import { VortexViewModel, ModsStorage } from "../../types";
 
 export type ButtonOpenDirProps = {
-  item: types.ILoadOrderDisplayItem,
-  mods: IMods,
+  item: VortexViewModel,
+  mods: ModsStorage,
   modsPath: string,
   installPath: string,
 };

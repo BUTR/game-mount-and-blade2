@@ -1,15 +1,13 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-
-import { actions, selectors, types, util } from 'vortex-api';
+import { types, util } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
-
-import { refreshCache } from './subModCache';
 import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID } from '../common';
+import { VortexLauncherManager } from './VortexLauncherManager';
 
 let STORE_ID: string;
 
 const toChar = (avt: vetypes.ApplicationVersionType): string => {
-  switch(avt) {
+  switch (avt) {
     case vetypes.ApplicationVersionType.Alpha: return "a";
     case vetypes.ApplicationVersionType.Beta: return "b";
     case vetypes.ApplicationVersionType.Development: return "d";
@@ -24,12 +22,10 @@ export const versionToString = (av: vetypes.ApplicationVersion): string => {
 };
 
 export const getVersion = (metadata: vetypes.DependentModuleMetadata): string => {
-  if (!isVersionEmpty(metadata.version))
-  {
+  if (!isVersionEmpty(metadata.version))  {
       return ` >= ${versionToString(metadata.version)}`;
   }
-  if (!isVersionRangeEmpty(metadata.versionRange))
-  {
+  if (!isVersionRangeEmpty(metadata.versionRange))  {
       return ` >= ${versionToString(metadata.versionRange.min)} <= ${versionToString(metadata.versionRange.max)}`;
   }
   return "";
@@ -48,7 +44,7 @@ export const findGame = toBluebird<string>(async (): Promise<string> => {
   return game.gamePath;
 });
 
-export const prepareForModding = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: vetypes.VortexExtensionManager): Promise<void> => {
+export const prepareForModding = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
   // If game store not found, location may be set manually - allow setup function to continue.
@@ -58,30 +54,8 @@ export const prepareForModding = async (context: types.IExtensionContext, discov
     : Promise.resolve()));
 
   // Check if we've already set the load order object for this profile and create it if we haven't.
-  return startSteam().then(async () => {
-    await refreshCache(context);
-  }).finally(() => {
-    const state = context.api.getState();
-    const activeProfile = selectors.activeProfile(state);
-    if (activeProfile === undefined) {
-      // Valid use case when attempting to switch to
-      //  Bannerlord without any active profile.
-      manager.setLoadOrder({});
-    }
-    manager.setLoadOrder(manager.getLoadOrder());
+  return startSteam().finally(() => {
+    manager.initializeModuleViewModels();
+    manager.orderBySavedLoadOrder();
   });
 };
-
-/*
-export const getLoadOrder = (context: types.IExtensionContext): types.LoadOrder => {
-  const state = context.api.getState();
-  const activeProfile = selectors.activeProfile(state);
-  return util.getSafe<types.LoadOrder>(state, [`persistent`, `loadOrder`, activeProfile.id], []);
-};
-export const setLoadOrder = (context: types.IExtensionContext, loadOrder: types.LoadOrder): void => {
-  const state = context.api.store?.getState();
-  const activeProfile = selectors.activeProfile(state);
-  context.api.store?.dispatch(actions.setLoadOrder(activeProfile.id, loadOrder));
-  //manager.setLoadOrder((loadOrder || []) as any);
-};
-*/

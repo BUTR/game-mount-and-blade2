@@ -1,30 +1,30 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import * as React from 'react';
 import path from 'path';
-import { createAction } from 'redux-act';
 import { actions, fs, log, selectors, types, util } from 'vortex-api';
-import { createVortexExtensionManager, types as vetypes } from '@butr/vortexextensionnative';
 import { LoadOrderItemRenderer } from './views/LoadOrderItemRenderer';
 import { LoadOrderInfoPanel } from './views/LoadOrderInfoPanel';
 import { Settings } from './views/Settings';
+import SaveList from './views/Saves/SaveList';
 import { findGame, prepareForModding } from './utils/util';
-import { registerNativeCallbacks } from './utils/bindingsUtils';
-import { preSort } from './utils/loadOrder';
-import { BANNERLORD_EXEC, EPICAPP_ID, EXTENSION_BASE_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID } from './common';
-import { IAddedFiles, IDeployment } from './types';
+import { preSort } from './utils/sorter';
+import { BANNERLORD_EXEC, EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID } from './common';
+import { IAddedFiles, IDeployment, VortexViewModel } from './types';
+import { VortexLauncherManager } from './utils/VortexLauncherManager';
+import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { setSortOnDeploy } from './actions';
 
-const setSortOnDeploy = createAction(`${EXTENSION_BASE_ID}_SET_SORT_ON_DEPLOY`, (profileId: string, sort: boolean) => ({ profileId, sort }));
+let launcherManager: VortexLauncherManager;
 
 const reducer: types.IReducerSpec = {
     reducers: {
       [setSortOnDeploy as any]: (state, payload) => util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
+      [actions.setLoadOrder as any]: (state, payload) => util.setSafe(state, [payload.id], payload.order),
     },
     defaults: {
       sortOnDeploy: {},
     },
 };
-
-const manager = createVortexExtensionManager();
 
 const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.IDiscoveryResult): void => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
@@ -67,7 +67,7 @@ const addModdingTool = (context: types.IExtensionContext, discovery: types.IDisc
   context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
 };
 
-const setup = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: vetypes.VortexExtensionManager): Promise<void> => {
+const setup = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
   
   // Quickly ensure that the official Launcher is added.
@@ -86,7 +86,7 @@ const setup = async (context: types.IExtensionContext, discovery: types.IDiscove
 }
 
 const main = (context: types.IExtensionContext): boolean => {
-  registerNativeCallbacks(context, manager);
+  launcherManager = new VortexLauncherManager(context);
   
   // Register reducer
   context.registerReducer([`settings`, `mountandblade2`], reducer);
@@ -108,10 +108,10 @@ const main = (context: types.IExtensionContext): boolean => {
     mergeMods: true,
     queryPath: findGame,
     queryModPath: () => `.`,
-    getGameVersion: (_gamePath, _exePath) => Promise.resolve(manager.getGameVersion()),
+    getGameVersion: (_gamePath, _exePath) => launcherManager.getGameVersionVortex(),
     logo: `gameart.jpg`,
     executable: () => BANNERLORD_EXEC,
-    setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, manager)),
+    setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
     requiredFiles: [ BANNERLORD_EXEC ],
     parameters: [],
     requiresCleanup: true,
@@ -146,48 +146,57 @@ const main = (context: types.IExtensionContext): boolean => {
     createInfoPanel: (props) => React.createElement(LoadOrderInfoPanel, {...props}) as any,
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
-    preSort: (items, _sortDir, updateType?) => preSort(context, manager, items, updateType) as any,
-    callback: (loadOrder) => manager.refreshGameParameters(loadOrder),
-    itemRenderer: ((props: any) => React.createElement(LoadOrderItemRenderer, {...props, manager})) as any,
+    preSort: (items, _sortDir, updateType?) => preSort(context, launcherManager, items as VortexViewModel[], updateType) as any,
+    callback: (loadOrder) => launcherManager.setLoadOrder(loadOrder as ILoadOrder),
+    itemRenderer: ((props: any) => React.createElement(LoadOrderItemRenderer, {...props, launcherManager: launcherManager})) as any,
+  });
+
+  context.registerMainPage('savegame', 'Saves', SaveList, {
+    id: 'bannerlord-saves',
+    hotkey: 'A',
+    group: 'per-game',
+    visible: () => {
+      if (context.api.store === undefined) {
+        return false;
+      }
+      return selectors.activeGameId(context.api.store.getState()) === GAME_ID;
+    },
+    props: () => ({
+      t: context.api.translate,
+      launcherManager: launcherManager,
+    }),
   });
 
   // Register Installer.
-  const testModulePromise = (files: string[], gameId: string) => Promise.resolve(manager.testModule(files, gameId));
-  const installModulePromise = (files: string[], destinationPath: string) => Promise.resolve(manager.installModule(files, destinationPath));
-  context.registerInstaller(`bannerlordmodules`, 25, testModulePromise, installModulePromise);
+  context.registerInstaller(`bannerlordmodules`, 25, launcherManager.testModuleVortex, launcherManager.installModuleVortex);
 
   // Register AutoSort button
-  const autoSortIcon = manager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = () => { manager.sort(); };
+  const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
+  const autoSortAction = () => { launcherManager.sort(); };
   const autoSortCondition = () => {
     const state = context.api.store?.getState();
     const gameId = selectors.activeGameId(state);
     return (gameId === GAME_ID);
   };
   context.registerAction(`generic-load-order-icons`, 200, autoSortIcon, {}, `Auto Sort`, autoSortAction, autoSortCondition);
+  context.registerAction(`generic-load-order-icons`, 300, `open-ext`, {}, `Test Dialog`, () => { launcherManager.dialogTestWarning(); }, () => true);
+  context.registerAction(`generic-load-order-icons`, 400, `open-ext`, {}, `Test File`, () => { launcherManager.dialogTestFileOpen(); }, () => true);
 
   // Register Callbacks
   context.once(toBluebird<void>(async () => {
-    //context.api.onAsync(`did-deploy`, async (profileId: string, _deployment: IDeployment) => manager.refreshModules(profileId));
-    context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => manager.setLoadOrder(manager.getLoadOrder()));
+    context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => launcherManager.refreshModulesVortex());
 
-    //context.api.onAsync(`did-purge`, async (profileId: string) => manager.refreshModules(profileId));
-    context.api.onAsync(`did-purge`, async (_profileId: string) => manager.setLoadOrder(manager.getLoadOrder()));
+    context.api.onAsync(`did-purge`, async (_profileId: string) => launcherManager.refreshModulesVortex());
 
-    context.api.events.on(`gamemode-activated`, (_gameMode: string) => {
-      manager.setLoadOrder(manager.getLoadOrder());
-      //const state = context.api.getState();
-      //const profile = selectors.activeProfile(state);
-      //manager.refreshModules(profile?.id);
-    });
+    context.api.events.on(`gamemode-activated`, (_gameMode: string) => launcherManager.refreshModulesVortex());
 
     context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
       const state = context.api.store?.getState();
       const profile = selectors.profileById(state, profileId);
-      // don't care about any other games - or if the profile is no longer valid.
       if (profile.gameId !== GAME_ID) {
         return;
       }
+
       const game = util.getGame(GAME_ID);
       const discovery = selectors.discoveryByGame(state, GAME_ID);
       const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : { };
@@ -219,9 +228,7 @@ const main = (context: types.IExtensionContext): boolean => {
           }
         }
       });
-
     });
-
   }));
 
   return true;

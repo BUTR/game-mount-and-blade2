@@ -8,7 +8,7 @@ export class LoadOrderInfoPanelClass extends React.Component<IInfoPanelProps, {}
 		super(props);
 	}
 
-	render(): React.ReactNode {
+	render = (): React.ReactNode => {
 		return (<LoadOrderInfoPanel {...this.props} ></LoadOrderInfoPanel>)
 	}
 }

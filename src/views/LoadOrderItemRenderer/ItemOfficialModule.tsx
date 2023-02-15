@@ -1,31 +1,27 @@
 import * as React from 'react';
 import * as BS from 'react-bootstrap';
-import { types } from "vortex-api";
-import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-import { types as vetypes } from '@butr/vortexextensionnative';
 import { TW_LOGO } from '../../common';
+import { versionToString } from '../../utils/util';
+import { VortexViewModel } from '../../types';
 
 export type ItemOfficialModuleProps = {
-  item: types.ILoadOrderDisplayItem,
-  order: ILoadOrder,
-  onStatusChange: (evt: React.FormEvent<BS.Checkbox>, item: types.ILoadOrderDisplayItem) => void,
-  issues: vetypes.ModuleIssue[],
+  item: VortexViewModel,
+  onStatusChange: (evt: React.FormEvent<BS.Checkbox>) => void,
 };
 
 export const ItemOfficialModule = (props: ItemOfficialModuleProps): JSX.Element => {
-  const { item, order, onStatusChange, issues } = props;
+  const { item, onStatusChange } = props;
 
-  const index = Array.isArray(order) ? order.indexOf(item.id) : -1;
-  const isInvalid = issues.length !== 0;
-  const isEnabled = !isInvalid && index !== -1;
-  const text = `${item.name} (${item.version})`
+  const isInvalid = !item.isValid;
+  const isEnabled = !isInvalid && item.index !== -1 && item.isSelected;
+  const text = `${item.name} (${versionToString(item.moduleInfo.version)})`
 
   return (
     <div style={{ display: `flex`, alignItems: `center` }}>
       <BS.Checkbox
         checked={isEnabled}
         disabled={isInvalid}
-        onChange={evt => onStatusChange(evt, item)}
+        onChange={onStatusChange}
         >
         <img
             src={TW_LOGO}

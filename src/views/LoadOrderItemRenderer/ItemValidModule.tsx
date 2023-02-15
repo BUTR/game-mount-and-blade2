@@ -1,29 +1,26 @@
 import * as React from 'react';
 import * as BS from 'react-bootstrap';
-import { types } from "vortex-api";
-import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-import { types as vetypes } from '@butr/vortexextensionnative';
 import { MODULE_LOGO } from '../../common';
+import { versionToString } from '../../utils/util';
+import { VortexViewModel } from '../../types';
 
 export type ItemValidModuleProps = {
-  item: types.ILoadOrderDisplayItem,
-  order: ILoadOrder,
-  onStatusChange: (evt: any, item: types.ILoadOrderDisplayItem) => void,
-  issues: vetypes.ModuleIssue[],
+  item: VortexViewModel,
+  onStatusChange: (evt: any) => void,
 };
 
 export const ItemValidModule = (props: ItemValidModuleProps): JSX.Element => {
-  const { item, order, onStatusChange, issues } = props;
+  const { item, onStatusChange } = props;
 
-  const isInvalid = issues.length !== 0;
-  const isEnabled = !isInvalid && order[item.id].enabled;
-  const text = `${item.name} (${item.version})`
+  const isInvalid = !item.isValid;
+  const isEnabled = !isInvalid && item.isSelected;
+  const text = `${item.name} (${versionToString(item.moduleInfo.version)})`;
 
   return (
     <BS.Checkbox
       checked={isEnabled}
       disabled={isInvalid}
-      onChange={evt => onStatusChange(evt, item)}
+      onChange={onStatusChange}
     >
       <img
         src={MODULE_LOGO}

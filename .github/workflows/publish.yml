@@ -28,9 +28,6 @@ jobs:
     # We need to build some repositories with windows specific code
     - run: npm install -g autogypi
 
-    # Remove the file based package used for development and install the latest available on NPM
-    - run: npm uninstall @butr/vortexextensionnative && npm install @butr/vortexextensionnative
-
     - run: npm ci
 
     - run: npm run build

@@ -1,12 +1,9 @@
 import * as React from 'react';
 import * as BS from 'react-bootstrap';
-import { withTranslation } from "react-i18next";
 import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
-import { ComponentEx, actions, FlexLayout, selectors, util, types } from "vortex-api";
-import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { ComponentEx, FlexLayout, selectors, util, types } from "vortex-api";
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { IItemRendererProps, IMods } from "../../types";
+import { IItemRendererProps, VortexViewModel, ModsStorage, VortexLoadOrderEntry } from "../../types";
 
 import { IconNonVortex } from './IconNonVortex';
 import { IconIssues } from './IconIssues';
@@ -14,73 +11,61 @@ import { IconDependencies } from './IconDependencies';
 import { ItemOfficialModule } from './ItemOfficialModule';
 import { ItemValidModule } from './ItemValidModule';
 import { ButtonOpenDir } from './ButtonOpenDir';
-import { getModuleIssues } from '../../utils/subModCache';
-import { GAME_ID } from '../../common';
-
-const NAMESPACE = `mnb2-customrenderer`;
+import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
 
 interface IStateProps {
   profile: types.IProfile;
   modsPath: string;
   installPath: string;
-  mods: IMods;
-  order: ILoadOrder;
-}
-interface IDispatchProps {
-  onSetLoadOrderEntry: (profileId: string, modId: string, entry: types.ILoadOrderEntry) => void;
-  onSetDeploymentRequired: () => void;
-}
+  mods: ModsStorage;
+};
 type IOwnProps = IItemRendererProps & {
-  manager: vetypes.VortexExtensionManager
+  launcherManager: VortexLauncherManager;
 };
 
 interface IBaseState {
   offset: { x: number, y: number };
   issues: vetypes.ModuleIssue[];
-}
+};
 
-type IComponentProps = IStateProps & IDispatchProps & IOwnProps;
+type IComponentProps = IStateProps & IOwnProps;
 type IComponentState = IBaseState;
 class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
   constructor(props: IComponentProps) {
     super(props);
     this.state = {
       offset: { x: 0, y: 0 },
-      issues: getModuleIssues(props.item.id),
+      issues: props.launcherManager.getModuleIssues(props.item.id),
     };
-
-    //this.onStatusChange = this.onStatusChange.bind(this);
-    this.renderAddendum = this.renderAddendum.bind(this);
-    this.renderItem = this.renderItem.bind(this);
   }
 
-  onStatusChange(evt: any, item: types.ILoadOrderDisplayItem): void {
-    const { profile, order, onSetLoadOrderEntry } = this.props;
+  onStatusChange = (evt: any): void => {
+    const { profile, item, launcherManager } = this.props;
     
-    const index = Array.isArray(order) ? order.indexOf(item.id) : -1;
-    const entry: types.ILoadOrderEntry & { pos: number} = {
-      pos: index,
-      id: item.id,
-      name: item.name,
+    const entry: VortexLoadOrderEntry = {
+      pos: item.index,
       enabled: evt.target.checked,
       locked: false,
+      data: {
+        id: item.id,
+        name: item.name,
+        isSelected: evt.target.checked,
+        index: item.index
+      }
     };
 
-    onSetLoadOrderEntry(profile.id, item.id, entry);
+    launcherManager.setLoadOrderEntry(profile.id, item.id, entry);
   };
 
-  renderItem(item: types.ILoadOrderDisplayItem): JSX.Element {
-    const { order } = this.props;
-    const { issues } = this.state;
-  
+  renderItem = (item: VortexViewModel): JSX.Element => { 
     if (item.official) {
-      return ItemOfficialModule({ item: item, order, onStatusChange: this.onStatusChange, issues: issues });
+      return ItemOfficialModule({ item: item, onStatusChange: this.onStatusChange });
     }
 
-    return ItemValidModule({ item: item, order, onStatusChange: this.onStatusChange, issues: issues });
+    return ItemValidModule({ item: item, onStatusChange: this.onStatusChange });
   };
 
-  renderAddendum(): JSX.Element {
+  renderAddendum = (): JSX.Element => {
     const { item, mods, modsPath, installPath } = this.props;
     const { issues } = this.state;
 
@@ -88,15 +73,15 @@ class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState
       <React.Fragment>
         {IconIssues({ item: item, issues: issues })}
         {IconDependencies({ item: item })}
-        {IconNonVortex({ item: item, mods: mods })}
+        {IconNonVortex({ item: item })}
         {ButtonOpenDir({ item: item, mods: mods, modsPath: modsPath, installPath: installPath })}
       </React.Fragment>
     );
   };
 
-  render(): JSX.Element {
-    const { order, className, item, onRef } = this.props;
-    const position = (!item.prefix) ? item.prefix : order[item.id].pos + 1;
+  render = (): JSX.Element => {
+    const { className, item, onRef } = this.props;
+    const position = (!item.prefix) ? item.prefix : item.index + 1;
 
     let classes = [`load-order-entry`];
     if (className !== undefined) {
@@ -140,7 +125,7 @@ class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState
 
 }
 
-const mapState = (state: types.IState, ownProps: IOwnProps): IStateProps => {
+const mapState = (state: types.IState, _ownProps: IOwnProps): IStateProps => {
   const profile = selectors.activeProfile(state);
   const game = util.getGame(profile.gameId);
   const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, profile.gameId);
@@ -150,13 +135,8 @@ const mapState = (state: types.IState, ownProps: IOwnProps): IStateProps => {
     profile,
     modsPath,
     installPath,
-    mods: util.getSafe<IMods>(state, [`persistent`, `mods`, profile.gameId], {}),
-    order: ownProps.manager.getLoadOrder(),
+    mods: util.getSafe<ModsStorage>(state, [`persistent`, `mods`, profile.gameId], {}),
   };
 };
-const mapDispatch = (dispatch: Dispatch, _ownProps: IOwnProps): IDispatchProps => ({
-  onSetLoadOrderEntry: (profileId, modId, entry) => dispatch(actions.setLoadOrderEntry(profileId, modId, entry)),
-  onSetDeploymentRequired: () => dispatch(actions.setDeploymentNecessary(GAME_ID, true)),
-});
 
-export default withTranslation([`common`, NAMESPACE])(connect(mapState, mapDispatch)(LoadOrderItemRenderer));
+export default connect(mapState)(LoadOrderItemRenderer);
