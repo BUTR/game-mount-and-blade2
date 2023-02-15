@@ -10,9 +10,10 @@
         "issueTracker": "https://github.com/BUTR/game-mount-and-blade2/issues"
     },
     "scripts": {
-        "build-full": "pwsh ./build.ps1",
-        "build-full-debug": "pwsh ./build.ps1",
-        "build-full-light": "pwsh ./build-light.ps1",
+        "build": "pwsh ./build.ps1",
+        "build-debug": "pwsh ./build.ps1",
+        "build-light": "pwsh ./build-light.ps1",
+        "build-pack": "npm run webpack && extractInfo",
         "clean": "shx rm *.tgz && shx rm *.7z && shx rm -rf ./dist",
         "clear-caches": "jest --clearCache",
         "lint": "eslint -c .eslintrc.build.json src test",
@@ -21,7 +22,6 @@
         "test-debug": "jest --clearCache && node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --verbose=true --silent=false --no-cache",
         "repl": "ts-node -r tsconfig-paths/register",
         "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --color",
-        "build": "npm run webpack && extractInfo",
         "bundle7z": "7z a -t7z game-mount-and-blade2.7z ./dist/*.*"
     },
     "devDependencies": {

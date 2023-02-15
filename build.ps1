@@ -32,6 +32,6 @@ if (Test-Path "$ExtensionPath") {
 }
 
 Invoke-Command -ScriptBlock {
-   npm run build;
+   npm run build-pack;
    npm run bundle7z;
 }
