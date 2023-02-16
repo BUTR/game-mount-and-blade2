@@ -48,7 +48,6 @@
         "eslint": "^8.34.0",
         "eslint-config-airbnb-typescript": "^16.1.1",
         "eslint-plugin-import": "^2.25.4",
-        "exe-version": "github:Nexus-Mods/node-exe-version",
         "glob": "^8.0.3",
         "i18next": "^21.0.0",
         "lint-staged": "^12.3.5",
@@ -64,12 +63,10 @@
         "ts-loader": "^6.0.4",
         "ts-node": "^10.7.0",
         "tsconfig-paths": "^3.13.0",
-        "turbowalk": "github:Nexus-Mods/node-turbowalk",
         "typescript": "^4.5.0",
         "vortex-api": "github:Nexus-Mods/vortex-api",
         "webpack": "^4.35.0",
-        "webpack-cli": "^4.9.2",
-        "xml2js": "^0.4.23"
+        "webpack-cli": "^4.9.2"
     },
     "dependencies": {
         "@butr/vortexextensionnative": "file:butr-vortexextensionnative-1.0.0.tgz"
