@@ -1,0 +1,17 @@
+{
+	"name": "NodeJS & Powershell & 7z",
+	"image": "mcr.microsoft.com/vscode/devcontainers/base:debian",
+
+	"features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "16.19.0",
+            "nodeGypDependencies": "false"
+        },
+		"ghcr.io/devcontainers/features/powershell:1": {
+			"version": "latest"
+		},
+		"ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+			"packages": "p7zip-full"
+		}
+	}
+}

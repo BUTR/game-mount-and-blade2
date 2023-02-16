@@ -1,7 +1,7 @@
 const webpack = require('vortex-api/bin/webpack');
 const CopyPlugin = require("copy-webpack-plugin");
 
-const config = webpack.default('game-mount-and-blade2', __dirname, 5);
+const config = webpack.default('game-mount-and-blade2', __dirname, 4);
 config.plugins.push(new CopyPlugin({
     patterns: [
         { from: "**/Bannerlord.LauncherManager.Native.dll", to: "[name].[ext]" },

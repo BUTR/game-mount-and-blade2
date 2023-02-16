@@ -25,15 +25,10 @@ jobs:
       with:
         node-version: 16.x
 
-    # Remove the file based package used for development and install the latest available on NPM
-    - run: npm uninstall @butr/vortexextensionnative && npm install @butr/vortexextensionnative
-
     - run: npm ci
 
     - run: npm run build
     
-    - run: npm run bundle7z
-
     - uses: actions/upload-artifact@v3
       with:
         name: game-mount-and-blade2

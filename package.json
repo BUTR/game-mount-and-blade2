@@ -10,19 +10,16 @@
         "issueTracker": "https://github.com/BUTR/game-mount-and-blade2/issues"
     },
     "scripts": {
-        "build": "pwsh ./build.ps1",
-        "build-debug": "pwsh ./build.ps1",
-        "build-light": "pwsh ./build-light.ps1",
-        "build-pack": "npm run webpack && extractInfo",
-        "clean": "shx rm *.tgz && shx rm *.7z && shx rm -rf ./dist",
-        "clear-caches": "jest --clearCache",
+        "build": "npm run webpack && extractInfo && npm run bundle7z",
+        "build-update": "npm update @butr/vortexextensionnative && npm run buils",
+        "clean": "pwsh -Command Remove-Item *.tgz, *.7z, dist -Recurse -Force -ErrorAction Ignore",
         "lint": "eslint -c .eslintrc.build.json src test",
         "lint-fix": "eslint -c .eslintrc.build.json --fix src test && prettier --write",
         "pre-commit": "lint-staged",
         "test-debug": "jest --clearCache && node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --verbose=true --silent=false --no-cache",
         "repl": "ts-node -r tsconfig-paths/register",
         "webpack": "node ./node_modules/webpack/bin/webpack --config webpack.config.js --color",
-        "bundle7z": "7z a -t7z game-mount-and-blade2.7z ./dist/*.*"
+        "bundle7z": "pwsh -Command 7z a -t7z game-mount-and-blade2.7z dist/*.*"
     },
     "devDependencies": {
         "@types/bluebird": "^3.5.20",
@@ -40,7 +37,6 @@
         "@types/xml2js": "^0.4.11",
         "@typescript-eslint/eslint-plugin": "^5.52.0",
         "@typescript-eslint/parser": "^5.52.0",
-        "7z-bin": "github:Nexus-Mods/7z-bin",
         "bluebird": "^3.7.2",
         "collections": "github:Nexus-Mods/extension-collections",
         "copy-webpack-plugin": "^6.4.1",
@@ -69,6 +65,6 @@
         "webpack-cli": "^4.9.2"
     },
     "dependencies": {
-        "@butr/vortexextensionnative": "file:butr-vortexextensionnative-1.0.0.tgz"
+        "@butr/vortexextensionnative": "^1.0.38"
     }
 }
