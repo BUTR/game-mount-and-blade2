@@ -4,7 +4,7 @@
 
 	"features": {
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "16.19.0",
+            "version": "16.19.1",
             "nodeGypDependencies": "false"
         },
 		"ghcr.io/devcontainers/features/powershell:1": {
