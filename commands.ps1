@@ -62,7 +62,7 @@ try {
 
         Invoke-Command -ScriptBlock {
             npx extractInfo;
-            7z a -t7z game-mount-and-blade2.7z dist/*.*;
+            7z a -t7z game-mount-and-blade2.7z ./dist/*.*;
         }
     }
 }
