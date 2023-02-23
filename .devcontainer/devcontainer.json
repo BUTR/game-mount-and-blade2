@@ -11,5 +11,8 @@
 		"ghcr.io/devcontainers/features/powershell:1": {
 			"version": "latest"
 		}
-	}
+	},
+	"mounts": [
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins,target=/vortex-plugins,type=bind,consistency=default"
+	]
 }

@@ -184,11 +184,25 @@ const main = (context: types.IExtensionContext): boolean => {
 
   // Register Callbacks
   context.once(toBluebird<void>(async () => {
-    context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => launcherManager.refreshModulesVortex());
+    context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => {
+      const state = context.api.store?.getState();
+      const gameId = selectors.activeGameId(state);
+      if (gameId !== GAME_ID) {
+        return;
+      }
+      launcherManager.refreshModulesVortex();
+    });
 
-    context.api.onAsync(`did-purge`, async (_profileId: string) => launcherManager.refreshModulesVortex());
+    context.api.onAsync(`did-purge`, async (_profileId: string) => {
+      const state = context.api.store?.getState();
+      const gameId = selectors.activeGameId(state);
+      if (gameId !== GAME_ID) {
+        return;
+      }
+      launcherManager.refreshModulesVortex();
+    });
 
-    context.api.events.on(`gamemode-activated`, (_gameMode: string) => launcherManager.refreshModulesVortex());
+    context.api.events.on(`gamemode-activated`, (_gameMode: string) => GAME_ID === _gameMode ? launcherManager.refreshModulesVortex() : null);
 
     context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
       const state = context.api.store?.getState();

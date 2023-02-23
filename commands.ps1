@@ -62,7 +62,14 @@ try {
 
         Invoke-Command -ScriptBlock {
             npx extractInfo;
-            7z a -t7z game-mount-and-blade2.7z ./dist/*.*;
+            7z a -t7z "game-mount-and-blade2.7z" "./dist/*.*";
+        }
+    }
+    # Copy to Vortex if available
+    if ($type -eq "build" -or $type -eq "build-extended" -or $type -eq "build-update" -or $type -eq "build-webpack" -or $type -eq "build-7z") {
+        if (Test-Path -Path "/vortex-plugins/game-mount-and-blade2") {
+            Write-Host "Copy dist to Vortex plugins mount";
+            Copy-Item "./dist" -Destination "/vortex-plugins/game-mount-and-blade2"
         }
     }
 }
