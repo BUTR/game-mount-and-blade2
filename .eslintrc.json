@@ -1,51 +1,34 @@
 {
   "extends": [
-    "airbnb-base",
-    "airbnb-typescript/base",
     "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:prettier/recommended",
     "plugin:@typescript-eslint/recommended"
   ],
-  "plugins": ["@typescript-eslint"],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": "./tsconfig.eslint.json"
-  },
+  "plugins": ["prettier", "react", "react-hooks", "@typescript-eslint"],
   "rules": {
-    "linebreak-style": "off",
-    "semi": ["error", "always"],
-    "curly": "error",
-    "indent": ["error", 2],
-    "max-len": ["error", {"code": 300, "ignoreComments": true, "ignoreUrls": true, "ignoreStrings": true, "ignoreTemplateLiterals": true}],
-    "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
-    "func-style": ["error", "expression"],
-    "array-element-newline": ["error", "consistent"], //
-    "comma-dangle": ["error", "always-multiline"],
-    "arrow-body-style": ["error", "as-needed"],
-    "implicit-arrow-linebreak": ["warn", "beside"],
-    "operator-linebreak": ["error", "after", {"overrides": {"?": "before", ":": "before", "|": "before", ">": "before", "<": "before"}}],
-    //"@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-    "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/quotes": ["error", "backtick"],
-    "@typescript-eslint/consistent-type-assertions": ["warn", { "assertionStyle": "as", "objectLiteralTypeAssertions": "never" }],
-    "@typescript-eslint/explicit-function-return-type": "warn",
-    "default-param-last": "off",
-    "@typescript-eslint/default-param-last": "warn",
-    "@typescript-eslint/no-base-to-string": "warn",
-    "@typescript-eslint/no-confusing-void-expression": "warn",
-    "@typescript-eslint/no-inferrable-types": "warn",
-    "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/no-empty-interface": "off",
-    "import/extensions": ["error", { "ignorePackages": true, "js": "never", "jsx": "never", "ts": "never", "tsx": "never" }],
-    "import/prefer-default-export": "off",
-    "import/no-extraneous-dependencies": "off",
-    "no-debugger": "warn",
-    "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"],
-    "no-use-before-define": "off",
-    "@typescript-eslint/no-use-before-define": "off",
-
-    "import/no-cycle": ["warn", { "ignoreExternal": true }],
-    "max-classes-per-file": "off",
-    "no-param-reassign": ["warn", { "props": false }],
-    "@typescript-eslint/no-explicit-any": "off"
-  }
+    "eqeqeq": "error",
+    "no-console": "warn",
+    "prettier/prettier": "error",
+    "react/display-name": "off",
+    "react/no-children-prop": "off",
+    // if you use React 17+; otherwise, turn this on
+    "react/react-in-jsx-scope": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+    "jest": true
+  },
+  "ignorePatterns": ["node_modules", "build", "dist", "public"]
 }
