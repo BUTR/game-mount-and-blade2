@@ -67,9 +67,10 @@ try {
     }
     # Copy to Vortex if available
     if ($type -eq "build" -or $type -eq "build-extended" -or $type -eq "build-update" -or $type -eq "build-webpack" -or $type -eq "build-7z") {
-        if (Test-Path -Path "/vortex-plugins/game-mount-and-blade2") {
+        if (Test-Path -Path "/vortex-plugins") {
             Write-Host "Copy dist to Vortex plugins mount";
-            Copy-Item "./dist" -Destination "/vortex-plugins/game-mount-and-blade2"
+            Remove-Item "/vortex-plugins/game-mount-and-blade2" -Recurse -Force -ErrorAction Ignore;
+            Copy-Item "./dist" -Destination "/vortex-plugins/game-mount-and-blade2" -Recurse;
         }
     }
 }
