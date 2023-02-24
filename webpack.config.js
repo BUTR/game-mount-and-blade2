@@ -7,6 +7,7 @@ config.plugins.push(new CopyPlugin({
         { from: "**/Bannerlord.LauncherManager.Native.dll", to: "[name].[ext]" },
         { from: "assets/*.jpg", to: "[name].[ext]" },
         { from: "assets/*.png", to: "[name].[ext]" },
+        { from: "src/stylesheets/*.scss", to: "[name].[ext]" },
     ],
 }));
 config.module.rules.push({

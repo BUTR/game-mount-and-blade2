@@ -54,6 +54,7 @@ try {
 
         Invoke-Command -ScriptBlock {
             npx webpack --config webpack.config.js --color;
+            npx extractInfo;
         }
     }
     # 7z
@@ -61,7 +62,6 @@ try {
         Write-Host "Pack 7z";
 
         Invoke-Command -ScriptBlock {
-            npx extractInfo;
             7z a -t7z "game-mount-and-blade2.7z" "./dist/*.*";
         }
     }
