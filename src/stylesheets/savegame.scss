@@ -1,0 +1,31 @@
+#table-bannerlord-savegames {
+  .header-status {
+    min-width: 5;
+    max-width: 5em;
+  }
+  .header-dayLong {
+    min-width: 5em;
+    max-width: 5em;
+  }
+  .header-mainHeroLevel {
+    min-width: 5em;
+    max-width: 5em;
+  }
+  .header-applicationVersion {
+    min-width: 15em;
+    max-width: 15em;
+  }
+
+  .header-characterName {
+    min-width: 15em;
+    max-width: 15em;
+  }
+
+  .table-selected {
+    background-color: #ff7300;
+  }
+
+  .header-name {
+    width: 100%;
+  }
+}
