@@ -76,26 +76,3 @@ export interface IAddedFiles {
   filePath: string,
   candidates: string[]
 }
-
-/**
- * Bindings for FS
- */
-export type Dirent = {
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a regular file.
-   * @since v10.10.0
-   */
-  isFile(): boolean;
-  /**
-   * Returns `true` if the `fs.Dirent` object describes a file system
-   * directory.
-   * @since v10.10.0
-   */
-  isDirectory(): boolean;
-  /**
-   * The file name that this `fs.Dirent` object refers to. The type of this
-   * value is determined by the `options.encoding` passed to {@link readdir} or {@link readdirSync}.
-   * @since v10.10.0
-   */
-  name: string;
-}

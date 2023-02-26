@@ -15,9 +15,8 @@ import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextension
 import SaveEntry from './SaveListEntry';
 import { IItemRendererProps, IModuleCache } from '../../types';
 import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
-import semver from 'semver';
-import { ApplicationVersion } from '@butr/vortexextensionnative/dist/main/lib/types';
 import { versionToString } from '../../utils/util';
+import { getAvailableModulesByName, getLoadOrderIssues, getMismatchedModuleVersionsWarning, getMissingModuleNamesError, getModules, getNameDuplicatesError } from './saveUtils';
 
 interface IStateProps {}
 type IOwnProps = IItemRendererProps & {
@@ -27,25 +26,29 @@ type IOwnProps = IItemRendererProps & {
 interface IBaseState {
   saves: vetypes.SaveMetadata[];
   modules: Readonly<IModuleCache>;
+  // TODO: Move to the entry renderer
+  loadOrder: { [saveName: string]: string };
+  warningHints: { [saveName: string]: string | undefined };
+  errorHints: { [saveName: string]: string | undefined };
 }
 
-interface ISaveGame {
+export interface ISaveGame {
   name: string;
-  applicationVersion?: string;
-  creationTime?: string;
+  applicationVersion?: vetypes.ApplicationVersion;
+  creationTime?: number;
   characterName?: string;
-  mainHeroGold?: string;
-  mainHeroLevel?: string;
-  dayLong?: string;
+  mainHeroGold?: number;
+  mainHeroLevel?: number;
+  dayLong?: number;
   clanBannerCode?: string;
-  clanFiefs?: string;
-  clanInfluence?: string;
-  mainPartyFood?: string;
-  mainPartyHealthyMemberCount?: string;
-  mainPartyPrisonerMemberCount?: string;
-  mainPartyWoundedMemberCount?: string;
-  version?: string; // always a 1?
-  modules: { [name: string]: string }; // key value pair - name of module : version of module
+  clanFiefs?: number;
+  clanInfluence?: number;
+  mainPartyFood?: number;
+  mainPartyHealthyMemberCount?: number;
+  mainPartyPrisonerMemberCount?: number;
+  mainPartyWoundedMemberCount?: number;
+  version?: number; // always a 1?
+  modules: { [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
 }
 
 type IComponentProps = IStateProps & IOwnProps;
@@ -66,6 +69,9 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.initState({
       saves,
       modules,
+      loadOrder: { },
+      warningHints: { },
+      errorHints: { },
     });
 
     this.OnRefreshList();
@@ -99,48 +105,63 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       {
         id: 'characterName',
         name: 'Character',
-        calc: (saveGame: ISaveGame) => saveGame.characterName,
+        calc: (saveGame: ISaveGame) => saveGame.characterName ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'mainHeroLevel',
-        name: 'Levels',
-        calc: (saveGame: ISaveGame) => saveGame.mainHeroLevel,
+        name: 'Level',
+        calc: (saveGame: ISaveGame) => saveGame.mainHeroLevel ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'dayLong',
         name: 'Days',
-        calc: (saveGame: ISaveGame) => (saveGame.dayLong != undefined ? parseInt(saveGame.dayLong) : ''),
+        calc: (saveGame: ISaveGame) => saveGame.dayLong?.toFixed(0) ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'status',
         name: 'Status',
-        customRenderer: (saveGame: ISaveGame) => (
-          <tooltip.Icon
-            name="feedback-warning"
-            tooltip={'some tooltip text?' + saveGame.name}
-            style={{ color: `orange`, marginRight: `10` }}
-          />
-        ),
+        customRenderer: (saveGame: ISaveGame) => {
+          const { warningHints, errorHints } = this.state;
+          if (warningHints[saveGame.name] !== undefined) {
+            return (
+              <tooltip.Icon
+                name="feedback-warning"
+                tooltip={warningHints[saveGame.name]!}
+                style={{ color: `orange`, marginRight: `10` }}
+              />
+            )
+          }
+          if (errorHints[saveGame.name] !== undefined) {
+            return (
+              <tooltip.Icon
+                name="feedback-warning"
+                tooltip={errorHints[saveGame.name]!}
+                style={{ color: `red`, marginRight: `10` }}
+              />
+            )
+          }
+          return (<div></div>);
+        },
         placement: 'both',
         edit: {},
       },
       {
         id: 'applicationVersion',
         name: 'Version',
-        calc: (saveGame: ISaveGame) => saveGame.applicationVersion,
+        calc: (saveGame: ISaveGame) => saveGame.applicationVersion != undefined ? versionToString(saveGame.applicationVersion) : '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'creationTime',
         name: 'Created At',
-        calc: (saveGame: ISaveGame) => saveGame.creationTime,
+        calc: (saveGame: ISaveGame) => saveGame.creationTime ?? '',
         placement: 'both',
         edit: {},
       },
@@ -213,28 +234,29 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.savesDict = saves.reduce((prev: { [name: string]: ISaveGame }, current) => {
       const saveGame: ISaveGame = {
         name: current.Name,
-        applicationVersion: current.ApplicationVersion,
-        creationTime: current.CreationTime,
+        applicationVersion: current.ApplicationVersion !== undefined ? BannerlordModuleManager.parseApplicationVersion(current.ApplicationVersion) : undefined,
+        creationTime: current.CreationTime !== undefined ? parseInt(current.CreationTime) : undefined,
         characterName: current.CharacterName,
-        mainHeroGold: current.MainHeroGold,
-        mainHeroLevel: current.MainHeroLevel,
-        dayLong: current.DayLong,
+        mainHeroGold: current.MainHeroGold !== undefined ? parseInt(current.MainHeroGold) : undefined,
+        mainHeroLevel: current.MainHeroLevel !== undefined ? parseInt(current.MainHeroLevel) : undefined,
+        dayLong: current.DayLong !== undefined ? parseFloat(current.DayLong) : undefined,
 
         clanBannerCode: current.ClanBannerCode,
-        clanFiefs: current.ClanFiefs,
-        clanInfluence: current.ClanInfluence,
+        clanFiefs: current.ClanFiefs !== undefined ? parseInt(current.ClanFiefs) : undefined,
+        clanInfluence: current.ClanInfluence !== undefined ? parseFloat(current.ClanInfluence) : undefined,
 
-        mainPartyFood: current.MainPartyFood,
-        mainPartyHealthyMemberCount: current.MainPartyHealthyMemberCount,
-        mainPartyPrisonerMemberCount: current.MainPartyPrisonerMemberCount,
-        mainPartyWoundedMemberCount: current.MainPartyWoundedMemberCount,
-        version: current.Version,
+        mainPartyFood: current.MainPartyFood !== undefined ? parseFloat(current.MainPartyFood) : undefined,
+        mainPartyHealthyMemberCount: current.MainPartyHealthyMemberCount !== undefined ? parseInt(current.MainPartyHealthyMemberCount) : undefined,
+        mainPartyPrisonerMemberCount: current.MainPartyPrisonerMemberCount !== undefined ? parseInt(current.MainPartyPrisonerMemberCount) : undefined,
+        mainPartyWoundedMemberCount: current.MainPartyWoundedMemberCount !== undefined ? parseInt(current.MainPartyWoundedMemberCount) : undefined,
+        version: current.Version !== undefined ? parseInt(current.Version) : undefined,
         modules: {}, // blank dictionary for now
       };
-
+      
       // build up modules dictionary?
       const moduleNames: string[] = current.Modules.split(';');
 
+      const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
       for (const module of moduleNames) {
         const key: string = module;
         const value: string = current['Module_' + module];
@@ -242,9 +264,15 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
         // skip this if it's undefined
         if (value == undefined) continue;
 
-        saveGame.modules[key] = value;
+        const version = BannerlordModuleManager.parseApplicationVersion(value);
+        if (version.changeSet === saveChangeSet) {
+          version.changeSet = 0;
+        }
+        saveGame.modules[key] = version;
       }
 
+      this.ParseSave(saveGame);
+      this.ValidateSave(saveGame);
       prev[current.Name] = saveGame;
 
       return prev;
@@ -305,6 +333,71 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     console.log(saveGame);
     launcherManager.setGameParameterSaveFile(saveGame.name);
   }
+
+  private ParseSave(saveGame: ISaveGame) {
+    const { launcherManager } = this.props;
+    const { loadOrder } = this.state;
+
+    const availableModules = launcherManager.getModulesVortex();
+    const availableModulesByName = getAvailableModulesByName(availableModules);
+    const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', { });
+    const modules = Object.keys(saveGame.modules).map(current => {
+      return availableModulesByName[current]?.id ?? `${current} ${unknownId}`;
+    }).filter(x => x !== undefined);
+
+    loadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', { 
+      'LOADORDER': modules.join('\n')
+    });
+    this.setState({ loadOrder });
+  }
+
+  private ValidateSave(saveGame: ISaveGame) {
+    const { launcherManager } = this.props;
+    const { warningHints, errorHints } = this.state;
+
+    warningHints[saveGame.name] = undefined;
+    errorHints[saveGame.name] = undefined;
+
+    const availableModules = launcherManager.getModulesVortex();
+
+    const nameDuplicates = getNameDuplicatesError(saveGame, launcherManager, availableModules);
+    if (nameDuplicates !== undefined) {
+      errorHints[saveGame.name] = launcherManager.localize('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', { 
+        'MODULENAMES': Object.values(nameDuplicates).join('\n')
+      });
+      this.setState({ errorHints });
+      return;
+    }
+
+    const loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, availableModules);
+    const missingModules = getMissingModuleNamesError(saveGame, launcherManager, availableModules);
+    if (loadOrderIssues.length > 0 || missingModules.length > 0) {
+      let str = '';
+      if (loadOrderIssues.length > 0) {
+        str += launcherManager.localize('{=HvvA78sZ}Load Order Issues:{NL}{LOADORDERISSUES}', {
+          'LOADORDERISSUES': loadOrderIssues.join('\n\n')
+        });
+        str += missingModules !== undefined ? '\n\n\n' : '';
+      }
+      if (missingModules.length > 0) {
+        str += launcherManager.localize('{=GtDRbC3m}Missing Modules:{NL}{MODULES}', {
+          'MODULES': missingModules.join('\n')
+        });
+      }
+      errorHints[saveGame.name] = str;
+      this.setState({ errorHints });
+      return;
+    }
+
+    const mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+    if (mismatchedModuleVersions !== undefined) {
+      warningHints[saveGame.name] = launcherManager.localize('{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}', { 
+        'MODULEVERSIONS': mismatchedModuleVersions
+      });
+      this.setState({ warningHints });
+    }
+  }
+
 }
 
 export default SaveList;

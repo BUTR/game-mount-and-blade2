@@ -8,6 +8,7 @@ config.plugins.push(new CopyPlugin({
         { from: "assets/*.jpg", to: "[name].[ext]" },
         { from: "assets/*.png", to: "[name].[ext]" },
         { from: "src/stylesheets/*.scss", to: "[name].[ext]" },
+        { from: "assets/localization", to: "localization" },
     ],
 }));
 config.module.rules.push({
