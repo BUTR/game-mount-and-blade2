@@ -6,9 +6,9 @@ import { LoadOrderItemRenderer } from './views/LoadOrderItemRenderer';
 import { LoadOrderInfoPanel } from './views/LoadOrderInfoPanel';
 import { Settings } from './views/Settings';
 import SaveList from './views/Saves/SaveList';
-import { findGame, prepareForModding } from './utils/util';
+import { findGame, getBannerlordExec, prepareForModding, requiresLauncher } from './utils/util';
 import { preSort } from './utils/sorter';
-import { BANNERLORD_EXEC, EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID } from './common';
+import { EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
 import { IAddedFiles, IDeployment, VortexViewModel } from './types';
 import { VortexLauncherManager } from './utils/VortexLauncherManager';
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
@@ -110,15 +110,17 @@ const main = (context: types.IExtensionContext): boolean => {
     queryModPath: () => `.`,
     getGameVersion: (_gamePath, _exePath) => launcherManager.getGameVersionVortex(),
     logo: `gameart.jpg`,
-    executable: () => BANNERLORD_EXEC,
+    executable: (discoveryPath) => getBannerlordExec(discoveryPath, context.api),
     setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
-    requiredFiles: [ BANNERLORD_EXEC ],
+    requiresLauncher: (gamePath, store) => requiresLauncher(store) as any,
+    requiredFiles: [],
     parameters: [],
     requiresCleanup: true,
     environment: { SteamAPPId: STEAMAPP_ID.toString() },
     details: {
       steamAppId: STEAMAPP_ID,
       epicAppId: EPICAPP_ID,
+      xboxId: XBOX_ID,
       customOpenModsPath: MODULES,
     },
   });
