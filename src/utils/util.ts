@@ -63,6 +63,7 @@ export const prepareForModding = async (context: types.IExtensionContext, discov
 
 export const getBannerlordExec = (discoveryPath: string|undefined, api: types.IExtensionApi): string => {
   const discovery: types.IDiscoveryResult = (api.getState().persistent.gameMode as any).discovered?.[GAME_ID];
+  if (!discovery) return BANNERLORD_EXEC;
   if (discovery.store === `xbox`) return BANNERLORD_EXEC_XBOX;
   if (!!discovery.store && [`gog`, `steam`, `epic`].includes(discovery.store)) return BANNERLORD_EXEC;
   if (!discovery.store && !!discoveryPath) {
@@ -71,7 +72,7 @@ export const getBannerlordExec = (discoveryPath: string|undefined, api: types.IE
       .then(() => BANNERLORD_EXEC_XBOX)
       .catch(() => BANNERLORD_EXEC);
   }
-  return ``;
+  return BANNERLORD_EXEC;
 };
 
 export const requiresLauncher = async (store?: string): Promise<{ launcher: string, addInfo?: any } | undefined> => {
