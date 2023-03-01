@@ -24,10 +24,13 @@ import {
   getModules,
   getNameDuplicatesError,
 } from './saveUtils';
+import ticksToDate from 'ticks-to-date';
+import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
 
 interface IStateProps {}
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
+  context: IExtensionContext;
 };
 
 interface IBaseState {
@@ -35,8 +38,6 @@ interface IBaseState {
   modules: Readonly<IModuleCache>;
   // TODO: Move to the entry renderer
   loadOrder: { [saveName: string]: string };
-  warningHints: { [saveName: string]: string | undefined };
-  errorHints: { [saveName: string]: string | undefined };
   currentlySelectedSaveGame: ISaveGame | undefined;
 }
 
@@ -57,6 +58,10 @@ export interface ISaveGame {
   mainPartyWoundedMemberCount?: number;
   version?: number; // always a 1?
   modules: { [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
+  duplicateModules?: string[];
+  loadOrderIssues?: string[];
+  missingModules?: string[];
+  mismatchedModuleVersions?: string[];
 }
 
 type IComponentProps = IStateProps & IOwnProps;
@@ -78,10 +83,12 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       saves,
       modules,
       loadOrder: {},
-      warningHints: {},
-      errorHints: {},
       currentlySelectedSaveGame: undefined,
     });
+
+    console.log(this.props);
+    console.log(props.context);
+    console.log(this.state);
 
     this.OnRefreshList();
 
@@ -94,7 +101,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
           icon: `refresh`,
           text: `Refresh List`,
           className: `load-order-refresh-list`,
-          onClick: this.OnRefreshList,
+          onClick: () => this.OnRefreshList(),
         }),
       },
     ];
@@ -150,7 +157,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       {
         id: 'creationTime',
         name: 'Created',
-        calc: (saveGame: ISaveGame) => saveGame.creationTime ?? '',
+        calc: (saveGame: ISaveGame) => ticksToDate(saveGame.creationTime)?.toLocaleString(),
         placement: 'both',
         edit: {},
       },
@@ -173,29 +180,48 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
-    const { warningHints, errorHints } = this.state;
+    /* brand colours
+     * --brand-success
+     * --brand-warning
+     * --brand-danger
+     */
 
-    if (warningHints[saveGame.name] !== undefined) {
-      return (
-        <tooltip.Icon
-          name="feedback-warning"
-          tooltip={warningHints[saveGame.name]!}
-          style={{ color: `orange`, marginRight: `10` }}
-        />
-      );
+    // default is all fine
+    let iconName = 'toggle-enabled';
+    let colorName = 'var(--brand-success)';
+    let issues: string[] = [];
+
+    // build up tooltip issues array, and colours if necessary
+    // warning is set first, anything else is error, if nothing then we just
+    // fallback to the default green
+
+    // warnings
+    if (saveGame.loadOrderIssues && saveGame.loadOrderIssues.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-warning)';
+      issues.push(saveGame.loadOrderIssues.length + ' load order issues');
     }
 
-    if (errorHints[saveGame.name] !== undefined) {
-      return (
-        <tooltip.Icon
-          name="feedback-warning"
-          tooltip={errorHints[saveGame.name]!}
-          style={{ color: `red`, marginRight: `10` }}
-        />
-      );
+    // errors
+    if (saveGame.missingModules && saveGame.missingModules.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(saveGame.missingModules.length + ' missing modules');
     }
 
-    return <tooltip.Icon name="toggle-enabled" tooltip="Good to go!" style={{ color: `green`, marginRight: `10` }} />;
+    if (saveGame.duplicateModules && saveGame.duplicateModules.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(saveGame.duplicateModules.length + ' duplicate modules');
+    }
+
+    if (saveGame.mismatchedModuleVersions && saveGame.mismatchedModuleVersions.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(saveGame.mismatchedModuleVersions.length + ' version mismatches');
+    }
+
+    return <tooltip.Icon name={iconName} tooltip={issues.join('\n')} style={{ color: colorName }} />;
   }
 
   private renderContent(saveActions: ITableRowAction[]) {
@@ -221,11 +247,8 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
                   actions={saveActions}
                   multiSelect={false}
                   hasActions={false}
-                  showDetails={true}
-                  onChangeSelection={(ids) => {
-                    this.OnSaveSelected(this.savesDict[ids[0]]);
-                    console.log(`BANNERLORD: onChangeSelection(${ids})`);
-                  }}
+                  showDetails={false}
+                  onChangeSelection={(ids) => this.OnChangeSelection(ids)}
                 />
               </FlexLayout.Flex>
 
@@ -237,29 +260,103 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     );
   }
 
-  private RenderSidebar(saveGame: ISaveGame | undefined): JSX.Element {
-    if (saveGame == undefined) {
-      return <h3>Choose a save game</h3>;
+  private OnChangeSelection(ids: string[]) {
+    console.log(`BANNERLORD: OnChangeSelection(${ids})`);
+
+    // get current state object
+    let { currentlySelectedSaveGame } = this.state;
+
+    const saveGame = this.savesDict[ids[0]];
+
+    //console.log(`BANNERLORD: OnSaveSelected(): previous= saveGame=`);
+    //console.log(currentlySelectedSaveGame);
+    //console.log(saveGame);
+    //console.log(this.state);
+
+    /** so so hacky to get a deselection row added
+     * this works by finding the element from the save game name.
+     * a save called 'New Save Game' is turned into an id called 'new-save-game_' for the row that can be selected
+     * we then detect if we are already clicking something that is selected, and remove the class 'table-selected' from
+     * its row, so it looks deselected. we then send an empty string back to the launcherManager and set
+     * currentlySelectedSaveGame as undefined to mimic
+     */
+
+    // replace defaults to only the first instance, so we need a small inline regex to do globally
+    const id = ids[0].replace(/ /g, '-').toLowerCase() + '_';
+    const element = document.getElementById(id);
+    console.log(element);
+    console.log(id);
+
+    if (currentlySelectedSaveGame != undefined) {
+      if (saveGame.name == currentlySelectedSaveGame.name) {
+        // matches so this is a second click
+        console.log(`BANNERLORD: OnSaveSelected(): we've clicked an already selected item. ${saveGame}`);
+
+        if (element != null) {
+          console.log(element);
+          element.className = element.className.replace(/(?:^|\s)table-selected(?!\S)/g, '');
+        }
+
+        this.OnSaveClear();
+        return;
+      } else {
+        // doesn't match so is a new item.
+        console.log(`BANNERLORD: OnSaveSelected(): this is a new item that's been clicked. ${saveGame}`);
+      }
     } else {
+      // no previous selected items
+      console.log(`BANNERLORD: OnSaveSelected(): first click of the day. ${saveGame}`);
+
+      if (element != null) {
+        console.log(element);
+        element.className += ' table-selected';
+      }
     }
+
+    this.OnSaveSelected(saveGame);
+  }
+
+  private RenderSidebar(saveGame: ISaveGame | undefined): JSX.Element {
+    // if nothing is selected
+    if (saveGame == undefined) {
+      return <></>;
+    }
+
+    // something is selected
     return (
       <>
-        <h3>{saveGame?.name}</h3>
-        <p>Instructions:</p>
-        <p>Something</p>
-        <p>Modules:</p>
-        <ul>
-          <li>One</li>
-          <li>Two</li>
-          <li>Three</li>
-          <li>Four</li>
-        </ul>
+        {<h3>{saveGame.name}</h3>}
+        {this.GetIssueRenderSnippet('Missing Modules:', saveGame.missingModules)}
+        {this.GetIssueRenderSnippet('Duplicate Modules:', saveGame.duplicateModules)}
+        {this.GetIssueRenderSnippet('Version Mismatches:', saveGame.mismatchedModuleVersions)}
+        {this.GetIssueRenderSnippet('Load Order issues:', saveGame.loadOrderIssues)}
       </>
     );
   }
 
+  private GetIssueRenderSnippet(issueHeading: string, issue: string[] | undefined): JSX.Element {
+    // if we have something in the issue array, then return that nicely formatted
+    if (issue && issue.length) {
+      return (
+        <>
+          <p>{issueHeading}</p>
+          <ul>
+            {issue.map((object, i) => (
+              <li key={i}>{object}</li>
+            ))}
+          </ul>
+        </>
+      );
+    }
+
+    // default to returning empty fragment
+    return <></>;
+  }
+
   private OnRefreshList() {
     const { launcherManager } = this.props;
+
+    console.log(this.props);
 
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
     const modules = launcherManager.getModulesVortex();
@@ -367,9 +464,31 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     console.log(this.savesDict);
     console.log(saves);
     console.log(modules);
+
+    // get current state object
+    let { currentlySelectedSaveGame } = this.state;
+  }
+
+  private OnSaveClear() {
+    const { launcherManager } = this.props;
+
+    // get current state object
+    let { currentlySelectedSaveGame } = this.state;
+
+    // update it
+    currentlySelectedSaveGame = undefined;
+
+    // save it
+    this.setState({ currentlySelectedSaveGame });
+
+    // need to send null but empty string will do
+    launcherManager.setGameParameterSaveFile('');
   }
 
   private OnSaveSelected(saveGame: ISaveGame) {
+    console.log(`BANNERLORD: OnSaveSelected() modules.length=${Object.keys(saveGame.modules).length} saveGame=`);
+    console.log(saveGame);
+
     const { launcherManager } = this.props;
 
     // get current state object
@@ -380,10 +499,6 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     // save it
     this.setState({ currentlySelectedSaveGame });
-
-    console.log('BANNERLORD: OnSaveSelected(): saveGame=');
-    console.log(saveGame);
-    console.log(this.state);
 
     launcherManager.setGameParameterSaveFile(saveGame.name);
   }
@@ -409,24 +524,27 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
   private ValidateSave(saveGame: ISaveGame) {
     const { launcherManager } = this.props;
-    const { warningHints, errorHints } = this.state;
-
-    warningHints[saveGame.name] = undefined;
-    errorHints[saveGame.name] = undefined;
 
     const availableModules = launcherManager.getModulesVortex();
 
-    const nameDuplicates = getNameDuplicatesError(saveGame, launcherManager, availableModules);
+    /*
     if (nameDuplicates !== undefined) {
       errorHints[saveGame.name] = launcherManager.localize('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', {
         MODULENAMES: Object.values(nameDuplicates).join('\n'),
       });
       this.setState({ errorHints });
       return;
-    }
+    }*/
 
-    const loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, availableModules);
-    const missingModules = getMissingModuleNamesError(saveGame, launcherManager, availableModules);
+    saveGame.duplicateModules = getNameDuplicatesError(saveGame, launcherManager, availableModules);
+    saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, availableModules);
+    saveGame.missingModules = getMissingModuleNamesError(saveGame, launcherManager, availableModules);
+    saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+
+    console.log(`BANNERLORD: ValidateSave() saveGame=`);
+    console.log(saveGame);
+
+    /*
     if (loadOrderIssues.length > 0 || missingModules.length > 0) {
       let str = '';
       if (loadOrderIssues.length > 0) {
@@ -443,9 +561,11 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       errorHints[saveGame.name] = str;
       this.setState({ errorHints });
       return;
-    }
+    }*/
 
-    const mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+    //saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+
+    /*
     if (mismatchedModuleVersions !== undefined) {
       warningHints[saveGame.name] = launcherManager.localize(
         '{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}',
@@ -454,7 +574,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
         }
       );
       this.setState({ warningHints });
-    }
+    }*/
   }
 }
 

@@ -174,6 +174,7 @@ const main = (context: types.IExtensionContext): boolean => {
       return selectors.activeGameId(context.api.store.getState()) === GAME_ID;
     },
     props: () => ({
+      context: context,
       t: context.api.translate,
       launcherManager: launcherManager,
     }),
