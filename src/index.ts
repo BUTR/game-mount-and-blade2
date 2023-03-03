@@ -123,7 +123,7 @@ const main = (context: types.IExtensionContext): boolean => {
     logo: `gameart.jpg`,
     executable: (discoveryPath) => getBannerlordExec(discoveryPath, context.api),
     setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
-    requiresLauncher: (gamePath, store) => requiresLauncher(store) as any,
+    requiresLauncher: (_gamePath, store) => requiresLauncher(store) as any,
     requiredFiles: [],
     parameters: [],
     requiresCleanup: true,
