@@ -47,17 +47,12 @@ export class VortexLauncherManager {
       this.getState,
     );
 
-    const loadLocalizationFiles = (path: string) => {
-      if (fs.statSync(path).isDirectory()) {
-        fs.readdirSync(path).forEach((f: Dirent) => {
-          loadLocalizationFiles(path + '/' + f)
-        });
-      } else if (path.endsWith(".xml")) {
-        const content: string = fs.readFileSync(path, { encoding: 'utf8' });
+    fs.readdirSync(__dirname, { withFileTypes: true}).forEach((d: Dirent) => {
+      if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith(".xml")) {
+        const content: string = fs.readFileSync(`${__dirname}/${d.name}`, { encoding: 'utf8' });
         this._launcherManager.loadLocalization(content);
       }
-    }
-    loadLocalizationFiles(__dirname);
+    });
   }
 
   /**
