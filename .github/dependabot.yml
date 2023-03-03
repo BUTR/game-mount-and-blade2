@@ -9,4 +9,22 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 20
+    allow:
+      - dependency-name: "@butr/vortexextensionnative"
+      - dependency-name: "ticks-to-date"
+
+      - dependency-name: "@types/webpack"
+      - dependency-name: "copy-webpack-plugin"
+      - dependency-name: "webpack*"
+
+      - dependency-name: "@typescript-eslint*"
+      - dependency-name: "eslint*"
+
+      - dependency-name: "@types/glob"
+      - dependency-name: "glob"
+
+      - dependency-name: "lint-staged"
+      - dependency-name: "prettier"
+      
+      - dependency-name: "ts-loader"
+      - dependency-name: "typescript"
