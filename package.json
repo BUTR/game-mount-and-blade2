@@ -40,7 +40,7 @@
         "collections": "github:Nexus-Mods/extension-collections",
         "copy-webpack-plugin": "^6.4.1",
         "copyfiles": "^2.4.1",
-        "eslint": "^8.34.0",
+        "eslint": "^8.35.0",
         "eslint-config-airbnb-typescript": "^17.0.0",
         "eslint-plugin-import": "^2.25.4",
         "glob": "^9.1.2",
