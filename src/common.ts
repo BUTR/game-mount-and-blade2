@@ -8,6 +8,7 @@ export const I18N_NAMESPACE = `game-mount-and-blade2`;
 
 // The relative path to the actual game executable, not the launcher.
 export const BANNERLORD_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `Bannerlord.exe`);
+export const BANNERLORD_EXEC_XBOX = path.join(`bin`, `Gaming.Desktop.x64_Shipping_Client`, `Launcher.Native.exe`);
 
 export const MODULES = `Modules`;
 
@@ -20,6 +21,7 @@ export const EXTENSION_BASE_ID = `MAB2B`;
 export const GOG_IDS = [`1802539526`, `1564781494`];
 export const STEAMAPP_ID = 261550;
 export const EPICAPP_ID = `Chickadee`;
+export const XBOX_ID = `TaleWorldsEntertainment.MountBladeIIBannerlord`;
 
 // A set of folder names (lowercased) which are available alongside the
 //  game's modules folder. We could've used the fomod installer stop patterns
