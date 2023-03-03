@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Panel, ListGroup, ListGroupItem, Alert, Radio } from 'react-bootstrap';
+import { Panel, ListGroup, ListGroupItem, Alert, Radio, FormControl } from 'react-bootstrap';
 import {
   ComponentEx,
   FlexLayout,
@@ -10,6 +10,7 @@ import {
   ToolbarIcon,
   tooltip,
   types,
+  util,
 } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
 import SaveEntry from './SaveListEntry';
@@ -26,6 +27,8 @@ import {
 } from './saveUtils';
 import ticksToDate from 'ticks-to-date';
 import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
+import { setCurrentSave, setSortOnDeploy } from '../../actions';
+import { IState } from 'vortex-api/lib/types/api';
 
 interface IStateProps {}
 type IOwnProps = IItemRendererProps & {
@@ -38,10 +41,12 @@ interface IBaseState {
   modules: Readonly<IModuleCache>;
   // TODO: Move to the entry renderer
   loadOrder: { [saveName: string]: string };
-  currentlySelectedSaveGame: ISaveGame | undefined;
+  selectedRow: ISaveGame | undefined;
+  selectedSave: ISaveGame | undefined;
 }
 
 export interface ISaveGame {
+  index: number;
   name: string;
   applicationVersion?: vetypes.ApplicationVersion;
   creationTime?: number;
@@ -69,8 +74,10 @@ type IComponentState = IBaseState;
 class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
-  private savesDict: { [name: string]: ISaveGame } = {};
+  private savesGames: { [name: string]: ISaveGame } = {};
   private tableAttributes: types.ITableAttribute[];
+  private storedSaveGameName: string = '';
+  private sortedSaveGames: [string, ISaveGame][] = [];
 
   constructor(props: IComponentProps) {
     super(props);
@@ -83,14 +90,39 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       saves,
       modules,
       loadOrder: {},
-      currentlySelectedSaveGame: undefined,
+      selectedRow: undefined,
+      selectedSave: undefined,
     });
 
-    console.log(this.props);
-    console.log(props.context);
-    console.log(this.state);
-
+    // get list of save games
     this.OnRefreshList();
+
+    // get stored save game from vortex state
+    const vortexState: IState = props.context.api.getState();
+    this.storedSaveGameName = (vortexState.settings as any).mountandblade2?.saveList?.saveName ?? undefined;
+    //console.log('storedSaveGame=' + this.storedSaveGameName);
+
+    // if nothing found in the vortex state, then we default to 'no save'
+    if (this.storedSaveGameName == undefined) {
+      this.storedSaveGameName = 'No Save';
+      props.context.api.store?.dispatch(setCurrentSave(this.storedSaveGameName));
+      //console.log(vortexState);
+    } else {
+      const foundSave: ISaveGame | undefined = Object.values(this.savesGames).find(
+        (value) => value.name == this.storedSaveGameName
+      );
+
+      //console.log(foundSave);
+
+      // if nothing found in the saves then we default to No Save
+      if (foundSave == undefined) {
+        // no save found, set default name
+        this.storedSaveGameName = 'No Save';
+      } else {
+        // set state to the found save
+        this.setState({ selectedSave: foundSave, selectedRow: foundSave });
+      }
+    }
 
     this.mStaticButtons = [
       {
@@ -112,52 +144,59 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     this.tableAttributes = [
       {
+        id: '#',
+        name: '#',
+        customRenderer: (data: [string, ISaveGame]) => this.GetRadioCustomRenderer(data[1], this.storedSaveGameName),
+        placement: 'both',
+        edit: {},
+      },
+      {
         id: 'name',
         name: 'Name',
-        calc: (saveGame: ISaveGame) => saveGame.name,
+        calc: (data: [string, ISaveGame]) => data[1].name,
         placement: 'both',
         edit: {},
       },
       {
         id: 'characterName',
         name: 'Character',
-        calc: (saveGame: ISaveGame) => saveGame.characterName ?? '',
+        calc: (data: [string, ISaveGame]) => data[1].characterName ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'mainHeroLevel',
         name: 'Level',
-        calc: (saveGame: ISaveGame) => saveGame.mainHeroLevel ?? '',
+        calc: (data: [string, ISaveGame]) => data[1].mainHeroLevel ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'dayLong',
         name: 'Days',
-        calc: (saveGame: ISaveGame) => saveGame.dayLong?.toFixed(0) ?? '',
+        calc: (data: [string, ISaveGame]) => data[1].dayLong?.toFixed(0) ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'status',
         name: 'Status',
-        customRenderer: (saveGame: ISaveGame) => this.GetStatusCustomRenderer(saveGame),
+        customRenderer: (data: [string, ISaveGame]) => this.GetStatusCustomRenderer(data[1]),
         placement: 'both',
         edit: {},
       },
       {
         id: 'applicationVersion',
         name: 'Version',
-        calc: (saveGame: ISaveGame) =>
-          saveGame.applicationVersion != undefined ? versionToString(saveGame.applicationVersion) : '',
+        calc: (data: [string, ISaveGame]) =>
+          data[1].applicationVersion != undefined ? versionToString(data[1].applicationVersion) : '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'creationTime',
         name: 'Created',
-        calc: (saveGame: ISaveGame) => ticksToDate(saveGame.creationTime)?.toLocaleString(),
+        calc: (data: [string, ISaveGame]) => ticksToDate(data[1].creationTime)?.toLocaleString(),
         placement: 'both',
         edit: {},
       },
@@ -176,6 +215,17 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
         <MainPage.Header>{header}</MainPage.Header>
         <MainPage.Body>{this.renderContent(this.saveGameActions)}</MainPage.Body>
       </MainPage>
+    );
+  }
+
+  private GetRadioCustomRenderer(saveGame: ISaveGame, storedSaveGame: string): JSX.Element {
+    return (
+      <Radio
+        name="radioGroup"
+        defaultChecked={saveGame.name == storedSaveGame}
+        id={`bannerlord-savegames-radio${saveGame.index}`}
+        onChange={() => this.Radio_OnChange(saveGame)}
+      ></Radio>
     );
   }
 
@@ -225,7 +275,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   private renderContent(saveActions: ITableRowAction[]) {
-    const { saves, currentlySelectedSaveGame } = this.state;
+    const { saves, selectedRow, selectedSave } = this.state;
 
     return (
       <Panel>
@@ -233,26 +283,27 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
           <FlexLayout type="column">
             <FlexLayout.Fixed id="instructions">
               <p>
-                Instructions: Choose a save below (which is read from xxx folder in Steam library locaiton?) to launch
-                with that save. When it is selected, any issues are displayed on the right.
+                Instructions: Select a row to see more information and use the radio buttons to select the save to
+                launch the game. If you don't want to launch with a save, choose the 'No Save' option at the top.
               </p>
+              <p>Currently selected save: {selectedSave?.name}</p>
             </FlexLayout.Fixed>
 
             <FlexLayout type="row">
               <FlexLayout.Flex>
                 <Table
                   tableId="bannerlord-savegames"
-                  data={this.savesDict}
+                  data={this.sortedSaveGames}
                   staticElements={this.tableAttributes}
                   actions={saveActions}
                   multiSelect={false}
                   hasActions={false}
                   showDetails={false}
-                  onChangeSelection={(ids) => this.OnChangeSelection(ids)}
+                  onChangeSelection={(ids) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0])][1])}
                 />
               </FlexLayout.Flex>
 
-              <FlexLayout.Fixed id="sidebar">{this.RenderSidebar(currentlySelectedSaveGame)}</FlexLayout.Fixed>
+              <FlexLayout.Fixed id="sidebar">{this.RenderSidebar(selectedRow)}</FlexLayout.Fixed>
             </FlexLayout>
           </FlexLayout>
         </Panel.Body>
@@ -260,60 +311,50 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     );
   }
 
-  private OnChangeSelection(ids: string[]) {
-    console.log(`BANNERLORD: OnChangeSelection(${ids})`);
+  private Radio_OnChange(saveGame: ISaveGame) {
+    // when a save is selected that we need to send to launcher
+
+    console.log(`BANNERLORD: Radio_OnChange(${saveGame.name}) saveGame=`);
+    console.log(saveGame);
+
+    const { launcherManager, context } = this.props;
 
     // get current state object
-    let { currentlySelectedSaveGame } = this.state;
+    let { selectedSave } = this.state;
 
-    const saveGame = this.savesDict[ids[0]];
+    // update it
+    selectedSave = saveGame;
 
-    //console.log(`BANNERLORD: OnSaveSelected(): previous= saveGame=`);
-    //console.log(currentlySelectedSaveGame);
-    //console.log(saveGame);
-    //console.log(this.state);
+    // save it in local state
+    this.setState({ selectedSave });
 
-    /** so so hacky to get a deselection row added
-     * this works by finding the element from the save game name.
-     * a save called 'New Save Game' is turned into an id called 'new-save-game_' for the row that can be selected
-     * we then detect if we are already clicking something that is selected, and remove the class 'table-selected' from
-     * its row, so it looks deselected. we then send an empty string back to the launcherManager and set
-     * currentlySelectedSaveGame as undefined to mimic
-     */
+    // set vortex state so it stored between sessions
+    context.api.store?.dispatch(setCurrentSave(saveGame.name));
+    //console.log(context.api.getState());
 
-    // replace defaults to only the first instance, so we need a small inline regex to do globally
-    const id = ids[0].replace(/ /g, '-').toLowerCase() + '_';
-    const element = document.getElementById(id);
-    console.log(element);
-    console.log(id);
+    // set on launcher. if this is 'no save' then just send empty string
+    launcherManager.setGameParameterSaveFile(saveGame.name == 'No Save' ? '' : saveGame.name);
+  }
 
-    if (currentlySelectedSaveGame != undefined) {
-      if (saveGame.name == currentlySelectedSaveGame.name) {
-        // matches so this is a second click
-        console.log(`BANNERLORD: OnSaveSelected(): we've clicked an already selected item. ${saveGame}`);
+  private Table_OnChangeSelection(saveGame: ISaveGame) {
+    // when a row is selected
 
-        if (element != null) {
-          console.log(element);
-          element.className = element.className.replace(/(?:^|\s)table-selected(?!\S)/g, '');
-        }
+    //const selectedIndex = parseInt(ids[0]);
 
-        this.OnSaveClear();
-        return;
-      } else {
-        // doesn't match so is a new item.
-        console.log(`BANNERLORD: OnSaveSelected(): this is a new item that's been clicked. ${saveGame}`);
-      }
-    } else {
-      // no previous selected items
-      console.log(`BANNERLORD: OnSaveSelected(): first click of the day. ${saveGame}`);
+    // get current state object
+    let { selectedRow } = this.state;
 
-      if (element != null) {
-        console.log(element);
-        element.className += ' table-selected';
-      }
-    }
+    // get save game from selected row index
+    //const saveGame = this.sortedSaveGames[selectedIndex][1];
 
-    this.OnSaveSelected(saveGame);
+    //console.log(`BANNERLORD: OnChangeSelection(${ids}) selectedIndex=${selectedIndex} saveGame=`);
+    console.log(saveGame);
+
+    // update it
+    selectedRow = saveGame;
+
+    // save it
+    this.setState({ selectedRow });
   }
 
   private RenderSidebar(saveGame: ISaveGame | undefined): JSX.Element {
@@ -326,10 +367,10 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     return (
       <>
         {<h3>{saveGame.name}</h3>}
-        {this.GetIssueRenderSnippet('Missing Modules:', saveGame.missingModules)}
-        {this.GetIssueRenderSnippet('Duplicate Modules:', saveGame.duplicateModules)}
-        {this.GetIssueRenderSnippet('Version Mismatches:', saveGame.mismatchedModuleVersions)}
-        {this.GetIssueRenderSnippet('Load Order issues:', saveGame.loadOrderIssues)}
+        {this.GetIssueRenderSnippet('Missing Modules', saveGame.missingModules)}
+        {this.GetIssueRenderSnippet('Duplicate Modules', saveGame.duplicateModules)}
+        {this.GetIssueRenderSnippet('Version Mismatches', saveGame.mismatchedModuleVersions)}
+        {this.GetIssueRenderSnippet('Load Order issues', saveGame.loadOrderIssues)}
       </>
     );
   }
@@ -339,7 +380,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     if (issue && issue.length) {
       return (
         <>
-          <p>{issueHeading}</p>
+          <p>{issueHeading}:</p>
           <ul>
             {issue.map((object, i) => (
               <li key={i}>{object}</li>
@@ -350,7 +391,11 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     }
 
     // default to returning empty fragment
-    return <></>;
+    return (
+      <>
+        <p>No {issueHeading}</p>
+      </>
+    );
   }
 
   private OnRefreshList() {
@@ -363,8 +408,17 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     // build new ISaveGame from SaveMetadata, just to make it easier to work with
 
-    this.savesDict = saves.reduce((prev: { [name: string]: ISaveGame }, current) => {
+    // add starting entry to top of list (didn't work as numbers got added first, but we are setting the index anyway to sort later)
+    this.savesGames['nosave'] = {
+      index: 0,
+      name: 'No Save',
+      modules: {},
+    };
+
+    // add savesDict as starting object and keep adding to it
+    saves.reduce((prev: { [name: string]: ISaveGame }, current, currentIndex) => {
       const saveGame: ISaveGame = {
+        index: currentIndex + 1,
         name: current.Name,
         applicationVersion:
           current.ApplicationVersion !== undefined
@@ -416,91 +470,27 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       prev[current.Name] = saveGame;
 
       return prev;
-    }, {});
+    }, this.savesGames);
 
-    /*
-    saves.map((save) => {
-      this.savesDict[save.Name] = {
-        name: save.Name,
-        applicationVersion: BannerlordModuleManager.parseApplicationVersion(save.ApplicationVersion),
-        creationTime: save.CreationTime,
-        characterName: save.CharacterName,
-        mainHeroGold: save.MainHeroGold,
-        mainHeroLevel: save.MainHeroLevel,
-        dayLong: save.DayLong,
+    // build up saves object ready for table display
 
-        clanBannerCode: save.ClanBannerCode,
-        clanFiefs: save.ClanFiefs,
-        clanInfluence: save.ClanInfluence,
+    // add tempSaves built from the launcher
+    //this.savesDict = Object.assign(this.savesDict, tempSaves);
 
-        mainPartyFood: save.MainPartyFood,
-        mainPartyHealthyMemberCount: save.MainPartyHealthyMemberCount,
-        mainPartyPrisonerMemberCount: save.MainPartyPrisonerMemberCount,
-        mainPartyWoundedMemberCount: save.MainPartyWoundedMemberCount,
-        version: save.Version,
-        modules: {}, // blank dictionary for now
-      };
+    this.sortedSaveGames = Object.entries(this.savesGames).sort((a, b) => a[1].index - b[1].index);
 
-      // build up modules dictionary?
-      const moduleNames: string[] = save.Modules.split(';');
-
-      for (const module of moduleNames) {
-        const key: string = module;
-        const value: string = save['Module_' + module];
-
-        // skip this if it's undefined
-        if (value == undefined) continue;
-
-        this.savesDict[save.Name].modules[key] = value;
-      }
-    });*/
+    //console.log(this.savesGames);
+    //console.log(this.sortedSaveGames);
 
     this.setState({
       saves,
       modules,
     });
 
-    console.log(`BANNERLORD: OnRefreshList() this.savesDict= saves=`);
-    console.log(this.savesDict);
-    console.log(saves);
-    console.log(modules);
-
-    // get current state object
-    let { currentlySelectedSaveGame } = this.state;
-  }
-
-  private OnSaveClear() {
-    const { launcherManager } = this.props;
-
-    // get current state object
-    let { currentlySelectedSaveGame } = this.state;
-
-    // update it
-    currentlySelectedSaveGame = undefined;
-
-    // save it
-    this.setState({ currentlySelectedSaveGame });
-
-    // need to send null but empty string will do
-    launcherManager.setGameParameterSaveFile('');
-  }
-
-  private OnSaveSelected(saveGame: ISaveGame) {
-    console.log(`BANNERLORD: OnSaveSelected() modules.length=${Object.keys(saveGame.modules).length} saveGame=`);
-    console.log(saveGame);
-
-    const { launcherManager } = this.props;
-
-    // get current state object
-    let { currentlySelectedSaveGame } = this.state;
-
-    // update it
-    currentlySelectedSaveGame = saveGame;
-
-    // save it
-    this.setState({ currentlySelectedSaveGame });
-
-    launcherManager.setGameParameterSaveFile(saveGame.name);
+    //console.log(`BANNERLORD: OnRefreshList() this.savesDict= saves=`);
+    //console.log(this.savesGames);
+    //console.log(saves);
+    //console.log(modules);
   }
 
   private ParseSave(saveGame: ISaveGame) {
@@ -541,8 +531,8 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     saveGame.missingModules = getMissingModuleNamesError(saveGame, launcherManager, availableModules);
     saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
 
-    console.log(`BANNERLORD: ValidateSave() saveGame=`);
-    console.log(saveGame);
+    //console.log(`BANNERLORD: ValidateSave() saveGame=`);
+    //console.log(saveGame);
 
     /*
     if (loadOrderIssues.length > 0 || missingModules.length > 0) {

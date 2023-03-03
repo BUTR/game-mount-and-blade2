@@ -12,7 +12,14 @@ export const BANNERLORD_EXEC_XBOX = path.join(`bin`, `Gaming.Desktop.x64_Shippin
 
 export const MODULES = `Modules`;
 
-export const OFFICIAL_MODULES = new Set([`Native`, `CustomBattle`, `SandBoxCore`, `Sandbox`, `StoryMode`, `BirthAndDeath`]);
+export const OFFICIAL_MODULES = new Set([
+  `Native`,
+  `CustomBattle`,
+  `SandBoxCore`,
+  `Sandbox`,
+  `StoryMode`,
+  `BirthAndDeath`,
+]);
 
 export const LAUNCHER_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `TaleWorlds.MountAndBlade.Launcher.exe`);
 export const MODDING_KIT_EXEC = path.join(`bin`, `Win64_Shipping_wEditor`, `TaleWorlds.MountAndBlade.Launcher.exe`);
@@ -27,7 +34,8 @@ export const XBOX_ID = `TaleWorldsEntertainment.MountBladeIIBannerlord`;
 //  game's modules folder. We could've used the fomod installer stop patterns
 //  functionality for this, but it's better if this extension is self contained;
 //  especially given that the game's modding pattern changes quite often.
-export const ROOT_FOLDERS = new Set([`bin`,
+export const ROOT_FOLDERS = new Set([
+  `bin`,
   `data`,
   `gui`,
   `icons`,
@@ -35,4 +43,5 @@ export const ROOT_FOLDERS = new Set([`bin`,
   `music`,
   `shaders`,
   `sounds`,
-  `xmlschemas`]);
+  `xmlschemas`,
+]);

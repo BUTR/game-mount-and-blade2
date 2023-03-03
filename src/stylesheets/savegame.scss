@@ -1,4 +1,9 @@
 #table-bannerlord-savegames {
+  .radio input[type='radio'] {
+    margin: 0;
+    position: inherit;
+  }
+
   .header-status {
     max-width: 5em;
   }
@@ -16,10 +21,6 @@
   }
   .header-applicationVersion {
     max-width: 9em;
-  }
-
-  .table-selected {
-    background-color: var(--brand-primary, white);
   }
 
   .header-name {

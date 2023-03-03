@@ -34,8 +34,8 @@ export const getNameDuplicatesError = (
   const moduleNames = Object.keys(availableModulesByName);
   const uniqueModuleNames = new Set(moduleNames);
 
-  console.log('getNameDuplicatesError');
-  console.log(uniqueModuleNames);
+  //console.log('getNameDuplicatesError');
+  //console.log(uniqueModuleNames);
 
   const duplicates = moduleNames.filter((currentValue) => {
     if (uniqueModuleNames.has(currentValue)) {
@@ -43,7 +43,7 @@ export const getNameDuplicatesError = (
     }
   });
 
-  console.log(duplicates);
+  //console.log(duplicates);
 
   if (duplicates.length !== 0) {
     return duplicates;

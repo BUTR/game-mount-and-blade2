@@ -12,7 +12,7 @@ import { EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP
 import { IAddedFiles, IDeployment, VortexViewModel } from './types';
 import { VortexLauncherManager } from './utils/VortexLauncherManager';
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-import { setSortOnDeploy } from './actions';
+import { setCurrentSave, setSortOnDeploy } from './actions';
 
 let launcherManager: VortexLauncherManager;
 
@@ -21,6 +21,7 @@ const reducer: types.IReducerSpec = {
     [setSortOnDeploy as any]: (state, payload) =>
       util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
     [actions.setLoadOrder as any]: (state, payload) => util.setSafe(state, [payload.id], payload.order),
+    [setCurrentSave as any]: (state, payload) => util.setSafe(state, [`saveList`], payload),
   },
   defaults: {
     sortOnDeploy: {},
@@ -235,6 +236,9 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register Callbacks
   context.once(
     toBluebird<void>(async () => {
+      console.log(`BANNERLORD: context.once() context.api.store?.getState()`);
+      console.log(context.api.store?.getState());
+
       context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => {
         const state = context.api.store?.getState();
         const gameId = selectors.activeGameId(state);
