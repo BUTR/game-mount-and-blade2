@@ -35,7 +35,7 @@
         "@types/webpack": "^5.28.0",
         "@types/xml2js": "^0.4.11",
         "@typescript-eslint/eslint-plugin": "^5.54.0",
-        "@typescript-eslint/parser": "^5.52.0",
+        "@typescript-eslint/parser": "^5.54.0",
         "bluebird": "^3.7.2",
         "collections": "github:Nexus-Mods/extension-collections",
         "copy-webpack-plugin": "^6.4.1",
