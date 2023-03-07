@@ -1,0 +1,63 @@
+#table-bannerlord-savegames {
+  .radio input[type='radio'] {
+    margin: 0;
+    position: inherit;
+  }
+
+  .header-status {
+    max-width: 5em;
+  }
+  .header-dayLong {
+    max-width: 4em;
+  }
+
+  .header-creationTime {
+    min-width: 12em;
+    max-width: 12em;
+  }
+
+  .header-mainHeroLevel {
+    max-width: 4em;
+  }
+  .header-applicationVersion {
+    max-width: 9em;
+  }
+
+  .header-name {
+    width: 50%;
+  }
+
+  .header-characterName {
+    width: 50%;
+  }
+}
+
+#page-bannerlord-saves {
+  #sidebar {
+    padding: 10px;
+    width: 20em;
+    margin-left: 1em;
+    background-color: var(--brand-bg, black);
+    border: 2px solid var(--border-color, white);
+    overflow: auto;
+  }
+
+  #sidebar > :first-child {
+    margin-top: 0 !important;
+  }
+
+  #instructions {
+    background-color: var(--brand-bg, black);
+    border: 2px solid var(--border-color, white);
+    padding: 10px;
+    margin-bottom: 1em;
+  }
+
+  #instructions > :first-child {
+    margin-top: 0 !important;
+  }
+
+  #instructions > :last-child {
+    margin-bottom: 0 !important;
+  }
+}

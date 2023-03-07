@@ -12,18 +12,20 @@ import { EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP
 import { IAddedFiles, IDeployment, VortexViewModel } from './types';
 import { VortexLauncherManager } from './utils/VortexLauncherManager';
 import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
-import { setSortOnDeploy } from './actions';
+import { setCurrentSave, setSortOnDeploy } from './actions';
 
 let launcherManager: VortexLauncherManager;
 
 const reducer: types.IReducerSpec = {
-    reducers: {
-      [setSortOnDeploy as any]: (state, payload) => util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
-      [actions.setLoadOrder as any]: (state, payload) => util.setSafe(state, [payload.id], payload.order),
-    },
-    defaults: {
-      sortOnDeploy: {},
-    },
+  reducers: {
+    [setSortOnDeploy as any]: (state, payload) =>
+      util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
+    [actions.setLoadOrder as any]: (state, payload) => util.setSafe(state, [payload.id], payload.order),
+    [setCurrentSave as any]: (state, payload) => util.setSafe(state, [`saveList`], payload),
+  },
+  defaults: {
+    sortOnDeploy: {},
+  },
 };
 
 const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.IDiscoveryResult): void => {
@@ -46,7 +48,11 @@ const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.
   context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, launcherId, tool, false));
 };
 
-const addModdingTool = (context: types.IExtensionContext, discovery: types.IDiscoveryResult, hidden?: boolean): void => {
+const addModdingTool = (
+  context: types.IExtensionContext,
+  discovery: types.IDiscoveryResult,
+  hidden?: boolean
+): void => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
   const toolId = `bannerlord-sdk`;
@@ -67,9 +73,13 @@ const addModdingTool = (context: types.IExtensionContext, discovery: types.IDisc
   context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
 };
 
-const setup = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
+const setup = async (
+  context: types.IExtensionContext,
+  discovery: types.IDiscoveryResult,
+  manager: VortexLauncherManager
+): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
-  
+
   // Quickly ensure that the official Launcher is added.
   addOfficialLauncher(context, discovery);
   try {
@@ -83,16 +93,17 @@ const setup = async (context: types.IExtensionContext, discovery: types.IDiscove
   }
 
   await prepareForModding(context, discovery, manager);
-}
+};
 
 const main = (context: types.IExtensionContext): boolean => {
   launcherManager = new VortexLauncherManager(context);
-  
+
   // Register reducer
   context.registerReducer([`settings`, `mountandblade2`], reducer);
- 
+
   // Register Settings
-  const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) => context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
+  const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) =>
+    context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
   const settingsProps = () => ({ t: context.api.translate, onSetSortOnDeploy: settingsOnSetSortOnDeploy });
   const settingsVisible = () => {
     const state = context.api.getState();
@@ -145,12 +156,14 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerLoadOrderPage({
     gameId: GAME_ID,
     // Cast as any because this is strictly typed to React.ComponentClass but accepts a function component.
-    createInfoPanel: (props) => React.createElement(LoadOrderInfoPanel, {...props}) as any,
+    createInfoPanel: (props) => React.createElement(LoadOrderInfoPanel, { ...props }) as any,
     noCollectionGeneration: true,
     gameArtURL: `${__dirname}/gameart.jpg`,
-    preSort: (items, _sortDir, updateType?) => preSort(context, launcherManager, items as VortexViewModel[], updateType) as any,
+    preSort: (items, _sortDir, updateType?) =>
+      preSort(context, launcherManager, items as VortexViewModel[], updateType) as any,
     callback: (loadOrder) => launcherManager.setLoadOrder(loadOrder as ILoadOrder),
-    itemRenderer: ((props: any) => React.createElement(LoadOrderItemRenderer, {...props, launcherManager: launcherManager})) as any,
+    itemRenderer: ((props: any) =>
+      React.createElement(LoadOrderItemRenderer, { ...props, launcherManager: launcherManager })) as any,
   });
 
   context.registerMainPage('savegame', 'Saves', SaveList, {
@@ -164,88 +177,137 @@ const main = (context: types.IExtensionContext): boolean => {
       return selectors.activeGameId(context.api.store.getState()) === GAME_ID;
     },
     props: () => ({
+      context: context,
       t: context.api.translate,
       launcherManager: launcherManager,
     }),
   });
 
   // Register Installer.
-  context.registerInstaller(`bannerlordmodules`, 25, launcherManager.testModuleVortex, launcherManager.installModuleVortex);
+  context.registerInstaller(
+    `bannerlordmodules`,
+    25,
+    launcherManager.testModuleVortex,
+    launcherManager.installModuleVortex
+  );
 
   // Register AutoSort button
   const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = () => { launcherManager.sort(); };
+  const autoSortAction = () => {
+    launcherManager.sort();
+  };
   const autoSortCondition = () => {
     const state = context.api.store?.getState();
     const gameId = selectors.activeGameId(state);
-    return (gameId === GAME_ID);
+    return gameId === GAME_ID;
   };
-  context.registerAction(`generic-load-order-icons`, 200, autoSortIcon, {}, `Auto Sort`, autoSortAction, autoSortCondition);
-  context.registerAction(`generic-load-order-icons`, 300, `open-ext`, {}, `Test Dialog`, () => { launcherManager.dialogTestWarning(); }, () => true);
-  context.registerAction(`generic-load-order-icons`, 400, `open-ext`, {}, `Test File`, () => { launcherManager.dialogTestFileOpen(); }, () => true);
+  context.registerAction(
+    `generic-load-order-icons`,
+    200,
+    autoSortIcon,
+    {},
+    `Auto Sort`,
+    autoSortAction,
+    autoSortCondition
+  );
+  context.registerAction(
+    `generic-load-order-icons`,
+    300,
+    `open-ext`,
+    {},
+    `Test Dialog`,
+    () => {
+      launcherManager.dialogTestWarning();
+    },
+    () => true
+  );
+  context.registerAction(
+    `generic-load-order-icons`,
+    400,
+    `open-ext`,
+    {},
+    `Test File`,
+    () => {
+      launcherManager.dialogTestFileOpen();
+    },
+    () => true
+  );
 
   // Register Callbacks
-  context.once(toBluebird<void>(async () => {
-    context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => {
-      const state = context.api.store?.getState();
-      const gameId = selectors.activeGameId(state);
-      if (gameId !== GAME_ID) {
-        return;
-      }
-      launcherManager.refreshModulesVortex();
-    });
+  context.once(
+    toBluebird<void>(async () => {
+      console.log(`BANNERLORD: context.once() context.api.store?.getState()`);
+      console.log(context.api.store?.getState());
 
-    context.api.onAsync(`did-purge`, async (_profileId: string) => {
-      const state = context.api.store?.getState();
-      const gameId = selectors.activeGameId(state);
-      if (gameId !== GAME_ID) {
-        return;
-      }
-      launcherManager.refreshModulesVortex();
-    });
-
-    context.api.events.on(`gamemode-activated`, (_gameMode: string) => GAME_ID === _gameMode ? launcherManager.refreshModulesVortex() : null);
-
-    context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
-      const state = context.api.store?.getState();
-      const profile = selectors.profileById(state, profileId);
-      if (profile.gameId !== GAME_ID) {
-        return;
-      }
-
-      const game = util.getGame(GAME_ID);
-      const discovery = selectors.discoveryByGame(state, GAME_ID);
-      const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : { };
-      const installPath = selectors.installPathForGame(state, GAME_ID);
-
-      await Promise.map(files, async (entry: { filePath: string, candidates: string[] }) => {
-        // only act if we definitively know which mod owns the file
-        if (entry.candidates.length === 1) {
-          const mod = util.getSafe<types.IMod | undefined>(state.persistent.mods, [GAME_ID, entry.candidates[0]], undefined);
-          if (mod === undefined) {
-            return;
-          }
-          const relPath = path.relative(modPaths[mod.type ?? ``], entry.filePath);
-          const targetPath = path.join(installPath, mod.id, relPath);
-          // copy the new file back into the corresponding mod, then delete it.
-          //  That way, vortex will create a link to it with the correct
-          //  deployment method and not ask the user any questions
-          await fs.ensureDirAsync(path.dirname(targetPath));
-
-          // Remove the target destination file if it exists.
-          //  this is to completely avoid a scenario where we may attempt to
-          //  copy the same file onto itself.
-          await fs.removeAsync(targetPath);
-          try {
-            await fs.copyAsync(entry.filePath, targetPath);
-            await fs.removeAsync(entry.filePath);
-          } catch (err: any) {
-            log(`error`, `failed to import added file to mod`, err.message);
-          }
+      context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => {
+        const state = context.api.store?.getState();
+        const gameId = selectors.activeGameId(state);
+        if (gameId !== GAME_ID) {
+          return;
         }
+        launcherManager.refreshModulesVortex();
       });
-    });
-  }));
+
+      context.api.onAsync(`did-purge`, async (_profileId: string) => {
+        const state = context.api.store?.getState();
+        const gameId = selectors.activeGameId(state);
+        if (gameId !== GAME_ID) {
+          return;
+        }
+        launcherManager.refreshModulesVortex();
+      });
+
+      context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
+
+      context.api.events.on(`gamemode-activated`, (_gameMode: string) =>
+        GAME_ID === _gameMode ? launcherManager.refreshModulesVortex() : null
+      );
+
+      context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
+        const state = context.api.store?.getState();
+        const profile = selectors.profileById(state, profileId);
+        if (profile.gameId !== GAME_ID) {
+          return;
+        }
+
+        const game = util.getGame(GAME_ID);
+        const discovery = selectors.discoveryByGame(state, GAME_ID);
+        const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : {};
+        const installPath = selectors.installPathForGame(state, GAME_ID);
+
+        await Promise.map(files, async (entry: { filePath: string; candidates: string[] }) => {
+          // only act if we definitively know which mod owns the file
+          if (entry.candidates.length === 1) {
+            const mod = util.getSafe<types.IMod | undefined>(
+              state.persistent.mods,
+              [GAME_ID, entry.candidates[0]],
+              undefined
+            );
+            if (mod === undefined) {
+              return;
+            }
+            const relPath = path.relative(modPaths[mod.type ?? ``], entry.filePath);
+            const targetPath = path.join(installPath, mod.id, relPath);
+            // copy the new file back into the corresponding mod, then delete it.
+            //  That way, vortex will create a link to it with the correct
+            //  deployment method and not ask the user any questions
+            await fs.ensureDirAsync(path.dirname(targetPath));
+
+            // Remove the target destination file if it exists.
+            //  this is to completely avoid a scenario where we may attempt to
+            //  copy the same file onto itself.
+            await fs.removeAsync(targetPath);
+            try {
+              await fs.copyAsync(entry.filePath, targetPath);
+              await fs.removeAsync(entry.filePath);
+            } catch (err: any) {
+              log(`error`, `failed to import added file to mod`, err.message);
+            }
+          }
+        });
+      });
+    })
+  );
 
   return true;
 };
