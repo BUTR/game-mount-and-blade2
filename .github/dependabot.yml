@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     allow:
       - dependency-name: "@butr/vortexextensionnative"
       - dependency-name: "ticks-to-date"
