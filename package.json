@@ -31,7 +31,7 @@
       "@types/redux": "^3.6.0",
       "@types/redux-thunk": "^2.1.0",
       "@types/webpack": "^4.41.32",
-      "@typescript-eslint/eslint-plugin": "^5.52.0",
+      "@typescript-eslint/eslint-plugin": "^5.54.0",
       "@typescript-eslint/parser": "^5.52.0",
       "bluebird": "^3.7.2",
       "collections": "github:Nexus-Mods/extension-collections",
