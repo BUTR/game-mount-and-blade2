@@ -60,6 +60,6 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "^1.0.58"
+    "@butr/vortexextensionnative": "^1.0.60"
   }
 }
