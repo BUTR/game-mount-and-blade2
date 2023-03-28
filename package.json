@@ -60,7 +60,7 @@
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "^1.0.58",
+    "@butr/vortexextensionnative": "^1.0.62",
     "ticks-to-date": "^1.0.3"
   }
 }
