@@ -36,7 +36,7 @@
     "bluebird": "^3.7.2",
     "collections": "github:Nexus-Mods/extension-collections",
     "copy-webpack-plugin": "^6.4.1",
-    "eslint": "^8.34.0",
+    "eslint": "^8.39.0",
     "eslint-config-airbnb-typescript": "^16.1.1",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-import": "^2.25.4",
