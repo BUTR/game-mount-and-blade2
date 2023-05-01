@@ -43,7 +43,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "glob": "^9.2.1",
     "i18next": "^19.0.1",
-    "lint-staged": "^12.3.5",
+    "lint-staged": "^13.2.2",
     "node-loader": "^1.0.3",
     "prettier": "^2.8.4",
     "react": "^16.12.0",
