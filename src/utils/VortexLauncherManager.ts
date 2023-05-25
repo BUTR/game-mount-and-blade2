@@ -6,7 +6,7 @@ import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../common";
 import { IModuleCache, IValidationCache, VortexLoadOrderStorage, VortexLoadOrderEntry, ModuleViewModelStorage } from "../types";
-import { Dirent } from 'fs';
+import { Dirent, readFileSync } from 'fs';
 
 export class VortexLauncherManager {
   /**
@@ -41,6 +41,7 @@ export class VortexLauncherManager {
       this.writeFileContent,
       this.readDirectoryFileList,
       this.readDirectoryList,
+      this.getAllModuleViewModels,
       this.getModuleViewModels,
       this.setModuleViewModels,
       this.getOptions,
@@ -212,7 +213,11 @@ export class VortexLauncherManager {
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
   public installModuleVortex = (files: string[], destinationPath: string): Bluebird<types.IInstallResult> => {
-    const result = this._launcherManager.installModule(files, destinationPath);
+    const subModuleFilePath = files.find(x => x.endsWith("SubModule.xml"))!;
+    const subModuleFile = readFileSync(subModuleFilePath, { encoding: "utf-8" });
+    const moduleInfo = BannerlordModuleManager.getModuleInfoWithPath(subModuleFile, subModuleFilePath)!;
+
+    const result = this._launcherManager.installModule(files, [moduleInfo]);
     const subModsIds = Array<string>();
     const transformedResult: types.IInstallResult = {
       instructions: result.instructions.reduce((map, current) => {
@@ -238,7 +243,8 @@ export class VortexLauncherManager {
       key: "subModsIds",
       value: subModsIds,
     });
-    return Promise.resolve(transformedResult);
+
+    return Bluebird.resolve(transformedResult);
   };
 
   /**
@@ -446,6 +452,12 @@ export class VortexLauncherManager {
    * Callback
    */
   private getModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
+    return Object.values(this.moduleViewModels);
+  };
+  /**
+   * Callback
+   */
+  private getAllModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
     return Object.values(this.moduleViewModels);
   };
   /**
