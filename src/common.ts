@@ -10,6 +10,10 @@ export const I18N_NAMESPACE = `game-mount-and-blade2`;
 export const BANNERLORD_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `Bannerlord.exe`);
 export const BANNERLORD_EXEC_XBOX = path.join(`bin`, `Gaming.Desktop.x64_Shipping_Client`, `Launcher.Native.exe`);
 
+export const BLSE_EXE = `Bannerlord.BLSE.Standalone.exe`;
+export const BLSE_MOD_ID = 1;
+export const BLSE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${BLSE_MOD_ID}`;
+
 export const MODULES = `Modules`;
 
 export const OFFICIAL_MODULES = new Set([

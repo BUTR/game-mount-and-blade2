@@ -48,11 +48,7 @@ const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.
   context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, launcherId, tool, false));
 };
 
-const addModdingTool = (
-  context: types.IExtensionContext,
-  discovery: types.IDiscoveryResult,
-  hidden?: boolean
-): void => {
+const addModdingKit = (context: types.IExtensionContext, discovery: types.IDiscoveryResult, hidden?: boolean): void => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
   const toolId = `bannerlord-sdk`;
@@ -73,22 +69,18 @@ const addModdingTool = (
   context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
 };
 
-const setup = async (
-  context: types.IExtensionContext,
-  discovery: types.IDiscoveryResult,
-  manager: VortexLauncherManager
-): Promise<void> => {
+const setup = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
   // Quickly ensure that the official Launcher is added.
   addOfficialLauncher(context, discovery);
   try {
     await fs.statAsync(path.join(discovery.path, MODDING_KIT_EXEC));
-    addModdingTool(context, discovery);
+    addModdingKit(context, discovery);
   } catch (err) {
     const tools = discovery?.tools;
     if (tools !== undefined && util.getSafe(tools, [`bannerlord-sdk`], undefined) !== undefined) {
-      addModdingTool(context, discovery, true);
+      addModdingKit(context, discovery, true);
     }
   }
 
@@ -112,6 +104,31 @@ const main = (context: types.IExtensionContext): boolean => {
   };
   context.registerSettings(`Interface`, Settings, settingsProps, settingsVisible, 51);
 
+  const tools: types.ITool[] = [
+    {
+      id: 'blse',
+      name: 'Bannerlord Software Extender LauncherEx',
+      shortName: 'BLSE LauncherEx',
+      logo: 'blse.png',
+      executable: () => 'Bannerlord.BLSE.LauncherEx.exe',
+      requiredFiles: ['Bannerlord.BLSE.LauncherEx.exe'],
+      relative: true,
+      exclusive: true,
+      defaultPrimary: true,
+    },
+    {
+      id: 'blse-vanilla',
+      name: 'Bannerlord Software Extender Vanilla Launcher',
+      shortName: 'BLSE Vanilla Launcher',
+      logo: 'blse.png',
+      executable: () => 'Bannerlord.BLSE.Launcher.exe',
+      requiredFiles: ['Bannerlord.BLSE.Launcher.exe'],
+      relative: true,
+      exclusive: true,
+      defaultPrimary: false,
+    }
+  ];
+
   // Register Game
   context.registerGame({
     id: GAME_ID,
@@ -121,6 +138,7 @@ const main = (context: types.IExtensionContext): boolean => {
     queryModPath: () => `.`,
     getGameVersion: (_gamePath, _exePath) => launcherManager.getGameVersionVortex(),
     logo: `gameart.jpg`,
+    supportedTools: tools,
     executable: (discoveryPath) => getBannerlordExec(discoveryPath, context.api),
     setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
     requiresLauncher: (_gamePath, store) => requiresLauncher(store) as any,
