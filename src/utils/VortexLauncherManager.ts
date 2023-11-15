@@ -213,9 +213,11 @@ export class VortexLauncherManager {
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
   public installModuleVortex = (files: string[], destinationPath: string): Bluebird<types.IInstallResult> => {
-    const subModuleFilePath = files.find(x => x.endsWith("SubModule.xml"))!;
+    const subModuleRelFilePath = files.find(x => x.endsWith("SubModule.xml"))!;
+    const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
     const subModuleFile = readFileSync(subModuleFilePath, { encoding: "utf-8" });
-    const moduleInfo = BannerlordModuleManager.getModuleInfoWithPath(subModuleFile, subModuleFilePath)!;
+    const moduleInfo = BannerlordModuleManager.getModuleInfoWithPath(subModuleFile, subModuleRelFilePath)!;
+    moduleInfo.path = subModuleRelFilePath; // TODO: fix the library
 
     const result = this._launcherManager.installModule(files, [moduleInfo]);
     const subModsIds = Array<string>();
@@ -290,6 +292,26 @@ export class VortexLauncherManager {
   public localize = (template: string, values: { [key: string]: string }): string => {
     return this._launcherManager.localizeString(template, values);
   }
+
+  /**
+   * Sets the game store manually, since the launcher manager is not perfect.
+   */
+  public setStore = (STORE_ID: string) => {
+    switch(STORE_ID){
+      case `steam`:
+        this._launcherManager.setGameStore(`Steam`);
+        break;
+      case `gog`:
+        this._launcherManager.setGameStore(`GOG`);
+        break;
+      case `xbox`:
+        this._launcherManager.setGameStore(`Xbox`);
+        break;
+      case `xbox`:
+        this._launcherManager.setGameStore(`Xbox`);
+        break;
+    }
+  };
 
 
   /**

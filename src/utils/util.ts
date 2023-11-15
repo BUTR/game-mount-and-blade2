@@ -64,6 +64,7 @@ export const prepareForModding = async (context: types.IExtensionContext, discov
 
   // Check if we've already set the load order object for this profile and create it if we haven't.
   return startSteam().finally(() => {
+    manager.setStore(STORE_ID);
     manager.initializeModuleViewModels();
     manager.orderBySavedLoadOrder();
   });
