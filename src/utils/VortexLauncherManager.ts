@@ -2,21 +2,20 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { actions, fs, selectors, types, util } from "vortex-api";
 import { IExtensionContext } from "vortex-api/lib/types/api";
-import { ILoadOrder } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../common";
 import { IModuleCache, IValidationCache, VortexLoadOrderStorage, VortexLoadOrderEntry, ModuleViewModelStorage } from "../types";
+import { setLoadOrder } from "../utils/util";
 import { Dirent, readFileSync } from 'fs';
+
+import { resolveModId } from '../utils/util';
 
 export class VortexLauncherManager {
   /**
    * The current module ViewModels that should be displayed by Vortex
    */
   public moduleViewModels: ModuleViewModelStorage = { };
-  /**
-   * The current module load order
-   */
-  //private _loadOrder: IVortexLoadOrder = { };
+
   /**
    * We cache the latest validation result for performance
    */
@@ -24,16 +23,11 @@ export class VortexLauncherManager {
   private _launcherManager: NativeLauncherManager;
   private _context: IExtensionContext;
 
-
   public constructor(context: IExtensionContext) {
-    this._launcherManager = new NativeLauncherManager();;
-
-    this._context = context;
-
-    this._launcherManager.registerCallbacks(
+    this._launcherManager = new NativeLauncherManager(
       this.setGameParameters,
-      this.loadLoadOrder,
-      this.saveLoadOrder,
+      this.loadLoadOrderVortex,
+      this.setLoadOrder,
       this.sendNotification,
       this.sendDialog,
       this.getInstallPath,
@@ -47,6 +41,8 @@ export class VortexLauncherManager {
       this.getOptions,
       this.getState,
     );
+
+    this._context = context;
 
     fs.readdirSync(__dirname, { withFileTypes: true}).forEach((d: Dirent) => {
       if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith(".xml")) {
@@ -77,12 +73,16 @@ export class VortexLauncherManager {
 
     // We fill the module ViewModels with all available modules
     this.moduleViewModels = this._launcherManager.getModules().reduce<ModuleViewModelStorage>((map, current, index) => {
+      const loEntry = loadOrder.find(x => x.id === current.id);
+      if (loEntry === undefined) {
+        return map;
+      }
       map[current.id] = {
         moduleInfoExtended: current,
         isValid: this._validation_cache[current.id] === undefined ? true : this._validation_cache[current.id].length == 0,
-        isSelected: loadOrder[current.id] === undefined ? false : loadOrder[current.id].data?.isSelected ?? false,
-        isDisabled: loadOrder[current.id] === undefined ? false : !loadOrder[current.id].enabled ?? false,
-        index: index,
+        isSelected: loEntry === undefined ? false : loEntry.data?.isSelected ?? false,
+        isDisabled: loEntry === undefined ? false : !loEntry.enabled ?? false,
+        index: loEntry?.data?.index ?? index,
       };
       return map;
     }, { });
@@ -120,12 +120,13 @@ export class VortexLauncherManager {
 
     const loadOrder = this.getLoadOrderFromVortex();
     this.moduleViewModels = this._launcherManager.getModules().reduce<ModuleViewModelStorage>((map, current, index) => {
+      const loEntry = loadOrder.find(x => x.id === current.id);
       map[current.id] = {
         moduleInfoExtended: current,
         isValid: this._validation_cache[current.id] === undefined ? true : this._validation_cache[current.id].length == 0,
-        isSelected: loadOrder[current.id] === undefined ? false : loadOrder[current.id].data?.isSelected ?? false,
-        isDisabled: loadOrder[current.id] === undefined ? false : !loadOrder[current.id].enabled ?? false,
-        index: index,
+        isSelected: loEntry === undefined ? false : loEntry.data?.isSelected ?? false,
+        isDisabled: loEntry === undefined ? false : !loEntry.enabled ?? false,
+        index,
       };
       return map;
     }, { });
@@ -167,8 +168,7 @@ export class VortexLauncherManager {
    * Available: enabled, locked, pos
    * Others are not
    */
-  public setLoadOrder = (_loadOrder: ILoadOrder): void=> {
-    //this._loadOrder = loadOrder;
+  public setLoadOrder = (): void=> {
     this._launcherManager.refreshGameParameters();
   };
 
@@ -258,14 +258,10 @@ export class VortexLauncherManager {
 
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this._context.api.getState();
-    const activeProfile = selectors.activeProfile(state);
-    const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfile.id], {});
-    //if (Array.isArray(loadOrder)) {
-    //    return {};
-    //}
+    const activeProfileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfileId], []);
     return loadOrder;
   };
-
 
   public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
     return this._launcherManager.orderByLoadOrder(loadOrder);
@@ -276,6 +272,10 @@ export class VortexLauncherManager {
   }
   public dialogTestFileOpen = () => {
     return this._launcherManager.dialogTestFileOpen();
+  }
+
+  public changeModulePosition = (moduleViewModel: vetypes.ModuleViewModel, insertIndex: number) => {
+    return this._launcherManager.sortHelperChangeModulePosition(moduleViewModel, insertIndex);
   }
 
   public isSorting = (): boolean => {
@@ -325,16 +325,13 @@ export class VortexLauncherManager {
    */
   private loadLoadOrder = (): vetypes.LoadOrder => {
     const loadOrder = this.getLoadOrderFromVortex();
-
-    return Object.keys(loadOrder).map(key => ({
-      key: key,
-      value: loadOrder[key],
-    })).reduce<vetypes.LoadOrder>((map, current) => {
-      map[current.key] = {
-        id: current.key,
-        name: current.key,
-        isSelected: current.value.data?.isSelected ?? false,
-        index: current.value.data?.index ?? -1,
+    return loadOrder.reduce<vetypes.LoadOrder>((map, current, idx) => {
+      this._launcherManager.sortHelperChangeModulePosition(this.moduleViewModels[current.id], idx)
+      map[current.id] = {
+        id: current.id,
+        name: current.name,
+        isSelected: current.data?.isSelected ?? false,
+        index: current.data?.index ?? idx,
       };
       return map;
     }, { });
@@ -342,27 +339,29 @@ export class VortexLauncherManager {
   /**
    * Callback
    */
-  private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void => {
-    const transformed = Object.values(loadOrder).reduce<VortexLoadOrderStorage>((map, current) => {
-      map[current.id] = {
-        pos: current.index,
+  private saveLoadOrder = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
+    const transformed = await Object.values(loadOrder).reduce(async (accumP, current, idx) => {
+      const map = await accumP;
+      if (current.index !== idx) {
+        this._launcherManager.sortHelperChangeModulePosition(this.moduleViewModels[current.id], idx)
+      }
+      const modId = await resolveModId(this._context.api, current.id);
+      map.push({
+        id: current.id,
+        name: current.name,
         enabled: true,
+        modId,
         data: {
           id: current.id,
           name: current.name,
-          index: current.index,
+          index: idx,
           isSelected: current.isSelected,
         },
-      };
-      return map;
-    }, { });
-
-    const state = this._context.api.store?.getState();
-    const activeProfile = selectors.activeProfile(state);
-    if (activeProfile === undefined) {
-      return;
-    }
-    this._context.api.store?.dispatch(actions.setLoadOrder(activeProfile.id, transformed as any));
+      });
+      return Promise.resolve(map);
+    }, Promise.resolve([]) as any);
+    
+    setLoadOrder(this._context.api, Object.values(transformed));
   };
   /**
    * Callback
@@ -406,7 +405,7 @@ export class VortexLauncherManager {
         const fileName = message;
         const filtersTransformed = filters.map<types.IFileFilter>(x => ({ name: x.name, extensions: x.extensions }));
         return new Promise<string>(async resolve => {
-          const result = await this._context.api.selectFile({filters: filtersTransformed, defaultPath: fileName, create: true});
+          const result = await this._context.api.saveFile({ filters: filtersTransformed, defaultPath: fileName });
           resolve(result);
         });
       }

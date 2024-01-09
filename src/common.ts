@@ -1,5 +1,7 @@
 import path from 'path';
 
+export const LOAD_ORDER_SUFFIX = `_loadorder.json`;
+
 export const TW_LOGO = path.join(__dirname, `TW_Logo.png`);
 export const MODULE_LOGO = path.join(__dirname, `Module.png`);
 

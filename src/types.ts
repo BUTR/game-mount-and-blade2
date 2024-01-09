@@ -1,5 +1,5 @@
 import { types } from 'vortex-api';
-import { ILoadOrder, ILoadOrderEntry } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { ILoadOrderEntry } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { types as vetypes } from '@butr/vortexextensionnative';
 
 // Vortex Load Order
@@ -9,13 +9,9 @@ export interface VortexLoadOrderEntryData {
   isSelected: boolean;
   index: number;
 }
-export interface VortexLoadOrderEntry extends ILoadOrderEntry<VortexLoadOrderEntryData> {
 
-}
-export interface VortexLoadOrderStorage extends ILoadOrder {
-  [moduleId: string]: VortexLoadOrderEntry;
-}
-// Vortex Load Order
+export interface VortexLoadOrderEntry extends ILoadOrderEntry<VortexLoadOrderEntryData> {}
+export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
 
 // Vortex Display Item
 export interface VortexViewModel extends types.ILoadOrderDisplayItem {

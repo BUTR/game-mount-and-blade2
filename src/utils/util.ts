@@ -3,8 +3,13 @@ import * as path from 'path';
 import { actions, fs, selectors, types, util } from 'vortex-api';
 import { gte } from 'semver';
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID, BANNERLORD_EXEC, BANNERLORD_EXEC_XBOX, GAME_ID, BLSE_MOD_ID, BLSE_URL, BLSE_EXE } from '../common';
+import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID, BANNERLORD_EXEC, BANNERLORD_EXEC_XBOX, GAME_ID, BLSE_MOD_ID, BLSE_URL, BLSE_EXE, LOAD_ORDER_SUFFIX } from '../common';
 import { VortexLauncherManager } from './VortexLauncherManager';
+import { LoadOrder } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
+import { ModuleViewModel } from '@butr/vortexextensionnative/dist/main/lib/types/LauncherManager';
+
+import { parseStringPromise } from 'xml2js'
+import turbowalk, { IEntry, IWalkOptions } from 'turbowalk';
 
 let STORE_ID: string;
 
@@ -194,9 +199,12 @@ export const getBannerlordExec = (discoveryPath: string|undefined, api: types.IE
   if (!!discovery.store && [`gog`, `steam`, `epic`].includes(discovery.store)) return BANNERLORD_EXEC;
   if (!discovery.store && !!discoveryPath) {
     // Brute force the detection by manually checking the paths.
-    return fs.statSync(path.join(discoveryPath, BANNERLORD_EXEC_XBOX))
-      .then(() => BANNERLORD_EXEC_XBOX)
-      .catch(() => BANNERLORD_EXEC);
+    try {
+      fs.statSync(path.join(discoveryPath, BANNERLORD_EXEC_XBOX));
+      return BANNERLORD_EXEC_XBOX;
+    } catch (err) {
+      return BANNERLORD_EXEC;
+    }
   }
   return BANNERLORD_EXEC;
 };
@@ -213,3 +221,118 @@ export const requiresLauncher = async (store?: string): Promise<{ launcher: stri
   }
   return undefined;
 };
+
+export function forceRefresh(api: types.IExtensionApi) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const action = {
+    type: 'SET_FB_FORCE_UPDATE',
+    payload: {
+      profileId,
+    },
+  };
+  if (api.store) {
+    api.store.dispatch(action);
+  }
+}
+
+export function setLoadOrder(api: types.IExtensionApi, loadOrder: LoadOrder) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const PARAMS_TEMPLATE = ['/{{gameMode}}', '_MODULES_{{subModIds}}*_MODULES_'];
+  const parameters = [
+    PARAMS_TEMPLATE[0].replace('{{gameMode}}', 'singleplayer'),
+    PARAMS_TEMPLATE[1].replace('{{subModIds}}', loadOrder.map(value => `*${value.id}`).join('')),
+  ];
+  const action = {
+    type: 'SET_FB_LOAD_ORDER',
+    payload: {
+      profileId,
+      loadOrder,
+    },
+  };
+  if (api.store) {
+    const discoveryPath = selectors.discoveryByGame(api.getState(), GAME_ID)?.path;
+    const batched = [
+      action,
+      actions.setGameParameters(GAME_ID, {
+        executable: getBannerlordExec(discoveryPath, api) || BANNERLORD_EXEC,
+        parameters,
+      }),
+    ];
+    util.batchDispatch(api.store, batched);
+  }
+}
+
+interface IWalkOptionsWithFilter extends IWalkOptions {
+  filter?: (entry: IEntry) => boolean;
+}
+export async function walkPath(dirPath: string, walkOptions?: IWalkOptionsWithFilter): Promise<IEntry[]> {
+  walkOptions = walkOptions || { skipLinks: true, skipHidden: true, skipInaccessible: true };
+  const walkResults: IEntry[] = [];
+  return new Promise<IEntry[]>(async (resolve, reject) => {
+    await turbowalk(dirPath, (entries: IEntry[]) => {
+      const filtered = (walkOptions?.filter === undefined)
+        ? entries
+        : entries.filter(walkOptions.filter);
+      walkResults.push(...filtered);
+      return Promise.resolve() as any;
+      // If the directory is missing when we try to walk it; it's most probably down to a collection being
+      //  in the process of being installed/removed. We can safely ignore this.
+    }, walkOptions).catch((err: any) => err.code === 'ENOENT' ? Promise.resolve() : Promise.reject(err));
+    return resolve(walkResults);
+  });
+}
+
+export function getLoadOrderFileName(api: types.IExtensionApi): string {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  return `${profileId}${LOAD_ORDER_SUFFIX}`;
+}
+
+export function getLoadOrderFilePath(api: types.IExtensionApi): string {
+  const state = api.getState();
+  const loadOrderFileName = getLoadOrderFileName(api);
+  return path.join(selectors.installPathForGame(state, GAME_ID), loadOrderFileName);
+}
+
+export async function resolveModuleId(subModulePath: string): Promise<string | undefined> {
+  try {
+    await fs.statAsync(subModulePath);
+    const contents = await fs.readFileAsync(subModulePath, 'utf8');
+    const data = await parseStringPromise(contents, { explicitArray: false, mergeAttrs: true });
+    return data.Module.Id.value;
+  } catch {
+    return undefined;
+  }
+}
+
+type ModuleIdMap = { [moduleId: string]: string };
+const _moduleIdMap: ModuleIdMap = {};
+
+export async function resolveModId(api: types.IExtensionApi, module: ModuleViewModel|string): Promise<string|undefined> {
+  const state = api.getState();
+  const moduleId = typeof module === 'object' ? module.moduleInfoExtended?.id : module;
+  if (moduleId === undefined) {
+    return Promise.reject(new util.DataInvalid(`Module ID is undefined!`));
+  }
+  if (_moduleIdMap[moduleId] !== undefined) {
+    return _moduleIdMap[moduleId];
+  }
+  const installationPath = selectors.installPathForGame(state, GAME_ID);
+  const mods: { [modId: string]: types.IMod } = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+  for (const [id, mod] of Object.entries(mods)) {
+    const modPath = path.join(installationPath, mod.installationPath);
+    const submodules = await walkPath(modPath,
+      { filter: (entry: IEntry) => path.basename(entry.filePath).toLowerCase() === 'submodule.xml' });
+    for (const submodule of submodules) {
+      const subModuleId = await resolveModuleId(submodule.filePath);
+      if (subModuleId === moduleId) {
+        _moduleIdMap[moduleId] = id;
+        return id;
+      }
+    }
+  }
+
+  return undefined;
+}

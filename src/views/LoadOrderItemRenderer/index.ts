@@ -1,5 +1,5 @@
-import LoadOrderItemRenderer from './LoadOrderItemRenderer';
+// import LoadOrderItemRenderer from './LoadOrderItemRenderer';
 
-export {
-	LoadOrderItemRenderer
-};
+// export {
+// 	LoadOrderItemRenderer
+// };

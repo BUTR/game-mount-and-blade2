@@ -1,30 +1,79 @@
-import Bluebird from 'bluebird';
 import * as React from 'react';
-import { Panel } from 'react-bootstrap';
-import { util, FlexLayout } from 'vortex-api';
-import { IInfoPanelProps } from 'vortex-api/lib/extensions/mod_load_order/types/types';
+import { util } from 'vortex-api';
 import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from '../../common';
+import { ModuleIssue } from '@butr/vortexextensionnative/dist/main/lib/types';
+import { tooltip } from 'vortex-api';
 
-export const LoadOrderInfoPanel = (props: IInfoPanelProps): JSX.Element => {
+interface IBaseProps {
+  refresh: () => void;
+  invalidEntries: { [moduleId: string]: ModuleIssue[] }
+}
+
+interface IInvalidModulesProps {
+  invalidEntries: { [moduleId: string]: ModuleIssue[] };
+}
+
+const InvalidModules: React.FC<IInvalidModulesProps> = ({ invalidEntries }) => {
   const [t] = useTranslation(I18N_NAMESPACE);
+  const [expanded, setExpanded] = React.useState(false);
 
-  const openWiki = (): Bluebird<void> => util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`);
+  const toggleExpand = React.useCallback(() => {
+    setExpanded(!expanded);
+  }, [expanded, setExpanded]);
 
   return (
-    <Panel id='loadorderinfo'>
-      <h2>{t(`Managing your load order`)}</h2>
-      <FlexLayout.Flex>
+    <div>
+      <tooltip.Button tooltip={t('Expand/Collapse error information')} onClick={toggleExpand}>
+        {expanded ? 'Collapse Errors' : 'Expand Errors'}
+      </tooltip.Button>
+      {expanded && (
         <div>
-          <p>
-            {t(`You can adjust the load order for Bannerlord by dragging and dropping mods up or down on this page. ` +
-                        `Please keep in mind that Bannerlord is still in Early Access, which means that there might be significant ` +
-                        `changes to the game as time goes on. Please notify us of any Vortex related issues you encounter with this ` +
-                        `extension so we can fix it. For more information and help see: `)}
-            <a onClick={openWiki}>{t(`Modding Bannerlord with Vortex.`)}</a>
-          </p>
+          {Object.keys(invalidEntries).map((moduleId) => (
+            <div key={moduleId}>
+              <h5>{`${moduleId}`}</h5>
+              <ul>
+                {invalidEntries[moduleId].map((issue, index) => (
+                  <li key={index}>
+                    {`Type: ${issue.type}, Reason: ${issue.reason}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <div>
+      )}
+    </div>
+  );
+};
+
+function renderInvalid(props: IBaseProps) {
+  const { invalidEntries } = props;
+  const [t] = useTranslation(I18N_NAMESPACE);
+  return (
+    <div>
+      <h4>{t('Invalid Modules')}</h4>
+      {Object.keys(invalidEntries).length > 0 ? (
+        <InvalidModules invalidEntries={invalidEntries} />
+      ) : (
+        <p>{t('No invalid modules found.')}</p>
+      )}
+    </div>
+  );
+}
+
+export default function LoadOrderInfoPanel(props: IBaseProps) {
+  const [t] = useTranslation(I18N_NAMESPACE);
+  const openWiki = React.useCallback(() => {
+    util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`).catch(() => null);
+  }, []);
+  return (
+      <>
+        <p>
+          {t(`You can adjust the load order for Bannerlord by dragging and dropping mods up or down on this page. `
+           + `For more information and help see: `)}
+          <a onClick={openWiki}>{t(`Modding Bannerlord with Vortex.`)}</a>
+        </p>
           <p>
             {t(`How to use:`)}
             <ul>
@@ -35,23 +84,16 @@ export const LoadOrderInfoPanel = (props: IInfoPanelProps): JSX.Element => {
               <li>{t(`Optional: Manually drag and drop mods to different positions in the load order (for testing different overrides). Mods further down the list override mods further up.`)}</li>
             </ul>
           </p>
-        </div>
         <div>
           <p>
             {t(`Please note:`)}
             <ul>
               <li>
-                {t(`The load order reflected here will only be loaded if you run the game via the play button in ` +
-                            `the top left corner. Do not run the Single Player game through the launcher, as that will ignore ` +
-                            `the Vortex load order and go by what is shown in the launcher instead.`)}
+                {t(`The load order reflected here will only be loaded if you run the game through Vortex's default starter for Bannerlord. `
+                 + `If you have a different tool set as the primary starter, please unassign it in the tools dashlet on the dashboard. `)}
               </li>
               <li>
-                {t(`For Bannerlord, mods sorted further towards the bottom of the list will override mods further up (if they conflict). ` +
-                            `Note: Harmony patches may be the exception to this rule.`)}
-              </li>
-              <li>
-                {t(`Auto Sort uses the SubModule.xml files (the entries under <DependedModules>) to detect ` +
-                            `dependencies to sort by. `)}
+                {t(`Auto Sort uses Aragas's Bannerlord Mod Sorter. It will sort your mods based on the dependencies defined by the mods themselves. `)}
               </li>
               <li>
                 {t(`If you cannot see your mod in this load order, Vortex may have been unable to find or parse its SubModule.xml file. ` +
@@ -67,7 +109,7 @@ export const LoadOrderInfoPanel = (props: IInfoPanelProps): JSX.Element => {
             </ul>
           </p>
         </div>
-      </FlexLayout.Flex>
-    </Panel>
+        {renderInvalid(props)}
+      </>
   );
 };

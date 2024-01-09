@@ -13,7 +13,6 @@ import {
   util,
 } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
-import SaveEntry from './SaveListEntry';
 import { IItemRendererProps, IModuleCache } from '../../types';
 import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
 import { versionToString } from '../../utils/util';
@@ -26,14 +25,11 @@ import {
   getNameDuplicatesError,
 } from './saveUtils';
 import ticksToDate from 'ticks-to-date';
-import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
 import { setCurrentSave, setSortOnDeploy } from '../../actions';
-import { IState } from 'vortex-api/lib/types/api';
 
-interface IStateProps {}
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
-  context: IExtensionContext;
+  context: types.IExtensionContext;
 };
 
 interface IBaseState {
@@ -69,8 +65,10 @@ export interface ISaveGame {
   mismatchedModuleVersions?: string[];
 }
 
-type IComponentProps = IStateProps & IOwnProps;
+type IComponentProps = IOwnProps;
 type IComponentState = IBaseState;
+
+const TableWrapper = Table as any;
 class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
@@ -98,7 +96,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.OnRefreshList();
 
     // get stored save game from vortex state
-    const vortexState: IState = props.context.api.getState();
+    const vortexState: types.IState = props.context.api.getState();
     this.storedSaveGameName = (vortexState.settings as any).mountandblade2?.saveList?.saveName ?? undefined;
     //console.log('storedSaveGame=' + this.storedSaveGameName);
 
@@ -206,13 +204,13 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   public render(): JSX.Element {
     const { t } = this.props;
 
-    const header: JSX.Element = (
-      <IconBar group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
-    );
+    const IconWrapper = IconBar as any;
 
     return (
       <MainPage>
-        <MainPage.Header>{header}</MainPage.Header>
+        <MainPage.Header>
+          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
+        </MainPage.Header>
         <MainPage.Body>{this.renderContent(this.saveGameActions)}</MainPage.Body>
       </MainPage>
     );
@@ -291,7 +289,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
             <FlexLayout type="row">
               <FlexLayout.Flex>
-                <Table
+                <TableWrapper
                   tableId="bannerlord-savegames"
                   data={this.sortedSaveGames}
                   staticElements={this.tableAttributes}
@@ -299,7 +297,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
                   multiSelect={false}
                   hasActions={false}
                   showDetails={false}
-                  onChangeSelection={(ids) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0])][1])}
+                  onChangeSelection={(ids: string[]) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0])][1])}
                 />
               </FlexLayout.Flex>
 
