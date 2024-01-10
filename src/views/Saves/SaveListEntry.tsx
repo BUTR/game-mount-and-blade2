@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Checkbox, Col, ListGroupItem, Radio, Row } from 'react-bootstrap';
+import { ListGroupItem, Radio } from 'react-bootstrap';
 import { ComponentEx, FlexLayout } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { Container } from 'react-bootstrap/lib/Tab';
 
 interface IStateProps {}
 type IOwnProps = {

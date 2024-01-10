@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Panel, ListGroup, ListGroupItem, Alert, Radio, FormControl } from 'react-bootstrap';
+import { Panel, Radio } from 'react-bootstrap';
+import ticksToDate from 'ticks-to-date';
 import {
   ComponentEx,
   FlexLayout,
@@ -10,22 +11,18 @@ import {
   ToolbarIcon,
   tooltip,
   types,
-  util,
 } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
-import { IItemRendererProps, IModuleCache } from '../../types';
-import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
-import { versionToString } from '../../utils/util';
 import {
   getAvailableModulesByName,
   getLoadOrderIssues,
   getMismatchedModuleVersionsWarning,
   getMissingModuleNamesError,
-  getModules,
   getNameDuplicatesError,
 } from './saveUtils';
-import ticksToDate from 'ticks-to-date';
-import { setCurrentSave, setSortOnDeploy } from '../../actions';
+import { setCurrentSave } from '../../actions';
+import { VortexLauncherManager, versionToString } from '../../utils';
+import { IItemRendererProps, IModuleCache } from '../../types';
 
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
@@ -69,7 +66,7 @@ type IComponentProps = IOwnProps;
 type IComponentState = IBaseState;
 
 const TableWrapper = Table as any;
-class SaveList extends ComponentEx<IComponentProps, IComponentState> {
+export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
   private savesGames: { [name: string]: ISaveGame } = {};
@@ -81,7 +78,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     super(props);
 
     const saves: vetypes.SaveMetadata[] = props.launcherManager.getSaveFiles();
-    const modules: Readonly<IModuleCache> = props.launcherManager.getModulesVortex();
+    const modules: Readonly<IModuleCache> = props.launcherManager.getAvailableModules();
 
     // need to init the state so it saves with vortex
     this.initState({
@@ -331,7 +328,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //console.log(context.api.getState());
 
     // set on launcher. if this is 'no save' then just send empty string
-    launcherManager.setGameParameterSaveFile(saveGame.name == 'No Save' ? '' : saveGame.name);
+    launcherManager.setSaveFile(saveGame.name == 'No Save' ? '' : saveGame.name);
   }
 
   private Table_OnChangeSelection(saveGame: ISaveGame) {
@@ -402,7 +399,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     console.log(this.props);
 
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
-    const modules = launcherManager.getModulesVortex();
+    const modules = launcherManager.getAvailableModules();
 
     // build new ISaveGame from SaveMetadata, just to make it easier to work with
 
@@ -495,7 +492,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     const { launcherManager } = this.props;
     const { loadOrder } = this.state;
 
-    const availableModules = launcherManager.getModulesVortex();
+    const availableModules = launcherManager.getAvailableModules();
     const availableModulesByName = getAvailableModulesByName(availableModules);
     const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', {});
     const modules = Object.keys(saveGame.modules)
@@ -513,7 +510,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private ValidateSave(saveGame: ISaveGame) {
     const { launcherManager } = this.props;
 
-    const availableModules = launcherManager.getModulesVortex();
+    const availableModules = launcherManager.getAvailableModules();
 
     /*
     if (nameDuplicates !== undefined) {
@@ -565,5 +562,3 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     }*/
   }
 }
-
-export default SaveList;

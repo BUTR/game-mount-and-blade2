@@ -1,33 +1,21 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
+import { Dirent, readFileSync } from 'fs';
 import path from 'path';
 import { actions, fs, selectors, types, util } from "vortex-api";
-import { IExtensionContext } from "vortex-api/lib/types/api";
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
-import { GAME_ID } from "../common";
-import { IModuleCache, IValidationCache, VortexLoadOrderStorage, VortexLoadOrderEntry, ModuleViewModelStorage } from "../types";
-import { setLoadOrder } from "../utils/util";
-import { Dirent, readFileSync } from 'fs';
-
-import { resolveModId } from '../utils/util';
+import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder } from "..";
+import { GAME_ID } from "../../common";
+import { IModuleCache, VortexLoadOrderStorage } from "../../types";
 
 export class VortexLauncherManager {
-  /**
-   * The current module ViewModels that should be displayed by Vortex
-   */
-  public moduleViewModels: ModuleViewModelStorage = { };
-
-  /**
-   * We cache the latest validation result for performance
-   */
-  private _validation_cache: IValidationCache = { };
   private _launcherManager: NativeLauncherManager;
-  private _context: IExtensionContext;
+  private _context: types.IExtensionContext;
 
-  public constructor(context: IExtensionContext) {
+  public constructor(context: types.IExtensionContext) {
     this._launcherManager = new NativeLauncherManager(
       this.setGameParameters,
       this.loadLoadOrderVortex,
-      this.setLoadOrder,
+      this.saveLoadOrderVortex,
       this.sendNotification,
       this.sendDialog,
       this.getInstallPath,
@@ -53,110 +41,57 @@ export class VortexLauncherManager {
   }
 
   /**
-   * Returns any validation issues for a module
+   * Gets the LoadOrder from Vortex's Load Order Page
    */
-  public getModuleIssues = (id: string): vetypes.ModuleIssue[] => {
-    return this._validation_cache[id] ?? [];
+  private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
+    const state = this._context.api.getState();
+    const activeProfileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfileId], []);
+    return loadOrder;
   };
 
-  /**
-   * Loads the modules from FS and creates ViewModels fro them.
-   * This is not filtered, you need to either manualy filter and order them
-   * or call @method {orderBySavedLoadOrder}
-   */
-  public initializeModuleViewModels = (): void => {
-    // Reload the current Module list from FS
-    this.refreshModulesVortex();
-
-    // Use the Load Order as the source of metadata
-    const loadOrder = this.getLoadOrderFromVortex();
-
-    // We fill the module ViewModels with all available modules
-    this.moduleViewModels = this._launcherManager.getModules().reduce<ModuleViewModelStorage>((map, current, index) => {
-      const loEntry = loadOrder.find(x => x.id === current.id);
-      if (loEntry === undefined) {
-        return map;
-      }
-      map[current.id] = {
-        moduleInfoExtended: current,
-        isValid: this._validation_cache[current.id] === undefined ? true : this._validation_cache[current.id].length == 0,
-        isSelected: loEntry === undefined ? false : loEntry.data?.isSelected ?? false,
-        isDisabled: loEntry === undefined ? false : !loEntry.enabled ?? false,
-        index: loEntry?.data?.index ?? index,
-      };
-      return map;
-    }, { });
-  };
-
-  /**
-   * Uses the Load Order from Vortex's permanent storage to order the currently
-   * loaded module ViewModels
-   */
-  public orderBySavedLoadOrder = () => {
-    // Get the currently saved Load Order
-    const loadOrder = this.loadLoadOrder();
-
-    // Order the current list of model ViewModels with the current Load Order.
-    // The result will fe filtered and ordered list of ViewModels
-    const orderByLoadOrderResult = this._launcherManager.orderByLoadOrder(loadOrder);
-    if (orderByLoadOrderResult.result && orderByLoadOrderResult.orderedModuleViewModels) {
-      this.moduleViewModels = orderByLoadOrderResult.orderedModuleViewModels.reduce<ModuleViewModelStorage>((map, current) => {
-        map[current.moduleInfoExtended.id] = current;
-        return map;
-      }, { });
-    };
-  };
 
   /**
    * Will make LauncherModule refresh it's internal state
    * Will refresh the ViewModels
    * Will refresh the Validation Cache
    */
-  public refreshModulesVortex = (): void => {
+  public refreshModules = (): void => {
     this._launcherManager.refreshModules();
-
-    const modules = this.getModulesVortex();
-    const moduleValues = Object.values(modules);
-
-    const loadOrder = this.getLoadOrderFromVortex();
-    this.moduleViewModels = this._launcherManager.getModules().reduce<ModuleViewModelStorage>((map, current, index) => {
-      const loEntry = loadOrder.find(x => x.id === current.id);
-      map[current.id] = {
-        moduleInfoExtended: current,
-        isValid: this._validation_cache[current.id] === undefined ? true : this._validation_cache[current.id].length == 0,
-        isSelected: loEntry === undefined ? false : loEntry.data?.isSelected ?? false,
-        isDisabled: loEntry === undefined ? false : !loEntry.enabled ?? false,
-        index,
-      };
-      return map;
-    }, { });
-
-    this._validation_cache = moduleValues.reduce((map, module) => {
-      const validationManager: vetypes.IValidationManager = {
-        isSelected: (moduleId: string): boolean => {
-          const viewModel = this.moduleViewModels[moduleId];
-          if (viewModel !== undefined) {
-            return viewModel.isSelected ?? false;
-          }
-          return false;
-        }
-      };
-      map[module.id] = BannerlordModuleManager.validateModule(moduleValues, module, validationManager);
-      return map;
-    }, {} as IValidationCache);
-    this.saveLoadOrder(this.loadLoadOrder());
   };
 
-  public setGameParameterSaveFile = (saveName: string) => {
+  /**
+   * Will trigger the LauncherManager to pull the @property {moduleViewModels}
+   * And update the LO for the CLI.
+   */
+  public refreshGameParameters = () => {
+    this._launcherManager.refreshGameParameters();
+  }
+
+  /**
+   * Will update the CLI args with the save name
+   * @param saveName if null will exclude if from the CLI
+   */
+  public setSaveFile = (saveName: string) => {
     this._launcherManager.setGameParameterSaveFile(saveName);
+    this.refreshGameParameters();
+  }
+
+  /**
+   * Will update the CLI args with continuing the latest save file
+   * @param saveName if null will exclude if from the CLI
+   */
+  public setContinueLastSaveFile = (value: boolean) => {
+    this._launcherManager.setGameParameterContinueLastSaveFile(value);
+    this.refreshGameParameters();
   }
 
   /**
    * Returns the currently tracked list of modules by LauncherManager
    * Use @method {refreshModulesVortex} to reload modules from the FS.
-   * @return {Window}
+   * @return
    */
-  public getModulesVortex = (): Readonly<IModuleCache> => {
+  public getAvailableModules = (): Readonly<IModuleCache> => {
     return this._launcherManager.getModules().reduce<IModuleCache>((map, current) => {
       map[current.id] = current;
       return map;
@@ -164,31 +99,21 @@ export class VortexLauncherManager {
   };
 
   /**
-   * I don't get data from the load order.
-   * Available: enabled, locked, pos
-   * Others are not
+   * Will sort the available Modules based on the provided LoadOrder
+   * @param loadOrder 
+   * @returns 
    */
-  public setLoadOrder = (): void=> {
-    this._launcherManager.refreshGameParameters();
-  };
-
-  public getGameVersion = (): vetypes.ApplicationVersion => {
-    return BannerlordModuleManager.parseApplicationVersion(this._launcherManager.getGameVersion());
+  public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
+    return this._launcherManager.orderByLoadOrder(loadOrder);
   }
+
+
 
   /**
    * A simple wrapper for Vortex that returns a promise
    */
   public getGameVersionVortex = (): Bluebird<string> => {
     return Promise.resolve(this._launcherManager.getGameVersion());
-  };
-
-  public setLoadOrderEntry = (profileId: string, modId: string, entry: VortexLoadOrderEntry): void=> {
-    this._context.api.store?.dispatch(actions.setLoadOrderEntry(profileId, modId, entry));
-    this.moduleViewModels[modId].isSelected = entry.data?.isSelected ?? false;
-
-    this.loadLoadOrderVortex();
-    this._launcherManager.refreshGameParameters();
   };
 
   /**
@@ -209,6 +134,7 @@ export class VortexLauncherManager {
     };
     return Promise.resolve(transformedResult);
   };
+
   /**
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
@@ -250,45 +176,33 @@ export class VortexLauncherManager {
   };
 
   /**
-   * Returns the Load Order saved in Vortex's permantent storage
+   * 
+   * @returns 
    */
-  public loadLoadOrderVortex = (): vetypes.LoadOrder => {
-    return this.loadLoadOrder();
-  };
-
-  private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
-    const state = this._context.api.getState();
-    const activeProfileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-    const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfileId], []);
-    return loadOrder;
-  };
-
-  public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
-    return this._launcherManager.orderByLoadOrder(loadOrder);
-  }
-
-  public dialogTestWarning = () => {
-    return this._launcherManager.dialogTestWarning();
-  }
-  public dialogTestFileOpen = () => {
-    return this._launcherManager.dialogTestFileOpen();
-  }
-
-  public changeModulePosition = (moduleViewModel: vetypes.ModuleViewModel, insertIndex: number) => {
-    return this._launcherManager.sortHelperChangeModulePosition(moduleViewModel, insertIndex);
-  }
-
   public isSorting = (): boolean => {
     return this._launcherManager.isSorting();
   }
-  public sort = () => {
+
+  /**
+   * 
+   */
+  public autoSort = () => {
     this._launcherManager.sort();
   }
 
+  /**
+   * 
+   */
   public getSaveFiles = (): vetypes.SaveMetadata[] => {
     return this._launcherManager.getSaveFiles();
   }
 
+  /**
+   * 
+   * @param template 
+   * @param values 
+   * @returns 
+   */
   public localize = (template: string, values: { [key: string]: string }): string => {
     return this._launcherManager.localizeString(template, values);
   }
@@ -322,46 +236,37 @@ export class VortexLauncherManager {
   };
   /**
    * Callback
+   * Returns the Load Order saved in Vortex's permantent storage
    */
-  private loadLoadOrder = (): vetypes.LoadOrder => {
-    const loadOrder = this.getLoadOrderFromVortex();
-    return loadOrder.reduce<vetypes.LoadOrder>((map, current, idx) => {
-      this._launcherManager.sortHelperChangeModulePosition(this.moduleViewModels[current.id], idx)
-      map[current.id] = {
-        id: current.id,
-        name: current.name,
-        isSelected: current.data?.isSelected ?? false,
-        index: current.data?.index ?? idx,
-      };
-      return map;
-    }, { });
+  public loadLoadOrderVortex = (): vetypes.LoadOrder => {
+    const modules = this.getAvailableModules();
+
+    const savedLoadOrder = persistenceToVortex(modules, readLoadOrder(this._context.api));
+
+    let index = savedLoadOrder.length;
+    for (const module of Object.values(modules)) {
+      if (savedLoadOrder.find(x => x.id === module.id) == undefined)
+        savedLoadOrder.push({
+          id: module.id,
+          enabled: false,
+          name: module.name,
+          data: {
+            moduleInfoExtended: module,
+            index: index++,
+            isDisabled: false,
+          }
+      });
+    }
+
+    const loadOrderConverted = vortexToLibrary(savedLoadOrder);
+    return loadOrderConverted;
   };
   /**
    * Callback
+   * Saves the Load Order in Vortex's permantent storage
    */
-  private saveLoadOrder = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
-    const transformed = await Object.values(loadOrder).reduce(async (accumP, current, idx) => {
-      const map = await accumP;
-      if (current.index !== idx) {
-        this._launcherManager.sortHelperChangeModulePosition(this.moduleViewModels[current.id], idx)
-      }
-      const modId = await resolveModId(this._context.api, current.id);
-      map.push({
-        id: current.id,
-        name: current.name,
-        enabled: true,
-        modId,
-        data: {
-          id: current.id,
-          name: current.name,
-          index: idx,
-          isSelected: current.isSelected,
-        },
-      });
-      return Promise.resolve(map);
-    }, Promise.resolve([]) as any);
-    
-    setLoadOrder(this._context.api, Object.values(transformed));
+  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void=> {
+    writeLoadOrder(this._context.api, libraryToPersistence(loadOrder));
   };
   /**
    * Callback
@@ -473,22 +378,36 @@ export class VortexLauncherManager {
    * Callback
    */
   private getModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
-    return Object.values(this.moduleViewModels);
+    const loadOrder = this.getLoadOrderFromVortex();
+    const viewModels = vortexToLibraryVM(loadOrder);
+    const result = Object.values(viewModels);
+    return result;  
   };
   /**
    * Callback
    */
   private getAllModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
-    return Object.values(this.moduleViewModels);
+    const loadOrder = this.getLoadOrderFromVortex();
+    const viewModels = vortexToLibraryVM(loadOrder);
+    const result = Object.values(viewModels);
+    return result;
   };
   /**
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
-    this.moduleViewModels = moduleViewModels.reduce<ModuleViewModelStorage>((map, current) => {
-      map[current.moduleInfoExtended.id] = current;
-      return map;
-    }, { });
+    const loadOrder = libraryVMToVortex(moduleViewModels);
+
+    const state = this._context.api.getState();
+    const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    const action = {
+      type: 'SET_FB_LOAD_ORDER',
+      payload: {
+        profileId,
+        loadOrder,
+      },
+    };
+    this._context.api.store?.dispatch(action);
   };
   /**
    * Callback

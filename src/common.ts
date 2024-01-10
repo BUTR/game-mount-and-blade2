@@ -25,6 +25,7 @@ export const OFFICIAL_MODULES = new Set([
   `Sandbox`,
   `StoryMode`,
   `BirthAndDeath`,
+  `Multiplayer`,
 ]);
 
 export const LAUNCHER_EXEC = path.join(`bin`, `Win64_Shipping_Client`, `TaleWorlds.MountAndBlade.Launcher.exe`);
@@ -35,19 +36,3 @@ export const GOG_IDS = [`1802539526`, `1564781494`];
 export const STEAMAPP_ID = 261550;
 export const EPICAPP_ID = `Chickadee`;
 export const XBOX_ID = `TaleWorldsEntertainment.MountBladeIIBannerlord`;
-
-// A set of folder names (lowercased) which are available alongside the
-//  game's modules folder. We could've used the fomod installer stop patterns
-//  functionality for this, but it's better if this extension is self contained;
-//  especially given that the game's modding pattern changes quite often.
-export const ROOT_FOLDERS = new Set([
-  `bin`,
-  `data`,
-  `gui`,
-  `icons`,
-  `modules`,
-  `music`,
-  `shaders`,
-  `sounds`,
-  `xmlschemas`,
-]);

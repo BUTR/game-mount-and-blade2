@@ -1,0 +1,1 @@
+export { VortexLauncherManager } from './VortexLauncherManager';

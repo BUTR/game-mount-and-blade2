@@ -2,67 +2,12 @@ import * as React from 'react';
 import { util } from 'vortex-api';
 import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from '../../common';
-import { ModuleIssue } from '@butr/vortexextensionnative/dist/main/lib/types';
-import { tooltip } from 'vortex-api';
 
 interface IBaseProps {
   refresh: () => void;
-  invalidEntries: { [moduleId: string]: ModuleIssue[] }
 }
 
-interface IInvalidModulesProps {
-  invalidEntries: { [moduleId: string]: ModuleIssue[] };
-}
-
-const InvalidModules: React.FC<IInvalidModulesProps> = ({ invalidEntries }) => {
-  const [t] = useTranslation(I18N_NAMESPACE);
-  const [expanded, setExpanded] = React.useState(false);
-
-  const toggleExpand = React.useCallback(() => {
-    setExpanded(!expanded);
-  }, [expanded, setExpanded]);
-
-  return (
-    <div>
-      <tooltip.Button tooltip={t('Expand/Collapse error information')} onClick={toggleExpand}>
-        {expanded ? 'Collapse Errors' : 'Expand Errors'}
-      </tooltip.Button>
-      {expanded && (
-        <div>
-          {Object.keys(invalidEntries).map((moduleId) => (
-            <div key={moduleId}>
-              <h5>{`${moduleId}`}</h5>
-              <ul>
-                {invalidEntries[moduleId].map((issue, index) => (
-                  <li key={index}>
-                    {`Type: ${issue.type}, Reason: ${issue.reason}`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-function renderInvalid(props: IBaseProps) {
-  const { invalidEntries } = props;
-  const [t] = useTranslation(I18N_NAMESPACE);
-  return (
-    <div>
-      <h4>{t('Invalid Modules')}</h4>
-      {Object.keys(invalidEntries).length > 0 ? (
-        <InvalidModules invalidEntries={invalidEntries} />
-      ) : (
-        <p>{t('No invalid modules found.')}</p>
-      )}
-    </div>
-  );
-}
-
-export default function LoadOrderInfoPanel(props: IBaseProps) {
+export function LoadOrderInfoPanel(props: IBaseProps) {
   const [t] = useTranslation(I18N_NAMESPACE);
   const openWiki = React.useCallback(() => {
     util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`).catch(() => null);
@@ -109,7 +54,6 @@ export default function LoadOrderInfoPanel(props: IBaseProps) {
             </ul>
           </p>
         </div>
-        {renderInvalid(props)}
       </>
   );
 };

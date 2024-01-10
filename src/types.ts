@@ -1,73 +1,43 @@
 import { types } from 'vortex-api';
-import { ILoadOrderEntry } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { types as vetypes } from '@butr/vortexextensionnative';
 
-// Vortex Load Order
-export interface VortexLoadOrderEntryData {
+export type PersistenceLoadOrderStorage = PersistenceLoadOrderEntry[];
+export interface PersistenceLoadOrderEntry {
   id: string;
   name: string;
   isSelected: boolean;
-  index: number;
-}
-
-export interface VortexLoadOrderEntry extends ILoadOrderEntry<VortexLoadOrderEntryData> {}
-export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
-
-// Vortex Display Item
-export interface VortexViewModel extends types.ILoadOrderDisplayItem {
-  moduleInfo: vetypes.ModuleInfoExtendedWithPath;
-  index: number;
-  isSelected: boolean;
   isDisabled: boolean;
-  isValid: boolean;
+  index: number;
 }
-export interface VortexViewModelStorage extends Array<VortexViewModel> {
 
+export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
+export type VortexLoadOrderEntry = types.ILoadOrderEntry<VortexViewModelData>;
+export interface VortexViewModelData {
+  moduleInfoExtended: vetypes.ModuleInfoExtendedWithPath;
+  isDisabled: boolean;
+  index: number;
 }
-// Vortex Display Item
 
-// Map for ModuleViewModel
-export interface ModuleViewModelStorage {
-  [moduleId: string]: vetypes.ModuleViewModel;
-}
-// Map for ModuleViewModel
-
-export interface IItemRendererProps {
+export interface IItemRendererProps<T = any> {
   className: string;
-  item: VortexViewModel;
+  item: T;
   onRef: (ref: any) => any;
 }
 
-export interface ModsStorage {
-  [moduleId: string]: types.IMod;
-}
-
-
-export interface ModuleInfoExtendedWithPathWithVortexMetadata extends vetypes.ModuleInfoExtendedWithPath {
-  vortexId?: string;
-}
 export interface IModuleCache {
-  [moduleId: string]: ModuleInfoExtendedWithPathWithVortexMetadata;
-}
-export interface IValidationCache {
-  [moduleId: string]: vetypes.ModuleIssue[];
+  [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
 }
 
-export interface IIncompatibleModule {
-  id: string,
-  currentVersion: string,
-  requiredVersion: string
-}
-
-export interface IValidationResult {
-  missing: string[];
-  incompatible: IIncompatibleModule[];
-}
-
+/**
+ * Vortex
+ */
 export interface IDeployment {
   [modType: string]: types.IDeployedFile[];
 }
 
+/**
+ * Vortex
+ */
 export interface IAddedFiles {
   filePath: string,
   candidates: string[]

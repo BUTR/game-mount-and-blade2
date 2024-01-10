@@ -1,18 +1,13 @@
 import { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { actions, fs, log, selectors, types, util } from 'vortex-api';
-import { Settings } from './views/Settings';
-import SaveList from './views/Saves/SaveList';
-import { findGame, getBannerlordExec, prepareForModding, requiresLauncher, resolveModId, setLoadOrder } from './utils/util';
-import { EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { IAddedFiles, IDeployment, VortexViewModel } from './types';
-import { VortexLauncherManager } from './utils/VortexLauncherManager';
 import { setCurrentSave, setSortOnDeploy } from './actions';
+import { EPICAPP_ID, GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
+import { LoadOrderManager, VortexLauncherManager, getBannerlordExec, findGame, prepareForModding } from './utils';
+import { SaveList, Settings } from './views';
+import { IAddedFiles } from './types';
 
-import LoadOrder from './loadOrder/BannerlordLoadOrder'
-import { ILoadOrderEntry } from 'vortex-api/lib/types/api';
-
-let loadOrder: LoadOrder;
+let loadOrderManager: LoadOrderManager;
 
 let launcherManager: VortexLauncherManager;
 
@@ -89,7 +84,7 @@ const setup = async (context: types.IExtensionContext, discovery: types.IDiscove
 
 const main = (context: types.IExtensionContext): boolean => {
   launcherManager = new VortexLauncherManager(context);
-  loadOrder = new LoadOrder(context.api, launcherManager);
+  loadOrderManager = new LoadOrderManager(context.api, launcherManager);
   
   // Register reducer
   context.registerReducer([`settings`, `mountandblade2`], reducer);
@@ -142,7 +137,7 @@ const main = (context: types.IExtensionContext): boolean => {
     supportedTools: tools,
     executable: (discoveryPath) => getBannerlordExec(discoveryPath, context.api),
     setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
-    requiresLauncher: (_gamePath, store) => requiresLauncher(store) as any,
+    //requiresLauncher: toBluebird((_gamePath: string, store?: string) => requiresLauncher(store)),
     requiredFiles: [],
     parameters: [],
     requiresCleanup: true,
@@ -171,7 +166,7 @@ const main = (context: types.IExtensionContext): boolean => {
   }
   */
 
-  context.registerLoadOrder(loadOrder);
+  context.registerLoadOrder(loadOrderManager);
 
   context.registerMainPage('savegame', 'Saves', SaveList, {
     id: 'bannerlord-saves',
@@ -197,27 +192,12 @@ const main = (context: types.IExtensionContext): boolean => {
     launcherManager.testModuleVortex,
     launcherManager.installModuleVortex
   );
+  // Register Installer.
 
   // Register AutoSort button
   const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = async () => {
-    launcherManager.sort();
-    const modules = launcherManager.moduleViewModels;
-    const loadOrder = await Object.entries(modules).reduce(async (accumP, [id, mv]) => {
-      const accum = await accumP;
-      const loEntry: ILoadOrderEntry = {
-        enabled: !mv.isDisabled,
-        id,
-        name: mv.moduleInfoExtended.name,
-        data: mv,
-        locked: false,
-        modId: await resolveModId(context.api, mv),
-      }
-      accum.push(loEntry);
-      return Promise.resolve(accum);
-    }, Promise.resolve([]) as any);
-    setLoadOrder(context.api, loadOrder);
-    launcherManager.refreshModulesVortex();
+  const autoSortAction = (instanceIds?: string[] | undefined): boolean | void => {
+    launcherManager.autoSort();
   };
   const autoSortCondition = () => {
     const state = context.api.store?.getState();
@@ -230,39 +210,15 @@ const main = (context: types.IExtensionContext): boolean => {
     autoSortIcon,
     {},
     `Auto Sort`,
-    autoSortAction as any,
+    autoSortAction,
     autoSortCondition
   );
+  // Register AutoSort button
 
   // Register Callbacks
   context.once(
     toBluebird<void>(async () => {
-      console.log(`BANNERLORD: context.once() context.api.store?.getState()`);
-      console.log(context.api.store?.getState());
-
-      context.api.onAsync(`did-deploy`, async (_profileId: string, _deployment: IDeployment) => {
-        const state = context.api.store?.getState();
-        const gameId = selectors.activeGameId(state);
-        if (gameId !== GAME_ID) {
-          return;
-        }
-        launcherManager.refreshModulesVortex();
-      });
-
-      context.api.onAsync(`did-purge`, async (_profileId: string) => {
-        const state = context.api.store?.getState();
-        const gameId = selectors.activeGameId(state);
-        if (gameId !== GAME_ID) {
-          return;
-        }
-        launcherManager.refreshModulesVortex();
-      });
-
       context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
-
-      context.api.events.on(`gamemode-activated`, (_gameMode: string) =>
-        GAME_ID === _gameMode ? launcherManager.refreshModulesVortex() : null
-      );
 
       context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
         const state = context.api.store?.getState();
@@ -313,6 +269,7 @@ const main = (context: types.IExtensionContext): boolean => {
       });
     })
   );
+  // Register Callbacks
 
   return true;
 };
