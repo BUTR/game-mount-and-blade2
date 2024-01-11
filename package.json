@@ -68,5 +68,12 @@
     "ticks-to-date": "^1.0.3",
     "turbowalk": "git+https://github.com/Nexus-Mods/node-turbowalk",
     "xml2js": "^0.6.2"
-  }
+  },
+  "resolutions": {
+    "node-gyp": "^9.0.0",
+    "@types/react": "^16.14.34",
+    "**/dir-compare/minimatch": "3.0.5",
+    "winapi-bindings": "git+https://github.com/Nexus-Mods/node-winapi-bindings"
+  },
+  "packageManager": "yarn@1.22.19"
 }
