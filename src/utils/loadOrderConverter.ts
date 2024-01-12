@@ -1,16 +1,17 @@
 import { types } from "vortex-api";
 import { types as vetypes, BannerlordModuleManager } from "@butr/vortexextensionnative";
-import { VortexLauncherManager, ValidationManager } from ".";
+import { VortexLauncherManager, ValidationManager, getModIds } from ".";
 import { VortexLoadOrderStorage, VortexLoadOrderEntry, PersistenceLoadOrderStorage, IModuleCache, PersistenceLoadOrderEntry } from "../types";
 
-export const persistenceToVortex = (modules: Readonly<IModuleCache>, loadOrder: PersistenceLoadOrderStorage): VortexLoadOrderStorage => {
+export const persistenceToVortex = (api: types.IExtensionApi, modules: Readonly<IModuleCache>, loadOrder: PersistenceLoadOrderStorage): VortexLoadOrderStorage => {
   const loadOrderConverted = loadOrder.map<VortexLoadOrderEntry>(x => {
+    const modId = getModIds(api, x.id);
     return {
       id: x.id,
       name: x.name,
       enabled: x.isSelected,
       locked: undefined,
-      modId: x.id,
+      modId: modId[0] || undefined,
       data: {
         moduleInfoExtended: modules[x.id],
         isDisabled: x.isDisabled,
@@ -62,18 +63,19 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
   return loadOrderConverted;
 }
 
-export const libraryToVortex = (manager: VortexLauncherManager, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
+export const libraryToVortex = (api: types.IExtensionApi, manager: VortexLauncherManager, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
   const modules = manager.getAvailableModules();
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
   const loadOrderConverted = Object.values(loadOrder).map((current, idx) => {
     const module = modules[current.id];
     const moduleValidation = BannerlordModuleManager.validateModule(Object.values(modules), module, validationManager);
+    const modId = getModIds(api, current.id);
     return {
       id: current.id,
       enabled: current.isSelected,
       name: current.name,
-      modId: current.id,
+      modId: modId[0] || undefined,
       data: {
         moduleInfoExtended: module,
         //isValid: true,
@@ -86,13 +88,14 @@ export const libraryToVortex = (manager: VortexLauncherManager, loadOrder: vetyp
   return loadOrderConverted;
 }
 
-export const libraryVMToVortex = (loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
+export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
   const loadOrderConverted = Object.values(loadOrder).map((current, idx) => {
+    const modId = getModIds(api, current.moduleInfoExtended.id);
     return {
       id: current.moduleInfoExtended.id,
       enabled: current.isSelected,
       name: current.moduleInfoExtended.name,
-      modId: current.moduleInfoExtended.id,
+      modId: modId[0] || undefined,
       data: {
         moduleInfoExtended: current.moduleInfoExtended,
         isValid: current.isValid,

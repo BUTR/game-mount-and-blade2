@@ -26,8 +26,7 @@ export const prepareForModding = async (context: types.IExtensionContext, discov
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
 
   // skip if BLSE found
-  const blsePath = path.join(discovery.path, BLSE_EXE);
-  const blseFound = await getPathExistsAsync(blsePath);
+  const blseFound = await getPathExistsAsync(path.join(discovery.path, BLSE_EXE));
   if (!blseFound) {
     recommendBLSE(context);
   }
@@ -41,7 +40,5 @@ export const prepareForModding = async (context: types.IExtensionContext, discov
   // Check if we've already set the load order object for this profile and create it if we haven't.
   return startSteam().finally(() => {
     manager.setStore(STORE_ID);
-    //manager.initializeModuleViewModels();
-    //manager.orderBySavedLoadOrder();
   });
 };

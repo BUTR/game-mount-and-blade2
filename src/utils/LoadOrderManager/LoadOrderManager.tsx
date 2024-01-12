@@ -66,7 +66,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     }
     */
     
-    const loadOrderConverted = libraryToVortex(this.mManager, savedLoadOrder);
+    const loadOrderConverted = libraryToVortex(this.mApi, this.mManager, savedLoadOrder);
     return Promise.resolve(loadOrderConverted);
   }
 

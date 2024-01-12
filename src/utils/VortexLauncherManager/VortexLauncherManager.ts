@@ -241,7 +241,7 @@ export class VortexLauncherManager {
   public loadLoadOrderVortex = (): vetypes.LoadOrder => {
     const modules = this.getAvailableModules();
 
-    const savedLoadOrder = persistenceToVortex(modules, readLoadOrder(this._context.api));
+    const savedLoadOrder = persistenceToVortex(this._context.api, modules, readLoadOrder(this._context.api));
 
     let index = savedLoadOrder.length;
     for (const module of Object.values(modules)) {
@@ -321,7 +321,10 @@ export class VortexLauncherManager {
    * Callback
    */
   private getInstallPath = (): string => {
-    const state = this._context.api.store?.getState();
+    const state: types.IState | undefined = this._context.api.store?.getState();
+    if (!state) {
+      return "";
+    }
     const discovery = selectors.currentGameDiscovery(state);
     return discovery.path || "";
   };
@@ -396,7 +399,7 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
-    const loadOrder = libraryVMToVortex(moduleViewModels);
+    const loadOrder = libraryVMToVortex(this._context.api, moduleViewModels);
 
     const state = this._context.api.getState();
     const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);

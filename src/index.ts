@@ -196,11 +196,14 @@ const main = (context: types.IExtensionContext): boolean => {
 
   // Register AutoSort button
   const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = (instanceIds?: string[] | undefined): boolean | void => {
+  const autoSortAction = (_instanceIds?: string[]): boolean | void => {
     launcherManager.autoSort();
   };
-  const autoSortCondition = () => {
-    const state = context.api.store?.getState();
+  const autoSortCondition = (): boolean => {
+    const state: types.IState | undefined = context.api.store?.getState();
+    if (!state) {
+      return false;
+    }
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   };
@@ -221,7 +224,11 @@ const main = (context: types.IExtensionContext): boolean => {
       context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
 
       context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
-        const state = context.api.store?.getState();
+        const state: types.IState | undefined = context.api.store?.getState();
+        if (!state) {
+          return;
+        }
+
         const profile = selectors.profileById(state, profileId);
         if (profile.gameId !== GAME_ID) {
           return;
