@@ -1,11 +1,25 @@
 import React from 'react';
-import { types } from 'vortex-api';
+import { types, selectors } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
-import { ValidationManager, VortexLauncherManager, vortexToLibrary, libraryToVortex, forceRefresh } from '..';
+import { ValidationManager, VortexLauncherManager, vortexToLibrary, libraryToVortex } from '..';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel } from '../../views';
 import { VortexLoadOrderStorage } from '../../types';
+
+const forceRefresh = (api: types.IExtensionApi) => {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const action = {
+    type: 'SET_FB_FORCE_UPDATE',
+    payload: {
+      profileId,
+    },
+  };
+  if (api.store) {
+    api.store.dispatch(action);
+  }
+}
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public gameId: string = GAME_ID;

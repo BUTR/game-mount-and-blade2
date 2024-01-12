@@ -5,5 +5,6 @@ export * from './blse';
 export * from './game';
 export * from './loadOrderConverter';
 export * from './loadOrderPersistence';
+export * from './modIdUtil';
 export * from './util';
 export * from './version';

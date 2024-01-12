@@ -54,7 +54,7 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
       id: current.id,
       name: current.name,
       isSelected: current.enabled,
-      isDisabled: !current.locked || current.locked === `false` || current.locked === `never`,
+      isDisabled: !(!current.locked || current.locked === `false` || current.locked === `never`),
       index: loadOrder.indexOf(current),
     };
     return map;
