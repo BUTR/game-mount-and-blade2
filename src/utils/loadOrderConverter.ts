@@ -43,7 +43,7 @@ export const vortexToLibraryVM = (loadOrder: VortexLoadOrderStorage): vetypes.Mo
     moduleInfoExtended: entry.data.moduleInfoExtended,
     isValid: entry.enabled && BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager).length == 0,
     isSelected: entry.enabled,
-    isDisabled: entry.data.isDisabled,
+    isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
     index: entry.data.index,
   } as vetypes.ModuleViewModel : []);
   return loadOrderConverted;
@@ -55,7 +55,8 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
       id: current.id,
       name: current.name,
       isSelected: current.enabled,
-      isDisabled: !(!current.locked || current.locked === `false` || current.locked === `never`),
+      isDisabled: !!current.locked && (current.locked === `true` || current.locked === `always`),
+      //isDisabled: !(!current.locked || current.locked === `false` || current.locked === `never`),
       index: loadOrder.indexOf(current),
     };
     return map;

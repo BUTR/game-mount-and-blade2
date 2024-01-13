@@ -176,7 +176,7 @@ const main = (context: types.IExtensionContext): boolean => {
       if (context.api.store === undefined) {
         return false;
       }
-      return selectors.activeGameId(context.api.store.getState()) === GAME_ID;
+      return selectors.activeGameId(context.api.getState()) === GAME_ID;
     },
     props: () => ({
       context: context,
@@ -200,10 +200,7 @@ const main = (context: types.IExtensionContext): boolean => {
     launcherManager.autoSort();
   };
   const autoSortCondition = (): boolean => {
-    const state: types.IState | undefined = context.api.store?.getState();
-    if (!state) {
-      return false;
-    }
+    const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   };
@@ -224,10 +221,7 @@ const main = (context: types.IExtensionContext): boolean => {
       context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
 
       context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
-        const state: types.IState | undefined = context.api.store?.getState();
-        if (!state) {
-          return;
-        }
+        const state = context.api.getState();
 
         const profile = selectors.profileById(state, profileId);
         if (profile.gameId !== GAME_ID) {

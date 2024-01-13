@@ -14,7 +14,6 @@ export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
 export type VortexLoadOrderEntry = types.ILoadOrderEntry<VortexViewModelData>;
 export interface VortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithPath;
-  isDisabled: boolean;
   index: number;
 }
 

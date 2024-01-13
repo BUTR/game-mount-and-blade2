@@ -17,10 +17,10 @@ type AvailableModulesByName = {
 };
 
 export const getAvailableModulesByName = (availableModules: Readonly<IModuleCache>): AvailableModulesByName => {
-  return Object.values(availableModules).reduce((map, current) => {
+  return Object.values(availableModules).reduce<AvailableModulesByName>((map, current) => {
     map[current.name] = current;
     return map;
-  }, {} as AvailableModulesByName);
+  }, {});
 };
 
 export const getNameDuplicatesError = (
@@ -62,12 +62,12 @@ export const getMissingModuleNamesError = (
 ): Array<string> => {
   const availableModulesByName = getAvailableModulesByName(availableModules);
 
-  return Object.keys(saveGame.modules).reduce((map, current) => {
+  return Object.keys(saveGame.modules).reduce<string[]>((map, current) => {
     if (availableModulesByName[current] == undefined) {
       map.push(current);
     }
     return map;
-  }, Array<string>());
+  }, []);
 };
 
 export const getMismatchedModuleVersionsWarning = (
@@ -77,7 +77,7 @@ export const getMismatchedModuleVersionsWarning = (
 ): string[] | undefined => {
   const availableModulesByName = getAvailableModulesByName(availableModules);
   //debugger;
-  const mismatchedVersions = Object.keys(saveGame.modules).reduce((map, moduleName) => {
+  const mismatchedVersions = Object.keys(saveGame.modules).reduce<MismatchedModuleMap>((map, moduleName) => {
     // is the module even installed?
     if (availableModulesByName[moduleName] == undefined) {
       return map; // just return the previous accumulation and move on
@@ -93,7 +93,7 @@ export const getMismatchedModuleVersionsWarning = (
       };
     }
     return map;
-  }, {} as MismatchedModuleMap);
+  }, {});
 
   const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map((current) => {
     const module = availableModulesByName[current.name];

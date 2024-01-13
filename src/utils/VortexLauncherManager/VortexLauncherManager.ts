@@ -14,8 +14,8 @@ export class VortexLauncherManager {
   public constructor(context: types.IExtensionContext) {
     this._launcherManager = new NativeLauncherManager(
       this.setGameParameters,
-      this.loadLoadOrderVortex,
-      this.saveLoadOrderVortex,
+      this.loadLoadOrder,
+      this.saveLoadOrder,
       this.sendNotification,
       this.sendDialog,
       this.getInstallPath,
@@ -38,7 +38,7 @@ export class VortexLauncherManager {
         this._launcherManager.loadLocalization(content);
       }
     });
-  }
+  };
 
   /**
    * Gets the LoadOrder from Vortex's Load Order Page
@@ -50,14 +50,12 @@ export class VortexLauncherManager {
     return loadOrder;
   };
 
+  public loadLoadOrderVortex = (): vetypes.LoadOrder => {
+    return this._launcherManager.loadLoadOrder();
+  };
 
-  /**
-   * Will make LauncherModule refresh it's internal state
-   * Will refresh the ViewModels
-   * Will refresh the Validation Cache
-   */
-  public refreshModules = (): void => {
-    this._launcherManager.refreshModules();
+  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void=> {
+    this._launcherManager.saveLoadOrder(loadOrder);
   };
 
   /**
@@ -66,7 +64,22 @@ export class VortexLauncherManager {
    */
   public refreshGameParameters = () => {
     this._launcherManager.refreshGameParameters();
-  }
+  };
+
+  /**
+   * Will make LauncherModule refresh it's internal state
+   * Will refresh the ViewModels
+   * Will refresh the Validation Cache
+   */
+  public refreshModules = (): void => {
+    this._launcherManager.refreshModules();
+    this.refreshGameParameters();
+  };
+
+  public setModulesToLaunch = (loadOrder: vetypes.LoadOrder): void=> {
+    this._launcherManager.setGameParameterLoadOrder(loadOrder);
+    this.refreshGameParameters();
+  };
 
   /**
    * Will update the CLI args with the save name
@@ -75,7 +88,7 @@ export class VortexLauncherManager {
   public setSaveFile = (saveName: string) => {
     this._launcherManager.setGameParameterSaveFile(saveName);
     this.refreshGameParameters();
-  }
+  };
 
   /**
    * Will update the CLI args with continuing the latest save file
@@ -84,7 +97,7 @@ export class VortexLauncherManager {
   public setContinueLastSaveFile = (value: boolean) => {
     this._launcherManager.setGameParameterContinueLastSaveFile(value);
     this.refreshGameParameters();
-  }
+  };
 
   /**
    * Returns the currently tracked list of modules by LauncherManager
@@ -95,7 +108,7 @@ export class VortexLauncherManager {
     return this._launcherManager.getModules().reduce<IModuleCache>((map, current) => {
       map[current.id] = current;
       return map;
-    }, { });
+    }, {});
   };
 
   /**
@@ -105,7 +118,7 @@ export class VortexLauncherManager {
    */
   public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
     return this._launcherManager.orderByLoadOrder(loadOrder);
-  }
+  };
 
 
 
@@ -148,7 +161,7 @@ export class VortexLauncherManager {
     const result = this._launcherManager.installModule(files, [moduleInfo]);
     const subModsIds = Array<string>();
     const transformedResult: types.IInstallResult = {
-      instructions: result.instructions.reduce((map, current) => {
+      instructions: result.instructions.reduce<types.IInstruction[]>((map, current) => {
         switch (current.type) {
           case "Copy":
             map.push({
@@ -164,7 +177,7 @@ export class VortexLauncherManager {
             break;
         }
         return map;
-      }, Array<types.IInstruction>()),
+      }, []),
     };
     transformedResult.instructions.push({
       type: "attribute",
@@ -181,21 +194,21 @@ export class VortexLauncherManager {
    */
   public isSorting = (): boolean => {
     return this._launcherManager.isSorting();
-  }
+  };
 
   /**
    * 
    */
   public autoSort = () => {
     this._launcherManager.sort();
-  }
+  };
 
   /**
    * 
    */
   public getSaveFiles = (): vetypes.SaveMetadata[] => {
     return this._launcherManager.getSaveFiles();
-  }
+  };
 
   /**
    * 
@@ -205,7 +218,7 @@ export class VortexLauncherManager {
    */
   public localize = (template: string, values: { [key: string]: string }): string => {
     return this._launcherManager.localizeString(template, values);
-  }
+  };
 
   /**
    * Sets the game store manually, since the launcher manager is not perfect.
@@ -238,7 +251,7 @@ export class VortexLauncherManager {
    * Callback
    * Returns the Load Order saved in Vortex's permantent storage
    */
-  public loadLoadOrderVortex = (): vetypes.LoadOrder => {
+  private loadLoadOrder = (): vetypes.LoadOrder => {
     const modules = this.getAvailableModules();
 
     const savedLoadOrder = persistenceToVortex(this._context.api, modules, readLoadOrder(this._context.api));
@@ -253,7 +266,6 @@ export class VortexLauncherManager {
           data: {
             moduleInfoExtended: module,
             index: index++,
-            isDisabled: false,
           }
       });
     }
@@ -265,7 +277,7 @@ export class VortexLauncherManager {
    * Callback
    * Saves the Load Order in Vortex's permantent storage
    */
-  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void=> {
+  private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void=> {
     writeLoadOrder(this._context.api, libraryToPersistence(loadOrder));
   };
   /**
@@ -321,10 +333,7 @@ export class VortexLauncherManager {
    * Callback
    */
   private getInstallPath = (): string => {
-    const state: types.IState | undefined = this._context.api.store?.getState();
-    if (!state) {
-      return "";
-    }
+    const state = this._context.api.getState();
     const discovery = selectors.currentGameDiscovery(state);
     return discovery.path || "";
   };

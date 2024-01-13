@@ -93,7 +93,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.OnRefreshList();
 
     // get stored save game from vortex state
-    const vortexState: types.IState = props.context.api.getState();
+    const vortexState = props.context.api.getState();
     this.storedSaveGameName = (vortexState.settings as any).mountandblade2?.saveList?.saveName ?? undefined;
     //console.log('storedSaveGame=' + this.storedSaveGameName);
 

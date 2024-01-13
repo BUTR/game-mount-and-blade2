@@ -16,9 +16,7 @@ const forceRefresh = (api: types.IExtensionApi) => {
       profileId,
     },
   };
-  if (api.store) {
-    api.store.dispatch(action);
-  }
+  api.store?.dispatch(action);
 }
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
@@ -26,13 +24,14 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public toggleableEntries: boolean = true;
   public usageInstructions?: React.ComponentType<{}>;
   public noCollectionGeneration: boolean = true;
-  private mApi: types.IExtensionApi;
-  private mManager: VortexLauncherManager;
+  private _api: types.IExtensionApi;
+  private _manager: VortexLauncherManager;
+  private _isInitialized: boolean = false;
 
   constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
-    this.mApi = api;
-    this.mManager = manager;
-    const refresh = () => forceRefresh(this.mApi);
+    this._api = api;
+    this._manager = manager;
+    const refresh = () => forceRefresh(this._api);
     this.usageInstructions = () => {
       return (<LoadOrderInfoPanel refresh={refresh} />);
     };
@@ -40,16 +39,16 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(loadOrder);
-    this.mManager.saveLoadOrderVortex(loadOrderConverted);
+    this._manager.saveLoadOrderVortex(loadOrderConverted);
     return Promise.resolve();
   }
 
   public deserializeLoadOrder = (): Promise<VortexLoadOrderStorage> => {
     // Make sure the LauncherManager has the latest module list
-    this.mManager.refreshModules();
+    this._manager.refreshModules();
 
     // Get the saved Load Order
-    const savedLoadOrder = this.mManager.loadLoadOrderVortex();
+    const savedLoadOrder = this._manager.loadLoadOrderVortex();
 
     /* TODO: Expose via settings
     // Apply the Load Order to the list of modules
@@ -65,8 +64,14 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       this.mApi.sendNotification?.({ type: "info", message: `The Load Order was re-sorted with the default algorithm!\nReasons:\n${result.issues.join(`\n`)}`, });
     }
     */
+
+    if (!this._isInitialized) {
+      this._isInitialized = true;
+      // We automatically set the modules to launch on save, but not on first load
+      this._manager.setModulesToLaunch(savedLoadOrder);
+    }
     
-    const loadOrderConverted = libraryToVortex(this.mApi, this.mManager, savedLoadOrder);
+    const loadOrderConverted = libraryToVortex(this._api, this._manager, savedLoadOrder);
     return Promise.resolve(loadOrderConverted);
   }
 

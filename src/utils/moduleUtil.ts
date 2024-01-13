@@ -1,5 +1,4 @@
-import { IExtensionApi, IState } from "vortex-api/lib/types/api";
-import { selectors } from "vortex-api";
+import { selectors, types } from "vortex-api";
 
 /**
  * I have no idea what to do if we have multiple mods that provide the same Module
@@ -7,15 +6,11 @@ import { selectors } from "vortex-api";
  * @param moduleId 
  * @returns 
  */
-export const getModIds = (api: IExtensionApi, moduleId: string): string[] => {
-    const state: IState | undefined = api.store?.getState();
-    if (!state) {
-        return [];
-    }
-
+export const getModIds = (api: types.IExtensionApi, moduleId: string): string[] => {
+    const state = api.getState();
     const gameId = selectors.activeGameId(state);
     const gameMods = state.persistent.mods[gameId] || { };
-    const modIds = Object.values(gameMods).reduce((arr, mod) => {
+    const modIds = Object.values(gameMods).reduce<string[]>((arr, mod) => {
         if (!mod.attributes || !mod.attributes.subModsIds) {
             return arr;
         }
@@ -25,7 +20,7 @@ export const getModIds = (api: IExtensionApi, moduleId: string): string[] => {
         }
 
         return arr;
-    }, [] as string[])
+    }, [])
 
     return modIds;
 }
