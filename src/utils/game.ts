@@ -1,5 +1,5 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-import * as path from 'path';
+import path from 'path';
 import { fs, types } from 'vortex-api';
 import { findBLSEMod } from '.';
 import { XBOX_ID, BANNERLORD_EXEC, BANNERLORD_EXEC_XBOX, GAME_ID, BLSE_EXE } from '../common';

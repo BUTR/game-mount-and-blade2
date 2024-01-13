@@ -2,7 +2,7 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import _ from 'lodash';
-import * as React from 'react';
+import React from 'react';
 import { Button, ListGroup, ListGroupItem } from 'react-bootstrap';
 import { withTranslation } from 'react-i18next';
 import { connect } from 'react-redux';

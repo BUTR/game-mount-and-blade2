@@ -1,5 +1,5 @@
 import { fs, selectors, types } from 'vortex-api';
-import * as path from 'path';
+import path from 'path';
 import { GAME_ID, LOAD_ORDER_SUFFIX } from '../common';
 import { PersistenceLoadOrderStorage } from '../types';
 

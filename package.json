@@ -58,7 +58,7 @@
     "ts-loader": "^9.2.6",
     "ts-node": "^10.7.0",
     "turbowalk": "git+https://github.com/Nexus-Mods/node-turbowalk",
-    "typescript": "^5.1.5",
+    "typescript": "^5.3.3",
     "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api",
     "vortex-ext-common": "^0.4.0",
     "webpack": "^5.76.0",

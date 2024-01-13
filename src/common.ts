@@ -2,8 +2,8 @@ import path from 'path';
 
 export const LOAD_ORDER_SUFFIX = `_loadorder.json`;
 
-export const TW_LOGO = path.join(__dirname, `TW_Logo.png`);
-export const MODULE_LOGO = path.join(__dirname, `Module.png`);
+export const TW_LOGO = path.join(__dirname, `tw_logo.png`);
+export const MODULE_LOGO = path.join(__dirname, `module.png`);
 
 export const GAME_ID = `mountandblade2bannerlord`;
 export const I18N_NAMESPACE = `game-mount-and-blade2`;

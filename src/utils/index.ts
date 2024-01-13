@@ -8,3 +8,4 @@ export * from './loadOrderPersistence';
 export * from './moduleUtil';
 export * from './util';
 export * from './version';
+export * from './vortex';

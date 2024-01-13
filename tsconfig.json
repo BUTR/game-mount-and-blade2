@@ -1,5 +1,4 @@
 {
-  "composite": true,
   "compilerOptions": {
     "incremental": true,
     "target": "esnext",
@@ -7,11 +6,13 @@
     "moduleResolution": "node",
     "jsx": "react",
     "allowJs": true,
+    "checkJs": true,
     "inlineSourceMap": true,
     "inlineSources": true,
     "outDir": "./out",
     "rootDir": "src",
     "declaration": false,
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "resolveJsonModule": false /* Include modules imported with .json extension. */,
 
@@ -44,8 +45,8 @@
     "pretty": true /* Stylize errors and messages using color and context. */,
 
     /* Experimental Options */
-    "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,
-    "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
+    "experimentalDecorators": false /* Enables experimental support for ES7 decorators. */,
+    "emitDecoratorMetadata": false /* Enables experimental support for emitting type metadata for decorators. */,
   },
   "exclude": ["test", "node_modules"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],

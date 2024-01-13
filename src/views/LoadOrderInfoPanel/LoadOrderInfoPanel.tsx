@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { util } from 'vortex-api';
 import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from '../../common';

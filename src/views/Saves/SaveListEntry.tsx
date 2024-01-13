@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { ListGroupItem, Radio } from 'react-bootstrap';
 import { ComponentEx, FlexLayout } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';

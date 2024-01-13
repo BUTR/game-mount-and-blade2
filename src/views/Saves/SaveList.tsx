@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Panel, Radio } from 'react-bootstrap';
 import ticksToDate from 'ticks-to-date';
 import {
