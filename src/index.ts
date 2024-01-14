@@ -1,16 +1,17 @@
-import { Promise, method as toBluebird } from 'bluebird';
+import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
-import { actions, fs, log, selectors, types, util } from 'vortex-api';
+import { actions, selectors, types, util } from 'vortex-api';
 import { setCurrentSave, setSortOnDeploy } from './actions';
-import { EPICAPP_ID, GAME_ID, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { LoadOrderManager, VortexLauncherManager, getBannerlordExec, findGame, setup } from './utils';
-import { SaveList, Settings } from './views';
+import { GAME_ID } from './common';
+import { BannerlordGame } from './game';
+import { LoadOrderManager, VortexLauncherManager, getInstallPathModule, isModTypeModule, isModTypeBLSE, getInstallPathBLSE, testBLSE, installBLSE, didDeployBLSE, didPurgeBLSE, addedFiles } from './utils';
+import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';
 
 const main = (context: types.IExtensionContext): boolean => {
-  const launcherManager = new VortexLauncherManager(context);
-  const loadOrderManager = new LoadOrderManager(context.api, launcherManager);
+  const launcherManager = new VortexLauncherManager(context.api);
   
+  // Register Settings
   const reducer: types.IReducerSpec = {
     reducers: {
       [setSortOnDeploy as any]: (state, payload) =>
@@ -23,69 +24,22 @@ const main = (context: types.IExtensionContext): boolean => {
     },
   };
 
-  // Register reducer
   context.registerReducer([`settings`, `mountandblade2`], reducer);
 
-  // Register Settings
-  const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) =>
-    context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
+  const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) => context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
   const settingsProps = () => ({ t: context.api.translate, onSetSortOnDeploy: settingsOnSetSortOnDeploy });
-  const settingsVisible = () => {
-    const state = context.api.getState();
-    const profile = selectors.activeProfile(state);
-    return profile !== undefined && profile?.gameId === GAME_ID;
-  };
-  context.registerSettings(`Interface`, Settings, settingsProps, settingsVisible, 51);
-
-  const tools: types.ITool[] = [
-    {
-      id: 'blse',
-      name: 'Bannerlord Software Extender LauncherEx',
-      shortName: 'BLSE LauncherEx',
-      logo: 'blse.png',
-      executable: () => 'Bannerlord.BLSE.LauncherEx.exe',
-      requiredFiles: ['Bannerlord.BLSE.LauncherEx.exe'],
-      relative: true,
-      exclusive: true,
-      defaultPrimary: true,
-    },
-    {
-      id: 'blse-vanilla',
-      name: 'Bannerlord Software Extender Vanilla Launcher',
-      shortName: 'BLSE Vanilla Launcher',
-      logo: 'blse.png',
-      executable: () => 'Bannerlord.BLSE.Launcher.exe',
-      requiredFiles: ['Bannerlord.BLSE.Launcher.exe'],
-      relative: true,
-      exclusive: true,
-      defaultPrimary: false,
-    }
-  ];
+  const settingsVisible = () => selectors.activeProfile(context.api.getState()).gameId === GAME_ID;
+  context.registerSettings(
+    `Interface`,
+    Settings,
+    settingsProps,
+    settingsVisible,
+    51
+  );
+  // Register Settings
 
   // Register Game
-  context.registerGame({
-    id: GAME_ID,
-    name: `Mount & Blade II: Bannerlord (BUTR)`,
-    mergeMods: true,
-    queryPath: findGame,
-    queryModPath: () => `.`,
-    getGameVersion: (_gamePath, _exePath) => launcherManager.getGameVersionVortex(),
-    logo: `gameart.jpg`,
-    supportedTools: tools,
-    executable: (discoveryPath) => getBannerlordExec(discoveryPath, context.api),
-    setup: toBluebird((discovery: types.IDiscoveryResult) => setup(context, discovery, launcherManager)),
-    //requiresLauncher: toBluebird((_gamePath: string, store?: string) => requiresLauncher(store)),
-    requiredFiles: [],
-    parameters: [],
-    requiresCleanup: true,
-    environment: { SteamAPPId: STEAMAPP_ID.toString() },
-    details: {
-      steamAppId: STEAMAPP_ID,
-      epicAppId: EPICAPP_ID,
-      xboxId: XBOX_ID,
-      customOpenModsPath: MODULES,
-    },
-  });
+  context.registerGame(new BannerlordGame(context.api, launcherManager));
 
   /*
   // Register Collection Feature
@@ -103,44 +57,23 @@ const main = (context: types.IExtensionContext): boolean => {
   }
   */
 
-  context.registerLoadOrder(loadOrderManager);
+  context.registerLoadOrder(new LoadOrderManager(context.api, launcherManager));
 
-  context.registerMainPage('savegame', 'Saves', SaveList, {
-    id: 'bannerlord-saves',
-    hotkey: 'A',
-    group: 'per-game',
-    visible: () => {
-      if (context.api.store === undefined) {
-        return false;
-      }
-      return selectors.activeGameId(context.api.getState()) === GAME_ID;
-    },
-    props: () => ({
-      context: context,
-      t: context.api.translate,
-      launcherManager: launcherManager,
-    }),
-  });
+  context.registerMainPage('savegame', 'Saves', SaveList, new SavePageOptions(context, launcherManager));
 
   // Register Installer.
-  context.registerInstaller(
-    `bannerlordmodules`,
-    25,
-    launcherManager.testModuleVortex,
-    launcherManager.installModuleVortex
-  );
+  context.registerInstaller('bannerlord-blse-installer', 30, testBLSE, (files, destinationPath) => installBLSE(context.api, files, destinationPath));
+  context.registerModType('bannerlord-blse', 30, gameId => gameId === GAME_ID, game => getInstallPathBLSE(context.api, game), isModTypeBLSE);
+  
+  context.registerInstaller(`bannerlord-module-installer`, 25, launcherManager.testModule, launcherManager.installModule);
+  context.registerModType('bannerlord-module', 25, gameId => gameId === GAME_ID, game => getInstallPathModule(context.api, game), isModTypeModule);
   // Register Installer.
+
 
   // Register AutoSort button
   const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = (_instanceIds?: string[]): boolean | void => {
-    launcherManager.autoSort();
-  };
-  const autoSortCondition = (): boolean => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  };
+  const autoSortAction = (_instanceIds?: string[]): boolean | void => launcherManager.autoSort();
+  const autoSortCondition = (): boolean => selectors.activeGameId(context.api.getState()) === GAME_ID;
   context.registerAction(
     `fb-load-order-icons`,
     200,
@@ -153,60 +86,30 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register AutoSort button
 
   // Register Callbacks
-  context.once(
-    toBluebird<void>(async () => {
-      context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
+  context.once(toBluebird<void>(async () => {
+    context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
 
-      context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
-        const state = context.api.getState();
+    /* TODO: Provide compatibility info for Game Version -> Mod Version from the BUTR Site
+    const proxy = new BUTRProxy(context.api);
+    context.api.addMetaServer(`butr.site`, {
+      url: '',
+      loopbackCB: (query: types.IQuery) => Bluebird.resolve(proxy.find(query)).catch(err => {
+        log('error', 'failed to look up smapi meta info', err.message);
+        return Bluebird.resolve([]);
+      }),
+      cacheDurationSec: 86400,
+      priority: 25,
+    });
+    */
 
-        const profile = selectors.profileById(state, profileId);
-        if (profile.gameId !== GAME_ID) {
-          return;
-        }
+    context.api.onAsync(`added-files`, (profileId: string, files: IAddedFiles[]) => addedFiles(context.api, profileId, files));
 
-        const game = util.getGame(GAME_ID);
-        const discovery = selectors.discoveryByGame(state, GAME_ID);
-        if (!discovery?.path) {
-          // Can't do anything without a discovery path.
-          return;
-        }
-        const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : {};
-        const installPath = selectors.installPathForGame(state, GAME_ID);
-
-        await Promise.map(files, async (entry: { filePath: string; candidates: string[] }) => {
-          // only act if we definitively know which mod owns the file
-          if (entry.candidates.length === 1) {
-            const mod = util.getSafe<types.IMod | undefined>(
-              state.persistent.mods,
-              [GAME_ID, entry.candidates[0]],
-              undefined
-            );
-            if (mod === undefined) {
-              return;
-            }
-            const relPath = path.relative(modPaths[mod.type ?? ``], entry.filePath);
-            const targetPath = path.join(installPath, mod.id, relPath);
-            // copy the new file back into the corresponding mod, then delete it.
-            //  That way, vortex will create a link to it with the correct
-            //  deployment method and not ask the user any questions
-            await fs.ensureDirAsync(path.dirname(targetPath));
-
-            // Remove the target destination file if it exists.
-            //  this is to completely avoid a scenario where we may attempt to
-            //  copy the same file onto itself.
-            await fs.removeAsync(targetPath);
-            try {
-              await fs.copyAsync(entry.filePath, targetPath);
-              await fs.removeAsync(entry.filePath);
-            } catch (err: any) {
-              log(`error`, `failed to import added file to mod`, err.message);
-            }
-          }
-        });
-      });
-    })
-  );
+    // TODO: lister to profile switch events and check for BLSE
+    // Set BLSE CLI as primary tool on deployment if no primary tool is set
+    context.api.onAsync('did-deploy', (profileId: string) => didDeployBLSE(context.api, profileId));
+    // Remove BLSE CLI as primary tool on purge if it is set
+    context.api.onAsync('did-purge', (profileId: string) => didPurgeBLSE(context.api, profileId));
+  }));
   // Register Callbacks
 
   return true;

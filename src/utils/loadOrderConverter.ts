@@ -10,100 +10,92 @@ export const persistenceToVortex = (api: types.IExtensionApi, modules: Readonly<
       id: x.id,
       name: x.name,
       enabled: x.isSelected,
-      locked: undefined,
-      modId: modId[0] || undefined,
+      modId: modId[0]!,
       data: {
-        moduleInfoExtended: modules[x.id],
-        isDisabled: x.isDisabled,
+        moduleInfoExtended: modules[x.id]!,
         index: x.index,
       },
-    } as VortexLoadOrderEntry
+    };
   });
   return loadOrderConverted;
-}
-export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceLoadOrderStorage => {
-  const loadOrderConverted = Object.values(loadOrder).map(x => {
-    return {
-      id: x.id,
-      name: x.name,
-      isSelected: x.isSelected,
-      isDisabled: x.isDisabled,
-      index: x.index,
-    } as PersistenceLoadOrderEntry;
-  });
-  return loadOrderConverted;
-}
+};
 
+export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceLoadOrderStorage => {
+  const loadOrderConverted = Object.values(loadOrder).map<PersistenceLoadOrderEntry>(x => ({
+    id: x.id,
+    name: x.name,
+    isSelected: x.isSelected,
+    isDisabled: x.isDisabled,
+    index: x.index,
+  }));
+  return loadOrderConverted;
+};
 
 export const vortexToLibraryVM = (loadOrder: VortexLoadOrderStorage): vetypes.ModuleViewModel[] => {
-  const modules = loadOrder.flatMap((entry) => entry.data ? entry.data.moduleInfoExtended : []);
+  const modules = loadOrder.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) => entry.data ? entry.data.moduleInfoExtended : []);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
-  const loadOrderConverted = loadOrder.flatMap((entry) => entry.data ? {
+  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => entry.data ? {
     moduleInfoExtended: entry.data.moduleInfoExtended,
     isValid: entry.enabled && BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager).length == 0,
     isSelected: entry.enabled,
     isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
     index: entry.data.index,
-  } as vetypes.ModuleViewModel : []);
+  } : []);
   return loadOrderConverted;
-}
+};
+export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
+  const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
+    const modId = getModIds(api, curr.moduleInfoExtended.id);
+    return {
+      id: curr.moduleInfoExtended.id,
+      enabled: curr.isSelected,
+      name: curr.moduleInfoExtended.name,
+      modId: modId[0]!,
+      data: {
+        moduleInfoExtended: curr.moduleInfoExtended,
+        isValid: curr.isValid,
+        isDisabled: curr.isDisabled,
+        index: curr.index,
+      },
+    };
+  }, []);
+  return loadOrderConverted;
+};
 
 export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.LoadOrder => {
-  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, current) => {
-    map[current.id] = {
-      id: current.id,
-      name: current.name,
-      isSelected: current.enabled,
-      isDisabled: !!current.locked && (current.locked === `true` || current.locked === `always`),
-      //isDisabled: !(!current.locked || current.locked === `false` || current.locked === `never`),
-      index: loadOrder.indexOf(current),
+  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {
+    map[curr.id] = {
+      id: curr.id,
+      name: curr.name,
+      isSelected: curr.enabled,
+      isDisabled: !!curr.locked && (curr.locked === `true` || curr.locked === `always`),
+      index: loadOrder.indexOf(curr),
     };
     return map;
-  }, { });
+  }, {});
   return loadOrderConverted;
-}
-
+};
 export const libraryToVortex = (api: types.IExtensionApi, manager: VortexLauncherManager, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
   const modules = manager.getAvailableModules();
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
-  const loadOrderConverted = Object.values(loadOrder).map((current, idx) => {
-    const module = modules[current.id];
+  const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
+    const module = modules[curr.id]!;
     const moduleValidation = BannerlordModuleManager.validateModule(Object.values(modules), module, validationManager);
-    const modId = getModIds(api, current.id);
+    const modId = getModIds(api, curr.id);
     return {
-      id: current.id,
-      enabled: current.isSelected,
-      name: current.name,
-      modId: modId[0] || undefined,
+      id: curr.id,
+      enabled: curr.isSelected,
+      name: curr.name,
+      modId: modId[0]!,
       data: {
         moduleInfoExtended: module,
-        //isValid: true,
         isValid: moduleValidation && moduleValidation.length === 0,
         isDisabled: false,
-        index: current.index,
+        index: curr.index,
       },
-    } as VortexLoadOrderEntry;
-  }, [] as VortexLoadOrderStorage);
+    };
+  }, []);
   return loadOrderConverted;
-}
-
-export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
-  const loadOrderConverted = Object.values(loadOrder).map((current, idx) => {
-    const modId = getModIds(api, current.moduleInfoExtended.id);
-    return {
-      id: current.moduleInfoExtended.id,
-      enabled: current.isSelected,
-      name: current.moduleInfoExtended.name,
-      modId: modId[0] || undefined,
-      data: {
-        moduleInfoExtended: current.moduleInfoExtended,
-        isValid: current.isValid,
-        isDisabled: current.isDisabled,
-        index: current.index,
-      },
-    } as VortexLoadOrderEntry;
-  }, [] as VortexLoadOrderStorage);
-  return loadOrderConverted;
-}
+};

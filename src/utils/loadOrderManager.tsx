@@ -1,40 +1,39 @@
 import React from 'react';
 import { types, selectors } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
-import { BannerlordModuleManager } from "@butr/vortexextensionnative";
-import { ValidationManager, VortexLauncherManager, vortexToLibrary, libraryToVortex } from '..';
-import { GAME_ID } from '../../common';
-import { LoadOrderInfoPanel } from '../../views';
-import { VortexLoadOrderStorage } from '../../types';
-
-const forceRefresh = (api: types.IExtensionApi) => {
-  const state = api.getState();
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const action = {
-    type: 'SET_FB_FORCE_UPDATE',
-    payload: {
-      profileId,
-    },
-  };
-  api.store?.dispatch(action);
-}
+import { BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
+import { ValidationManager, VortexLauncherManager, vortexToLibrary, libraryToVortex } from '.';
+import { GAME_ID } from '../common';
+import { LoadOrderInfoPanel } from '../views';
+import { VortexLoadOrderStorage } from '../types';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
+  private _api: types.IExtensionApi;
+  private _manager: VortexLauncherManager;
+  private _isInitialized: boolean = false;
+  
   public gameId: string = GAME_ID;
   public toggleableEntries: boolean = true;
   public usageInstructions?: React.ComponentType<{}>;
   public noCollectionGeneration: boolean = true;
-  private _api: types.IExtensionApi;
-  private _manager: VortexLauncherManager;
-  private _isInitialized: boolean = false;
 
   constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
     this._api = api;
     this._manager = manager;
-    const refresh = () => forceRefresh(this._api);
-    this.usageInstructions = () => {
-      return (<LoadOrderInfoPanel refresh={refresh} />);
+    const refresh = () => this.forceRefresh();
+    this.usageInstructions = () => (<LoadOrderInfoPanel refresh={refresh} />);
+  }
+
+  private forceRefresh = () => {
+    const state = this._api.getState();
+    const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    const action = {
+      type: 'SET_FB_FORCE_UPDATE',
+      payload: {
+        profileId,
+      },
     };
+    this._api.store?.dispatch(action);
   }
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
@@ -76,7 +75,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   }
 
   public validate = (_prev: VortexLoadOrderStorage, curr: VortexLoadOrderStorage): Promise<types.IValidationResult> => {
-    const modules = curr.flatMap((entry) => entry.data && entry.enabled ? entry.data.moduleInfoExtended : []);
+    const modules = curr.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) => entry.data && entry.enabled ? entry.data.moduleInfoExtended : []);
     const validationManager = ValidationManager.fromVortex(curr);
 
     const invalidResults: IInvalidResult[] = [];
@@ -90,7 +89,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       }
     }
     for (const entry of curr) {
-      if (entry.data) {
+      if (entry.data && entry.enabled) {
         const moduleIssues = BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager);
         for (const issue of moduleIssues) {
           invalidResults.push({
@@ -107,4 +106,4 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       invalid: invalidResults
     });
   }
-}
+};

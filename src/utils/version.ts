@@ -1,4 +1,3 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types as vetypes } from '@butr/vortexextensionnative';
 
 const toChar = (avt: vetypes.ApplicationVersionType): string => {
@@ -12,9 +11,8 @@ const toChar = (avt: vetypes.ApplicationVersionType): string => {
   }
 };
 
-export const versionToString = (av: vetypes.ApplicationVersion): string => {
-  return `${toChar(av.applicationVersionType)}${av.major}.${av.minor}.${av.revision}.${av.changeSet}`
-};
+export const versionToString = (av: vetypes.ApplicationVersion): string =>
+   `${toChar(av.applicationVersionType)}${av.major}.${av.minor}.${av.revision}.${av.changeSet}`;
 
 export const getVersion = (metadata: vetypes.DependentModuleMetadata): string => {
   if (!isVersionEmpty(metadata.version))  {
@@ -26,9 +24,8 @@ export const getVersion = (metadata: vetypes.DependentModuleMetadata): string =>
   return "";
 };
 
-export const isVersionEmpty = (av: vetypes.ApplicationVersion): boolean => {
-  return av.applicationVersionType == vetypes.ApplicationVersionType.Alpha && av.major == 0 && av.minor == 0 && av.revision == 0 && av.changeSet == 0;
-};
-export const isVersionRangeEmpty = (avr: vetypes.ApplicationVersionRange): boolean => {
-  return isVersionEmpty(avr.min) && isVersionEmpty(avr.max);
-};
+export const isVersionEmpty = (av: vetypes.ApplicationVersion): boolean => 
+  av.applicationVersionType == vetypes.ApplicationVersionType.Alpha && av.major == 0 && av.minor == 0 && av.revision == 0 && av.changeSet == 0;
+
+export const isVersionRangeEmpty = (avr: vetypes.ApplicationVersionRange): boolean =>
+  isVersionEmpty(avr.min) && isVersionEmpty(avr.max);

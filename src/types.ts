@@ -8,31 +8,52 @@ export interface PersistenceLoadOrderEntry {
   isSelected: boolean;
   isDisabled: boolean;
   index: number;
-}
+};
 
 export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
 export type VortexLoadOrderEntry = types.ILoadOrderEntry<VortexViewModelData>;
 export interface VortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithPath;
   index: number;
-}
+};
 
 export interface IItemRendererProps<T = any> {
   className: string;
   item: T;
   onRef: (ref: any) => any;
-}
+};
 
 export interface IModuleCache {
   [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
-}
+};
+
+export interface IBannerlordModStorage {
+  [modId: string]: IBannerlordMod
+};
+export interface IBannerlordMod extends types.IMod {
+  attributes?: IBannerlordModAttributes;
+};
+export interface IBannerlordModAttributes {
+  modId: number;
+  version: string;
+};
+
+/**
+ * Vortex
+ */
+export const enum VortexStoreIds {
+  Steam = `steam`,
+  GOG = `gog`,
+  Epic = `epic`,
+  Xbox = `xbox`,
+};
 
 /**
  * Vortex
  */
 export interface IDeployment {
   [modType: string]: types.IDeployedFile[];
-}
+};
 
 /**
  * Vortex
@@ -40,4 +61,4 @@ export interface IDeployment {
 export interface IAddedFiles {
   filePath: string,
   candidates: string[]
-}
+};

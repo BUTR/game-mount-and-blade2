@@ -1,17 +1,17 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-import { Dirent, readFileSync } from 'fs';
 import path from 'path';
+import { Dirent, readFileSync } from 'fs';
 import { actions, fs, selectors, types, util } from "vortex-api";
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
-import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder } from "..";
-import { GAME_ID } from "../../common";
-import { IModuleCache, VortexLoadOrderStorage } from "../../types";
+import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder } from ".";
+import { GAME_ID } from "../common";
+import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from "../types";
 
 export class VortexLauncherManager {
   private _launcherManager: NativeLauncherManager;
-  private _context: types.IExtensionContext;
+  private _api: types.IExtensionApi;
 
-  public constructor(context: types.IExtensionContext) {
+  public constructor(api: types.IExtensionApi) {
     this._launcherManager = new NativeLauncherManager(
       this.setGameParameters,
       this.loadLoadOrder,
@@ -30,7 +30,7 @@ export class VortexLauncherManager {
       this.getState,
     );
 
-    this._context = context;
+    this._api = api;
 
     fs.readdirSync(__dirname, { withFileTypes: true}).forEach((d: Dirent) => {
       if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith(".xml")) {
@@ -44,7 +44,7 @@ export class VortexLauncherManager {
    * Gets the LoadOrder from Vortex's Load Order Page
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
-    const state = this._context.api.getState();
+    const state = this._api.getState();
     const activeProfileId = selectors.lastActiveProfileForGame(state, GAME_ID);
     const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfileId], []);
     return loadOrder;
@@ -132,7 +132,7 @@ export class VortexLauncherManager {
   /**
    * Calls LauncherManager's testModule and converts the result to Vortex data
    */
-  public testModuleVortex = (files: string[], gameId: string): Bluebird<types.ISupportedResult> => {
+  public testModule = (files: string[], gameId: string): Bluebird<types.ISupportedResult> => {
     if (gameId !== GAME_ID){
       return Promise.resolve({
         supported: false,
@@ -151,7 +151,7 @@ export class VortexLauncherManager {
   /**
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
-  public installModuleVortex = (files: string[], destinationPath: string): Bluebird<types.IInstallResult> => {
+  public installModule = (files: string[], destinationPath: string): Bluebird<types.IInstallResult> => {
     const subModuleRelFilePath = files.find(x => x.endsWith("SubModule.xml"))!;
     const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
     const subModuleFile = readFileSync(subModuleFilePath, { encoding: "utf-8" });
@@ -166,8 +166,8 @@ export class VortexLauncherManager {
           case "Copy":
             map.push({
               type: "copy",
-              source: current.source,
-              destination: current.destination
+              source: current.source || '',
+              destination: current.destination || '',
             });
             break;
           case "ModuleInfo":
@@ -223,19 +223,22 @@ export class VortexLauncherManager {
   /**
    * Sets the game store manually, since the launcher manager is not perfect.
    */
-  public setStore = (STORE_ID: string) => {
-    switch(STORE_ID){
-      case `steam`:
+  public setStore = (storeId: string) => {
+    switch(storeId){
+      case VortexStoreIds.Steam:
         this._launcherManager.setGameStore(`Steam`);
         break;
-      case `gog`:
+      case VortexStoreIds.GOG:
         this._launcherManager.setGameStore(`GOG`);
         break;
-      case `xbox`:
+      case VortexStoreIds.Epic:
+        this._launcherManager.setGameStore(`Epic`);
+        break;
+      case VortexStoreIds.Xbox:
         this._launcherManager.setGameStore(`Xbox`);
         break;
-      case `xbox`:
-        this._launcherManager.setGameStore(`Xbox`);
+      default:
+        this._launcherManager.setGameStore(`Unknown`);
         break;
     }
   };
@@ -244,8 +247,8 @@ export class VortexLauncherManager {
   /**
    * Callback
    */
-  private setGameParameters = (executable: string, gameParameters: string[]): void => {
-    this._context.api.store?.dispatch(actions.setGameParameters(GAME_ID, { executable: executable, parameters: gameParameters }));
+  private setGameParameters = (_executable: string, gameParameters: string[]): void => {
+    this._api.store?.dispatch(actions.setGameParameters(GAME_ID, { parameters: gameParameters }));
   };
   /**
    * Callback
@@ -254,7 +257,7 @@ export class VortexLauncherManager {
   private loadLoadOrder = (): vetypes.LoadOrder => {
     const modules = this.getAvailableModules();
 
-    const savedLoadOrder = persistenceToVortex(this._context.api, modules, readLoadOrder(this._context.api));
+    const savedLoadOrder = persistenceToVortex(this._api, modules, readLoadOrder(this._api));
 
     let index = savedLoadOrder.length;
     for (const module of Object.values(modules)) {
@@ -277,8 +280,8 @@ export class VortexLauncherManager {
    * Callback
    * Saves the Load Order in Vortex's permantent storage
    */
-  private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void=> {
-    writeLoadOrder(this._context.api, libraryToPersistence(loadOrder));
+  private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void => {
+    writeLoadOrder(this._api, libraryToPersistence(loadOrder));
   };
   /**
    * Callback
@@ -286,10 +289,10 @@ export class VortexLauncherManager {
   private sendNotification = (id: string, type: vetypes.NotificationType, message: string, delayMS: number): void => {
     switch(type) {
       case "hint":
-        this._context.api.sendNotification?.({ id: id, type: "activity", message: message, displayMS: delayMS, });
+        this._api.sendNotification?.({ id: id, type: "activity", message: message, displayMS: delayMS, });
         break;
       case "info":
-        this._context.api.sendNotification?.({ id: id, type: "info", message: message, displayMS: delayMS, });
+        this._api.sendNotification?.({ id: id, type: "info", message: message, displayMS: delayMS, });
         break;
     }
   };
@@ -302,7 +305,7 @@ export class VortexLauncherManager {
       {
         const messageFull = message.split("--CONTENT-SPLIT--", 2).join('\n');
         return new Promise<string>(async resolve => {
-          const result = await this._context.api.showDialog?.("question", title, { message: messageFull, }, [
+          const result = await this._api.showDialog?.("question", title, { message: messageFull, }, [
             { label: 'No', action: () => "false" },
             { label: 'Yes', action: () => "true" },
           ]);
@@ -313,7 +316,7 @@ export class VortexLauncherManager {
       {
         const filtersTransformed = filters.map<types.IFileFilter>(x => ({ name: x.name, extensions: x.extensions }));
         return new Promise<string>(async resolve => {
-          const result = await this._context.api.selectFile({ filters: filtersTransformed});
+          const result = await this._api.selectFile({ filters: filtersTransformed});
           resolve(result);
         });
       }
@@ -322,18 +325,17 @@ export class VortexLauncherManager {
         const fileName = message;
         const filtersTransformed = filters.map<types.IFileFilter>(x => ({ name: x.name, extensions: x.extensions }));
         return new Promise<string>(async resolve => {
-          const result = await this._context.api.saveFile({ filters: filtersTransformed, defaultPath: fileName });
+          const result = await this._api.saveFile({ filters: filtersTransformed, defaultPath: fileName });
           resolve(result);
         });
       }
     }
-    return Promise.resolve("");
   };
   /**
    * Callback
    */
   private getInstallPath = (): string => {
-    const state = this._context.api.getState();
+    const state = this._api.getState();
     const discovery = selectors.currentGameDiscovery(state);
     return discovery.path || "";
   };
@@ -371,7 +373,7 @@ export class VortexLauncherManager {
    */
   private readDirectoryFileList = (directoryPath: string): string[] | null => {
     try {
-      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isFile()).map((x: Dirent) => path.join(directoryPath, x.name));
+      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isFile()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {
       return null;
     }
@@ -381,7 +383,7 @@ export class VortexLauncherManager {
    */
   private readDirectoryList = (directoryPath: string): string[] | null => {
     try {
-      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isDirectory()).map((x: Dirent) => path.join(directoryPath, x.name));
+      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isDirectory()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {
       return null;
     }
@@ -408,9 +410,9 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
-    const loadOrder = libraryVMToVortex(this._context.api, moduleViewModels);
+    const loadOrder = libraryVMToVortex(this._api, moduleViewModels);
 
-    const state = this._context.api.getState();
+    const state = this._api.getState();
     const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
     const action = {
       type: 'SET_FB_LOAD_ORDER',
@@ -419,7 +421,7 @@ export class VortexLauncherManager {
         loadOrder,
       },
     };
-    this._context.api.store?.dispatch(action);
+    this._api.store?.dispatch(action);
   };
   /**
    * Callback
@@ -440,4 +442,4 @@ export class VortexLauncherManager {
       isSingleplayer: true
     };
   };
-}
+};

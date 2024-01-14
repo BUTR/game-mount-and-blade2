@@ -19,7 +19,7 @@ class SaveListEntry extends ComponentEx<IComponentProps, IComponentState> {
     super(props);
   }
 
-  public render(): JSX.Element {
+  public override render(): JSX.Element {
     const { item } = this.props;
 
     return (
@@ -35,8 +35,8 @@ class SaveListEntry extends ComponentEx<IComponentProps, IComponentState> {
           <FlexLayout.Flex>
             <div style={{ display: `flex`, alignItems: `center` }}>
               <Radio name="groupOptions">
-                {item.Name} | {item.ApplicationVersion} | {item.CharacterName} | {item.MainHeroLevel} | {item.DayLong} |{' '}
-                {item.CreationTime}
+                {item.Name} | {item['ApplicationVersion']} | {item['CharacterName']} | {item['MainHeroLevel']} | {item['DayLong']} |{' '}
+                {item['CreationTime']}
               </Radio>
             </div>
           </FlexLayout.Flex>

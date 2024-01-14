@@ -83,8 +83,8 @@ export const getMismatchedModuleVersionsWarning = (
       return map; // just return the previous accumulation and move on
     }
 
-    const installedVerson = availableModulesByName[moduleName].version;
-    const saveVersion = saveGame.modules[moduleName];
+    const installedVerson = availableModulesByName[moduleName]!.version;
+    const saveVersion = saveGame.modules[moduleName]!;
     if (BannerlordModuleManager.compareVersions(installedVerson, saveVersion) !== 0) {
       map[moduleName] = {
         name: moduleName,
@@ -95,8 +95,8 @@ export const getMismatchedModuleVersionsWarning = (
     return map;
   }, {});
 
-  const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map((current) => {
-    const module = availableModulesByName[current.name];
+  const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map<string>((current) => {
+    const module = availableModulesByName[current.name]!;
     return launcherManager.localize('{=nYVWoomO}{MODULEID}. Required {REQUIREDVERSION}. Actual {ACTUALVERSION}', {
       MODULEID: module.id,
       REQUIREDVERSION: versionToString(current.save),
@@ -117,16 +117,16 @@ export const getMismatchedModuleVersionsWarning = (
 
 export const getLoadOrderIssues = (saveGame: ISaveGame, manager: VortexLauncherManager, availableModules: Readonly<IModuleCache>): Array<string> => {
   const availableModulesByName = getAvailableModulesByName(availableModules);
-  const modules = Object.keys(saveGame.modules).map((current) => {
-      return availableModulesByName[current];
-    }).filter((x) => x !== undefined);
+  const modules = Object.keys(saveGame.modules)
+    .map<vetypes.ModuleInfoExtendedWithPath>((current) => availableModulesByName[current]!)
+    .filter((x) => x !== undefined);
   return Utils.isLoadOrderCorrect(modules);
 };
 
 export const getModules = (saveGame: ISaveGame, manager: VortexLauncherManager): Array<vetypes.ModuleInfoExtendedWithPath> => {
   const availableModules = manager.getAvailableModules();
   const availableModulesByName = getAvailableModulesByName(availableModules);
-  return Object.keys(saveGame.modules).map((current) => {
-      return availableModulesByName[current];
-    }).filter((x) => x !== undefined);
+  return Object.keys(saveGame.modules)
+    .map<vetypes.ModuleInfoExtendedWithPath>((current) => availableModulesByName[current]!)
+    .filter((x) => x !== undefined);
 };

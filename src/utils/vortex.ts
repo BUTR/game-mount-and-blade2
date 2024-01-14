@@ -1,64 +1,52 @@
 import { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
-import { actions, fs, types, util } from 'vortex-api';
-import { VortexLauncherManager, prepareForModding } from '.';
-import { GAME_ID, LAUNCHER_EXEC, MODDING_KIT_EXEC } from '../common';
+import { types, util } from 'vortex-api';
+import { VortexLauncherManager, addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool, getBinaryPath, getPathExistsAsync, isStoreSteam, isStoreXbox, recommendBLSE } from '.';
+import { BLSE_CLI_EXE, XBOX_ID } from '../common';
 
-const addOfficialLauncher = (context: types.IExtensionContext, discovery: types.IDiscoveryResult): void => {
+const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
   if (!discovery.path) throw new Error(`discovery.path is undefined!`);
-
-  const launcherId = `TaleWorldsBannerlordLauncher`;
-  const exec = path.basename(LAUNCHER_EXEC);
-  const tool: types.IDiscoveredTool = {
-    id: launcherId,
-    name: `Official Launcher`,
-    logo: `tw_launcher.png`,
-    executable: () => exec,
-    requiredFiles: [exec],
-    path: path.join(discovery.path, LAUNCHER_EXEC),
-    relative: true,
-    workingDirectory: path.join(discovery.path, `bin`, `Win64_Shipping_Client`),
-    hidden: false,
-    custom: false,
-  };
-  context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, launcherId, tool, false));
-};
-
-const addModdingKit = (context: types.IExtensionContext, discovery: types.IDiscoveryResult, hidden?: boolean): void => {
-  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
-
-  const toolId = `bannerlord-sdk`;
-  const exec = path.basename(MODDING_KIT_EXEC);
-  const tool: types.IDiscoveredTool = {
-    id: toolId,
-    name: `Modding Kit`,
-    logo: `tw_launcher.png`,
-    executable: () => exec,
-    requiredFiles: [exec],
-    path: path.join(discovery.path, MODDING_KIT_EXEC),
-    relative: true,
-    exclusive: true,
-    workingDirectory: path.join(discovery.path, path.dirname(MODDING_KIT_EXEC)),
-    hidden: hidden || false,
-    custom: false,
-  };
-  context.api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, toolId, tool, false));
-};
-
-export const setup = async (context: types.IExtensionContext, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
-  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
-
-  // Quickly ensure that the official Launcher is added.
-  addOfficialLauncher(context, discovery);
-  try {
-    await fs.statAsync(path.join(discovery.path, MODDING_KIT_EXEC));
-    addModdingKit(context, discovery);
-  } catch (err) {
-    const tools = discovery?.tools;
-    if (tools !== undefined && util.getSafe(tools, [`bannerlord-sdk`], undefined) !== undefined) {
-      addModdingKit(context, discovery, true);
-    }
+ 
+  // skip if BLSE found
+  // question: if the user incorrectly deleted BLSE and the binary is left, what should we do?
+  // maybe just ask the user to always install BLSE via Vortex?
+  if (!await getPathExistsAsync(path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE))) {
+    recommendBLSE(api);
   }
 
-  await prepareForModding(context, discovery, manager);
+  if (isStoreSteam(discovery.store)) {
+    await util.GameStoreHelper.launchGameStore(api, discovery.store!, undefined, true).catch(() => { });
+  }
+
+  if (discovery.store) {
+    manager.setStore(discovery.store);
+  }
+};
+
+export const setup = toBluebird(async (api: types.IExtensionApi, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
+  if (!discovery.path) {
+    throw new Error(`discovery.path is undefined!`);
+  }
+
+  // Quickly ensure that the official Launcher is added.
+  addOfficialCLITool(api, discovery);
+  addOfficialLauncherTool(api, discovery);
+  addModdingKitTool(api, discovery);
+  await addBLSETools(api, discovery);
+
+  await prepareForModding(api, discovery, manager);
+});
+
+export const requiresLauncher = async (store?: string): Promise<{ launcher: string, addInfo?: any }> => {
+  if (isStoreXbox(store)) {
+    return {
+      launcher: `xbox`,
+      addInfo: {
+        appId: XBOX_ID,
+        parameters: [{ appExecName: `bin.Gaming.Desktop.x64.Shipping.Client.Launcher.Native` }],
+      },
+    };
+  }
+  // The API doesn't expect undefined, but it's allowed
+  return undefined!;
 };

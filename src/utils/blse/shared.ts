@@ -1,41 +1,41 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-import { actions, selectors, types, util } from 'vortex-api';
 import { gte } from 'semver';
-import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../common';
+import { actions, selectors, types, util } from 'vortex-api';
+import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../../common';
+import { IBannerlordMod, IBannerlordModStorage } from '../../types';
 
-export const findBLSEMod = (api: types.IExtensionApi): types.IMod | undefined => {
+export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefined => {
   const state = api.getState();
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile = selectors.profileById(state, profileId);
   const isActive = (modId: string) => util.getSafe(profile, ['modState', modId, 'enabled'], false);
-  const isBLSE = (mod: types.IMod) => mod.type === 'BLSE' && mod.attributes?.modId === 1;
-  const mods: { [modId: string]: types.IMod } = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
-  const BLSEMods: types.IMod[] = Object.values(mods).filter((mod: types.IMod) => isBLSE(mod) && isActive(mod.id));
+  const isBLSE = (mod: IBannerlordMod) => mod.type === `bannerlord-blse` || mod.attributes?.modId === 1;
+  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
+  const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isBLSE(mod) && isActive(mod.id));
 
-  return (BLSEMods.length === 0)
+  return (blseMods.length === 0)
     ? undefined
-    : BLSEMods.length > 1
-      ? BLSEMods.reduce((prev: types.IMod | undefined, iter: types.IMod) => {
+    : blseMods.length > 1
+      ? blseMods.reduce<IBannerlordMod | undefined>((prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
         if (prev === undefined) {
           return iter;
         }
         return (gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0')) ? iter : prev;
       }, undefined)
-      : BLSEMods[0];
-}
+      : blseMods[0];
+};
 
-const deployBLSE = async (api: types.IExtensionApi) => {
+export const deployBLSE = async (api: types.IExtensionApi) => {
   await util.toPromise(cb => api.events.emit('deploy-mods', cb));
   await util.toPromise(cb => api.events.emit('start-quick-discovery', () => cb(null)));
 
   const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
-  const tool = discovery?.tools?.['blse'];
+  const tool = discovery?.tools?.['blse-cli'];
   if (tool) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));
   }
-}
+};
 
-const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) => {
+export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) => {
   api.dismissNotification?.('blse-missing');
   api.sendNotification?.({
     id: 'blse-installing',
@@ -85,27 +85,4 @@ const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) => {
   } finally {
     api.dismissNotification?.('blse-installing');
   }
-}
-
-export const recommendBLSE = (context: types.IExtensionContext) => {
-  const blseMod = findBLSEMod(context.api);
-  const title = blseMod ? 'BLSE is not deployed' : 'BLSE is not installed';
-  const actionTitle = blseMod ? 'Deploy' : 'Get BLSE';
-  const action = () => (blseMod
-    ? deployBLSE(context.api)
-    : downloadBLSE(context.api))
-    .then(() => context.api.dismissNotification?.('blse-missing'));
-
-  context.api.sendNotification?.({
-    id: 'blse-missing',
-    type: 'warning',
-    title,
-    message: 'BLSE is recommended to mod Bannerlord.',
-    actions: [
-      {
-        title: actionTitle,
-        action,
-      },
-    ]
-  });
 };

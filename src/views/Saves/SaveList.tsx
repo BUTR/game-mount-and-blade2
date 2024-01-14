@@ -41,25 +41,25 @@ interface IBaseState {
 export interface ISaveGame {
   index: number;
   name: string;
-  applicationVersion?: vetypes.ApplicationVersion;
-  creationTime?: number;
-  characterName?: string;
-  mainHeroGold?: number;
-  mainHeroLevel?: number;
-  dayLong?: number;
-  clanBannerCode?: string;
-  clanFiefs?: number;
-  clanInfluence?: number;
-  mainPartyFood?: number;
-  mainPartyHealthyMemberCount?: number;
-  mainPartyPrisonerMemberCount?: number;
-  mainPartyWoundedMemberCount?: number;
-  version?: number; // always a 1?
+  applicationVersion?: vetypes.ApplicationVersion | undefined;
+  creationTime?: number | undefined;
+  characterName?: string | undefined;
+  mainHeroGold?: number | undefined;
+  mainHeroLevel?: number | undefined;
+  dayLong?: number | undefined;
+  clanBannerCode?: string | undefined;
+  clanFiefs?: number | undefined;
+  clanInfluence?: number | undefined;
+  mainPartyFood?: number | undefined;
+  mainPartyHealthyMemberCount?: number | undefined;
+  mainPartyPrisonerMemberCount?: number | undefined;
+  mainPartyWoundedMemberCount?: number | undefined;
+  version?: number | undefined; // always a 1?
   modules: { [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
-  duplicateModules?: string[];
-  loadOrderIssues?: string[];
-  missingModules?: string[];
-  mismatchedModuleVersions?: string[];
+  duplicateModules?: string[] | undefined;
+  loadOrderIssues?: string[] | undefined;
+  missingModules?: string[] | undefined;
+  mismatchedModuleVersions?: string[] | undefined;
 }
 
 type IComponentProps = IOwnProps;
@@ -198,7 +198,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     ];
   }
 
-  public render(): JSX.Element {
+  public override render(): JSX.Element {
     const { t } = this.props;
 
     const IconWrapper = IconBar as any;
@@ -270,7 +270,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   private renderContent(saveActions: ITableRowAction[]) {
-    const { saves, selectedRow, selectedSave } = this.state;
+    const { selectedRow, selectedSave } = this.state;
 
     return (
       <Panel>
@@ -294,7 +294,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
                   multiSelect={false}
                   hasActions={false}
                   showDetails={false}
-                  onChangeSelection={(ids: string[]) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0])][1])}
+                  onChangeSelection={(ids: string[]) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0]!)]![1])}
                 />
               </FlexLayout.Flex>
 
@@ -412,48 +412,52 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     // add savesDict as starting object and keep adding to it
     saves.reduce((prev: { [name: string]: ISaveGame }, current, currentIndex) => {
+      if (!current['Modules']) {
+        return prev;
+      }
+
       const saveGame: ISaveGame = {
         index: currentIndex + 1,
         name: current.Name,
         applicationVersion:
-          current.ApplicationVersion !== undefined
-            ? BannerlordModuleManager.parseApplicationVersion(current.ApplicationVersion)
+          current['ApplicationVersion'] !== undefined
+            ? BannerlordModuleManager.parseApplicationVersion(current['ApplicationVersion'])
             : undefined,
-        creationTime: current.CreationTime !== undefined ? parseInt(current.CreationTime) : undefined,
-        characterName: current.CharacterName,
-        mainHeroGold: current.MainHeroGold !== undefined ? parseInt(current.MainHeroGold) : undefined,
-        mainHeroLevel: current.MainHeroLevel !== undefined ? parseInt(current.MainHeroLevel) : undefined,
-        dayLong: current.DayLong !== undefined ? parseFloat(current.DayLong) : undefined,
+        creationTime: current['CreationTime'] !== undefined ? parseInt(current['CreationTime']) : undefined,
+        characterName: current['CharacterName'],
+        mainHeroGold: current['MainHeroGold'] !== undefined ? parseInt(current['MainHeroGold']) : undefined,
+        mainHeroLevel: current['MainHeroLevel'] !== undefined ? parseInt(current['MainHeroLevel']) : undefined,
+        dayLong: current['DayLong'] !== undefined ? parseFloat(current['DayLong']) : undefined,
 
-        clanBannerCode: current.ClanBannerCode,
-        clanFiefs: current.ClanFiefs !== undefined ? parseInt(current.ClanFiefs) : undefined,
-        clanInfluence: current.ClanInfluence !== undefined ? parseFloat(current.ClanInfluence) : undefined,
+        clanBannerCode: current['ClanBannerCode'],
+        clanFiefs: current['ClanFiefs'] !== undefined ? parseInt(current['ClanFiefs']) : undefined,
+        clanInfluence: current['ClanInfluence'] !== undefined ? parseFloat(current['ClanInfluence']) : undefined,
 
-        mainPartyFood: current.MainPartyFood !== undefined ? parseFloat(current.MainPartyFood) : undefined,
+        mainPartyFood: current['MainPartyFood'] !== undefined ? parseFloat(current['MainPartyFood']) : undefined,
         mainPartyHealthyMemberCount:
-          current.MainPartyHealthyMemberCount !== undefined ? parseInt(current.MainPartyHealthyMemberCount) : undefined,
+          current['MainPartyHealthyMemberCount'] !== undefined ? parseInt(current['MainPartyHealthyMemberCount']) : undefined,
         mainPartyPrisonerMemberCount:
-          current.MainPartyPrisonerMemberCount !== undefined
-            ? parseInt(current.MainPartyPrisonerMemberCount)
+          current['MainPartyPrisonerMemberCount'] !== undefined
+            ? parseInt(current['MainPartyPrisonerMemberCount'])
             : undefined,
         mainPartyWoundedMemberCount:
-          current.MainPartyWoundedMemberCount !== undefined ? parseInt(current.MainPartyWoundedMemberCount) : undefined,
-        version: current.Version !== undefined ? parseInt(current.Version) : undefined,
+          current['MainPartyWoundedMemberCount'] !== undefined ? parseInt(current['MainPartyWoundedMemberCount']) : undefined,
+        version: current['Version'] !== undefined ? parseInt(current['Version']) : undefined,
         modules: {}, // blank dictionary for now
       };
 
       // build up modules dictionary?
-      const moduleNames: string[] = current.Modules.split(';');
+      const moduleNames: string[] = current['Modules'].split(';');
 
       const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
       for (const module of moduleNames) {
         const key: string = module;
-        const value: string = current['Module_' + module];
+        const moduleValue = current['Module_' + module];
+        if (!moduleValue) {
+          continue;
+        }
 
-        // skip this if it's undefined
-        if (value == undefined) continue;
-
-        const version = BannerlordModuleManager.parseApplicationVersion(value);
+        const version = BannerlordModuleManager.parseApplicationVersion(moduleValue);
         if (version.changeSet === saveChangeSet) {
           version.changeSet = 0;
         }
@@ -496,9 +500,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     const availableModulesByName = getAvailableModulesByName(availableModules);
     const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', {});
     const modules = Object.keys(saveGame.modules)
-      .map((current) => {
-        return availableModulesByName[current]?.id ?? `${current} ${unknownId}`;
-      })
+      .map<string>((current) => availableModulesByName[current]?.id ?? `${current} ${unknownId}`)
       .filter((x) => x !== undefined);
 
     loadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {

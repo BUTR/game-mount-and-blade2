@@ -1,57 +1,71 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { fs, types } from 'vortex-api';
-import { findBLSEMod } from '.';
-import { XBOX_ID, BANNERLORD_EXEC, BANNERLORD_EXEC_XBOX, GAME_ID, BLSE_EXE } from '../common';
+import { getBannerlordDiscovery, isStoreStandard, isStoreXbox } from '.';
+import { BANNERLORD_EXE, BANNERLORD_EXE_XBOX, GAME_ID, BINARY_FOLDER_STANDARD, BINARY_FOLDER_XBOX, BINARY_FOLDER_STANDARD_MODDING_KIT } from '../common';
 
-const xboxStore = (blseMod: types.IMod | undefined): string => {
-  if (!blseMod) {
-    // TODO: report that BLSE is needed
-  }
-  return BLSE_EXE;
-}
-const steamGogEpicStore = (blseMod: types.IMod | undefined): string => {
-  const exec = blseMod ? BLSE_EXE : BANNERLORD_EXEC;
-  return exec;
-}
+export const getBinaryPath = (store: string | undefined): string =>
+  path.join(`bin`, isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD);
 
-export const getBannerlordExec = (discoveryPath: string|undefined, api: types.IExtensionApi): string => {
-  const discovery: types.IDiscoveryResult = (api.getState().persistent.gameMode as any).discovered?.[GAME_ID];
-  if (!discovery) return BANNERLORD_EXEC;
+export const getBinaryModdingPath = (store: string | undefined): string =>
+  path.join(`bin`, BINARY_FOLDER_STANDARD_MODDING_KIT);
 
-  const blseMod = findBLSEMod(api);
+export const getBannerlordMainExe = (discoveryPath: string | undefined, api: types.IExtensionApi): string => {
+  const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
+  const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
 
-  if (discovery.store === `xbox`) {
-    return xboxStore(blseMod);
+  const discovery = getBannerlordDiscovery(api);
+  if (!discovery) {
+    return ``;
   }
 
-  if (!!discovery.store && [`gog`, `steam`, `epic`].includes(discovery.store)) {
-    return steamGogEpicStore(blseMod);
+  if (isStoreXbox(discovery.store)) {
+    return xbox();
   }
 
-  if (!discovery.store && !!discoveryPath) {
+  if (isStoreStandard(discovery.store)) {
+    return standard();
+  }
+
+  if (!discovery.store && discoveryPath) {
     // Brute force the detection by manually checking the paths.
     try {
-    fs.statSync(path.join(discoveryPath, BANNERLORD_EXEC_XBOX));
-      return xboxStore(blseMod);
+      fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      return xbox();
     } catch (err) {
-      return steamGogEpicStore(blseMod);
+      return standard();
     }
   }
 
-  return steamGogEpicStore(blseMod);
+  return standard();
 };
 
-export const requiresLauncher = async (store?: string): Promise<{ launcher: string, addInfo?: any }> => {
-  if (store === `xbox`) {
-    return {
-      launcher: `xbox`,
-      addInfo: {
-        appId: XBOX_ID,
-        parameters: [{ appExecName: `bin.Gaming.Desktop.x64.Shipping.Client.Launcher.Native` }],
-      },
-    };
+export const getBannerlordToolExe = (discoveryPath: string | undefined, api: types.IExtensionApi, exe: string): string => {
+  const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
+  const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
+  
+  const state = api.getState();
+  const discovery = state.settings.gameMode.discovered[GAME_ID];
+  if (!discovery) {
+    return ``;
   }
-  // The API doesn't expect undefined, but it's allowed
-  return undefined!;
+
+  if (isStoreXbox(discovery.store)) {
+    return xbox();
+  }
+
+  if (isStoreStandard(discovery.store)) {
+    return standard();
+  }
+
+  if (!discovery.store && discoveryPath) {
+    // Brute force the detection by manually checking the paths.
+    try {
+      fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      return xbox();
+    } catch (err) {
+      return standard();
+    }
+  }
+
+  return standard();
 };
