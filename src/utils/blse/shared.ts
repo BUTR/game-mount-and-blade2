@@ -3,25 +3,62 @@ import { actions, selectors, types, util } from 'vortex-api';
 import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../../common';
 import { IBannerlordMod, IBannerlordModStorage } from '../../types';
 
+export const isModActive = (profile: types.IProfile, mod: IBannerlordMod) => util.getSafe(profile.modState, [mod.id, 'enabled'], false);
+const isModBLSE = (mod: IBannerlordMod) => mod.type === `bannerlord-blse` || mod.attributes?.modId === 1;
+
 export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefined => {
   const state = api.getState();
+  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
+  const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
+
+  if (blseMods.length === 0)
+    return undefined;
+
+  if (blseMods.length === 1)
+    return blseMods[0];
+
+  return blseMods.reduce<IBannerlordMod | undefined>((prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
+    if (prev === undefined) {
+      return iter;
+    }
+    return (gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0')) ? iter : prev;
+  }, undefined);
+};
+
+export const findBLSEDownload = (api: types.IExtensionApi): string | undefined => {
+  const state = api.getState();
+  const downloadedFiles = state.persistent.downloads.files;
+  if (!downloadedFiles) {
+    return undefined;
+  }
+
+  const blseFiles = Object.entries(downloadedFiles)
+    .filter(x => x[1].game.includes(GAME_ID))
+    .filter(x => x[1].modInfo?.['nexus']?.modInfo?.mod_id === 1)
+    .sort((x, y) => x[1].fileTime - y[1].fileTime);
+
+  if (blseFiles.length === 0) {
+    return undefined;
+  }
+
+  const [downloadId, download] = blseFiles[0]!;
+
+  return downloadId;
+}
+
+export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
+  const state = api.getState();
+  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
+  const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
+  
+  if (blseMods.length == 0) {
+    return false;
+  }
+
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile = selectors.profileById(state, profileId);
-  const isActive = (modId: string) => util.getSafe(profile, ['modState', modId, 'enabled'], false);
-  const isBLSE = (mod: IBannerlordMod) => mod.type === `bannerlord-blse` || mod.attributes?.modId === 1;
-  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
-  const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isBLSE(mod) && isActive(mod.id));
 
-  return (blseMods.length === 0)
-    ? undefined
-    : blseMods.length > 1
-      ? blseMods.reduce<IBannerlordMod | undefined>((prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
-        if (prev === undefined) {
-          return iter;
-        }
-        return (gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0')) ? iter : prev;
-      }, undefined)
-      : blseMods[0];
+  return blseMods.filter(x => isModActive(profile, x)).length >= 1;
 };
 
 export const deployBLSE = async (api: types.IExtensionApi) => {

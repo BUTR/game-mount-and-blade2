@@ -104,7 +104,7 @@ export class VortexLauncherManager {
    * Use @method {refreshModulesVortex} to reload modules from the FS.
    * @return
    */
-  public getAvailableModules = (): Readonly<IModuleCache> => {
+  public getAllModules = (): Readonly<IModuleCache> => {
     return this._launcherManager.getModules().reduce<IModuleCache>((map, current) => {
       map[current.id] = current;
       return map;
@@ -255,12 +255,12 @@ export class VortexLauncherManager {
    * Returns the Load Order saved in Vortex's permantent storage
    */
   private loadLoadOrder = (): vetypes.LoadOrder => {
-    const modules = this.getAvailableModules();
+    const allModules = this.getAllModules();
 
-    const savedLoadOrder = persistenceToVortex(this._api, modules, readLoadOrder(this._api));
+    const savedLoadOrder = persistenceToVortex(this._api, allModules, readLoadOrder(this._api));
 
     let index = savedLoadOrder.length;
-    for (const module of Object.values(modules)) {
+    for (const module of Object.values(allModules)) {
       if (savedLoadOrder.find(x => x.id === module.id) == undefined)
         savedLoadOrder.push({
           id: module.id,

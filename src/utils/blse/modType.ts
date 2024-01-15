@@ -10,6 +10,5 @@ export const getInstallPathBLSE = (api: types.IExtensionApi, game: types.IGame):
 
 export const isModTypeBLSE = toBluebird((instructions: types.IInstruction[]): boolean => {
   const blseInstruction = instructions.find(inst => (inst.type === 'copy') && inst.source && inst.source.endsWith(BLSE_CLI_EXE));
-
   return !!blseInstruction;
 });

@@ -16,7 +16,7 @@ export const persistenceToVortex = (api: types.IExtensionApi, modules: Readonly<
         index: x.index,
       },
     };
-  });
+  }).sort((x, y) => x.data!.index - y.data!.index);
   return loadOrderConverted;
 };
 
@@ -62,6 +62,19 @@ export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.M
   }, []);
   return loadOrderConverted;
 };
+export const libraryVMToLibrary = (loadOrder: vetypes.ModuleViewModel[]): vetypes.LoadOrder => {
+  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {
+    map[curr.moduleInfoExtended.id] = {
+      id: curr.moduleInfoExtended.id,
+      name: curr.moduleInfoExtended.name,
+      isSelected: curr.isSelected,
+      isDisabled: curr.isDisabled,
+      index: curr.index,
+    };
+    return map;
+  }, {});
+  return loadOrderConverted;
+};
 
 export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.LoadOrder => {
   const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {
@@ -76,13 +89,13 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
   }, {});
   return loadOrderConverted;
 };
-export const libraryToVortex = (api: types.IExtensionApi, manager: VortexLauncherManager, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
-  const modules = manager.getAvailableModules();
+export const libraryToVortex = (api: types.IExtensionApi, allModules: Readonly<IModuleCache>, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
+  const availableModules = Object.values(loadOrder).map<vetypes.ModuleInfoExtendedWithPath>((curr) => allModules[curr.id]!);
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
   const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
-    const module = modules[curr.id]!;
-    const moduleValidation = BannerlordModuleManager.validateModule(Object.values(modules), module, validationManager);
+    const module = allModules[curr.id]!;
+    const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
     const modId = getModIds(api, curr.id);
     return {
       id: curr.id,

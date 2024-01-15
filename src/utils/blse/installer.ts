@@ -16,6 +16,8 @@ export const installBLSE = toBluebird(async (api: types.IExtensionApi, files: st
   const instructions = files.filter(file => file.includes(isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD)).map<types.IInstruction>(file => ({
     type: 'copy',
     source: file,
+    // TODO: Investigation
+    destination: path.join(`bin`, isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD)
   }));
   return {
     instructions: instructions

@@ -15,7 +15,6 @@ type IComponentProps = IStateProps & IOwnProps;
 type IComponentState = IBaseState;
 class SaveListEntry extends ComponentEx<IComponentProps, IComponentState> {
   constructor(props: IComponentProps) {
-    console.log(`SaveListEntry`);
     super(props);
   }
 

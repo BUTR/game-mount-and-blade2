@@ -1,5 +1,14 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
+import { GAME_ID } from './common';
+
+export interface VortexBannerlordSettings extends types.ISettings {
+  [GAME_ID]?: {
+    saveList?: {
+      saveName?: string;
+    }
+  }
+}
 
 export type PersistenceLoadOrderStorage = PersistenceLoadOrderEntry[];
 export interface PersistenceLoadOrderEntry {
