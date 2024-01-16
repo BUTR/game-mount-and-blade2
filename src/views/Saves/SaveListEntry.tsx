@@ -3,13 +3,13 @@ import { ListGroupItem, Radio } from 'react-bootstrap';
 import { ComponentEx, FlexLayout } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 
-interface IStateProps {}
+type IStateProps = object;
 type IOwnProps = {
   item: vetypes.SaveMetadata;
   onSelected: (saveMetadata: vetypes.SaveMetadata) => void;
 };
 
-interface IBaseState {}
+type IBaseState = object;
 
 type IComponentProps = IStateProps & IOwnProps;
 type IComponentState = IBaseState;
@@ -34,8 +34,8 @@ class SaveListEntry extends ComponentEx<IComponentProps, IComponentState> {
           <FlexLayout.Flex>
             <div style={{ display: `flex`, alignItems: `center` }}>
               <Radio name="groupOptions">
-                {item.Name} | {item['ApplicationVersion']} | {item['CharacterName']} | {item['MainHeroLevel']} | {item['DayLong']} |{' '}
-                {item['CreationTime']}
+                {item.Name} | {item['ApplicationVersion']} | {item['CharacterName']} | {item['MainHeroLevel']} |{' '}
+                {item['DayLong']} | {item['CreationTime']}
               </Radio>
             </div>
           </FlexLayout.Flex>

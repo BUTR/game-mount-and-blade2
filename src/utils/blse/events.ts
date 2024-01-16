@@ -1,4 +1,3 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { actions, selectors, types } from 'vortex-api';
 import { findBLSEMod } from './shared';
 import { GAME_ID } from '../../common';
@@ -51,7 +50,7 @@ export const didPurgeBLSE = async (api: types.IExtensionApi, profileId: string) 
   }
 
   const blseMod = findBLSEMod(api);
-  if (!!blseMod) {
+  if (blseMod) {
     api.store?.dispatch(actions.setPrimaryTool(profile.gameId, undefined!));
   }
 

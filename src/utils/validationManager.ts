@@ -1,26 +1,26 @@
-import { types as vetypes } from "@butr/vortexextensionnative";
-import { VortexLoadOrderStorage } from "../types";
+import { types as vetypes } from '@butr/vortexextensionnative';
+import { VortexLoadOrderStorage } from '../types';
 
 export class ValidationManager implements vetypes.IValidationManager {
   static fromVortex = (loadOrder: VortexLoadOrderStorage): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
       try {
-        const module = loadOrder.find(x => x.id === moduleId);
+        const module = loadOrder.find((x) => x.id === moduleId);
         return !!module && module.enabled;
-      } catch { 
+      } catch {
         return false;
       }
-    })
+    });
   };
   static fromLibrary = (loadOrder: vetypes.LoadOrder): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
       try {
         const module = loadOrder[moduleId];
         return !!module && module.isSelected;
-      } catch { 
+      } catch {
         return false;
       }
-    })
+    });
   };
 
   private _isSelectedImpl: (moduleId: string) => boolean;
@@ -30,4 +30,4 @@ export class ValidationManager implements vetypes.IValidationManager {
   }
 
   isSelected = (moduleId: string): boolean => this._isSelectedImpl(moduleId);
-};
+}

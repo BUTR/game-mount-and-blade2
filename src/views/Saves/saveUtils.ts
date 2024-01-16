@@ -23,7 +23,11 @@ export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName
   }, {});
 };
 
-export const getNameDuplicatesError = (saveGame: Readonly<ISaveGame>, manager: VortexLauncherManager, allModules: Readonly<IModuleCache>): string[] | undefined => {
+export const getNameDuplicatesError = (
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
+): string[] | undefined => {
   const allModulesByName = getModulesByName(allModules);
 
   const moduleNames = Object.keys(allModulesByName);
@@ -46,7 +50,11 @@ export const getNameDuplicatesError = (saveGame: Readonly<ISaveGame>, manager: V
   return undefined;
 };
 
-export const getMissingModuleNamesError = (saveGame: Readonly<ISaveGame>, manager: VortexLauncherManager, allModules: Readonly<IModuleCache>): Array<string> => {
+export const getMissingModuleNamesError = (
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
+): Array<string> => {
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules).reduce<string[]>((map, current) => {
     if (!allModulesByName[current]) {
@@ -56,7 +64,11 @@ export const getMissingModuleNamesError = (saveGame: Readonly<ISaveGame>, manage
   }, []);
 };
 
-export const getMismatchedModuleVersionsWarning = (saveGame: Readonly<ISaveGame>, manager: VortexLauncherManager, allModules: Readonly<IModuleCache>): string[] | undefined => {
+export const getMismatchedModuleVersionsWarning = (
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
+): string[] | undefined => {
   const allModulesByName = getModulesByName(allModules);
   const mismatchedVersions = Object.keys(saveGame.modules).reduce<MismatchedModuleMap>((map, moduleName) => {
     // is the module even installed?
@@ -96,7 +108,11 @@ export const getMismatchedModuleVersionsWarning = (saveGame: Readonly<ISaveGame>
   return undefined;
 };
 
-export const getLoadOrderIssues = (saveGame: ISaveGame, manager: VortexLauncherManager, allModules: Readonly<IModuleCache>): Array<string> => {
+export const getLoadOrderIssues = (
+  saveGame: ISaveGame,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
+): Array<string> => {
   const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)
     .map<vetypes.ModuleInfoExtendedWithPath | undefined>((current) => allModulesByName[current])
@@ -104,7 +120,10 @@ export const getLoadOrderIssues = (saveGame: ISaveGame, manager: VortexLauncherM
   return Utils.isLoadOrderCorrect(modules);
 };
 
-export const getModules = (saveGame: ISaveGame, manager: VortexLauncherManager): Array<vetypes.ModuleInfoExtendedWithPath> => {
+export const getModules = (
+  saveGame: ISaveGame,
+  manager: VortexLauncherManager
+): Array<vetypes.ModuleInfoExtendedWithPath> => {
   const allModules = manager.getAllModules();
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules)

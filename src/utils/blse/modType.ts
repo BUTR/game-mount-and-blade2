@@ -1,4 +1,3 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { selectors, types } from 'vortex-api';
 import { BLSE_CLI_EXE } from '../../common';
 
@@ -7,7 +6,9 @@ export const getInstallPathBLSE = (api: types.IExtensionApi, game: types.IGame):
   return discovery?.path ?? ``;
 };
 
-export const isModTypeBLSE = toBluebird((instructions: types.IInstruction[]): boolean => {
-  const blseInstruction = instructions.find(inst => (inst.type === 'copy') && inst.source && inst.source.endsWith(BLSE_CLI_EXE));
+export const isModTypeBLSE = (instructions: types.IInstruction[]): boolean => {
+  const blseInstruction = instructions.find(
+    (inst) => inst.type === 'copy' && inst.source && inst.source.endsWith(BLSE_CLI_EXE)
+  );
   return !!blseInstruction;
-});
+};

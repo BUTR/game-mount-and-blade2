@@ -1,27 +1,39 @@
-import { types } from "vortex-api";
-import { types as vetypes, BannerlordModuleManager } from "@butr/vortexextensionnative";
-import { ValidationManager, getModIds } from "../";
-import { VortexLoadOrderStorage, VortexLoadOrderEntry, PersistenceLoadOrderStorage, IModuleCache, PersistenceLoadOrderEntry } from "../../types";
+import { types } from 'vortex-api';
+import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextensionnative';
+import { ValidationManager, getModIds } from '../';
+import {
+  VortexLoadOrderStorage,
+  VortexLoadOrderEntry,
+  PersistenceLoadOrderStorage,
+  IModuleCache,
+  IPersistenceLoadOrderEntry,
+} from '../../types';
 
-export const persistenceToVortex = (api: types.IExtensionApi, modules: Readonly<IModuleCache>, loadOrder: PersistenceLoadOrderStorage): VortexLoadOrderStorage => {
-  const loadOrderConverted = loadOrder.map<VortexLoadOrderEntry>(x => {
-    const modIds = getModIds(api, x.id);
-    return {
-      id: x.id,
-      name: x.name,
-      enabled: x.isSelected,
-      modId: modIds[0]?.id ?? undefined!,
-      data: {
-        moduleInfoExtended: modules[x.id]!,
-        index: x.index,
-      },
-    };
-  }).sort((x, y) => x.data!.index - y.data!.index);
+export const persistenceToVortex = (
+  api: types.IExtensionApi,
+  modules: Readonly<IModuleCache>,
+  loadOrder: PersistenceLoadOrderStorage
+): VortexLoadOrderStorage => {
+  const loadOrderConverted = loadOrder
+    .map<VortexLoadOrderEntry>((x) => {
+      const modIds = getModIds(api, x.id);
+      return {
+        id: x.id,
+        name: x.name,
+        enabled: x.isSelected,
+        modId: modIds[0]?.id ?? undefined!,
+        data: {
+          moduleInfoExtended: modules[x.id]!,
+          index: x.index,
+        },
+      };
+    })
+    .sort((x, y) => x.data!.index - y.data!.index);
   return loadOrderConverted;
 };
 
 export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceLoadOrderStorage => {
-  const loadOrderConverted = Object.values(loadOrder).map<PersistenceLoadOrderEntry>(x => ({
+  const loadOrderConverted = Object.values(loadOrder).map<IPersistenceLoadOrderEntry>((x) => ({
     id: x.id,
     name: x.name,
     isSelected: x.isSelected,
@@ -32,16 +44,25 @@ export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceL
 };
 
 export const vortexToLibraryVM = (loadOrder: VortexLoadOrderStorage): vetypes.ModuleViewModel[] => {
-  const modules = loadOrder.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) => entry.data ? entry.data.moduleInfoExtended : []);
+  const modules = loadOrder.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) =>
+    entry.data ? entry.data.moduleInfoExtended : []
+  );
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
-  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => entry.data ? {
-    moduleInfoExtended: entry.data.moduleInfoExtended,
-    isValid: entry.enabled && BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager).length == 0,
-    isSelected: entry.enabled,
-    isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
-    index: entry.data.index,
-  } : []);
+  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) =>
+    entry.data
+      ? {
+          moduleInfoExtended: entry.data.moduleInfoExtended,
+          isValid:
+            entry.enabled &&
+            BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager).length ===
+              0,
+          isSelected: entry.enabled,
+          isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
+          index: entry.data.index,
+        }
+      : []
+  );
   return loadOrderConverted;
 };
 export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
@@ -89,8 +110,14 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
   }, {});
   return loadOrderConverted;
 };
-export const libraryToVortex = (api: types.IExtensionApi, allModules: Readonly<IModuleCache>, loadOrder: vetypes.LoadOrder): VortexLoadOrderStorage => {
-  const availableModules = Object.values(loadOrder).map<vetypes.ModuleInfoExtendedWithPath>((curr) => allModules[curr.id]!);
+export const libraryToVortex = (
+  api: types.IExtensionApi,
+  allModules: Readonly<IModuleCache>,
+  loadOrder: vetypes.LoadOrder
+): VortexLoadOrderStorage => {
+  const availableModules = Object.values(loadOrder).map<vetypes.ModuleInfoExtendedWithPath>(
+    (curr) => allModules[curr.id]!
+  );
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
   const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {

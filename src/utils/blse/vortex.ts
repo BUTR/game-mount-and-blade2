@@ -1,7 +1,12 @@
 import { actions, selectors, types } from 'vortex-api';
 import { findBLSEMod, deployBLSE, downloadBLSE, isModActive, findBLSEDownload } from './shared';
 
-const sendNotification = (api: types.IExtensionApi, title: string, actionTitle: string, action: (dismiss: types.NotificationDismiss) => void) => {
+const sendNotification = (
+  api: types.IExtensionApi,
+  title: string,
+  actionTitle: string,
+  action: (dismiss: types.NotificationDismiss) => void
+) => {
   api.sendNotification?.({
     id: 'blse-missing',
     type: 'warning',
@@ -14,15 +19,16 @@ const sendNotification = (api: types.IExtensionApi, title: string, actionTitle: 
           action(dismiss);
         },
       },
-    ]
+    ],
   });
-}
+};
 
 export const recommendBLSE = (api: types.IExtensionApi) => {
   const profile = selectors.activeProfile(api.getState());
 
   const blseMod = findBLSEMod(api);
-  if (!!blseMod) { // Found but not enabled
+  if (blseMod) {
+    // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
     if (!blseIsActive) {
       const action = (dismiss: types.NotificationDismiss) => {
@@ -35,7 +41,8 @@ export const recommendBLSE = (api: types.IExtensionApi) => {
   }
 
   const blseDownload = findBLSEDownload(api);
-  if (!!blseDownload) { // Downloaded but not installed
+  if (blseDownload) {
+    // Downloaded but not installed
     const action = (dismiss: types.NotificationDismiss) => {
       api.events.emit('start-install-download', blseDownload, {
         allowAutoEnable: true,
@@ -45,10 +52,10 @@ export const recommendBLSE = (api: types.IExtensionApi) => {
     sendNotification(api, 'BLSE is not installed', 'Install', action);
     return;
   }
-  
+
   // Non existent
   const action = (dismiss: types.NotificationDismiss) => {
-    downloadBLSE(api).then(() => dismiss())
+    downloadBLSE(api).then(() => dismiss());
   };
   sendNotification(api, 'BLSE is not installed via Vortex', 'Get BLSE', action);
 };

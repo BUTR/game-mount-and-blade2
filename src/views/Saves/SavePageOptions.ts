@@ -1,6 +1,6 @@
-import { selectors, types } from "vortex-api";
-import { GAME_ID } from "../../common";
-import { VortexLauncherManager } from "../../utils";
+import { selectors, types } from 'vortex-api';
+import { GAME_ID } from '../../common';
+import { VortexLauncherManager } from '../../utils';
 
 export class SavePageOptions implements types.IMainPageOptions {
   private context: types.IExtensionContext;
@@ -26,4 +26,4 @@ export class SavePageOptions implements types.IMainPageOptions {
     t: this.context.api.translate,
     launcherManager: this.launcherManager,
   });
-};
+}

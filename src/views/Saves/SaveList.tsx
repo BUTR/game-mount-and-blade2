@@ -151,7 +151,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       {
         id: 'applicationVersion',
         name: 'Version',
-        calc: (data: [string, ISaveGame]) => data[1].applicationVersion ? versionToString(data[1].applicationVersion) : '',
+        calc: (data: [string, ISaveGame]) =>
+          data[1].applicationVersion ? versionToString(data[1].applicationVersion) : '',
         placement: 'both',
         edit: {},
       },
@@ -189,7 +190,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
             <FlexLayout.Fixed id="instructions">
               <p>
                 Instructions: Select a row to see more information and use the radio buttons to select the save to
-                launch the game. If you don't want to launch with a save, choose the 'No Save' option at the top.
+                launch the game. If you don&apos;t want to launch with a save, choose the &apos;No Save&apos; option at
+                the top.
               </p>
               <p>Currently selected save: {selectedSave?.name}</p>
             </FlexLayout.Fixed>
@@ -204,7 +206,9 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
                   multiSelect={false}
                   hasActions={false}
                   showDetails={false}
-                  onChangeSelection={(ids: string[]) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0]!)]![1])}
+                  onChangeSelection={(ids: string[]) =>
+                    this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0]!)]![1])
+                  }
                 />
               </FlexLayout.Flex>
 
@@ -259,7 +263,9 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
         <>
           <p>{issueHeading}:</p>
           <ul>
-            {issue.map((object, i) => (<li key={i}>{object}</li>))}
+            {issue.map((object, i) => (
+              <li key={i}>{object}</li>
+            ))}
           </ul>
         </>
       );
@@ -320,7 +326,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // default is all fine
     let iconName = 'toggle-enabled';
     let colorName = 'var(--brand-success)';
-    let issues: string[] = [];
+    const issues: string[] = [];
 
     // build up tooltip issues array, and colours if necessary
     // warning is set first, anything else is error, if nothing then we just
@@ -357,8 +363,6 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
   private OnRefreshList() {
     const { launcherManager } = this.props;
-
-    console.log(this.props);
 
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
     const allModules = launcherManager.getAllModules();
@@ -397,13 +401,17 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
         mainPartyFood: current['MainPartyFood'] !== undefined ? parseFloat(current['MainPartyFood']) : undefined,
         mainPartyHealthyMemberCount:
-          current['MainPartyHealthyMemberCount'] !== undefined ? parseInt(current['MainPartyHealthyMemberCount']) : undefined,
+          current['MainPartyHealthyMemberCount'] !== undefined
+            ? parseInt(current['MainPartyHealthyMemberCount'])
+            : undefined,
         mainPartyPrisonerMemberCount:
           current['MainPartyPrisonerMemberCount'] !== undefined
             ? parseInt(current['MainPartyPrisonerMemberCount'])
             : undefined,
         mainPartyWoundedMemberCount:
-          current['MainPartyWoundedMemberCount'] !== undefined ? parseInt(current['MainPartyWoundedMemberCount']) : undefined,
+          current['MainPartyWoundedMemberCount'] !== undefined
+            ? parseInt(current['MainPartyWoundedMemberCount'])
+            : undefined,
         version: current['Version'] !== undefined ? parseInt(current['Version']) : undefined,
         modules: {}, // blank dictionary for now
       };

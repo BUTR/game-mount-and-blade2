@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /*
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 

@@ -1,11 +1,19 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { Dirent, readFileSync } from 'fs';
-import { actions, fs, selectors, types } from "vortex-api";
-import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
-import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder, hasPersistentLoadOrder } from ".";
-import { GAME_ID } from "../common";
-import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from "../types";
+import { actions, fs, selectors, types } from 'vortex-api';
+import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
+import {
+  vortexToLibrary,
+  libraryVMToVortex,
+  vortexToLibraryVM,
+  persistenceToVortex,
+  libraryToPersistence,
+  writeLoadOrder,
+  readLoadOrder,
+  hasPersistentLoadOrder,
+} from '.';
+import { GAME_ID } from '../common';
+import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
 
 export class VortexLauncherManager {
   private _launcherManager: NativeLauncherManager;
@@ -27,18 +35,20 @@ export class VortexLauncherManager {
       this.getModuleViewModels,
       this.setModuleViewModels,
       this.getOptions,
-      this.getState,
+      this.getState
     );
 
     this._api = api;
 
-    fs.readdirSync(__dirname, { withFileTypes: true}).forEach((d: Dirent) => {
-      if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith(".xml")) {
-        const content: string = fs.readFileSync(`${__dirname}/${d.name}`, { encoding: 'utf8' });
+    fs.readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
+      if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith('.xml')) {
+        const content: string = fs.readFileSync(`${__dirname}/${d.name}`, {
+          encoding: 'utf8',
+        });
         this._launcherManager.loadLocalization(content);
       }
     });
-  };
+  }
 
   /**
    * Gets the LoadOrder from Vortex's Load Order Page
@@ -49,7 +59,7 @@ export class VortexLauncherManager {
     if (!hasPersistentLoadOrder(state.persistent)) {
       return [];
     }
-    
+
     const loadOrder = state.persistent.loadOrder[profileId] ?? [];
     return loadOrder;
   };
@@ -58,7 +68,7 @@ export class VortexLauncherManager {
     return this._launcherManager.loadLoadOrder();
   };
 
-  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void=> {
+  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void => {
     this._launcherManager.saveLoadOrder(loadOrder);
   };
 
@@ -80,7 +90,7 @@ export class VortexLauncherManager {
     this.refreshGameParameters();
   };
 
-  public setModulesToLaunch = (loadOrder: vetypes.LoadOrder): void=> {
+  public setModulesToLaunch = (loadOrder: vetypes.LoadOrder): void => {
     this._launcherManager.setGameParameterLoadOrder(loadOrder);
     this.refreshGameParameters();
   };
@@ -117,37 +127,35 @@ export class VortexLauncherManager {
 
   /**
    * Will sort the available Modules based on the provided LoadOrder
-   * @param loadOrder 
-   * @returns 
+   * @param loadOrder
+   * @returns
    */
   public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
     return this._launcherManager.orderByLoadOrder(loadOrder);
   };
 
-
-
   /**
    * A simple wrapper for Vortex that returns a promise
    */
-  public getGameVersionVortex = (): Bluebird<string> => {
+  public getGameVersionVortex = (): Promise<string> => {
     return Promise.resolve(this._launcherManager.getGameVersion());
   };
 
   /**
    * Calls LauncherManager's testModule and converts the result to Vortex data
    */
-  public testModule = (files: string[], gameId: string): Bluebird<types.ISupportedResult> => {
-    if (gameId !== GAME_ID){
+  public testModule = (files: string[], gameId: string): Promise<types.ISupportedResult> => {
+    if (gameId !== GAME_ID) {
       return Promise.resolve({
         supported: false,
-        requiredFiles: []
+        requiredFiles: [],
       });
     }
 
     const result = this._launcherManager.testModule(files);
     const transformedResult: types.ISupportedResult = {
       supported: result.supported,
-      requiredFiles: result.requiredFiles
+      requiredFiles: result.requiredFiles,
     };
     return Promise.resolve(transformedResult);
   };
@@ -155,10 +163,12 @@ export class VortexLauncherManager {
   /**
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
-  public installModule = (files: string[], destinationPath: string): Bluebird<types.IInstallResult> => {
-    const subModuleRelFilePath = files.find(x => x.endsWith("SubModule.xml"))!;
+  public installModule = (files: string[], destinationPath: string): Promise<types.IInstallResult> => {
+    const subModuleRelFilePath = files.find((x) => x.endsWith('SubModule.xml'))!;
     const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
-    const subModuleFile = readFileSync(subModuleFilePath, { encoding: "utf-8" });
+    const subModuleFile = readFileSync(subModuleFilePath, {
+      encoding: 'utf-8',
+    });
     const moduleInfo = BannerlordModuleManager.getModuleInfoWithPath(subModuleFile, subModuleRelFilePath)!;
     moduleInfo.path = subModuleRelFilePath; // TODO: fix the library
 
@@ -167,14 +177,14 @@ export class VortexLauncherManager {
     const transformedResult: types.IInstallResult = {
       instructions: result.instructions.reduce<types.IInstruction[]>((map, current) => {
         switch (current.type) {
-          case "Copy":
+          case 'Copy':
             map.push({
-              type: "copy",
+              type: 'copy',
               source: current.source ?? '',
               destination: current.destination ?? '',
             });
             break;
-          case "ModuleInfo":
+          case 'ModuleInfo':
             if (current.moduleInfo !== undefined) {
               subModsIds.push(current.moduleInfo.id);
             }
@@ -184,41 +194,41 @@ export class VortexLauncherManager {
       }, []),
     };
     transformedResult.instructions.push({
-      type: "attribute",
-      key: "subModsIds",
+      type: 'attribute',
+      key: 'subModsIds',
       value: subModsIds,
     });
 
-    return Bluebird.resolve(transformedResult);
+    return Promise.resolve(transformedResult);
   };
 
   /**
-   * 
-   * @returns 
+   *
+   * @returns
    */
   public isSorting = (): boolean => {
     return this._launcherManager.isSorting();
   };
 
   /**
-   * 
+   *
    */
   public autoSort = () => {
     this._launcherManager.sort();
   };
 
   /**
-   * 
+   *
    */
   public getSaveFiles = (): vetypes.SaveMetadata[] => {
     return this._launcherManager.getSaveFiles();
   };
 
   /**
-   * 
-   * @param template 
-   * @param values 
-   * @returns 
+   *
+   * @param template
+   * @param values
+   * @returns
    */
   public localize = (template: string, values: { [key: string]: string }): string => {
     return this._launcherManager.localizeString(template, values);
@@ -228,7 +238,7 @@ export class VortexLauncherManager {
    * Sets the game store manually, since the launcher manager is not perfect.
    */
   public setStore = (storeId: string) => {
-    switch(storeId){
+    switch (storeId) {
       case VortexStoreIds.Steam:
         this._launcherManager.setGameStore(`Steam`);
         break;
@@ -247,7 +257,6 @@ export class VortexLauncherManager {
     }
   };
 
-
   /**
    * Callback
    */
@@ -265,7 +274,7 @@ export class VortexLauncherManager {
 
     let index = savedLoadOrder.length;
     for (const module of Object.values(allModules)) {
-      if (savedLoadOrder.find(x => x.id === module.id) == undefined)
+      if (savedLoadOrder.find((x) => x.id === module.id) === undefined)
         savedLoadOrder.push({
           id: module.id,
           enabled: false,
@@ -273,8 +282,8 @@ export class VortexLauncherManager {
           data: {
             moduleInfoExtended: module,
             index: index++,
-          }
-      });
+          },
+        });
     }
 
     const loadOrderConverted = vortexToLibrary(savedLoadOrder);
@@ -291,47 +300,64 @@ export class VortexLauncherManager {
    * Callback
    */
   private sendNotification = (id: string, type: vetypes.NotificationType, message: string, delayMS: number): void => {
-    switch(type) {
-      case "hint":
-        this._api.sendNotification?.({ id: id, type: "activity", message: message, displayMS: delayMS, });
+    switch (type) {
+      case 'hint':
+        this._api.sendNotification?.({
+          id: id,
+          type: 'activity',
+          message: message,
+          displayMS: delayMS,
+        });
         break;
-      case "info":
-        this._api.sendNotification?.({ id: id, type: "info", message: message, displayMS: delayMS, });
+      case 'info':
+        this._api.sendNotification?.({
+          id: id,
+          type: 'info',
+          message: message,
+          displayMS: delayMS,
+        });
         break;
     }
   };
   /**
    * Callback
    */
-  private sendDialog = async (type: vetypes.DialogType, title: string, message: string, filters: vetypes.FileFilter[]): Promise<string> => {
-    switch(type) {
-      case "warning":
-      {
-        const messageFull = message.split("--CONTENT-SPLIT--", 2).join('\n');
-        return new Promise<string>(async resolve => {
-          const result = await this._api.showDialog?.("question", title, { message: messageFull, }, [
-            { label: 'No', action: () => "false" },
-            { label: 'Yes', action: () => "true" },
-          ]);
-          resolve(result?.action ?? '');
-        });
+  private sendDialog = async (
+    type: vetypes.DialogType,
+    title: string,
+    message: string,
+    filters: vetypes.FileFilter[]
+  ): Promise<string> => {
+    switch (type) {
+      case 'warning': {
+        const messageFull = message.split('--CONTENT-SPLIT--', 2).join('\n');
+        const result = await this._api.showDialog?.('question', title, { message: messageFull }, [
+          { label: 'No', action: () => 'false' },
+          { label: 'Yes', action: () => 'true' },
+        ]);
+        return result?.action ?? '';
       }
-      case "fileOpen":
-      {
-        const filtersTransformed = filters.map<types.IFileFilter>(x => ({ name: x.name, extensions: x.extensions }));
-        return new Promise<string>(async resolve => {
-          const result = await this._api.selectFile({ filters: filtersTransformed});
-          resolve(result);
+      case 'fileOpen': {
+        const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
+          name: x.name,
+          extensions: x.extensions,
+        }));
+        const result = await this._api.selectFile({
+          filters: filtersTransformed,
         });
+        return result;
       }
-      case "fileSave":
-      {
+      case 'fileSave': {
         const fileName = message;
-        const filtersTransformed = filters.map<types.IFileFilter>(x => ({ name: x.name, extensions: x.extensions }));
-        return new Promise<string>(async resolve => {
-          const result = await this._api.saveFile({ filters: filtersTransformed, defaultPath: fileName });
-          resolve(result);
+        const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
+          name: x.name,
+          extensions: x.extensions,
+        }));
+        const result = await this._api.saveFile({
+          filters: filtersTransformed,
+          defaultPath: fileName,
         });
+        return result;
       }
     }
   };
@@ -341,7 +367,7 @@ export class VortexLauncherManager {
   private getInstallPath = (): string => {
     const state = this._api.getState();
     const discovery = selectors.currentGameDiscovery(state);
-    return discovery.path ?? "";
+    return discovery.path ?? '';
   };
   /**
    * Callback
@@ -370,6 +396,7 @@ export class VortexLauncherManager {
     try {
       return fs.writeFileSync(filePath, data);
     } catch {
+      /* ignore error */
     }
   };
   /**
@@ -377,7 +404,10 @@ export class VortexLauncherManager {
    */
   private readDirectoryFileList = (directoryPath: string): string[] | null => {
     try {
-      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isFile()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+      return fs
+        .readdirSync(directoryPath, { withFileTypes: true })
+        .filter((x: Dirent) => x.isFile())
+        .map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {
       return null;
     }
@@ -387,7 +417,10 @@ export class VortexLauncherManager {
    */
   private readDirectoryList = (directoryPath: string): string[] | null => {
     try {
-      return fs.readdirSync(directoryPath, { withFileTypes: true }).filter((x: Dirent) => x.isDirectory()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+      return fs
+        .readdirSync(directoryPath, { withFileTypes: true })
+        .filter((x: Dirent) => x.isDirectory())
+        .map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {
       return null;
     }
@@ -399,7 +432,7 @@ export class VortexLauncherManager {
     const loadOrder = this.getLoadOrderFromVortex();
     const viewModels = vortexToLibraryVM(loadOrder);
     const result = Object.values(viewModels);
-    return result;  
+    return result;
   };
   /**
    * Callback
@@ -431,18 +464,18 @@ export class VortexLauncherManager {
    */
   private getOptions = (): vetypes.LauncherOptions => {
     return {
-      language: "English",
+      language: 'English',
       unblockFiles: true,
       fixCommonIssues: true,
       betaSorting: false,
-    }
+    };
   };
   /**
    * Callback
    */
   private getState = (): vetypes.LauncherState => {
     return {
-      isSingleplayer: true
+      isSingleplayer: true,
     };
   };
-};
+}

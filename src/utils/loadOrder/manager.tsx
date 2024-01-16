@@ -1,7 +1,7 @@
 import React from 'react';
 import { types, selectors } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
-import { BannerlordModuleManager, Utils, types as vetypes } from "@butr/vortexextensionnative";
+import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { vortexToLibrary, libraryToVortex, libraryVMToVortex, libraryVMToLibrary } from '.';
 import { VortexLauncherManager } from '../';
 import { GAME_ID } from '../../common';
@@ -11,18 +11,18 @@ import { RequiredProperties, VortexLoadOrderStorage } from '../../types';
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private _api: types.IExtensionApi;
   private _manager: VortexLauncherManager;
-  private _isInitialized: boolean = false;
-  
+  private _isInitialized = false;
+
   public gameId: string = GAME_ID;
-  public toggleableEntries: boolean = true;
-  public usageInstructions?: React.ComponentType<{}>;
-  public noCollectionGeneration: boolean = true;
+  public toggleableEntries = true;
+  public usageInstructions?: React.ComponentType<unknown>;
+  public noCollectionGeneration = true;
 
   constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
     this._api = api;
     this._manager = manager;
     const refresh = () => this.forceRefresh();
-    this.usageInstructions = () => (<LoadOrderInfoPanel refresh={refresh} />);
+    this.usageInstructions = () => <LoadOrderInfoPanel refresh={refresh} />;
   }
 
   private forceRefresh = (): void => {
@@ -34,13 +34,13 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       },
     };
     this._api.store?.dispatch(action);
-  }
+  };
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(loadOrder);
     this._manager.saveLoadOrderVortex(loadOrderConverted);
     return Promise.resolve();
-  }
+  };
 
   private setParameters = (loadOrder: vetypes.LoadOrder): void => {
     if (!this._isInitialized) {
@@ -50,31 +50,52 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     }
   };
   private checkSavedLoadOrder = (autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
-    const savedLoadOrderIssues = Utils.isLoadOrderCorrect(loadOrder.map<vetypes.ModuleInfoExtendedWithPath>(x => x.data!.moduleInfoExtended))
+    const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
+      loadOrder.map<vetypes.ModuleInfoExtendedWithPath>((x) => x.data!.moduleInfoExtended)
+    );
     if (autoSort && savedLoadOrderIssues.length > 0) {
       // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
-      this._api.sendNotification?.({ type: "warning", message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${savedLoadOrderIssues.join(`\n *`)}`, });
+      this._api.sendNotification?.({
+        type: 'warning',
+        message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${savedLoadOrderIssues.join(
+          `\n *`
+        )}`,
+      });
     }
   };
   private checkOrderByLoadOrderResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): void => {
     if (autoSort && result.issues) {
-      this._api.sendNotification?.({ type: "warning", message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${result.issues.join(`\n`)}`, });
+      this._api.sendNotification?.({
+        type: 'warning',
+        message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${result.issues.join(
+          `\n`
+        )}`,
+      });
     }
   };
-  private checkResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
+  private checkResult = (
+    autoSort: boolean,
+    result: vetypes.OrderByLoadOrderResult
+  ): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
     if (!result || !result.orderedModuleViewModels || !result.result) {
       if (autoSort) {
         // The user is not expecting a sort operation, so don't give the notification
-        this._api.sendNotification?.({ type: "error", message: `Failed to correct the Load Order! Keeping the original list as-is.`, });
+        this._api.sendNotification?.({
+          type: 'error',
+          message: `Failed to correct the Load Order! Keeping the original list as-is.`,
+        });
       }
       return false;
     }
     return true;
   };
-  private getExcludedLoadOrder = (loadOrder: vetypes.LoadOrder, result: vetypes.OrderByLoadOrderResult): vetypes.LoadOrder => {
+  private getExcludedLoadOrder = (
+    loadOrder: vetypes.LoadOrder,
+    result: vetypes.OrderByLoadOrderResult
+  ): vetypes.LoadOrder => {
     const excludedLoadOrder = Object.entries(loadOrder).reduce<vetypes.LoadOrder>((arr, curr) => {
-      const [ id, entry ] = curr;
-      if (!!result.orderedModuleViewModels?.find(x => x.moduleInfoExtended.id == entry.id)) {
+      const [id, entry] = curr;
+      if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === entry.id)) {
         arr[id] = entry;
       }
       return arr;
@@ -105,7 +126,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
     // Not even sure this will trigger
     this.checkOrderByLoadOrderResult(autoSort, result);
-    
+
     // Use the sorted to closest valid state Load Order
     if (autoSort) {
       const loadOrderVortex = libraryVMToVortex(this._api, result.orderedModuleViewModels);
@@ -117,10 +138,12 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     const excludedSavedLoadOrder = this.getExcludedLoadOrder(savedLoadOrder, result);
     this.setParameters(excludedSavedLoadOrder);
     return Promise.resolve(libraryToVortex(this._api, this._manager.getAllModules(), excludedSavedLoadOrder));
-  }
+  };
 
   public validate = (_prev: VortexLoadOrderStorage, curr: VortexLoadOrderStorage): Promise<types.IValidationResult> => {
-    const modules = curr.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) => entry.data && entry.enabled ? entry.data.moduleInfoExtended : []);
+    const modules = curr.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) =>
+      entry.data && entry.enabled ? entry.data.moduleInfoExtended : []
+    );
     //const validationManager = ValidationManager.fromVortex(curr);
 
     const invalidResults = Array<IInvalidResult>();
@@ -130,14 +153,18 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         invalidResults.push({
           id: issue.target.id,
           reason: issue.reason,
-        })
+        });
       }
     }
 
     // While the contract doesn't explicitly allow undefined to be returned,
     // it's expecting an undefined when there are no issues.
-    return Promise.resolve(invalidResults.length === 0 ? undefined! : {
-      invalid: invalidResults
-    });
-  }
-};
+    return Promise.resolve(
+      invalidResults.length === 0
+        ? undefined!
+        : {
+            invalid: invalidResults,
+          }
+    );
+  };
+}

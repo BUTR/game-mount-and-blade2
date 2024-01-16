@@ -15,8 +15,8 @@ const getLoadOrderFilePath = (api: types.IExtensionApi): string => {
 
 /**
  * We need to keep it sync while the LauncherManager doesn't support async
- * @param api 
- * @returns 
+ * @param api
+ * @returns
  */
 export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderStorage => {
   try {
@@ -30,8 +30,8 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
 
 /**
  * We need to keep it sync while the LauncherManager doesn't support async
- * @param api 
- * @returns 
+ * @param api
+ * @returns
  */
 export const writeLoadOrder = (api: types.IExtensionApi, loadOrder: PersistenceLoadOrderStorage): void => {
   try {
@@ -39,6 +39,6 @@ export const writeLoadOrder = (api: types.IExtensionApi, loadOrder: PersistenceL
     //await fs.ensureDirWritableS(path.dirname(loFilePath));
     fs.writeFileSync(loFilePath, JSON.stringify(Object.values(loadOrder), null, 2), { encoding: 'utf8' });
   } catch {
-    
+    /* empty */
   }
 };

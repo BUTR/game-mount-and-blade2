@@ -1,8 +1,9 @@
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-import path from "path";
-import { fs, log, selectors, types, util } from "vortex-api";
-import { GAME_ID } from "../common";
-import { IAddedFiles } from "../types";
+// eslint-disable-next-line no-restricted-imports
+import Bluebird from 'bluebird';
+import path from 'path';
+import { fs, log, selectors, types, util } from 'vortex-api';
+import { GAME_ID } from '../common';
+import { IAddedFiles } from '../types';
 
 /**
  * Event function, be careful
@@ -16,7 +17,8 @@ export const addedFiles = async (api: types.IExtensionApi, profileId: string, fi
   }
 
   const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, profile.gameId);
-  if (!discovery?.path) { // Can't do anything without a discovery path.
+  if (!discovery?.path) {
+    // Can't do anything without a discovery path.
     return;
   }
 
@@ -24,12 +26,12 @@ export const addedFiles = async (api: types.IExtensionApi, profileId: string, fi
   const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : {};
   const installPath: string = selectors.installPathForGame(state, game.id);
 
-  await Promise.map(files, async (entry: { filePath: string; candidates: string[] }) => {
+  await Bluebird.map(files, async (entry: { filePath: string; candidates: string[] }) => {
     // only act if we definitively know which mod owns the file
     if (entry.candidates.length === 1) {
       const mod = state.persistent.mods[game.id]?.[entry.candidates[0]!];
       if (!mod) {
-          return;
+        return;
       }
       const relPath = path.relative(modPaths[mod.type ?? ``]!, entry.filePath);
       const targetPath = path.join(installPath, mod.id, relPath);

@@ -4,48 +4,48 @@ import { GAME_ID } from './common';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
-export type PersistenceLoadOrderStorage = PersistenceLoadOrderEntry[];
-export interface PersistenceLoadOrderEntry {
+export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
+export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
   isSelected: boolean;
   isDisabled: boolean;
   index: number;
-};
+}
 
 export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
-export type VortexLoadOrderEntry = types.ILoadOrderEntry<VortexViewModelData>;
-export interface VortexViewModelData {
+export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
+export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithPath;
   index: number;
-};
+}
 
 export interface IModuleCache {
   [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
-};
+}
 
 /**
  * Vortex
  */
-export interface IItemRendererProps<T = any> {
+export interface IItemRendererProps<T = unknown> {
   className: string;
   item: T;
-  onRef: (ref: any) => any;
-};
+  onRef: (ref: unknown) => unknown;
+}
 
 /**
  * Vortex
  */
 export interface IBannerlordModStorage {
-  [modId: string]: IBannerlordMod
-};
+  [modId: string]: IBannerlordMod;
+}
 
 /**
  * Vortex
  */
 export interface IBannerlordMod extends types.IMod {
   attributes?: IBannerlordModAttributes;
-};
+}
 
 /**
  * Vortex
@@ -54,15 +54,15 @@ export interface IBannerlordModAttributes {
   modId: number;
   version: string;
   source: string;
-};
+}
 
 /**
  * Vortex
  */
 export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterface {
   primaryTool: {
-    [GAME_ID]?: string
-  }
+    [GAME_ID]?: string;
+  };
 }
 
 /**
@@ -72,11 +72,11 @@ export interface ISettingsWithBannerlord extends types.ISettings {
   [GAME_ID]?: {
     saveList?: {
       saveName?: string;
-    },
+    };
     sortOnDeploy: {
-      [profileId: string]: boolean
-    }
-  }
+      [profileId: string]: boolean;
+    };
+  };
 }
 
 /**
@@ -89,9 +89,9 @@ export type IStatePersistent = types.IState['persistent'];
  */
 export interface IStatePersistentWithLoadOrder extends IStatePersistent {
   loadOrder: {
-    [profileId: string]: VortexLoadOrderStorage
-  }
-};
+    [profileId: string]: VortexLoadOrderStorage;
+  };
+}
 
 /**
  * Vortex
@@ -101,12 +101,12 @@ export const enum VortexStoreIds {
   GOG = `gog`,
   Epic = `epic`,
   Xbox = `xbox`,
-};
+}
 
 /**
  * Vortex
  */
 export interface IAddedFiles {
-  filePath: string,
-  candidates: string[]
-};
+  filePath: string;
+  candidates: string[];
+}
