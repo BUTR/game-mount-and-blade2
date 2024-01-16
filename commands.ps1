@@ -70,22 +70,27 @@ try {
     }
     # Copy to Vortex if available
     if ($type -eq "build" -or $type -eq "build-extended" -or $type -eq "build-update" -or $type -eq "build-webpack" -or $type -eq "build-7z") {
-        if (-not (Test-Path -Path "/vortex-plugins")) {
-          # Create a folder junction named /vortex-plugins pointing to %appdata%/vortex_devel/plugins
-          $appDataPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::ApplicationData)
-          $junctionPath = "/vortex-plugins"
-          $targetPath = Join-Path $appDataPath $DeployPath
-
-          if (-not (Test-Path $junctionPath -PathType Container)) {
-              New-Item -ItemType Junction -Path $junctionPath -Target $targetPath
-              Write-Host "Created folder junction at $junctionPath pointing to $targetPath"
-          } else {
-              Write-Host "Folder junction already exists at $junctionPath"
-          }
+        # TODO: On linux won't work
+        try {
+            if (-not (Test-Path -Path "/vortex-plugins")) {
+                # Create a folder junction named /vortex-plugins pointing to %appdata%/vortex_devel/plugins
+                $appDataPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::ApplicationData)
+                $junctionPath = "/vortex-plugins"
+                $targetPath = Join-Path $appDataPath $DeployPath
+      
+                if (-not (Test-Path $junctionPath -PathType Container)) {
+                    New-Item -ItemType Junction -Path $junctionPath -Target $targetPath
+                    Write-Host "Created folder junction at $junctionPath pointing to $targetPath"
+                } else {
+                    Write-Host "Folder junction already exists at $junctionPath"
+                }
+              }
+              Write-Host "Copy dist to Vortex plugins mount";
+              Remove-Item "/vortex-plugins/bannerlord" -Recurse -Force -ErrorAction Ignore;
+              Copy-Item "./dist" -Destination "/vortex-plugins/bannerlord" -Recurse;
         }
-        Write-Host "Copy dist to Vortex plugins mount";
-        Remove-Item "/vortex-plugins/bannerlord" -Recurse -Force -ErrorAction Ignore;
-        Copy-Item "./dist" -Destination "/vortex-plugins/bannerlord" -Recurse;
+        catch {
+        }
     }
 }
 finally {
