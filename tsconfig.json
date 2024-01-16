@@ -1,20 +1,23 @@
 {
-  "composite": true,
   "compilerOptions": {
     "incremental": true,
-    "target": "es2019",
+    "target": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "allowJs": true,
+    "checkJs": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
     "outDir": "./out",
     "rootDir": "src",
-    "moduleResolution": "node",
-    "module": "CommonJS",
     "declaration": false,
-    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "resolveJsonModule": false /* Include modules imported with .json extension. */,
 
     "removeComments": true,
     "preserveConstEnums": true,
-    "jsx": "react",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
@@ -27,13 +30,21 @@
     "strictFunctionTypes": true /* Enable strict checking of function types. */,
     "strictPropertyInitialization": true /* Enable strict checking of property initialization in classes. */,
     "noImplicitThis": true /* Raise error on 'this' expressions with an implied 'any' type. */,
-    "alwaysStrict": false /* Parse in strict mode and emit "use strict" for each source file. */,
+    "alwaysStrict": true /* Parse in strict mode and emit "use strict" for each source file. */,
+    "strictBindCallApply": true,
+    "useUnknownInCatchVariables": true,
 
     /* Additional Checks */
     "noUnusedLocals": false /* Report errors on unused locals. */,
-    "noUnusedParameters": true /* Report errors on unused parameters. */,
+    "noUnusedParameters": false /* Report errors on unused parameters. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
     "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
 
     /* Debugging Options */
     "traceResolution": false /* Report module resolution log messages. */,
@@ -42,10 +53,10 @@
     "pretty": true /* Stylize errors and messages using color and context. */,
 
     /* Experimental Options */
-    "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,
-    "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */,
+    "experimentalDecorators": false /* Enables experimental support for ES7 decorators. */,
+    "emitDecoratorMetadata": false /* Enables experimental support for emitting type metadata for decorators. */,
   },
   "exclude": ["test", "node_modules"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "compileOnSave": false
+  "compileOnSave": false,
 }

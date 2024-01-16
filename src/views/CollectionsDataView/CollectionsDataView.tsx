@@ -1,8 +1,9 @@
+/* eslint-disable prettier/prettier */
 /*
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 
 import _ from 'lodash';
-import * as React from 'react';
+import React from 'react';
 import { Button, ListGroup, ListGroupItem } from 'react-bootstrap';
 import { withTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
@@ -42,7 +43,7 @@ class CollectionsDataView extends ComponentEx<IComponentProps, IComponentState> 
     super(props);
     const { loadOrder, mods, collection } = props;
     this.initState({
-      sortedMods: genCollectionLoadOrder(loadOrder, mods, collection) || {},
+      sortedMods: genCollectionLoadOrder(loadOrder, mods, collection) ?? {},
     });
   }
 
@@ -123,7 +124,7 @@ class CollectionsDataView extends ComponentEx<IComponentProps, IComponentState> 
   private renderModEntry = (modId: string): JSX.Element => {
     const loEntry = this.state.sortedMods[modId];
     const key = modId + JSON.stringify(loEntry);
-    const name = util.renderModName(this.props.mods[modId]) || modId;
+    const name = util.renderModName(this.props.mods[modId]) ?? modId;
     const classes = [`load-order-entry`, `collection-tab`];
     return (
       <ListGroupItem
@@ -140,7 +141,7 @@ class CollectionsDataView extends ComponentEx<IComponentProps, IComponentState> 
 }
 
 const mapState = (state: types.IState, _ownProps: IOwnProps): IStateProps => {
-  const profile = selectors.activeProfile(state) || undefined;
+  const profile = selectors.activeProfile(state);
   let loadOrder: ILoadOrder = {};
   if (profile?.gameId) {
     loadOrder = util.getSafe<ILoadOrder>(state, [`persistent`, `loadOrder`, profile.id], {});

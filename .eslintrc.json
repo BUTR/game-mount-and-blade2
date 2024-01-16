@@ -1,4 +1,23 @@
 {
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "ignorePatterns": ["node_modules", "build", "dist", "public"],
+  "settings": {
+    "react": {
+      "version": "16.12.0"
+    }
+  },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
@@ -9,26 +28,82 @@
   "rules": {
     "eqeqeq": "error",
     "no-console": "warn",
+    "no-unused-vars": "off",
+    "no-extra-boolean-cast": "warn",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     "prettier/prettier": "error",
     "react/display-name": "off",
-    "react/no-children-prop": "off",
-    // if you use React 17+; otherwise, turn this on
-    "react/react-in-jsx-scope": "off",
+    "react/react-in-jsx-scope": "warn", // if you use React 17+; otherwise, turn this on
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+
+    "@typescript-eslint/naming-convention": [
+      "warn",
+      {
+        "selector": "interface",
+        "format": ["PascalCase"],
+        "custom": {
+          "regex": "^I[A-Z]",
+          "match": true
+        }
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "name": "bluebird",
+        "message": "Please avoid using Bluebird. Use ES6 promises instead"
+      }
+    ],
+    // TODO: Vortex uses this, can we also?
+    "max-lines-per-function": [
+      "off",
+      {
+        "max": 25,
+        "skipComments": true,
+        "skipBlankLines": true
+      }
+    ],
+    "max-len": [
+      "off",
+      {
+        "code": 120,
+        "comments": 150,
+        "ignoreUrls": true,
+        "ignoreStrings": true,
+        "ignoreRegExpLiterals": true,
+        "ignoreTrailingComments": true
+      }
+    ],
+    "indent": [
+      "off",
+      2,
+      {
+        "FunctionDeclaration": { "parameters": "first" },
+        "FunctionExpression": { "parameters": "first" },
+        "CallExpression": { "arguments": "first" },
+        "SwitchCase": 1,
+        "ImportDeclaration": "first",
+        "flatTernaryExpressions": true,
+        "offsetTernaryExpressions": false,
+        "ignoreComments": true
+      }
+    ]
   },
-  "parserOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true
+  "overrides": [
+    {
+      "files": ["*.tsx"],
+      "rules": {
+        "max-lines-per-function": [
+          "warn",
+          {
+            "max": 100,
+            "skipComments": true,
+            "skipBlankLines": true
+          }
+        ]
+      }
     }
-  },
-  "env": {
-    "browser": true,
-    "node": true,
-    "es6": true,
-    "jest": true
-  },
-  "ignorePatterns": ["node_modules", "build", "dist", "public"]
+  ]
 }

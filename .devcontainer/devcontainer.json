@@ -5,7 +5,7 @@
 	},
 	"features": {
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "16.19.1",
+            "version": "18.14.0",
             "nodeGypDependencies": "true"
         },
 		"ghcr.io/devcontainers/features/powershell:1": {
@@ -14,5 +14,12 @@
 	},
 	"mounts": [
 		"source=${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins,target=/vortex-plugins,type=bind,consistency=default"
-	]
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dbaeumer.vscode-eslint"
+			]
+		}
+	}
 }
