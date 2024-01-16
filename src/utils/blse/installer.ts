@@ -13,12 +13,15 @@ export const installBLSE = toBluebird(async (api: types.IExtensionApi, files: st
   }
 
   const isXbox = isStoreXbox(discovery.store);
-  const instructions = files.filter(file => file.includes(isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD)).map<types.IInstruction>(file => ({
-    type: 'copy',
-    source: file,
-    // TODO: Investigation
-    destination: path.join(`bin`, isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD)
-  }));
+  const instructions = files
+    .filter((file: string) => !file.endsWith(path.sep))
+    .filter(file => file.includes(isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD))
+    .map<types.IInstruction>(file => ({
+      type: 'copy',
+      source: file,
+      destination: file
+    })
+  );
   return {
     instructions: instructions
   };
