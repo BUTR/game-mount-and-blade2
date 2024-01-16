@@ -3,12 +3,16 @@ import { actions, selectors, types, util } from 'vortex-api';
 import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../../common';
 import { IBannerlordMod, IBannerlordModStorage } from '../../types';
 
-export const isModActive = (profile: types.IProfile, mod: IBannerlordMod) => util.getSafe(profile.modState, [mod.id, 'enabled'], false);
-const isModBLSE = (mod: IBannerlordMod) => mod.type === `bannerlord-blse` || mod.attributes?.modId === 1;
+export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
+  return profile.modState[mod.id]?.enabled ?? false;;
+}
+const isModBLSE = (mod: IBannerlordMod) => {
+  return mod.type === `bannerlord-blse` || (mod.attributes?.modId === 1 && mod.attributes?.source === `nexus`);
+}
 
 export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefined => {
   const state = api.getState();
-  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
+  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
 
   if (blseMods.length === 0)
@@ -48,31 +52,29 @@ export const findBLSEDownload = (api: types.IExtensionApi): string | undefined =
 
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
   const state = api.getState();
-  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage || {};
+  const mods = state.persistent.mods[GAME_ID] as IBannerlordModStorage ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
   
-  if (blseMods.length == 0) {
+  if (blseMods.length === 0) {
     return false;
   }
 
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const profile = selectors.profileById(state, profileId);
-
+  const profile = selectors.activeProfile(state);
   return blseMods.filter(x => isModActive(profile, x)).length >= 1;
 };
 
-export const deployBLSE = async (api: types.IExtensionApi) => {
+export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   await util.toPromise(cb => api.events.emit('deploy-mods', cb));
   await util.toPromise(cb => api.events.emit('start-quick-discovery', () => cb(null)));
 
-  const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
-  const tool = discovery?.tools?.['blse-cli'];
-  if (tool) {
+  const discovery = selectors.currentGameDiscovery(api.getState());
+  const tool = discovery.tools?.['blse-cli'];
+  if (!!tool) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));
   }
 };
 
-export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) => {
+export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean): Promise<void> => {
   api.dismissNotification?.('blse-missing');
   api.sendNotification?.({
     id: 'blse-installing',
@@ -82,12 +84,12 @@ export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) =
     allowSuppress: false,
   });
 
-  if (api.ext?.ensureLoggedIn !== undefined) {
+  if (!!api.ext?.ensureLoggedIn) {
     await api.ext.ensureLoggedIn();
   }
 
   try {
-    const modFiles = await api.ext.nexusGetModFiles?.(GAME_ID, BLSE_MOD_ID) || [];
+    const modFiles = await api.ext.nexusGetModFiles?.(GAME_ID, BLSE_MOD_ID) ?? [];
 
     const fileTime = (input: any) => Number.parseInt(input.uploaded_time, 10);
 
@@ -95,7 +97,7 @@ export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) =
       .filter(file => file.category_id === 1)
       .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
 
-    if (file === undefined) {
+    if (!file) {
       throw new util.ProcessCanceled('No BLSE main file found');
     }
 
@@ -109,7 +111,7 @@ export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean) =
       api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
     const modId = await util.toPromise<string>(cb =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-    const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+    const profileId = selectors.activeProfile(api.getState()).id;
     await actions.setModsEnabled(api, profileId, [modId], true, {
       allowAutoDeploy: false,
       installed: true,

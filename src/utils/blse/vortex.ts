@@ -1,6 +1,5 @@
 import { actions, selectors, types } from 'vortex-api';
 import { findBLSEMod, deployBLSE, downloadBLSE, isModActive, findBLSEDownload } from './shared';
-import { GAME_ID } from '../../common';
 
 const sendNotification = (api: types.IExtensionApi, title: string, actionTitle: string, action: (dismiss: types.NotificationDismiss) => void) => {
   api.sendNotification?.({
@@ -20,14 +19,10 @@ const sendNotification = (api: types.IExtensionApi, title: string, actionTitle: 
 }
 
 export const recommendBLSE = (api: types.IExtensionApi) => {
-  const state = api.getState();
-  const profile = selectors.activeProfile(state);
-  if (profile.gameId !== GAME_ID) {
-    return;
-  }
+  const profile = selectors.activeProfile(api.getState());
 
   const blseMod = findBLSEMod(api);
-  if (blseMod) { // Found but not enabled
+  if (!!blseMod) { // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
     if (!blseIsActive) {
       const action = (dismiss: types.NotificationDismiss) => {
@@ -40,7 +35,7 @@ export const recommendBLSE = (api: types.IExtensionApi) => {
   }
 
   const blseDownload = findBLSEDownload(api);
-  if (blseDownload) { // Downloaded but not installed
+  if (!!blseDownload) { // Downloaded but not installed
     const action = (dismiss: types.NotificationDismiss) => {
       api.events.emit('start-install-download', blseDownload, {
         allowAutoEnable: true,

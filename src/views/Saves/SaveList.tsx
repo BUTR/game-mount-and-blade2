@@ -22,8 +22,8 @@ import {
 } from './saveUtils';
 import { ISaveGame } from './types';
 import { setCurrentSave } from '../../actions';
-import { VortexLauncherManager, versionToString } from '../../utils';
-import { IItemRendererProps, IModuleCache, VortexBannerlordSettings } from '../../types';
+import { VortexLauncherManager, hasSettingsBannerlord, versionToString } from '../../utils';
+import { IItemRendererProps, IModuleCache } from '../../types';
 
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
@@ -69,9 +69,13 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // get list of save games
     this.OnRefreshList();
 
+    const vortexState = context.api.getState();
+
     // get stored save game from vortex state
-    const bannerlordSettings = context.api.getState().settings as VortexBannerlordSettings;
-    this.storedSaveGameName = bannerlordSettings.mountandblade2bannerlord?.saveList?.saveName ?? undefined;
+    if (hasSettingsBannerlord(vortexState.settings)) {
+      this.storedSaveGameName = vortexState.settings.mountandblade2bannerlord?.saveList?.saveName ?? undefined;
+    }
+
     if (this.storedSaveGameName) {
       const foundSave = Object.values(this.savesGames).find((value) => value.name === this.storedSaveGameName);
       if (foundSave) {

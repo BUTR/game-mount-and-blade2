@@ -2,13 +2,7 @@ import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { GAME_ID } from './common';
 
-export interface VortexBannerlordSettings extends types.ISettings {
-  [GAME_ID]?: {
-    saveList?: {
-      saveName?: string;
-    }
-  }
-}
+export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
 export type PersistenceLoadOrderStorage = PersistenceLoadOrderEntry[];
 export interface PersistenceLoadOrderEntry {
@@ -26,25 +20,77 @@ export interface VortexViewModelData {
   index: number;
 };
 
+export interface IModuleCache {
+  [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
+};
+
+/**
+ * Vortex
+ */
 export interface IItemRendererProps<T = any> {
   className: string;
   item: T;
   onRef: (ref: any) => any;
 };
 
-export interface IModuleCache {
-  [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
-};
-
+/**
+ * Vortex
+ */
 export interface IBannerlordModStorage {
   [modId: string]: IBannerlordMod
 };
+
+/**
+ * Vortex
+ */
 export interface IBannerlordMod extends types.IMod {
   attributes?: IBannerlordModAttributes;
 };
+
+/**
+ * Vortex
+ */
 export interface IBannerlordModAttributes {
   modId: number;
   version: string;
+  source: string;
+};
+
+/**
+ * Vortex
+ */
+export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterface {
+  primaryTool: {
+    [GAME_ID]?: string
+  }
+}
+
+/**
+ * Vortex
+ */
+export interface ISettingsWithBannerlord extends types.ISettings {
+  [GAME_ID]?: {
+    saveList?: {
+      saveName?: string;
+    },
+    sortOnDeploy: {
+      [profileId: string]: boolean
+    }
+  }
+}
+
+/**
+ * Vortex
+ */
+export type IStatePersistent = types.IState['persistent'];
+
+/**
+ * Vortex
+ */
+export interface IStatePersistentWithLoadOrder extends IStatePersistent {
+  loadOrder: {
+    [profileId: string]: VortexLoadOrderStorage
+  }
 };
 
 /**
@@ -55,13 +101,6 @@ export const enum VortexStoreIds {
   GOG = `gog`,
   Epic = `epic`,
   Xbox = `xbox`,
-};
-
-/**
- * Vortex
- */
-export interface IDeployment {
-  [modType: string]: types.IDeployedFile[];
 };
 
 /**

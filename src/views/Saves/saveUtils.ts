@@ -99,8 +99,8 @@ export const getMismatchedModuleVersionsWarning = (saveGame: Readonly<ISaveGame>
 export const getLoadOrderIssues = (saveGame: ISaveGame, manager: VortexLauncherManager, allModules: Readonly<IModuleCache>): Array<string> => {
   const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)
-    .map<vetypes.ModuleInfoExtendedWithPath>((current) => allModulesByName[current]!)
-    .filter((x) => x !== undefined);
+    .map<vetypes.ModuleInfoExtendedWithPath | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithPath => !!x);
   return Utils.isLoadOrderCorrect(modules);
 };
 
@@ -108,6 +108,6 @@ export const getModules = (saveGame: ISaveGame, manager: VortexLauncherManager):
   const allModules = manager.getAllModules();
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules)
-    .map<vetypes.ModuleInfoExtendedWithPath>((current) => allModulesByName[current]!)
-    .filter((x) => x !== undefined);
+    .map<vetypes.ModuleInfoExtendedWithPath | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithPath => !!x);
 };

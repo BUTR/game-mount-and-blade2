@@ -1,11 +1,11 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
-import { types } from 'vortex-api';
-import { isStoreXbox, getBannerlordDiscovery } from '..';
+import { selectors, types } from 'vortex-api';
+import { isStoreXbox } from '..';
 import { GAME_ID, BLSE_CLI_EXE, BINARY_FOLDER_XBOX, BINARY_FOLDER_STANDARD } from '../../common';
 
 export const installBLSE = toBluebird(async (api: types.IExtensionApi, files: string[], destinationPath: string): Promise<types.IInstallResult> => {
-  const discovery = getBannerlordDiscovery(api);
+  const discovery = selectors.currentGameDiscovery(api.getState());
   if (!discovery) {
     return Promise.resolve({
       instructions: []

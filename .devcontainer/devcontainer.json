@@ -14,5 +14,11 @@
 	},
 	"mounts": [
 		"source=${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins,target=/vortex-plugins,type=bind,consistency=default"
-	]
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+			]
+		}
+	}
 }

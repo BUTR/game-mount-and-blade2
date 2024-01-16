@@ -7,7 +7,7 @@ interface IBaseProps {
   refresh: () => void;
 }
 
-export function LoadOrderInfoPanel(props: IBaseProps) {
+export function LoadOrderInfoPanel(_props: IBaseProps) {
   const [t] = useTranslation(I18N_NAMESPACE);
   const openWiki = React.useCallback(() => {
     util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`).catch(() => null);

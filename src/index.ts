@@ -24,7 +24,7 @@ const main = (context: types.IExtensionContext): boolean => {
     },
   };
 
-  context.registerReducer([`settings`, `mountandblade2`], reducer);
+  context.registerReducer([`settings`, GAME_ID], reducer);
 
   const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) => context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
   const settingsProps = () => ({ t: context.api.translate, onSetSortOnDeploy: settingsOnSetSortOnDeploy });
@@ -73,7 +73,7 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register AutoSort button
   const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
   const autoSortAction = (_instanceIds?: string[]): boolean | void => launcherManager.autoSort();
-  const autoSortCondition = (): boolean => selectors.activeGameId(context.api.getState()) === GAME_ID;
+  const autoSortCondition = (_instanceIds?: string[]): boolean => selectors.activeGameId(context.api.getState()) === GAME_ID;
   context.registerAction(
     `fb-load-order-icons`,
     200,

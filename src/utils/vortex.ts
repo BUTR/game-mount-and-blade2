@@ -1,11 +1,31 @@
 import { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { types, util } from 'vortex-api';
-import { VortexLauncherManager, addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool, getBinaryPath, getPathExistsAsync, isStoreSteam, isStoreXbox, recommendBLSE } from '.';
+import { VortexLauncherManager, addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool, getBinaryPath, getPathExistsAsync, isStoreSteam, isStoreXbox, nameIn, recommendBLSE } from '.';
 import { BLSE_CLI_EXE, XBOX_ID } from '../common';
+import { ISettingsWithBannerlord, ISettingsInterfaceWithPrimaryTool, IStatePersistent, IStatePersistentWithLoadOrder } from '../types';
+
+type requiresLauncherResult = {
+  launcher: string,
+  addInfo?: any
+};
+
+export const hasPersistentLoadOrder = (persistent: IStatePersistent): persistent is IStatePersistentWithLoadOrder => {
+  return typeof (persistent as any)[nameIn<IStatePersistentWithLoadOrder>().loadOrder] === "object";
+}
+
+export const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord => {
+  return typeof (settings as any).GAME_ID === "object";
+}
+
+export const hasSettingsInterfacePrimaryTool = (settings: types.ISettingsInterface): settings is ISettingsInterfaceWithPrimaryTool => {
+  return typeof (settings as any)[nameIn<ISettingsInterfaceWithPrimaryTool>().primaryTool] === "object";
+}
 
 const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult, manager: VortexLauncherManager): Promise<void> => {
-  if (!discovery.path) throw new Error(`discovery.path is undefined!`);
+  if (!discovery.path) {
+    throw new Error(`discovery.path is undefined!`);
+  }
  
   // skip if BLSE found
   // question: if the user incorrectly deleted BLSE and the binary is left, what should we do?
@@ -15,10 +35,10 @@ const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDis
   }
 
   if (isStoreSteam(discovery.store)) {
-    await util.GameStoreHelper.launchGameStore(api, discovery.store!, undefined, true).catch(() => { });
+    await util.GameStoreHelper.launchGameStore(api, discovery.store, undefined, true).catch(() => { });
   }
 
-  if (discovery.store) {
+  if (!!discovery.store) {
     manager.setStore(discovery.store);
   }
 };
@@ -37,7 +57,7 @@ export const setup = toBluebird(async (api: types.IExtensionApi, discovery: type
   await prepareForModding(api, discovery, manager);
 });
 
-export const requiresLauncher = async (store?: string): Promise<{ launcher: string, addInfo?: any }> => {
+export const requiresLauncher = async (store?: string): Promise<requiresLauncherResult> => {
   if (isStoreXbox(store)) {
     return {
       launcher: `xbox`,

@@ -1,9 +1,9 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
 import { Dirent, readFileSync } from 'fs';
-import { actions, fs, selectors, types, util } from "vortex-api";
+import { actions, fs, selectors, types } from "vortex-api";
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from "@butr/vortexextensionnative";
-import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder } from ".";
+import { vortexToLibrary, libraryVMToVortex, vortexToLibraryVM, persistenceToVortex, libraryToPersistence, writeLoadOrder, readLoadOrder, hasPersistentLoadOrder } from ".";
 import { GAME_ID } from "../common";
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from "../types";
 
@@ -45,8 +45,12 @@ export class VortexLauncherManager {
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this._api.getState();
-    const activeProfileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-    const loadOrder = util.getSafe<VortexLoadOrderStorage>(state, [`persistent`, `loadOrder`, activeProfileId], []);
+    const profileId = selectors.activeProfile(state).id;
+    if (!hasPersistentLoadOrder(state.persistent)) {
+      return [];
+    }
+    
+    const loadOrder = state.persistent.loadOrder[profileId] ?? [];
     return loadOrder;
   };
 
@@ -166,8 +170,8 @@ export class VortexLauncherManager {
           case "Copy":
             map.push({
               type: "copy",
-              source: current.source || '',
-              destination: current.destination || '',
+              source: current.source ?? '',
+              destination: current.destination ?? '',
             });
             break;
           case "ModuleInfo":
@@ -337,7 +341,7 @@ export class VortexLauncherManager {
   private getInstallPath = (): string => {
     const state = this._api.getState();
     const discovery = selectors.currentGameDiscovery(state);
-    return discovery.path || "";
+    return discovery.path ?? "";
   };
   /**
    * Callback
@@ -412,8 +416,7 @@ export class VortexLauncherManager {
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
     const loadOrder = libraryVMToVortex(this._api, moduleViewModels);
 
-    const state = this._api.getState();
-    const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+    const profileId = selectors.activeProfile(this._api.getState()).id;
     const action = {
       type: 'SET_FB_LOAD_ORDER',
       payload: {

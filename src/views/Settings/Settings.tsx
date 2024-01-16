@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import I18next from 'i18next';
-import { More, Toggle, selectors, util, types } from 'vortex-api';
+import { More, Toggle, selectors, types } from 'vortex-api';
+import { hasSettingsBannerlord } from '../../utils';
 
 interface IBaseProps {
   t: typeof I18next.t;
@@ -44,10 +45,14 @@ export const Settings = (props: IBaseProps): JSX.Element => {
 };
 
 const mapState = (state: types.IState): IConnectedProps => {
-  const profileId = selectors.activeProfile(state)?.id;
+  const profileId = selectors.activeProfile(state).id;
+  let autoSortOnDeploy = true;
+  if (hasSettingsBannerlord(state.settings)) {
+    autoSortOnDeploy = state.settings.mountandblade2bannerlord?.sortOnDeploy[profileId] ?? true;
+  }
   return {
     profileId,
-    autoSortOnDeploy: util.getSafe<boolean>(state, [`settings`, `mountandblade2`, `sortOnDeploy`, profileId], true),
+    autoSortOnDeploy: autoSortOnDeploy,
   };
 };
 

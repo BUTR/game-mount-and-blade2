@@ -4,7 +4,10 @@ import { fs, log, selectors, types, util } from "vortex-api";
 import { GAME_ID } from "../common";
 import { IAddedFiles } from "../types";
 
-export const addedFiles = async (api: types.IExtensionApi, profileId: string, files: IAddedFiles[]) => {
+/**
+ * Event function, be careful
+ */
+export const addedFiles = async (api: types.IExtensionApi, profileId: string, files: IAddedFiles[]): Promise<void> => {
   const state = api.getState();
 
   const profile = selectors.profileById(state, profileId);
@@ -12,22 +15,19 @@ export const addedFiles = async (api: types.IExtensionApi, profileId: string, fi
     return;
   }
 
-  const game = util.getGame(GAME_ID);
-  const discovery = selectors.discoveryByGame(state, GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, profile.gameId);
   if (!discovery?.path) { // Can't do anything without a discovery path.
     return;
   }
+
+  const game = util.getGame(profile.gameId);
   const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : {};
-  const installPath = selectors.installPathForGame(state, GAME_ID);
+  const installPath: string = selectors.installPathForGame(state, game.id);
 
   await Promise.map(files, async (entry: { filePath: string; candidates: string[] }) => {
     // only act if we definitively know which mod owns the file
     if (entry.candidates.length === 1) {
-      const mod = util.getSafe<types.IMod | undefined>(
-        state.persistent.mods,
-        [GAME_ID, entry.candidates[0]!],
-        undefined
-      );
+      const mod = state.persistent.mods[game.id]?.[entry.candidates[0]!];
       if (!mod) {
           return;
       }
@@ -47,7 +47,7 @@ export const addedFiles = async (api: types.IExtensionApi, profileId: string, fi
         await fs.removeAsync(entry.filePath);
       } catch (err) {
         if (err instanceof Error) {
-        log(`error`, `failed to import added file to mod`, err.message);
+          log(`error`, `failed to import added file to mod`, err.message);
         }
       }
     }
