@@ -96,6 +96,21 @@ export const libraryVMToLibrary = (loadOrder: vetypes.ModuleViewModel[]): vetype
   }, {});
   return loadOrderConverted;
 };
+export const libraryToLibraryVM = (modules: vetypes.ModuleInfoExtendedWithPath[]): vetypes.ModuleViewModel[] => {
+  //const validationManager = ValidationManager.fromLibrary(loadOrder);
+  const loadOrderConverted = modules.reduce<vetypes.ModuleViewModel[]>((arr, curr) => {
+    arr.push({
+      moduleInfoExtended: curr,
+      //isValid: BannerlordModuleManager.validateModule(modules, curr, validationManager).length === 0,
+      isValid: false,
+      isSelected: false,
+      isDisabled: false,
+      index: 0,
+    });
+    return arr;
+  }, []);
+  return loadOrderConverted;
+};
 
 export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.LoadOrder => {
   const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {

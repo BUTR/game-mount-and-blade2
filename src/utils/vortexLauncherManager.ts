@@ -11,6 +11,7 @@ import {
   writeLoadOrder,
   readLoadOrder,
   hasPersistentLoadOrder,
+  libraryToLibraryVM,
 } from '.';
 import { GAME_ID } from '../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
@@ -427,6 +428,7 @@ export class VortexLauncherManager {
   };
   /**
    * Callback
+   * Returns the ViewModels that are currenty displayed by Vortex
    */
   private getModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
     const loadOrder = this.getLoadOrderFromVortex();
@@ -436,11 +438,16 @@ export class VortexLauncherManager {
   };
   /**
    * Callback
+   * Returns all available ViewModels for possible displaying
    */
   private getAllModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
-    const loadOrder = this.getLoadOrderFromVortex();
-    const viewModels = vortexToLibraryVM(loadOrder);
-    const result = Object.values(viewModels);
+    const existingModuleViewModels = this.getModuleViewModels() ?? [];
+    const modulesToConvert = Object.values(this.getAllModules()).filter(
+      (x) => existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id) === undefined
+    );
+
+    const viewModels = libraryToLibraryVM(modulesToConvert);
+    const result = viewModels.concat(existingModuleViewModels);
     return result;
   };
   /**
