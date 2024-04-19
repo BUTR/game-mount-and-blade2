@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 // eslint-disable-next-line no-restricted-imports
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
