@@ -22,17 +22,15 @@
     "pre-commit": "lint-staged"
   },
   "devDependencies": {
-    "@nexusmods/nexus-api": "^1.1.5",
-    "@types/bluebird": "^3.5.20",
-    "@types/glob": "^8.1.0",
+    "@nexusmods/nexus-api": "git+https://github.com/Nexus-Mods/node-nexus-api",
+    "@types/bluebird": "3.5.20",
     "@types/lodash": "^4.14.149",
-    "@types/node": "^16.5.0",
+    "@types/node": "^18.0.0",
     "@types/react": "^16.9.43",
     "@types/react-bootstrap": "^0.32.20",
     "@types/react-redux": "^7.1.9",
     "@types/redux": "^3.6.0",
-    "@types/redux-thunk": "^2.1.0",
-    "@types/webpack": "^4.41.0",
+    "@types/webpack": "^5.28.5",
     "@types/xml2js": "^0.4.5",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
@@ -45,7 +43,6 @@
     "eslint-plugin-prettier": "^5",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "glob": "^9.2.1",
     "i18next": "^19.0.1",
     "lint-staged": "^12.3.5",
     "native-addon-loader": "^2.0.1",
@@ -64,9 +61,9 @@
     "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api#fblo_api_update",
     "vortex-ext-common": "^0.4.0",
     "webpack": "^5.76.0",
-    "webpack-cli": "^4.8.0",
+    "webpack-cli": "^5.1.4",
     "webpack-node-externals": "^3.0.0",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.5.0"
   },
   "dependencies": {
     "@butr/vortexextensionnative": "1.0.103",

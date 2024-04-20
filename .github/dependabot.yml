@@ -20,9 +20,6 @@ updates:
       - dependency-name: "@typescript-eslint*"
       - dependency-name: "eslint*"
 
-      - dependency-name: "@types/glob"
-      - dependency-name: "glob"
-
       - dependency-name: "lint-staged"
       - dependency-name: "prettier"
       

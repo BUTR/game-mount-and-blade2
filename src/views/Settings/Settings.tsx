@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import I18next from 'i18next';
 import { More, Toggle, selectors, types } from 'vortex-api';
 import { hasSettingsBannerlord } from '../../utils';
+import { IMoreProps } from 'vortex-api/lib/controls/More';
 
 interface IBaseProps {
   t: typeof I18next.t;
@@ -16,7 +17,8 @@ interface IConnectedProps {
 
 export type SettingsProps = IBaseProps & IConnectedProps;
 
-const MoreWrapper = More as any;
+const MoreWrapper = More as React.ComponentType<IMoreProps>;
+
 export const Settings = (props: IBaseProps): JSX.Element => {
   const { t, onSetSortOnDeploy } = props;
   const { profileId, autoSortOnDeploy } = useSelector(mapState);
