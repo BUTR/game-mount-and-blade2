@@ -32,7 +32,7 @@
     "@types/redux": "^3.6.0",
     "@types/webpack": "^5.28.5",
     "@types/xml2js": "^0.4.5",
-    "@typescript-eslint/eslint-plugin": "^6",
+    "@typescript-eslint/eslint-plugin": "^7",
     "@typescript-eslint/parser": "^6",
     "bluebird": "^3.7.2",
     "collections": "git+https://github.com/Nexus-Mods/extension-collections",
