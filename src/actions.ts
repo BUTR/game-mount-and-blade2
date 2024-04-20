@@ -8,6 +8,7 @@ export const setSortOnDeploy = createAction(
     sort,
   })
 );
+
 export const setCurrentSave = createAction(`${EXTENSION_BASE_ID}_SET_CURRENT_SAVE`, (currentSave: string) => ({
   saveName: currentSave,
 }));

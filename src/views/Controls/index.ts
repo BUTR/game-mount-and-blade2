@@ -1,0 +1,1 @@
+export { TooltipImage } from './TooltipImage';

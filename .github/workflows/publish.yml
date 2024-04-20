@@ -18,18 +18,18 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Use Node.js 16.x
-      uses: actions/setup-node@v3
+    - name: Use Node.js 18
+      uses: actions/setup-node@v4
       with:
-        node-version: 16.x
+        node-version: 18.14.0
 
-    - run: npm ci
+    - run: yarn install --immutable --immutable-cache --check-cache
 
-    - run: npm run build
+    - run: yarn run build
     
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: game-mount-and-blade2
         path: game-mount-and-blade2.7z
@@ -44,7 +44,7 @@ jobs:
       run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
 
     - name: Download build artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: game-mount-and-blade2
 

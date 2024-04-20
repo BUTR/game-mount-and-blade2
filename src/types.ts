@@ -1,78 +1,112 @@
 import { types } from 'vortex-api';
-import { ILoadOrder, ILoadOrderEntry } from 'vortex-api/lib/extensions/mod_load_order/types/types';
 import { types as vetypes } from '@butr/vortexextensionnative';
+import { GAME_ID } from './common';
 
-// Vortex Load Order
-export interface VortexLoadOrderEntryData {
+export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
+
+export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
+export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
   isSelected: boolean;
-  index: number;
-}
-export interface VortexLoadOrderEntry extends ILoadOrderEntry<VortexLoadOrderEntryData> {
-
-}
-export interface VortexLoadOrderStorage extends ILoadOrder {
-  [moduleId: string]: VortexLoadOrderEntry;
-}
-// Vortex Load Order
-
-// Vortex Display Item
-export interface VortexViewModel extends types.ILoadOrderDisplayItem {
-  moduleInfo: vetypes.ModuleInfoExtendedWithPath;
-  index: number;
-  isSelected: boolean;
   isDisabled: boolean;
-  isValid: boolean;
-}
-export interface VortexViewModelStorage extends Array<VortexViewModel> {
-
-}
-// Vortex Display Item
-
-// Map for ModuleViewModel
-export interface ModuleViewModelStorage {
-  [moduleId: string]: vetypes.ModuleViewModel;
-}
-// Map for ModuleViewModel
-
-export interface IItemRendererProps {
-  className: string;
-  item: VortexViewModel;
-  onRef: (ref: any) => any;
+  index: number;
 }
 
-export interface ModsStorage {
-  [moduleId: string]: types.IMod;
+export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
+export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
+export interface IVortexViewModelData {
+  moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
+  index: number;
 }
 
-
-export interface ModuleInfoExtendedWithPathWithVortexMetadata extends vetypes.ModuleInfoExtendedWithPath {
-  vortexId?: string;
-}
 export interface IModuleCache {
-  [moduleId: string]: ModuleInfoExtendedWithPathWithVortexMetadata;
-}
-export interface IValidationCache {
-  [moduleId: string]: vetypes.ModuleIssue[];
+  [moduleId: string]: vetypes.ModuleInfoExtendedWithMetadata;
 }
 
-export interface IIncompatibleModule {
-  id: string,
-  currentVersion: string,
-  requiredVersion: string
+/**
+ * Vortex
+ */
+export interface IItemRendererProps<T = unknown> {
+  className: string;
+  item: T;
+  onRef: (ref: unknown) => unknown;
 }
 
-export interface IValidationResult {
-  missing: string[];
-  incompatible: IIncompatibleModule[];
+/**
+ * Vortex
+ */
+export interface IBannerlordModStorage {
+  [modId: string]: IBannerlordMod;
 }
 
-export interface IDeployment {
-  [modType: string]: types.IDeployedFile[];
+/**
+ * Vortex
+ */
+export interface IBannerlordMod extends types.IMod {
+  attributes?: IBannerlordModAttributes;
 }
 
+/**
+ * Vortex
+ */
+export interface IBannerlordModAttributes {
+  modId: number;
+  version: string;
+  source: string;
+}
+
+/**
+ * Vortex
+ */
+export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterface {
+  primaryTool: {
+    [GAME_ID]?: string;
+  };
+}
+
+/**
+ * Vortex
+ */
+export interface ISettingsWithBannerlord extends types.ISettings {
+  [GAME_ID]?: {
+    saveList?: {
+      saveName?: string;
+    };
+    sortOnDeploy: {
+      [profileId: string]: boolean;
+    };
+  };
+}
+
+/**
+ * Vortex
+ */
+export type IStatePersistent = types.IState['persistent'];
+
+/**
+ * Vortex
+ */
+export interface IStatePersistentWithLoadOrder extends IStatePersistent {
+  loadOrder: {
+    [profileId: string]: VortexLoadOrderStorage;
+  };
+}
+
+/**
+ * Vortex
+ */
+export const enum VortexStoreIds {
+  Steam = `steam`,
+  GOG = `gog`,
+  Epic = `epic`,
+  Xbox = `xbox`,
+}
+
+/**
+ * Vortex
+ */
 export interface IAddedFiles {
-  filePath: string,
-  candidates: string[]
+  filePath: string;
+  candidates: string[];
 }

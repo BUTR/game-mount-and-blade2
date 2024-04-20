@@ -1,5 +1,1 @@
-import LoadOrderItemRenderer from './LoadOrderItemRenderer';
-
-export {
-	LoadOrderItemRenderer
-};
+export { BannerlordItemRenderer } from './LoadOrderItemRenderer';

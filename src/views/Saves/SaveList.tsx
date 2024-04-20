@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { Panel, ListGroup, ListGroupItem, Alert, Radio, FormControl } from 'react-bootstrap';
+import React from 'react';
+import { Panel, Radio } from 'react-bootstrap';
+import ticksToDate from 'ticks-to-date';
 import {
   ComponentEx,
   FlexLayout,
@@ -10,118 +11,89 @@ import {
   ToolbarIcon,
   tooltip,
   types,
-  util,
 } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
-import SaveEntry from './SaveListEntry';
-import { IItemRendererProps, IModuleCache } from '../../types';
-import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
-import { versionToString } from '../../utils/util';
 import {
-  getAvailableModulesByName,
+  getModulesByName,
   getLoadOrderIssues,
   getMismatchedModuleVersionsWarning,
   getMissingModuleNamesError,
-  getModules,
   getNameDuplicatesError,
 } from './saveUtils';
-import ticksToDate from 'ticks-to-date';
-import { IExtensionContext } from 'vortex-api/lib/types/IExtensionContext';
-import { setCurrentSave, setSortOnDeploy } from '../../actions';
-import { IState } from 'vortex-api/lib/types/api';
+import { ISaveGame } from './types';
+import { setCurrentSave } from '../../actions';
+import { VortexLauncherManager, hasSettingsBannerlord, versionToString } from '../../utils';
+import { IItemRendererProps, IModuleCache } from '../../types';
+import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar';
+import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
+import { IExtensibleProps } from 'vortex-api/lib/types/IExtensionProvider';
+import { IBaseProps as ITableBaseProps } from 'vortex-api/lib/controls/Table';
 
-interface IStateProps {}
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
-  context: IExtensionContext;
+  context: types.IExtensionContext;
 };
 
 interface IBaseState {
   saves: vetypes.SaveMetadata[];
-  modules: Readonly<IModuleCache>;
+  allModules: Readonly<IModuleCache>;
   // TODO: Move to the entry renderer
   loadOrder: { [saveName: string]: string };
-  selectedRow: ISaveGame | undefined;
-  selectedSave: ISaveGame | undefined;
+  selectedRow?: ISaveGame | undefined;
+  selectedSave?: ISaveGame | undefined;
 }
 
-export interface ISaveGame {
-  index: number;
-  name: string;
-  applicationVersion?: vetypes.ApplicationVersion;
-  creationTime?: number;
-  characterName?: string;
-  mainHeroGold?: number;
-  mainHeroLevel?: number;
-  dayLong?: number;
-  clanBannerCode?: string;
-  clanFiefs?: number;
-  clanInfluence?: number;
-  mainPartyFood?: number;
-  mainPartyHealthyMemberCount?: number;
-  mainPartyPrisonerMemberCount?: number;
-  mainPartyWoundedMemberCount?: number;
-  version?: number; // always a 1?
-  modules: { [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
-  duplicateModules?: string[];
-  loadOrderIssues?: string[];
-  missingModules?: string[];
-  mismatchedModuleVersions?: string[];
-}
-
-type IComponentProps = IStateProps & IOwnProps;
+type IComponentProps = IOwnProps;
 type IComponentState = IBaseState;
-class SaveList extends ComponentEx<IComponentProps, IComponentState> {
+
+const TableWrapper = Table as React.ComponentType<ITableBaseProps & IExtensibleProps>;
+const IconWrapper = IconBar as React.ComponentType<
+  IIconBarBaseProps & IActionControlProps & IExtensibleProps & React.HTMLAttributes<unknown>
+>;
+
+export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
   private savesGames: { [name: string]: ISaveGame } = {};
   private tableAttributes: types.ITableAttribute[];
-  private storedSaveGameName: string = '';
+  private storedSaveGameName: string | undefined = undefined;
   private sortedSaveGames: [string, ISaveGame][] = [];
 
   constructor(props: IComponentProps) {
     super(props);
 
-    const saves: vetypes.SaveMetadata[] = props.launcherManager.getSaveFiles();
-    const modules: Readonly<IModuleCache> = props.launcherManager.getModulesVortex();
+    const { launcherManager, context } = props;
+
+    const saves = launcherManager.getSaveFiles();
+    const allModules = launcherManager.getAllModules();
 
     // need to init the state so it saves with vortex
     this.initState({
       saves,
-      modules,
+      allModules: allModules,
       loadOrder: {},
-      selectedRow: undefined,
-      selectedSave: undefined,
     });
 
     // get list of save games
     this.OnRefreshList();
 
+    const vortexState = context.api.getState();
+
     // get stored save game from vortex state
-    const vortexState: IState = props.context.api.getState();
-    this.storedSaveGameName = (vortexState.settings as any).mountandblade2?.saveList?.saveName ?? undefined;
-    //console.log('storedSaveGame=' + this.storedSaveGameName);
+    if (hasSettingsBannerlord(vortexState.settings)) {
+      this.storedSaveGameName = vortexState.settings.mountandblade2bannerlord?.saveList?.saveName ?? undefined;
+    }
 
-    // if nothing found in the vortex state, then we default to 'no save'
-    if (this.storedSaveGameName == undefined) {
-      this.storedSaveGameName = 'No Save';
-      props.context.api.store?.dispatch(setCurrentSave(this.storedSaveGameName));
-      //console.log(vortexState);
-    } else {
-      const foundSave: ISaveGame | undefined = Object.values(this.savesGames).find(
-        (value) => value.name == this.storedSaveGameName
-      );
-
-      //console.log(foundSave);
-
-      // if nothing found in the saves then we default to No Save
-      if (foundSave == undefined) {
-        // no save found, set default name
-        this.storedSaveGameName = 'No Save';
-      } else {
-        // set state to the found save
+    if (this.storedSaveGameName) {
+      const foundSave = Object.values(this.savesGames).find((value) => value.name === this.storedSaveGameName);
+      if (foundSave) {
         this.setState({ selectedSave: foundSave, selectedRow: foundSave });
+      } else {
+        this.storedSaveGameName = 'No Save';
       }
+    } else {
+      this.storedSaveGameName = 'No Save';
+      context.api.store?.dispatch(setCurrentSave(this.storedSaveGameName));
     }
 
     this.mStaticButtons = [
@@ -141,7 +113,6 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.saveGameActions = [];
 
     // basically column data
-
     this.tableAttributes = [
       {
         id: '#',
@@ -189,7 +160,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
         id: 'applicationVersion',
         name: 'Version',
         calc: (data: [string, ISaveGame]) =>
-          data[1].applicationVersion != undefined ? versionToString(data[1].applicationVersion) : '',
+          data[1].applicationVersion ? versionToString(data[1].applicationVersion) : '',
         placement: 'both',
         edit: {},
       },
@@ -203,79 +174,20 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     ];
   }
 
-  public render(): JSX.Element {
+  public override render(): JSX.Element {
     const { t } = this.props;
-
-    const header: JSX.Element = (
-      <IconBar group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
-    );
 
     return (
       <MainPage>
-        <MainPage.Header>{header}</MainPage.Header>
+        <MainPage.Header>
+          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
+        </MainPage.Header>
         <MainPage.Body>{this.renderContent(this.saveGameActions)}</MainPage.Body>
       </MainPage>
     );
   }
-
-  private GetRadioCustomRenderer(saveGame: ISaveGame, storedSaveGame: string): JSX.Element {
-    return (
-      <Radio
-        name="radioGroup"
-        defaultChecked={saveGame.name == storedSaveGame}
-        id={`bannerlord-savegames-radio${saveGame.index}`}
-        onChange={() => this.Radio_OnChange(saveGame)}
-      ></Radio>
-    );
-  }
-
-  private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
-    /* brand colours
-     * --brand-success
-     * --brand-warning
-     * --brand-danger
-     */
-
-    // default is all fine
-    let iconName = 'toggle-enabled';
-    let colorName = 'var(--brand-success)';
-    let issues: string[] = [];
-
-    // build up tooltip issues array, and colours if necessary
-    // warning is set first, anything else is error, if nothing then we just
-    // fallback to the default green
-
-    // warnings
-    if (saveGame.loadOrderIssues && saveGame.loadOrderIssues.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-warning)';
-      issues.push(saveGame.loadOrderIssues.length + ' load order issues');
-    }
-
-    // errors
-    if (saveGame.missingModules && saveGame.missingModules.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(saveGame.missingModules.length + ' missing modules');
-    }
-
-    if (saveGame.duplicateModules && saveGame.duplicateModules.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(saveGame.duplicateModules.length + ' duplicate modules');
-    }
-
-    if (saveGame.mismatchedModuleVersions && saveGame.mismatchedModuleVersions.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(saveGame.mismatchedModuleVersions.length + ' version mismatches');
-    }
-
-    return <tooltip.Icon name={iconName} tooltip={issues.join('\n')} style={{ color: colorName }} />;
-  }
-
   private renderContent(saveActions: ITableRowAction[]) {
-    const { saves, selectedRow, selectedSave } = this.state;
+    const { selectedRow, selectedSave } = this.state;
 
     return (
       <Panel>
@@ -284,14 +196,15 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
             <FlexLayout.Fixed id="instructions">
               <p>
                 Instructions: Select a row to see more information and use the radio buttons to select the save to
-                launch the game. If you don't want to launch with a save, choose the 'No Save' option at the top.
+                launch the game. If you don&apos;t want to launch with a save, choose the &apos;No Save&apos; option at
+                the top.
               </p>
               <p>Currently selected save: {selectedSave?.name}</p>
             </FlexLayout.Fixed>
 
             <FlexLayout type="row">
               <FlexLayout.Flex>
-                <Table
+                <TableWrapper
                   tableId="bannerlord-savegames"
                   data={this.sortedSaveGames}
                   staticElements={this.tableAttributes}
@@ -299,7 +212,9 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
                   multiSelect={false}
                   hasActions={false}
                   showDetails={false}
-                  onChangeSelection={(ids) => this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0])][1])}
+                  onChangeSelection={(ids: string[]) =>
+                    this.Table_OnChangeSelection(this.sortedSaveGames[parseInt(ids[0]!)]![1])
+                  }
                 />
               </FlexLayout.Flex>
 
@@ -310,32 +225,6 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       </Panel>
     );
   }
-
-  private Radio_OnChange(saveGame: ISaveGame) {
-    // when a save is selected that we need to send to launcher
-
-    console.log(`BANNERLORD: Radio_OnChange(${saveGame.name}) saveGame=`);
-    console.log(saveGame);
-
-    const { launcherManager, context } = this.props;
-
-    // get current state object
-    let { selectedSave } = this.state;
-
-    // update it
-    selectedSave = saveGame;
-
-    // save it in local state
-    this.setState({ selectedSave });
-
-    // set vortex state so it stored between sessions
-    context.api.store?.dispatch(setCurrentSave(saveGame.name));
-    //console.log(context.api.getState());
-
-    // set on launcher. if this is 'no save' then just send empty string
-    launcherManager.setGameParameterSaveFile(saveGame.name == 'No Save' ? '' : saveGame.name);
-  }
-
   private Table_OnChangeSelection(saveGame: ISaveGame) {
     // when a row is selected
 
@@ -348,7 +237,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //const saveGame = this.sortedSaveGames[selectedIndex][1];
 
     //console.log(`BANNERLORD: OnChangeSelection(${ids}) selectedIndex=${selectedIndex} saveGame=`);
-    console.log(saveGame);
+    //console.log(saveGame);
 
     // update it
     selectedRow = saveGame;
@@ -356,10 +245,9 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // save it
     this.setState({ selectedRow });
   }
-
   private RenderSidebar(saveGame: ISaveGame | undefined): JSX.Element {
     // if nothing is selected
-    if (saveGame == undefined) {
+    if (!saveGame) {
       return <></>;
     }
 
@@ -374,7 +262,6 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       </>
     );
   }
-
   private GetIssueRenderSnippet(issueHeading: string, issue: string[] | undefined): JSX.Element {
     // if we have something in the issue array, then return that nicely formatted
     if (issue && issue.length) {
@@ -398,13 +285,93 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     );
   }
 
+  // Table
+  private GetRadioCustomRenderer(saveGame: ISaveGame, storedSaveGame: string | undefined): JSX.Element {
+    return (
+      <Radio
+        name="radioGroup"
+        defaultChecked={saveGame.name === storedSaveGame}
+        id={`bannerlord-savegames-radio${saveGame.index}`}
+        onChange={() => this.Radio_OnChange(saveGame)}
+      ></Radio>
+    );
+  }
+  private Radio_OnChange(saveGame: ISaveGame) {
+    // when a save is selected that we need to send to launcher
+
+    //console.log(`BANNERLORD: Radio_OnChange(${saveGame.name}) saveGame=`);
+    //console.log(saveGame);
+
+    const { launcherManager, context } = this.props;
+
+    // get current state object
+    let { selectedSave } = this.state;
+
+    // update it
+    selectedSave = saveGame;
+
+    // save it in local state
+    this.setState({ selectedSave });
+
+    // set vortex state so it stored between sessions
+    context.api.store?.dispatch(setCurrentSave(saveGame.name));
+    //console.log(context.api.getState());
+
+    // set on launcher. if this is 'no save' then just send empty string
+    launcherManager.setSaveFile(saveGame.name === 'No Save' ? '' : saveGame.name);
+  }
+
+  // Table
+  private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
+    /* brand colours
+     * --brand-success
+     * --brand-warning
+     * --brand-danger
+     */
+
+    // default is all fine
+    let iconName = 'toggle-enabled';
+    let colorName = 'var(--brand-success)';
+    const issues: string[] = [];
+
+    // build up tooltip issues array, and colours if necessary
+    // warning is set first, anything else is error, if nothing then we just
+    // fallback to the default green
+
+    // warnings
+    if (saveGame.loadOrderIssues && saveGame.loadOrderIssues.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-warning)';
+      issues.push(`${saveGame.loadOrderIssues.length} load order issues`);
+    }
+
+    // errors
+    if (saveGame.missingModules && saveGame.missingModules.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(`${saveGame.missingModules.length} missing modules`);
+    }
+
+    if (saveGame.duplicateModules && saveGame.duplicateModules.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(`${saveGame.duplicateModules.length} duplicate modules`);
+    }
+
+    if (saveGame.mismatchedModuleVersions && saveGame.mismatchedModuleVersions.length) {
+      iconName = 'feedback-warning';
+      colorName = 'var(--brand-danger)';
+      issues.push(`${saveGame.mismatchedModuleVersions.length} version mismatches`);
+    }
+
+    return <tooltip.Icon name={iconName} tooltip={issues.join('\n')} style={{ color: colorName }} />;
+  }
+
   private OnRefreshList() {
     const { launcherManager } = this.props;
 
-    console.log(this.props);
-
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
-    const modules = launcherManager.getModulesVortex();
+    const allModules = launcherManager.getAllModules();
 
     // build new ISaveGame from SaveMetadata, just to make it easier to work with
 
@@ -417,48 +384,56 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     // add savesDict as starting object and keep adding to it
     saves.reduce((prev: { [name: string]: ISaveGame }, current, currentIndex) => {
+      if (!current['Modules']) {
+        return prev;
+      }
+
       const saveGame: ISaveGame = {
         index: currentIndex + 1,
         name: current.Name,
         applicationVersion:
-          current.ApplicationVersion !== undefined
-            ? BannerlordModuleManager.parseApplicationVersion(current.ApplicationVersion)
+          current['ApplicationVersion'] !== undefined
+            ? BannerlordModuleManager.parseApplicationVersion(current['ApplicationVersion'])
             : undefined,
-        creationTime: current.CreationTime !== undefined ? parseInt(current.CreationTime) : undefined,
-        characterName: current.CharacterName,
-        mainHeroGold: current.MainHeroGold !== undefined ? parseInt(current.MainHeroGold) : undefined,
-        mainHeroLevel: current.MainHeroLevel !== undefined ? parseInt(current.MainHeroLevel) : undefined,
-        dayLong: current.DayLong !== undefined ? parseFloat(current.DayLong) : undefined,
+        creationTime: current['CreationTime'] !== undefined ? parseInt(current['CreationTime']) : undefined,
+        characterName: current['CharacterName'],
+        mainHeroGold: current['MainHeroGold'] !== undefined ? parseInt(current['MainHeroGold']) : undefined,
+        mainHeroLevel: current['MainHeroLevel'] !== undefined ? parseInt(current['MainHeroLevel']) : undefined,
+        dayLong: current['DayLong'] !== undefined ? parseFloat(current['DayLong']) : undefined,
 
-        clanBannerCode: current.ClanBannerCode,
-        clanFiefs: current.ClanFiefs !== undefined ? parseInt(current.ClanFiefs) : undefined,
-        clanInfluence: current.ClanInfluence !== undefined ? parseFloat(current.ClanInfluence) : undefined,
+        clanBannerCode: current['ClanBannerCode'],
+        clanFiefs: current['ClanFiefs'] !== undefined ? parseInt(current['ClanFiefs']) : undefined,
+        clanInfluence: current['ClanInfluence'] !== undefined ? parseFloat(current['ClanInfluence']) : undefined,
 
-        mainPartyFood: current.MainPartyFood !== undefined ? parseFloat(current.MainPartyFood) : undefined,
+        mainPartyFood: current['MainPartyFood'] !== undefined ? parseFloat(current['MainPartyFood']) : undefined,
         mainPartyHealthyMemberCount:
-          current.MainPartyHealthyMemberCount !== undefined ? parseInt(current.MainPartyHealthyMemberCount) : undefined,
+          current['MainPartyHealthyMemberCount'] !== undefined
+            ? parseInt(current['MainPartyHealthyMemberCount'])
+            : undefined,
         mainPartyPrisonerMemberCount:
-          current.MainPartyPrisonerMemberCount !== undefined
-            ? parseInt(current.MainPartyPrisonerMemberCount)
+          current['MainPartyPrisonerMemberCount'] !== undefined
+            ? parseInt(current['MainPartyPrisonerMemberCount'])
             : undefined,
         mainPartyWoundedMemberCount:
-          current.MainPartyWoundedMemberCount !== undefined ? parseInt(current.MainPartyWoundedMemberCount) : undefined,
-        version: current.Version !== undefined ? parseInt(current.Version) : undefined,
+          current['MainPartyWoundedMemberCount'] !== undefined
+            ? parseInt(current['MainPartyWoundedMemberCount'])
+            : undefined,
+        version: current['Version'] !== undefined ? parseInt(current['Version']) : undefined,
         modules: {}, // blank dictionary for now
       };
 
       // build up modules dictionary?
-      const moduleNames: string[] = current.Modules.split(';');
+      const moduleNames = current['Modules'].split(';');
 
       const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
       for (const module of moduleNames) {
-        const key: string = module;
-        const value: string = current['Module_' + module];
+        const key = module;
+        const moduleValue = current['Module_' + module];
+        if (!moduleValue) {
+          continue;
+        }
 
-        // skip this if it's undefined
-        if (value == undefined) continue;
-
-        const version = BannerlordModuleManager.parseApplicationVersion(value);
+        const version = BannerlordModuleManager.parseApplicationVersion(moduleValue);
         if (version.changeSet === saveChangeSet) {
           version.changeSet = 0;
         }
@@ -484,7 +459,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     this.setState({
       saves,
-      modules,
+      allModules: allModules,
     });
 
     //console.log(`BANNERLORD: OnRefreshList() this.savesDict= saves=`);
@@ -492,18 +467,15 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //console.log(saves);
     //console.log(modules);
   }
-
   private ParseSave(saveGame: ISaveGame) {
     const { launcherManager } = this.props;
     const { loadOrder } = this.state;
 
-    const availableModules = launcherManager.getModulesVortex();
-    const availableModulesByName = getAvailableModulesByName(availableModules);
+    const allModules = launcherManager.getAllModules();
+    const allModulesByName = getModulesByName(allModules);
     const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', {});
     const modules = Object.keys(saveGame.modules)
-      .map((current) => {
-        return availableModulesByName[current]?.id ?? `${current} ${unknownId}`;
-      })
+      .map<string>((current) => allModulesByName[current]?.id ?? `${current} ${unknownId}`)
       .filter((x) => x !== undefined);
 
     loadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {
@@ -511,11 +483,10 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     });
     this.setState({ loadOrder });
   }
-
   private ValidateSave(saveGame: ISaveGame) {
     const { launcherManager } = this.props;
 
-    const availableModules = launcherManager.getModulesVortex();
+    const allModules = launcherManager.getAllModules();
 
     /*
     if (nameDuplicates !== undefined) {
@@ -526,10 +497,10 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       return;
     }*/
 
-    saveGame.duplicateModules = getNameDuplicatesError(saveGame, launcherManager, availableModules);
-    saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, availableModules);
-    saveGame.missingModules = getMissingModuleNamesError(saveGame, launcherManager, availableModules);
-    saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+    saveGame.duplicateModules = getNameDuplicatesError(saveGame, launcherManager, allModules);
+    saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, allModules);
+    saveGame.missingModules = getMissingModuleNamesError(saveGame, launcherManager, allModules);
+    saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, allModules);
 
     //console.log(`BANNERLORD: ValidateSave() saveGame=`);
     //console.log(saveGame);
@@ -553,7 +524,7 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       return;
     }*/
 
-    //saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, availableModules);
+    //saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, allModules);
 
     /*
     if (mismatchedModuleVersions !== undefined) {
@@ -567,5 +538,3 @@ class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     }*/
   }
 }
-
-export default SaveList;

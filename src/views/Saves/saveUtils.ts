@@ -1,8 +1,7 @@
 import { BannerlordModuleManager, types as vetypes, Utils } from '@butr/vortexextensionnative';
-import { IModuleCache, ModuleInfoExtendedWithPathWithVortexMetadata } from '../../types';
-import { versionToString } from '../../utils/util';
-import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
-import { ISaveGame } from './SaveList';
+import { ISaveGame } from './types';
+import { VortexLauncherManager, versionToString } from '../../utils';
+import { IModuleCache } from '../../types';
 
 type MismatchedModule = {
   name: string;
@@ -13,37 +12,32 @@ type MismatchedModuleMap = {
   [name: string]: MismatchedModule;
 };
 
-type AvailableModulesByName = {
-  [name: string]: ModuleInfoExtendedWithPathWithVortexMetadata;
+type ModulesByName = {
+  [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
 };
 
-export const getAvailableModulesByName = (availableModules: Readonly<IModuleCache>): AvailableModulesByName => {
-  return Object.values(availableModules).reduce((map, current) => {
+export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName => {
+  return Object.values(modules).reduce<ModulesByName>((map, current) => {
     map[current.name] = current;
     return map;
-  }, {} as AvailableModulesByName);
+  }, {});
 };
 
 export const getNameDuplicatesError = (
-  saveGame: ISaveGame,
-  launcherManager: VortexLauncherManager,
-  availableModules: Readonly<IModuleCache>
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
 ): string[] | undefined => {
-  const availableModulesByName = getAvailableModulesByName(availableModules);
+  const allModulesByName = getModulesByName(allModules);
 
-  const moduleNames = Object.keys(availableModulesByName);
+  const moduleNames = Object.keys(allModulesByName);
   const uniqueModuleNames = new Set(moduleNames);
-
-  //console.log('getNameDuplicatesError');
-  //console.log(uniqueModuleNames);
 
   const duplicates = moduleNames.filter((currentValue) => {
     if (uniqueModuleNames.has(currentValue)) {
       uniqueModuleNames.delete(currentValue);
     }
   });
-
-  //console.log(duplicates);
 
   if (duplicates.length !== 0) {
     return duplicates;
@@ -57,35 +51,33 @@ export const getNameDuplicatesError = (
 };
 
 export const getMissingModuleNamesError = (
-  saveGame: ISaveGame,
-  launcherManager: VortexLauncherManager,
-  availableModules: Readonly<IModuleCache>
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
 ): Array<string> => {
-  const availableModulesByName = getAvailableModulesByName(availableModules);
-
-  return Object.keys(saveGame.modules).reduce((map, current) => {
-    if (availableModulesByName[current] == undefined) {
+  const allModulesByName = getModulesByName(allModules);
+  return Object.keys(saveGame.modules).reduce<string[]>((map, current) => {
+    if (!allModulesByName[current]) {
       map.push(current);
     }
     return map;
-  }, Array<string>());
+  }, []);
 };
 
 export const getMismatchedModuleVersionsWarning = (
-  saveGame: ISaveGame,
-  launcherManager: VortexLauncherManager,
-  availableModules: Readonly<IModuleCache>
+  saveGame: Readonly<ISaveGame>,
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
 ): string[] | undefined => {
-  const availableModulesByName = getAvailableModulesByName(availableModules);
-  //debugger;
-  const mismatchedVersions = Object.keys(saveGame.modules).reduce((map, moduleName) => {
+  const allModulesByName = getModulesByName(allModules);
+  const mismatchedVersions = Object.keys(saveGame.modules).reduce<MismatchedModuleMap>((map, moduleName) => {
     // is the module even installed?
-    if (availableModulesByName[moduleName] == undefined) {
+    if (!allModulesByName[moduleName]) {
       return map; // just return the previous accumulation and move on
     }
 
-    const installedVerson = availableModulesByName[moduleName].version;
-    const saveVersion = saveGame.modules[moduleName];
+    const installedVerson = allModulesByName[moduleName]!.version;
+    const saveVersion = saveGame.modules[moduleName]!;
     if (BannerlordModuleManager.compareVersions(installedVerson, saveVersion) !== 0) {
       map[moduleName] = {
         name: moduleName,
@@ -94,11 +86,11 @@ export const getMismatchedModuleVersionsWarning = (
       };
     }
     return map;
-  }, {} as MismatchedModuleMap);
+  }, {});
 
-  const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map((current) => {
-    const module = availableModulesByName[current.name];
-    return launcherManager.localize('{=nYVWoomO}{MODULEID}. Required {REQUIREDVERSION}. Actual {ACTUALVERSION}', {
+  const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map<string>((current) => {
+    const module = allModulesByName[current.name]!;
+    return manager.localize('{=nYVWoomO}{MODULEID}. Required {REQUIREDVERSION}. Actual {ACTUALVERSION}', {
       MODULEID: module.id,
       REQUIREDVERSION: versionToString(current.save),
       ACTUALVERSION: versionToString(current.installed),
@@ -118,27 +110,23 @@ export const getMismatchedModuleVersionsWarning = (
 
 export const getLoadOrderIssues = (
   saveGame: ISaveGame,
-  launcherManager: VortexLauncherManager,
-  availableModules: Readonly<IModuleCache>
+  manager: VortexLauncherManager,
+  allModules: Readonly<IModuleCache>
 ): Array<string> => {
-  const availableModulesByName = getAvailableModulesByName(availableModules);
+  const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)
-    .map((current) => {
-      return availableModulesByName[current];
-    })
-    .filter((x) => x !== undefined);
+    .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithMetadata => !!x);
   return Utils.isLoadOrderCorrect(modules);
 };
 
 export const getModules = (
   saveGame: ISaveGame,
-  launcherManager: VortexLauncherManager
-): Array<ModuleInfoExtendedWithPathWithVortexMetadata> => {
-  const availableModules = launcherManager.getModulesVortex();
-  const availableModulesByName = getAvailableModulesByName(availableModules);
+  manager: VortexLauncherManager
+): Array<vetypes.ModuleInfoExtendedWithMetadata> => {
+  const allModules = manager.getAllModules();
+  const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules)
-    .map((current) => {
-      return availableModulesByName[current];
-    })
-    .filter((x) => x !== undefined);
+    .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithMetadata => !!x);
 };

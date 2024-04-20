@@ -1,142 +1,178 @@
+/* eslint-disable */
 import * as React from 'react';
-import * as BS from 'react-bootstrap';
-import { connect } from 'react-redux';
-import { ComponentEx, FlexLayout, selectors, util, types } from "vortex-api";
-import { types as vetypes } from '@butr/vortexextensionnative';
-import { IItemRendererProps, VortexViewModel, ModsStorage, VortexLoadOrderEntry } from "../../types";
+import { Checkbox, ListGroupItem } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
-import { IconNonVortex } from './IconNonVortex';
-import { IconIssues } from './IconIssues';
-import { IconDependencies } from './IconDependencies';
-import { ItemOfficialModule } from './ItemOfficialModule';
-import { ItemValidModule } from './ItemValidModule';
-import { ButtonOpenDir } from './ButtonOpenDir';
-import { VortexLauncherManager } from '../../utils/VortexLauncherManager';
+import { actions, Icon, selectors, tooltip, types, util } from 'vortex-api';
+import { IVortexViewModelData } from '../../types';
+import { versionToString } from '../../utils';
+import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
+import { Utils } from '@butr/vortexextensionnative';
+import { TooltipImage } from '../Controls';
 
-interface IStateProps {
-  profile: types.IProfile;
-  modsPath: string;
-  installPath: string;
-  mods: ModsStorage;
-};
-type IOwnProps = IItemRendererProps & {
-  launcherManager: VortexLauncherManager;
-};
-
-interface IBaseState {
-  offset: { x: number, y: number };
-  issues: vetypes.ModuleIssue[];
-};
-
-type IComponentProps = IStateProps & IOwnProps;
-type IComponentState = IBaseState;
-class LoadOrderItemRenderer extends ComponentEx<IComponentProps, IComponentState> {
-  constructor(props: IComponentProps) {
-    super(props);
-    this.state = {
-      offset: { x: 0, y: 0 },
-      issues: props.launcherManager.getModuleIssues(props.item.id),
-    };
-  }
-
-  onStatusChange = (evt: any): void => {
-    const { profile, item, launcherManager } = this.props;
-    
-    const entry: VortexLoadOrderEntry = {
-      pos: item.index,
-      enabled: evt.target.checked,
-      locked: false,
-      data: {
-        id: item.id,
-        name: item.name,
-        isSelected: evt.target.checked,
-        index: item.index
-      }
-    };
-
-    launcherManager.setLoadOrderEntry(profile.id, item.id, entry);
-  };
-
-  renderItem = (item: VortexViewModel): JSX.Element => { 
-    if (item.official) {
-      return ItemOfficialModule({ item: item, onStatusChange: this.onStatusChange });
-    }
-
-    return ItemValidModule({ item: item, onStatusChange: this.onStatusChange });
-  };
-
-  renderAddendum = (): JSX.Element => {
-    const { item, mods, modsPath, installPath } = this.props;
-    const { issues } = this.state;
-
-    return (
-      <React.Fragment>
-        {IconIssues({ item: item, issues: issues })}
-        {IconDependencies({ item: item })}
-        {IconNonVortex({ item: item })}
-        {ButtonOpenDir({ item: item, mods: mods, modsPath: modsPath, installPath: installPath })}
-      </React.Fragment>
-    );
-  };
-
-  render = (): JSX.Element => {
-    const { className, item, onRef } = this.props;
-    const position = (!item.prefix) ? item.prefix : item.index + 1;
-
-    let classes = [`load-order-entry`];
-    if (className !== undefined) {
-      classes = classes.concat(className.split(` `));
-    }
-
-    return (
-      <BS.ListGroupItem
-        className='load-order-entry'
-        ref={onRef}
-        key={`${item.name}-${position}`}
-        style={{ height: `48px` }}
-      >
-        <FlexLayout type='row'>
-          {/* TODO: How to FlexLayout.Flex? */}
-          <div
-            style={{
-              display: `flex`,
-              justifyContent: `stretch`,
-              height: `20px`,
-              overflow: `hidden`,
-              whiteSpace: `nowrap`,
-              textOverflow: `ellipsis`,
-            }}
-          >
-            {this.renderItem(item) }
-          </div>
-          <FlexLayout.Flex
-            style={{
-              display: `flex`,
-              justifyContent: `flex-end`,
-              minWidth: 0,
-            }}
-          >
-            {this.renderAddendum()}
-          </FlexLayout.Flex>
-        </FlexLayout>
-      </BS.ListGroupItem>
-    );
-  };
-
+interface IBaseProps {
+  api: types.IExtensionApi;
+  className?: string;
+  item: types.IFBLOItemRendererProps;
 }
 
-const mapState = (state: types.IState, _ownProps: IOwnProps): IStateProps => {
-  const profile = selectors.activeProfile(state);
-  const game = util.getGame(profile.gameId);
-  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, profile.gameId);
-  const modsPath = game.getModPaths && discovery?.path ? game.getModPaths(discovery.path)[``] : ``;
-  const installPath: string = selectors.installPathForGame(state, profile.gameId);
+interface IConnectedProps {
+  loadOrder: types.FBLOLoadOrder;
+  profile: types.IProfile;
+  modState: any;
+}
+
+export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
+  const { api, className, item } = props;
+  const { loadOrder, profile } = useSelector(mapStateToProps);
+
+  const name = item.loEntry.name ? `${item.loEntry.name}` : `${item.loEntry.id}`;
+  const version = versionToString(item.loEntry.data?.moduleInfoExtended.version);
+
+  const position = loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
+
+  let classes = ['load-order-entry'];
+  if (className !== undefined) {
+    classes = classes.concat(className.split(' '));
+  }
+
+  if (isExternal(item.loEntry)) {
+    classes = classes.concat('external');
+  }
+
+  const onStatusChange = React.useCallback(
+    (evt: any) => {
+      const entry = {
+        ...item.loEntry,
+        enabled: evt.target.checked,
+      };
+      api.store?.dispatch(actions.setFBLoadOrderEntry(profile.id, entry));
+    },
+    [api, item, profile]
+  );
+
+  const checkBox = () =>
+    item.displayCheckboxes ? (
+      <Checkbox
+        className="entry-checkbox"
+        checked={item.loEntry.enabled}
+        disabled={isLocked(item.loEntry)}
+        onChange={onStatusChange}
+      />
+    ) : null;
+
+  const lock = () => (isLocked(item.loEntry) ? <Icon className="locked-entry-logo" name="locked" /> : null);
+
+  return (
+    <ListGroupItem key={name} className={classes.join(' ')} ref={props.item.setRef}>
+      <Icon className="drag-handle-icon" name="drag-handle" />
+      <p className="load-order-index">{position}</p>
+      {renderValidationError(props)}
+      {renderModuleIcon(item.loEntry)}
+      <p className="load-order-name">{name} ({version})</p>
+      {renderExternalBanner(item.loEntry)}
+      {renderModuleProviderIcon(item.loEntry)}
+      {checkBox()}
+      {lock()}
+    </ListGroupItem>
+  );
+}
+
+function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+  const isOfficial = item.data !== undefined && item.data.moduleInfoExtended.isOfficial;
+  const isCommunity = item.data !== undefined && !item.data.moduleInfoExtended.isOfficial;
+  const dependencies = item.data !== undefined ? Utils.getDependencyHint(item.data.moduleInfoExtended) : '';
+
+  if (isOfficial) {
+    return (
+      <TooltipImage
+        src={TW_LOGO}
+        className="official-module-logo"
+        style={{ width: `1.5em`, height: `1.5em`, }}
+        tooltip={dependencies} >
+      </TooltipImage>
+    );
+  }
+
+  if (isCommunity) {
+    return (
+      <TooltipImage
+        src={MODULE_LOGO}
+        className="community-module-logo"
+        style={{ width: `1.5em`, height: `1.5em`, color: `#D69846` }}
+        tooltip={dependencies} >
+      </TooltipImage>
+    );
+  }
+
+  return (
+    <TooltipImage
+      src={""}
+      style={{ width: `1.5em`, height: `1.5em`, }}
+      tooltip={dependencies} >
+    </TooltipImage>
+  );
+}
+
+function renderValidationError(props: IBaseProps): JSX.Element | null {
+  const { invalidEntries, loEntry } = props.item;
+  const invalidEntry =
+    invalidEntries !== undefined
+      ? invalidEntries.find((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase())
+      : undefined;
+  return invalidEntry !== undefined ? (
+    <tooltip.Icon className="fblo-invalid-entry" name="feedback-error" tooltip={invalidEntry.reason} />
+  ) : null;
+}
+
+function renderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+  const [t] = useTranslation(['common']);
+  return isExternal(item) ? (
+    <div className="load-order-unmanaged-banner">
+      <Icon className="external-caution-logo" name="feedback-warning" />
+      <span className="external-text-area">{t('Not managed by Vortex')}</span>
+    </div>
+  ) : null;
+}
+
+function renderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+  const [t] = useTranslation(['common']);
+  
+  if (isSteamWorksop(item)) {
+    return (
+      <TooltipImage
+        src={STEAM_LOGO}
+        style={{ width: `1.5em`, height: `1.5em`, }}
+        tooltip={t('Managed by Steam')} >
+      </TooltipImage>
+    );
+  }
+
+  return (
+    <div style={{ width: `1.5em`, height: `1.5em`, }} />
+  );
+}
+
+function isLocked(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): boolean {
+  return [true, 'true', 'always'].includes(item.locked as types.FBLOLockState);
+}
+
+function isExternal(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): boolean {
+  return item.modId !== undefined ? false : true;
+}
+
+function isSteamWorksop(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): boolean {
+  return item.data?.moduleInfoExtended.moduleProviderType === 'Steam';
+}
+
+const empty = {};
+function mapStateToProps(state: types.IState): IConnectedProps {
+  const profile: types.IProfile = selectors.activeProfile(state);
   return {
     profile,
-    modsPath,
-    installPath,
-    mods: util.getSafe<ModsStorage>(state, [`persistent`, `mods`, profile.gameId], {}),
+    loadOrder: util.getSafe(state, ['persistent', 'loadOrder', profile.id], []),
+    modState: util.getSafe(profile, ['modState'], empty),
   };
-};
+}
 
-export default connect(mapState)(LoadOrderItemRenderer);
