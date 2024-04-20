@@ -13,8 +13,9 @@ export const installBLSE = async (api: types.IExtensionApi, files: string[]): Pr
 
   const isXbox = isStoreXbox(discovery.store);
   const instructions = files
-    .filter((file: string) => !file.endsWith(path.sep))
-    .filter((file) => file.includes(isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD))
+    .filter(
+      (file: string) => !file.endsWith(path.sep) && file.includes(isXbox ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD)
+    )
     .map<types.IInstruction>((file) => ({
       type: 'copy',
       source: file,

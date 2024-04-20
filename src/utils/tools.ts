@@ -10,6 +10,8 @@ import {
   BANNERLORD_EXE_LAUNCHER,
 } from '../common';
 
+// TODO: Reuse tool creation code
+
 const addDiscoveredTool = (api: types.IExtensionApi, tool: types.IDiscoveredTool) => {
   return api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, tool.id, tool, false));
 };

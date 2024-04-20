@@ -3,13 +3,11 @@ import { fs, selectors, types } from 'vortex-api';
 import { GAME_ID, LOAD_ORDER_SUFFIX } from '../../common';
 import { PersistenceLoadOrderStorage } from '../../types';
 
-const getLoadOrderFileName = (api: types.IExtensionApi): string => {
-  const profileId = selectors.activeProfile(api.getState()).id;
+const getLoadOrderFileName = (profileId: string): string => {
   return `${profileId}${LOAD_ORDER_SUFFIX}`;
 };
 
-const getLoadOrderFilePath = (api: types.IExtensionApi): string => {
-  const loadOrderFileName = getLoadOrderFileName(api);
+const getLoadOrderFilePath = (api: types.IExtensionApi, loadOrderFileName: string): string => {
   return path.join(selectors.installPathForGame(api.getState(), GAME_ID), loadOrderFileName);
 };
 
@@ -20,7 +18,9 @@ const getLoadOrderFilePath = (api: types.IExtensionApi): string => {
  */
 export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderStorage => {
   try {
-    const loFilePath = getLoadOrderFilePath(api);
+    const profileId = selectors.activeProfile(api.getState()).id;
+    const loFileName = getLoadOrderFileName(profileId);
+    const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = fs.readFileSync(loFilePath, 'utf8');
     return JSON.parse(fileContents);
   } catch {
@@ -35,7 +35,9 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
  */
 export const writeLoadOrder = (api: types.IExtensionApi, loadOrder: PersistenceLoadOrderStorage): void => {
   try {
-    const loFilePath = getLoadOrderFilePath(api);
+    const profileId = selectors.activeProfile(api.getState()).id;
+    const loFileName = getLoadOrderFileName(profileId);
+    const loFilePath = getLoadOrderFilePath(api, loFileName);
     //await fs.ensureDirWritableS(path.dirname(loFilePath));
     fs.writeFileSync(loFilePath, JSON.stringify(Object.values(loadOrder), null, 2), { encoding: 'utf8' });
   } catch {

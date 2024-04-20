@@ -19,8 +19,8 @@ export const getModIds = (api: types.IExtensionApi, moduleId: string): getModIds
     if (!mod.attributes || !mod.attributes['subModsIds']) {
       return arr;
     }
-    const subModsIds: string[] = mod.attributes['subModsIds'];
-    if (subModsIds.includes(moduleId)) {
+    const subModsIds: Set<string> = new Set(mod.attributes['subModsIds']);
+    if (subModsIds.has(moduleId)) {
       arr.push({
         id: mod.attributes['modId'],
         source: mod.attributes['source'],

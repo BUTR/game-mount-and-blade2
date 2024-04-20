@@ -7,6 +7,7 @@ import {
   IconBar,
   ITableRowAction,
   MainPage,
+  selectors,
   Table,
   ToolbarIcon,
   tooltip,
@@ -28,6 +29,7 @@ import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar
 import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
 import { IExtensibleProps } from 'vortex-api/lib/types/IExtensionProvider';
 import { IBaseProps as ITableBaseProps } from 'vortex-api/lib/controls/Table';
+import { findBLSEMod, isModActive } from '../../utils/blse/shared';
 
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
@@ -35,6 +37,7 @@ type IOwnProps = IItemRendererProps & {
 };
 
 interface IBaseState {
+  hasBLSE: boolean;
   saves: vetypes.SaveMetadata[];
   allModules: Readonly<IModuleCache>;
   // TODO: Move to the entry renderer
@@ -59,16 +62,23 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private storedSaveGameName: string | undefined = undefined;
   private sortedSaveGames: [string, ISaveGame][] = [];
 
+  // eslint-disable-next-line max-lines-per-function
   constructor(props: IComponentProps) {
     super(props);
 
     const { launcherManager, context } = props;
 
+    const vortexState = context.api.getState();
+    const vortexActiveProfile = selectors.activeProfile(vortexState);
+
+    const blseMod = findBLSEMod(context.api);
+    const hasBLSE = !!blseMod && isModActive(vortexActiveProfile, blseMod);
     const saves = launcherManager.getSaveFiles();
     const allModules = launcherManager.getAllModules();
 
     // need to init the state so it saves with vortex
     this.initState({
+      hasBLSE,
       saves,
       allModules: allModules,
       loadOrder: {},
@@ -76,8 +86,6 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     // get list of save games
     this.OnRefreshList();
-
-    const vortexState = context.api.getState();
 
     // get stored save game from vortex state
     if (hasSettingsBannerlord(vortexState.settings)) {
@@ -287,13 +295,17 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
   // Table
   private GetRadioCustomRenderer(saveGame: ISaveGame, storedSaveGame: string | undefined): JSX.Element {
-    return (
+    const { hasBLSE } = this.state;
+
+    return hasBLSE ? (
       <Radio
         name="radioGroup"
         defaultChecked={saveGame.name === storedSaveGame}
         id={`bannerlord-savegames-radio${saveGame.index}`}
         onChange={() => this.Radio_OnChange(saveGame)}
       ></Radio>
+    ) : (
+      <div />
     );
   }
   private Radio_OnChange(saveGame: ISaveGame) {
@@ -321,48 +333,50 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     launcherManager.setSaveFile(saveGame.name === 'No Save' ? '' : saveGame.name);
   }
 
-  // Table
-  private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
-    /* brand colours
-     * --brand-success
-     * --brand-warning
-     * --brand-danger
-     */
-
-    // default is all fine
-    let iconName = 'toggle-enabled';
-    let colorName = 'var(--brand-success)';
+  private checkIssues(
+    issueArray: string[] | undefined,
+    iconName: string,
+    colorName: string,
+    issueMessage: string
+  ): [string, string, string[]] {
+    let newIconName = iconName;
+    let newColorName = colorName;
     const issues: string[] = [];
 
-    // build up tooltip issues array, and colours if necessary
-    // warning is set first, anything else is error, if nothing then we just
-    // fallback to the default green
-
-    // warnings
-    if (saveGame.loadOrderIssues && saveGame.loadOrderIssues.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-warning)';
-      issues.push(`${saveGame.loadOrderIssues.length} load order issues`);
+    if (issueArray && issueArray.length) {
+      newIconName = 'feedback-warning';
+      newColorName = 'var(--brand-danger)';
+      issues.push(`${issueArray.length} ${issueMessage}`);
     }
 
-    // errors
-    if (saveGame.missingModules && saveGame.missingModules.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(`${saveGame.missingModules.length} missing modules`);
-    }
+    return [newIconName, newColorName, issues];
+  }
 
-    if (saveGame.duplicateModules && saveGame.duplicateModules.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(`${saveGame.duplicateModules.length} duplicate modules`);
-    }
+  // Table
+  private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
+    let iconName = 'toggle-enabled';
+    let colorName = 'var(--brand-success)';
+    let issues: string[] = [];
 
-    if (saveGame.mismatchedModuleVersions && saveGame.mismatchedModuleVersions.length) {
-      iconName = 'feedback-warning';
-      colorName = 'var(--brand-danger)';
-      issues.push(`${saveGame.mismatchedModuleVersions.length} version mismatches`);
-    }
+    [iconName, colorName, issues] = this.checkIssues(
+      saveGame.loadOrderIssues,
+      iconName,
+      colorName,
+      'load order issues'
+    );
+    [iconName, colorName, issues] = this.checkIssues(saveGame.missingModules, iconName, colorName, 'missing modules');
+    [iconName, colorName, issues] = this.checkIssues(
+      saveGame.duplicateModules,
+      iconName,
+      colorName,
+      'duplicate modules'
+    );
+    [iconName, colorName, issues] = this.checkIssues(
+      saveGame.mismatchedModuleVersions,
+      iconName,
+      colorName,
+      'version mismatches'
+    );
 
     return <tooltip.Icon name={iconName} tooltip={issues.join('\n')} style={{ color: colorName }} />;
   }
@@ -474,14 +488,18 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     const allModules = launcherManager.getAllModules();
     const allModulesByName = getModulesByName(allModules);
     const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', {});
-    const modules = Object.keys(saveGame.modules)
-      .map<string>((current) => allModulesByName[current]?.id ?? `${current} ${unknownId}`)
-      .filter((x) => x !== undefined);
+    const newLoadOrder = { ...loadOrder };
 
-    loadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {
-      LOADORDER: modules.join('\n'),
+    Object.keys(saveGame.modules).forEach((current) => {
+      const moduleId = allModulesByName[current]?.id ?? `${current} ${unknownId}`;
+      if (moduleId !== undefined) {
+        newLoadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {
+          LOADORDER: moduleId,
+        });
+      }
     });
-    this.setState({ loadOrder });
+
+    this.setState({ loadOrder: newLoadOrder });
   }
   private ValidateSave(saveGame: ISaveGame) {
     const { launcherManager } = this.props;

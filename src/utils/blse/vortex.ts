@@ -15,9 +15,7 @@ const sendNotification = (
     actions: [
       {
         title: actionTitle,
-        action: (dismiss: types.NotificationDismiss) => {
-          action(dismiss);
-        },
+        action: action,
       },
     ],
   });

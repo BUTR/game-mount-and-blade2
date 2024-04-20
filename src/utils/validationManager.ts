@@ -4,22 +4,14 @@ import { VortexLoadOrderStorage } from '../types';
 export class ValidationManager implements vetypes.IValidationManager {
   static fromVortex = (loadOrder: VortexLoadOrderStorage): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
-      try {
-        const module = loadOrder.find((x) => x.id === moduleId);
-        return !!module && module.enabled;
-      } catch {
-        return false;
-      }
+      const module = loadOrder.find((x) => x.id === moduleId);
+      return !!module && module.enabled;
     });
   };
   static fromLibrary = (loadOrder: vetypes.LoadOrder): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
-      try {
-        const module = loadOrder[moduleId];
-        return !!module && module.isSelected;
-      } catch {
-        return false;
-      }
+      const module = loadOrder[moduleId];
+      return !!module && module.isSelected;
     });
   };
 

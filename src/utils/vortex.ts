@@ -41,6 +41,12 @@ export const hasSettingsInterfacePrimaryTool = (
   return typeof (settings as never)[nameIn<ISettingsInterfaceWithPrimaryTool>().primaryTool] === 'object';
 };
 
+const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
+  await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch(() => {
+    /* ignore error */
+  });
+};
+
 const prepareForModding = async (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
@@ -53,14 +59,13 @@ const prepareForModding = async (
   // skip if BLSE found
   // question: if the user incorrectly deleted BLSE and the binary is left, what should we do?
   // maybe just ask the user to always install BLSE via Vortex?
-  if (!(await getPathExistsAsync(path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE)))) {
+  const binaryPath = path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE);
+  if (!(await getPathExistsAsync(binaryPath))) {
     recommendBLSE(api);
   }
 
   if (isStoreSteam(discovery.store)) {
-    await util.GameStoreHelper.launchGameStore(api, discovery.store, undefined, true).catch(() => {
-      /* ignore error */
-    });
+    await launchGameStore(api, discovery.store);
   }
 
   if (discovery.store) {
