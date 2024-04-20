@@ -43,26 +43,26 @@ export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceL
   return loadOrderConverted;
 };
 
-export const vortexToLibraryVM = (loadOrder: VortexLoadOrderStorage): vetypes.ModuleViewModel[] => {
-  const modules = loadOrder.flatMap<vetypes.ModuleInfoExtendedWithPath>((entry) =>
-    entry.data ? entry.data.moduleInfoExtended : []
-  );
+export const vortexToLibraryVM = (
+  loadOrder: VortexLoadOrderStorage,
+  allModules: Readonly<IModuleCache>
+): vetypes.ModuleViewModel[] => {
+  const modules = loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((entry) => allModules[entry.id]!);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
-  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) =>
-    entry.data
+  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => {
+    const module = allModules[entry.id]!;
+    return entry.data
       ? {
-          moduleInfoExtended: entry.data.moduleInfoExtended,
+          moduleInfoExtended: module,
           isValid:
-            entry.enabled &&
-            BannerlordModuleManager.validateModule(modules, entry.data.moduleInfoExtended, validationManager).length ===
-              0,
+            entry.enabled && BannerlordModuleManager.validateModule(modules, module, validationManager).length === 0,
           isSelected: entry.enabled,
           isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
           index: entry.data.index,
         }
-      : []
-  );
+      : [];
+  });
   return loadOrderConverted;
 };
 export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
@@ -96,7 +96,7 @@ export const libraryVMToLibrary = (loadOrder: vetypes.ModuleViewModel[]): vetype
   }, {});
   return loadOrderConverted;
 };
-export const libraryToLibraryVM = (modules: vetypes.ModuleInfoExtendedWithPath[]): vetypes.ModuleViewModel[] => {
+export const libraryToLibraryVM = (modules: vetypes.ModuleInfoExtendedWithMetadata[]): vetypes.ModuleViewModel[] => {
   //const validationManager = ValidationManager.fromLibrary(loadOrder);
   const loadOrderConverted = modules.reduce<vetypes.ModuleViewModel[]>((arr, curr) => {
     arr.push({
@@ -130,27 +130,33 @@ export const libraryToVortex = (
   allModules: Readonly<IModuleCache>,
   loadOrder: vetypes.LoadOrder
 ): VortexLoadOrderStorage => {
-  const availableModules = Object.values(loadOrder).map<vetypes.ModuleInfoExtendedWithPath>(
-    (curr) => allModules[curr.id]!
-  );
+  const availableModules = Object.values(loadOrder)
+    .map<vetypes.ModuleInfoExtendedWithMetadata>((curr) => allModules[curr.id]!)
+    .filter((x) => x !== undefined);
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
-  const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
-    const module = allModules[curr.id]!;
-    const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
-    const modId = getModIds(api, curr.id);
-    return {
-      id: curr.id,
-      enabled: curr.isSelected,
-      name: curr.name,
-      modId: modId[0]?.id ?? undefined!,
-      data: {
-        moduleInfoExtended: module,
-        isValid: moduleValidation && moduleValidation.length === 0,
-        isDisabled: false,
-        index: curr.index,
-      },
-    };
-  }, []);
+  const loadOrderConverted = Object.values(loadOrder)
+    .map<VortexLoadOrderEntry>((curr) => {
+      const module = allModules[curr.id];
+      if (module === undefined) {
+        return undefined!;
+      }
+
+      const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
+      const modId = getModIds(api, curr.id);
+      return {
+        id: curr.id,
+        enabled: curr.isSelected,
+        name: curr.name,
+        modId: modId[0]?.id ?? undefined!,
+        data: {
+          moduleInfoExtended: module,
+          isValid: moduleValidation && moduleValidation.length === 0,
+          isDisabled: false,
+          index: curr.index,
+        },
+      };
+    }, [])
+    .filter((x) => x !== undefined);
   return loadOrderConverted;
 };

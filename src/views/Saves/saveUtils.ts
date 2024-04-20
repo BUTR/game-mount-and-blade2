@@ -13,7 +13,7 @@ type MismatchedModuleMap = {
 };
 
 type ModulesByName = {
-  [name: string]: vetypes.ModuleInfoExtendedWithPath;
+  [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
 };
 
 export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName => {
@@ -115,18 +115,18 @@ export const getLoadOrderIssues = (
 ): Array<string> => {
   const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)
-    .map<vetypes.ModuleInfoExtendedWithPath | undefined>((current) => allModulesByName[current])
-    .filter((x): x is vetypes.ModuleInfoExtendedWithPath => !!x);
+    .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithMetadata => !!x);
   return Utils.isLoadOrderCorrect(modules);
 };
 
 export const getModules = (
   saveGame: ISaveGame,
   manager: VortexLauncherManager
-): Array<vetypes.ModuleInfoExtendedWithPath> => {
+): Array<vetypes.ModuleInfoExtendedWithMetadata> => {
   const allModules = manager.getAllModules();
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules)
-    .map<vetypes.ModuleInfoExtendedWithPath | undefined>((current) => allModulesByName[current])
-    .filter((x): x is vetypes.ModuleInfoExtendedWithPath => !!x);
+    .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])
+    .filter((x): x is vetypes.ModuleInfoExtendedWithMetadata => !!x);
 };

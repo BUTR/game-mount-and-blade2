@@ -24,6 +24,10 @@ import { ISaveGame } from './types';
 import { setCurrentSave } from '../../actions';
 import { VortexLauncherManager, hasSettingsBannerlord, versionToString } from '../../utils';
 import { IItemRendererProps, IModuleCache } from '../../types';
+import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar';
+import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
+import { IExtensibleProps } from 'vortex-api/lib/types/IExtensionProvider';
+import { IBaseProps as ITableBaseProps } from 'vortex-api/lib/controls/Table';
 
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
@@ -42,7 +46,11 @@ interface IBaseState {
 type IComponentProps = IOwnProps;
 type IComponentState = IBaseState;
 
-const TableWrapper = Table as any;
+const TableWrapper = Table as React.ComponentType<ITableBaseProps & IExtensibleProps>;
+const IconWrapper = IconBar as React.ComponentType<
+  IIconBarBaseProps & IActionControlProps & IExtensibleProps & React.HTMLAttributes<unknown>
+>;
+
 export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
@@ -169,12 +177,10 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   public override render(): JSX.Element {
     const { t } = this.props;
 
-    const IconWrapper = IconBar as any;
-
     return (
       <MainPage>
         <MainPage.Header>
-          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t} />
+          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
         </MainPage.Header>
         <MainPage.Body>{this.renderContent(this.saveGameActions)}</MainPage.Body>
       </MainPage>

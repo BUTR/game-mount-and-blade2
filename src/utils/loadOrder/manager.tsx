@@ -79,7 +79,7 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
     loadOrder: VortexLoadOrderStorage,
   ): void => {
     const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
-      loadOrder.map<vetypes.ModuleInfoExtendedWithPath>(
+      loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>(
         (x) => x.data!.moduleInfoExtended,
       ),
     );
@@ -202,7 +202,7 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
     _prev: VortexLoadOrderStorage,
     curr: VortexLoadOrderStorage,
   ): Promise<types.IValidationResult> => {
-    const modules = (curr || []).flatMap<vetypes.ModuleInfoExtendedWithPath>(
+    const modules = (curr || []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>(
       (entry) =>
         entry.data && entry.enabled ? entry.data.moduleInfoExtended : [],
     );

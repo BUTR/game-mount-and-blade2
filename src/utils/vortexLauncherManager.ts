@@ -170,7 +170,11 @@ export class VortexLauncherManager {
     const subModuleFile = readFileSync(subModuleFilePath, {
       encoding: 'utf-8',
     });
-    const moduleInfo = BannerlordModuleManager.getModuleInfoWithPath(subModuleFile, subModuleRelFilePath)!;
+    const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
+      subModuleFile,
+      vetypes.ModuleProviderType.Default,
+      subModuleRelFilePath
+    )!;
     moduleInfo.path = subModuleRelFilePath; // TODO: fix the library
 
     const result = this._launcherManager.installModule(files, [moduleInfo]);
@@ -431,8 +435,9 @@ export class VortexLauncherManager {
    * Returns the ViewModels that are currenty displayed by Vortex
    */
   private getModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
+    const allModules = this.getAllModules();
     const loadOrder = this.getLoadOrderFromVortex();
-    const viewModels = vortexToLibraryVM(loadOrder);
+    const viewModels = vortexToLibraryVM(loadOrder, allModules);
     const result = Object.values(viewModels);
     return result;
   };
@@ -441,8 +446,9 @@ export class VortexLauncherManager {
    * Returns all available ViewModels for possible displaying
    */
   private getAllModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
+    const allModules = this.getAllModules();
     const existingModuleViewModels = this.getModuleViewModels() ?? [];
-    const modulesToConvert = Object.values(this.getAllModules()).filter(
+    const modulesToConvert = Object.values(allModules).filter(
       (x) => existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id) === undefined
     );
 

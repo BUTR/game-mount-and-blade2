@@ -69,7 +69,7 @@
     "xml2js": "^0.6.2"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "1.0.95",
+    "@butr/vortexextensionnative": "1.0.103",
     "ticks-to-date": "^1.0.3"
   },
   "resolutions": {

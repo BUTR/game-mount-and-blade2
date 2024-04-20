@@ -16,12 +16,12 @@ export interface IPersistenceLoadOrderEntry {
 export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
 export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
 export interface IVortexViewModelData {
-  moduleInfoExtended: vetypes.ModuleInfoExtendedWithPath;
+  moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
   index: number;
 }
 
 export interface IModuleCache {
-  [moduleId: string]: vetypes.ModuleInfoExtendedWithPath;
+  [moduleId: string]: vetypes.ModuleInfoExtendedWithMetadata;
 }
 
 /**
