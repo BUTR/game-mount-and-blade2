@@ -5,7 +5,7 @@
 	},
 	"features": {
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "18.14.0",
+            "version": "18.17.1",
             "nodeGypDependencies": "true"
         },
 		"ghcr.io/devcontainers/features/powershell:1": {
@@ -18,7 +18,10 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"dbaeumer.vscode-eslint"
+				"ms-vscode.powershell",
+				"dbaeumer.vscode-eslint",
+				"github.vscode-github-actions",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}
