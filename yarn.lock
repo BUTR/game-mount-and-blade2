@@ -4318,10 +4318,10 @@ through@^2.3.8:
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==
 
-ticks-to-date@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/ticks-to-date/-/ticks-to-date-1.0.3.tgz#4fa657fa588406da3a8d0380a0342a89749dbb35"
-  integrity sha512-NciioRrezP8aZmcmgyeVRoQRg6U7TGj7E0sgCpvkLabVJ9bJycH3++yUHIn9MppG4B82B2IsE1uYohxEfq3hyQ==
+ticks-to-date@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/ticks-to-date/-/ticks-to-date-1.0.5.tgz#232adcc3237b3ceccef11227cff61dddf509e230"
+  integrity sha512-D/yU8ih4+VRccqm5UcH0Lj9XeK5IRly4yKEC+af507abdn99XFHmIJKD5BS8ZXyX8za+xCo1OK+A8jtJOlBYDA==
 
 to-regex-range@^5.0.1:
   version "5.0.1"

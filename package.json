@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@butr/vortexextensionnative": "1.0.103",
-    "ticks-to-date": "^1.0.3"
+    "ticks-to-date": "^1.0.5"
   },
   "resolutions": {
     "node-gyp": "^9.0.0",
