@@ -25,3 +25,4 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 USER $USERNAME
 
+LABEL org.opencontainers.image.source="https://github.com/butr/game-mount-and-blade2"
