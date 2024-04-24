@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - '.devcontainer/*'
+      - '.github/workflows/devcontainer.yml'
 
 jobs:
   build-and-push:
