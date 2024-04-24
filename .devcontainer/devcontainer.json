@@ -1,20 +1,37 @@
 {
 	"name": "NodeJS & Powershell & 7z",
+    "dockerFile": "Dockerfile",
 	"build": {
-		"dockerfile": "Dockerfile"
+		"cacheFrom": "ghcr.io/BUTR/game-mount-and-blade2:latest"
 	},
 	"features": {
+		//"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {
+		//	
+		//},
+		"ghcr.io/devcontainers/features/git:1": {
+            "version": "latest",
+            "ppa": "false"
+        },
         "ghcr.io/devcontainers/features/node:1": {
             "version": "18.17.1",
             "nodeGypDependencies": "true"
         },
 		"ghcr.io/devcontainers/features/powershell:1": {
-			"version": "latest"
+            "version": "latest"
 		}
 	},
+	"overrideFeatureInstallOrder": [
+		//"ghcr.io/stuartleeks/dev-container-features/shell-history",
+		"ghcr.io/devcontainers/features/git",
+		"ghcr.io/devcontainers/features/node",
+		"ghcr.io/devcontainers/features/powershell"
+	],
 	"mounts": [
+		//"source=profile,target=/home/developer,type=volume",
+        //"target=/home/developer/.vscode-server,type=volume",
 		"source=${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins,target=/vortex-plugins,type=bind,consistency=default"
 	],
+	"postAttachCommand": "yarn install",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -22,7 +39,18 @@
 				"dbaeumer.vscode-eslint",
 				"github.vscode-github-actions",
 				"ms-azuretools.vscode-docker"
-			]
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "pwsh", 
+				"terminal.integrated.profiles.linux": {
+					"path": {
+						"path": "/usr/local/bin/pwsh"
+					}
+				},
+				"powershell.powerShellAdditionalExePaths": {
+					"pwsh": "/usr/local/bin/pwsh"
+				}
+			}
 		}
 	}
 }
