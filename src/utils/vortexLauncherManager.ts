@@ -127,6 +127,14 @@ export class VortexLauncherManager {
   };
 
   /**
+   * Gets all modules with duplicates - when installed in /Modules and Steam Workshop
+   * @return
+   */
+  public getAllModulesWithDuplicates = (): vetypes.ModuleInfoExtendedWithMetadata[] => {
+    return this._launcherManager.getAllModules();
+  };
+
+  /**
    * Will sort the available Modules based on the provided LoadOrder
    * @param loadOrder
    * @returns

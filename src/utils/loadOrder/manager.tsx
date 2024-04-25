@@ -12,6 +12,7 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
   private _api: types.IExtensionApi;
   private _manager: VortexLauncherManager;
   private _isInitialized = false;
+  private _allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
 
   public gameId: string = GAME_ID;
   public toggleableEntries = true;
@@ -26,11 +27,24 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
   constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
     this._api = api;
     this._manager = manager;
-    this.customItemRenderer = ({ className = '', item }) => (
-      <BannerlordItemRenderer api={api} item={item} className={className} key={item.loEntry.id} />
-    );
-    const refresh = () => this.forceRefresh();
     this.usageInstructions = () => <LoadOrderInfoPanel refresh={refresh} />;
+
+    this.customItemRenderer = ({ className = '', item }) => {
+      const availableProviders = this._allModules
+        .filter((x) => x.id === item.loEntry.id)
+        .map((x) => x.moduleProviderType);
+
+      return (
+        <BannerlordItemRenderer
+          api={api}
+          item={item}
+          className={className}
+          key={item.loEntry.id}
+          availableProviders={availableProviders}
+        />
+      );
+    };
+    const refresh = () => this.forceRefresh();
   }
 
   private forceRefresh = (): void => {
@@ -116,6 +130,7 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
 
     // Make sure the LauncherManager has the latest module list
     this._manager.refreshModules();
+    this._allModules = this._manager.getAllModulesWithDuplicates();
 
     // Get the saved Load Order
     const allModules = this._manager.getAllModules();

@@ -8,13 +8,14 @@ import { actions, Icon, selectors, tooltip, types, util } from 'vortex-api';
 import { IVortexViewModelData } from '../../types';
 import { versionToString } from '../../utils';
 import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
-import { Utils } from '@butr/vortexextensionnative';
+import { types as vetypes, Utils } from '@butr/vortexextensionnative';
 import { TooltipImage } from '../Controls';
 
 interface IBaseProps {
   api: types.IExtensionApi;
   className?: string;
   item: types.IFBLOItemRendererProps;
+  availableProviders: vetypes.ModuleProviderType[];
 }
 
 interface IConnectedProps {
@@ -72,6 +73,7 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
       {renderModuleIcon(item.loEntry)}
       <p className="load-order-name">{name} ({version})</p>
       {renderExternalBanner(item.loEntry)}
+      {renderModuleDuplicates(props, item.loEntry)}
       {renderModuleProviderIcon(item.loEntry)}
       {checkBox()}
       {lock()}
@@ -79,7 +81,7 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
   );
 }
 
-function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
   const isOfficial = item.data !== undefined && item.data.moduleInfoExtended.isOfficial;
   const isCommunity = item.data !== undefined && !item.data.moduleInfoExtended.isOfficial;
   const dependencies = item.data !== undefined ? Utils.getDependencyHint(item.data.moduleInfoExtended) : '';
@@ -136,7 +138,7 @@ function renderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelDa
   ) : null;
 }
 
-function renderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+function renderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
   const [t] = useTranslation(['common']);
   
   if (isSteamWorksop(item)) {
@@ -152,6 +154,28 @@ function renderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewMod
   return (
     <div style={{ width: `1.5em`, height: `1.5em`, }} />
   );
+}
+
+function renderModuleDuplicates(props: IBaseProps, item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+  const { availableProviders } = props;
+  
+  if (availableProviders.length <= 1) {
+    return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+  }
+
+  if (item.data?.moduleInfoExtended.moduleProviderType) {
+    const redundantProviders = availableProviders.filter((provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType);
+    return (
+      <tooltip.Icon
+        className="nexus-id-invalid"
+        name="feedback-warning"
+        style={{ width: `1.5em`, height: `1.5em`, }}
+        tooltip={`The mod is also installed via ${redundantProviders.join(', ')}!`}>
+      </tooltip.Icon>
+    );
+  }
+
+  return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
 }
 
 function isLocked(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): boolean {
