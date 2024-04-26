@@ -8,28 +8,39 @@
 		//"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {
 		//	
 		//},
+		"./upgrade": {
+
+		},
 		"ghcr.io/devcontainers/features/git:1": {
             "version": "latest",
             "ppa": "false"
         },
+		"./7z": {
+
+		},
         "ghcr.io/devcontainers/features/node:1": {
             "version": "18.17.1",
             "nodeGypDependencies": "true"
         },
 		"ghcr.io/devcontainers/features/powershell:1": {
             "version": "latest"
+		},
+		"./vortex": {
+
 		}
 	},
 	"overrideFeatureInstallOrder": [
 		//"ghcr.io/stuartleeks/dev-container-features/shell-history",
+		"./upgrade",
 		"ghcr.io/devcontainers/features/git",
+		"./7z",
 		"ghcr.io/devcontainers/features/node",
-		"ghcr.io/devcontainers/features/powershell"
+		"ghcr.io/devcontainers/features/powershell",
+		"./vortex"
 	],
 	"mounts": [
 		//"source=profile,target=/home/developer,type=volume",
         //"target=/home/developer/.vscode-server,type=volume",
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins,target=/vortex-plugins,type=bind,consistency=default"
 	],
 	"postAttachCommand": "yarn install",
 	"customizations": {
