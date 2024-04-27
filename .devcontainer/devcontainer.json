@@ -1,6 +1,11 @@
 {
 	"name": "NodeJS & Powershell & 7z",
-	"image": "ghcr.io/butr/devcontainer:latest",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"cacheFrom": [
+			"ghcr.io/butr/game-mount-and-blade2-devcontainer:latest"
+		]
+	},
 	"features": {
 		"ghcr.io/butr/devcontainer/upgrade:1": {
 
