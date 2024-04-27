@@ -43,9 +43,10 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"ms-vscode.powershell",
+				"editorconfig.editorconfig",
 				"dbaeumer.vscode-eslint",
 				"github.vscode-github-actions",
+				"ms-vscode.powershell",
 				"ms-azuretools.vscode-docker"
 			],
 			"settings": {
