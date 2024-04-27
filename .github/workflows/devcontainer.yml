@@ -28,6 +28,6 @@ jobs:
         name: Pre-build dev container image
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ghcr.io/butr/game-mount-and-blade2
-          cacheFrom: ghcr.io/butr/game-mount-and-blade2
+          imageName: ghcr.io/butr/game-mount-and-blade2-devcontainer
+          cacheFrom: ghcr.io/butr/game-mount-and-blade2-devcontainer
           push: always
