@@ -3,16 +3,23 @@ import { types, selectors } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { vortexToLibrary, libraryToVortex, libraryVMToVortex, libraryVMToLibrary } from '.';
-import { VortexLauncherManager } from '../';
+import {
+  IModAnalyzerRequestModule,
+  IModAnalyzerRequestQuery,
+  ModAnalyzerProxy,
+  VortexLauncherManager,
+  versionToString,
+} from '../';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
-import { RequiredProperties, VortexLoadOrderStorage } from '../../types';
+import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
 
-export class LoadOrderManager implements types.IFBLOGameInfo {
+export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private _api: types.IExtensionApi;
   private _manager: VortexLauncherManager;
   private _isInitialized = false;
   private _allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
+  private _compatibilityScores: IModuleCompatibilityInfoCache = {};
 
   public gameId: string = GAME_ID;
   public toggleableEntries = true;
@@ -33,18 +40,42 @@ export class LoadOrderManager implements types.IFBLOGameInfo {
       const availableProviders = this._allModules
         .filter((x) => x.id === item.loEntry.id)
         .map((x) => x.moduleProviderType);
+      const compatibilityScore = this._compatibilityScores[item.loEntry.id];
 
       return (
         <BannerlordItemRenderer
           api={api}
+          manager={manager}
           item={item}
           className={className}
           key={item.loEntry.id}
           availableProviders={availableProviders}
+          compatibilityInfo={compatibilityScore}
         />
       );
     };
-    const refresh = () => this.forceRefresh();
+    const refresh = () => {
+      const proxy = new ModAnalyzerProxy(this._api);
+      const gameVersion = this._manager.getGameVersionVortex();
+      const query: IModAnalyzerRequestQuery = {
+        gameVersion: gameVersion,
+        modules: this._allModules.map<IModAnalyzerRequestModule>((x) => ({
+          moduleId: x.id,
+          moduleVersion: versionToString(x.version),
+        })),
+      };
+      proxy.analyze(query).then((result) => {
+        this._compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+          map[curr.moduleId] = {
+            score: curr.compatibility,
+            recommendedScore: curr.recommendedCompatibility,
+            recommendedVersion: curr.recommendedModuleVersion,
+          };
+          return map;
+        }, {});
+        this.forceRefresh();
+      });
+    };
   }
 
   private forceRefresh = (): void => {

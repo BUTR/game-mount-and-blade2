@@ -35,13 +35,13 @@ export class BannerlordGame implements types.IGame {
   }
 
   public queryPath = (): Bluebird<string | types.IGameStoreEntry> => {
-    return toBluebird(findGame)().then((game) => game.gamePath);
+    return toBluebird(findGame)({}).then((game) => game.gamePath);
   };
   public queryModPath = (_gamePath: string): string => {
     return `.`;
   };
   public getGameVersion = (_gamePath: string, _exePath: string): PromiseLike<string> => {
-    return this._launcherManager.getGameVersionVortex();
+    return this._launcherManager.getGameVersionVortexAsync();
   };
   public executable = (discoveredPath?: string): string => {
     return getBannerlordMainExe(discoveredPath, this._api);

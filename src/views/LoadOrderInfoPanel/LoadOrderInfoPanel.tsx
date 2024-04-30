@@ -1,5 +1,5 @@
 import React from 'react';
-import { util } from 'vortex-api';
+import { util, tooltip } from 'vortex-api';
 import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from '../../common';
 
@@ -7,13 +7,21 @@ interface IBaseProps {
   refresh: () => void;
 }
 
-export function LoadOrderInfoPanel(_props: IBaseProps) {
+export function LoadOrderInfoPanel(props: IBaseProps) {
   const [t] = useTranslation(I18N_NAMESPACE);
   const openWiki = React.useCallback(() => {
     util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`).catch(() => null);
   }, []);
+  // TODO: Take from BLSE translation
+  const NL = '\n';
+  const hint = `Get Update Recommendations${NL}Clicking on this button will send your module list to the BUTR server to get compatibility scores and recommended versions.${NL}They are based on the crash reports from ButterLib.${NL}${NL}(Requires Internet Connection)`;
   return (
     <>
+      <p>
+        <tooltip.Button tooltip={hint} onClick={props.refresh}>
+          {t('Update Compatibility Score')}
+        </tooltip.Button>
+      </p>
       <p>
         {t(
           `You can adjust the load order for Bannerlord by dragging and dropping mods up or down on this page. ` +

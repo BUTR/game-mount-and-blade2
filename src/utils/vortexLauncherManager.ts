@@ -146,8 +146,15 @@ export class VortexLauncherManager {
   /**
    * A simple wrapper for Vortex that returns a promise
    */
-  public getGameVersionVortex = (): Promise<string> => {
+  public getGameVersionVortexAsync = (): Promise<string> => {
     return Promise.resolve(this._launcherManager.getGameVersion());
+  };
+
+  /**
+   * A simple wrapper for Vortex that returns a promise
+   */
+  public getGameVersionVortex = (): string => {
+    return this._launcherManager.getGameVersion();
   };
 
   /**

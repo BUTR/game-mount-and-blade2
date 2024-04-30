@@ -4,6 +4,16 @@ import { GAME_ID } from './common';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
+export interface IModuleCompatibilityInfoCache {
+  [moduleId: string]: IModuleCompatibilityInfo;
+}
+
+export interface IModuleCompatibilityInfo {
+  score: number;
+  recommendedScore?: number | undefined;
+  recommendedVersion?: string | undefined;
+}
+
 export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
 export interface IPersistenceLoadOrderEntry {
   id: string;

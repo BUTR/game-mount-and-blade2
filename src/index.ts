@@ -1,8 +1,7 @@
-/* eslint-disable prettier/prettier */
 // eslint-disable-next-line no-restricted-imports
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
-import { actions, selectors, types, util } from 'vortex-api';
+import { actions, selectors, types, util, log } from 'vortex-api';
 import { setCurrentSave, setSortOnDeploy } from './actions';
 import { GAME_ID } from './common';
 import { BannerlordGame } from './game';
@@ -18,6 +17,7 @@ import {
   didDeployBLSE,
   didPurgeBLSE,
   addedFiles,
+  ModAnalyzerProxy,
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';
@@ -116,18 +116,20 @@ const main = (context: types.IExtensionContext): boolean => {
     toBluebird<void>(async () => {
       context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
 
-      /* TODO: Provide compatibility info for Game Version -> Mod Version from the BUTR Site
-    const proxy = new BUTRProxy(context.api);
-    context.api.addMetaServer(`butr.site`, {
-      url: '',
-      loopbackCB: (query: types.IQuery) => Bluebird.resolve(proxy.find(query)).catch(err => {
-        log('error', 'failed to look up smapi meta info', err.message);
-        return Bluebird.resolve([]);
-      }),
-      cacheDurationSec: 86400,
-      priority: 25,
-    });
-    */
+      /*
+      // TODO: Provide compatibility info for Game Version -> Mod Version from the BUTR Site
+      const proxy = new ModAnalyzerProxy(context.api);
+      context.api.addMetaServer(`butr.link`, {
+        url: '',
+        loopbackCB: (query: types.IQuery) =>
+          Bluebird.resolve(proxy.find(query)).catch((err) => {
+            log('error', 'failed to look up butr meta info', err.message);
+            return Bluebird.resolve([]);
+          }),
+        cacheDurationSec: 86400,
+        priority: 25,
+      });
+      */
 
       context.api.onAsync(`added-files`, (profileId: string, files: IAddedFiles[]) =>
         addedFiles(context.api, profileId, files)

@@ -5,17 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 import { actions, Icon, selectors, tooltip, types, util } from 'vortex-api';
-import { IVortexViewModelData } from '../../types';
-import { versionToString } from '../../utils';
+import { IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
+import { versionToString, VortexLauncherManager } from '../../utils';
 import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
 import { types as vetypes, Utils } from '@butr/vortexextensionnative';
 import { TooltipImage } from '../Controls';
 
 interface IBaseProps {
   api: types.IExtensionApi;
+  manager: VortexLauncherManager;
   className?: string;
   item: types.IFBLOItemRendererProps;
   availableProviders: vetypes.ModuleProviderType[];
+  compatibilityInfo: IModuleCompatibilityInfo | undefined;
 }
 
 interface IConnectedProps {
@@ -73,6 +75,7 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
       {renderModuleIcon(item.loEntry)}
       <p className="load-order-name">{name} ({version})</p>
       {renderExternalBanner(item.loEntry)}
+      {renderCompatibilityInfo(props)}
       {renderModuleDuplicates(props, item.loEntry)}
       {renderModuleProviderIcon(item.loEntry)}
       {checkBox()}
@@ -124,7 +127,12 @@ function renderValidationError(props: IBaseProps): JSX.Element | null {
       ? invalidEntries.find((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase())
       : undefined;
   return invalidEntry !== undefined ? (
-    <tooltip.Icon className="fblo-invalid-entry" name="feedback-error" tooltip={invalidEntry.reason} />
+    <tooltip.Icon
+      className="fblo-invalid-entry"
+      name="feedback-error"
+      style={{ width: `1.5em`, height: `1.5em`, }}
+      tooltip={invalidEntry.reason}>
+    </tooltip.Icon>
   ) : null;
 }
 
@@ -176,6 +184,39 @@ function renderModuleDuplicates(props: IBaseProps, item: types.IFBLOLoadOrderEnt
   }
 
   return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+}
+
+function renderCompatibilityInfo(props: IBaseProps): JSX.Element {
+  const { compatibilityInfo: compatibilityScore, item, manager } = props;
+
+  if (compatibilityScore === undefined) {
+    return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+  }
+
+  const hasRecommendation = compatibilityScore.recommendedVersion !== undefined && compatibilityScore.recommendedVersion !== null;
+
+  // TODO: Take from BLSE translation
+  const NL = '\n';
+  const SCORE = compatibilityScore.score;
+  const CURRENTVERSION = versionToString(item.loEntry.data?.moduleInfoExtended.version);
+  const RECOMMENDEDSCORE = compatibilityScore.recommendedScore ?? 0;
+  const RECOMMENDEDVERSION = compatibilityScore.recommendedVersion ?? '';
+  const GAMEVERSION = manager.getGameVersionVortex();
+  const hint = hasRecommendation
+    ? `Based on BUTR analytics:${NL}${NL}Compatibility Score ${SCORE}%${NL}${NL}Suggesting to update to ${RECOMMENDEDVERSION}.${NL}Compatibility Score ${RECOMMENDEDSCORE}%${NL}${NL}${RECOMMENDEDVERSION} has a better compatibility for game ${GAMEVERSION} rather than ${CURRENTVERSION}!`
+    : `Based on BUTR analytics:${NL}${NL}Update is not required.${NL}Compatibility Score ${SCORE}%${NL}${NL}${CURRENTVERSION} is one of the best version for game ${GAMEVERSION}`;
+
+  const color = compatibilityScore.score >= 75
+    ? 'green' : compatibilityScore.score >= 50
+    ? 'yellow' : 'red';
+
+  return (
+    <tooltip.Icon
+      style={{color: color, width: `1.5em`, height: `1.5em`}}
+      name="feedback-error"
+      tooltip={hint}>
+    </tooltip.Icon>
+  );
 }
 
 function isLocked(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): boolean {
