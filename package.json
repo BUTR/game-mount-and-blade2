@@ -1,6 +1,6 @@
 {
   "name": "game-mount-and-blade-ii-bannerlord-butr",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
   "author": "BUTR Team & Black Tree Gaming Ltd.",
   "license": "GPL-3.0+",
@@ -42,7 +42,7 @@
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^5",
     "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "i18next": "^19.0.1",
     "lint-staged": "^12.3.5",
     "native-addon-loader": "^2.0.1",
@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@butr/vortexextensionnative": "1.0.108",
-    "ticks-to-date": "^1.0.3"
+    "ticks-to-date": "^1.0.6"
   },
   "resolutions": {
     "node-gyp": "^9.0.0",
