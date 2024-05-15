@@ -9,26 +9,23 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.github/workflows/docs.yml'
-    tags:
-      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
 jobs:
-  get-changelog:
-    name: Get Changelog
+  get-version:
     runs-on: ubuntu-latest
+    name: Get Version
     outputs:
-      mod_version: ${{ steps.changelog.outputs.mod_version }}
+      version: ${{ steps.get-version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install and Run ChangelogParser
-        id: changelog
-        run: |
-          VERSION=${{ github.event.release.tag_name }}
-          echo "mod_version=${VERSION:1}" >> $GITHUB_OUTPUT
-        shell: bash
+      - name: Get Version
+        id: get-version
+        uses: beaconbrigade/package-json-version@v0.3
+        with:
+          path: .
 
   build-and-test:
     name: Build and Test
@@ -55,12 +52,12 @@ jobs:
   #         GITHUB          #
   ###########################
   publish-on-github:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [get-changelog, build-and-test]
+    if: github.ref == 'refs/heads/master'
+    needs: [get-version, build-and-test]
     uses: BUTR/workflows/.github/workflows/release-github.yml@master
     with:
       mod_id: Vortex-Extension
-      mod_version: ${{ needs.get-changelog.outputs.mod_version }}
+      mod_version: ${{ needs.get-version.outputs.version }}
       mod_description: |
           Download and install using the Extensions panel in Vortex.
           To manually install, extract the 7z to %APPDATA%/Vortex/plugins/game-mount-and-blade2.
@@ -70,14 +67,14 @@ jobs:
   #        NEXUSMODS        #
   ###########################
   publish-on-nexusmods:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [get-changelog, build-and-test]
+    if: github.ref == 'refs/heads/master'
+    needs: [get-version, build-and-test]
     uses: BUTR/workflows/.github/workflows/release-nexusmods.yml@master
     with:
       nexusmods_game_id: site
       nexusmods_mod_id: 875
       mod_filename: 'Vortex Extension'
-      mod_version: ${{ needs.get-changelog.outputs.mod_version }}
+      mod_version: ${{ needs.get-version.outputs.version }}
       mod_description: |
           Download and install using the Extensions panel in Vortex.
           To manually install, extract the 7z to %APPDATA%/Vortex/plugins/game-mount-and-blade2.
