@@ -26,7 +26,8 @@ jobs:
       - name: Install and Run ChangelogParser
         id: changelog
         run: |
-          echo "mod_version=${{github.ref_name}}" >> $GITHUB_OUTPUT
+          VERSION=${{ github.event.release.tag_name }}
+          echo "mod_version=${VERSION:1}" >> $GITHUB_OUTPUT
         shell: bash
 
   build-and-test:
