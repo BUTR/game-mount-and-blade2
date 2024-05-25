@@ -81,4 +81,4 @@ jobs:
       artifact_name: game-mount-and-blade2
     secrets:
       NEXUSMODS_APIKEY: ${{ secrets.ARAGAS_NEXUSMODS_API_KEY }}
-      NEXUSMOD_SESSION_COOKIE: ${{ secrets.ARAGAS_NEXUSMOD_SESSION_COOKIE }}
+      NEXUSMODS_SESSION_COOKIE: ${{ secrets.ARAGAS_NEXUSMODS_SESSION_COOKIE }}
