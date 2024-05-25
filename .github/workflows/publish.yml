@@ -56,7 +56,7 @@ jobs:
     needs: [get-version, build-and-test]
     uses: BUTR/workflows/.github/workflows/release-github.yml@master
     with:
-      mod_id: Vortex-Extension
+      mod_id: game-mount-and-blade2
       mod_version: ${{ needs.get-version.outputs.version }}
       mod_description: |
           Download and install using the Extensions panel in Vortex.
@@ -73,7 +73,7 @@ jobs:
     with:
       nexusmods_game_id: site
       nexusmods_mod_id: 875
-      mod_filename: 'Vortex Extension'
+      mod_filename: game-mount-and-blade2
       mod_version: ${{ needs.get-version.outputs.version }}
       mod_description: |
           Download and install using the Extensions panel in Vortex.
