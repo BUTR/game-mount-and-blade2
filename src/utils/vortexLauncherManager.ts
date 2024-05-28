@@ -62,6 +62,9 @@ export class VortexLauncherManager {
     }
 
     const loadOrder = state.persistent.loadOrder[profileId] ?? [];
+    if (!Array.isArray(loadOrder)) {
+      return [];
+    }
     return loadOrder;
   };
 
