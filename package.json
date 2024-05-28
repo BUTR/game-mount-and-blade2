@@ -1,6 +1,6 @@
 {
   "name": "game-mount-and-blade-ii-bannerlord-butr",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
   "author": "BUTR Team & Nexus Mods",
   "license": "GPL-3.0+",
@@ -31,7 +31,6 @@
     "@types/react-redux": "^7.1.9",
     "@types/redux": "^3.6.0",
     "@types/webpack": "^5.28.5",
-    "@types/xml2js": "^0.4.5",
     "@typescript-eslint/eslint-plugin": "7.0.0",
     "@typescript-eslint/parser": "^6",
     "bluebird": "^3.7.2",
@@ -56,24 +55,20 @@
     "redux-act": "^1.7.7",
     "ts-loader": "^9.2.6",
     "ts-node": "^10.7.0",
-    "turbowalk": "git+https://github.com/Nexus-Mods/node-turbowalk",
     "typescript": "^5.3.3",
-    "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api#fblo_api_update",
+    "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api",
     "vortex-ext-common": "^0.4.0",
     "webpack": "^5.76.0",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0",
-    "xml2js": "^0.5.0"
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "1.0.110",
+    "@butr/vortexextensionnative": "1.0.114",
     "ticks-to-date": "^1.0.6"
   },
   "resolutions": {
-    "node-gyp": "^9.0.0",
     "@types/react": "^16.14.34",
-    "**/dir-compare/minimatch": "3.0.5",
-    "winapi-bindings": "git+https://github.com/Nexus-Mods/node-winapi-bindings"
+    "**/dir-compare/minimatch": "3.0.5"
   },
   "packageManager": "yarn@1.22.19"
 }

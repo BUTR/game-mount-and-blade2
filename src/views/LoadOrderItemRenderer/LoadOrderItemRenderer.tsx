@@ -122,16 +122,16 @@ function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>)
 
 function renderValidationError(props: IBaseProps): JSX.Element | null {
   const { invalidEntries, loEntry } = props.item;
-  const invalidEntry =
+  const invalidEntryList =
     invalidEntries !== undefined
-      ? invalidEntries.find((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase())
+      ? invalidEntries.filter((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase()).map(x => x.reason).join('\n')
       : undefined;
-  return invalidEntry !== undefined ? (
+  return invalidEntryList !== undefined && invalidEntryList !== '' ? (
     <tooltip.Icon
       className="fblo-invalid-entry"
       name="feedback-error"
       style={{ width: `1.5em`, height: `1.5em`, }}
-      tooltip={invalidEntry.reason}>
+      tooltip={invalidEntryList}>
     </tooltip.Icon>
   ) : null;
 }

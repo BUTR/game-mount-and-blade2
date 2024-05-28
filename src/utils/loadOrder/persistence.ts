@@ -2,6 +2,7 @@ import path from 'path';
 import { fs, selectors, types } from 'vortex-api';
 import { GAME_ID, LOAD_ORDER_SUFFIX } from '../../common';
 import { PersistenceLoadOrderStorage } from '../../types';
+import { filterEntryWithInvalidId } from '../util';
 
 const getLoadOrderFileName = (profileId: string): string => {
   return `${profileId}${LOAD_ORDER_SUFFIX}`;
@@ -22,7 +23,9 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
     const loFileName = getLoadOrderFileName(profileId);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = fs.readFileSync(loFilePath, 'utf8');
-    return JSON.parse(fileContents);
+    
+    const loadOrder: PersistenceLoadOrderStorage = JSON.parse(fileContents);
+    return loadOrder.filter((x) => filterEntryWithInvalidId(x));
   } catch {
     return [];
   }
