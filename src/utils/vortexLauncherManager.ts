@@ -12,6 +12,7 @@ import {
   readLoadOrder,
   hasPersistentLoadOrder,
   libraryToLibraryVM,
+  filterEntryWithInvalidId,
 } from '.';
 import { GAME_ID } from '../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
@@ -65,7 +66,7 @@ export class VortexLauncherManager {
     if (!Array.isArray(loadOrder)) {
       return [];
     }
-    return loadOrder;
+    return loadOrder.filter((x) => filterEntryWithInvalidId(x));
   };
 
   public loadLoadOrderVortex = (): vetypes.LoadOrder => {
@@ -336,6 +337,22 @@ export class VortexLauncherManager {
         this._api.sendNotification?.({
           id: id,
           type: 'info',
+          message: message,
+          displayMS: delayMS,
+        });
+        break;
+      case 'warning':
+        this._api.sendNotification?.({
+          id: id,
+          type: 'warning',
+          message: message,
+          displayMS: delayMS,
+        });
+        break;
+      case 'error':
+        this._api.sendNotification?.({
+          id: id,
+          type: 'error',
           message: message,
           displayMS: delayMS,
         });

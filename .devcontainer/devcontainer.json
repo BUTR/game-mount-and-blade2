@@ -11,18 +11,18 @@
 
 		},
 		"ghcr.io/devcontainers/features/git:1": {
-            "version": "latest",
-            "ppa": "false"
-        },
+      "version": "latest",
+      "ppa": "false"
+    },
 		"ghcr.io/butr/devcontainer/7z:1": {
 
 		},
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "18.17.1",
-            "nodeGypDependencies": "true"
-        },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18.17.1",
+      "nodeGypDependencies": "true"
+    },
 		"ghcr.io/devcontainers/features/powershell:1": {
-            "version": "latest"
+      "version": "latest"
 		}
 	},
 	"overrideFeatureInstallOrder": [
@@ -32,12 +32,12 @@
 		"ghcr.io/devcontainers/features/node",
 		"ghcr.io/devcontainers/features/powershell"
 	],
-    "mounts": [
-		{
-		   	"source":"${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins",
-		   	"target":"/vortex-plugins",
-		   	"type":"bind"
-		}
+  "mounts": [
+    {
+      "source":"${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins",
+      "target":"/vortex-plugins",
+      "type":"bind"
+    }
 	],
 	"postAttachCommand": "yarn install",
 	"customizations": {

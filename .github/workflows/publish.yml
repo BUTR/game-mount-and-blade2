@@ -73,8 +73,9 @@ jobs:
       nexusmods_mod_id: 875
       mod_filename: game-mount-and-blade2
       mod_version: ${{ needs.get-version.outputs.version }}
-      mod_description: Download and drag the archive onto the lower right drop zone in Vortex's Extensions page.
+      mod_description: "Download and drag the archive onto the lower right drop zone in Vortex's Extensions page."
       artifact_name: game-mount-and-blade2
+      append_v_to_version: false
     secrets:
       NEXUSMODS_APIKEY: ${{ secrets.ARAGAS_NEXUSMODS_API_KEY }}
       NEXUSMODS_SESSION_COOKIE: ${{ secrets.ARAGAS_NEXUSMODS_SESSION_COOKIE }}
