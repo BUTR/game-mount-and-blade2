@@ -21,8 +21,11 @@ import {
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';
+import { version } from '../package.json';
 
 const main = (context: types.IExtensionContext): boolean => {
+  log('info', `Extension Version: ${version}`);
+
   const launcherManager = new VortexLauncherManager(context.api);
 
   // Register Settings
