@@ -9,7 +9,7 @@ import {
   ModAnalyzerProxy,
   VortexLauncherManager,
   versionToString,
-} from '../';
+} from '..';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
 import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
