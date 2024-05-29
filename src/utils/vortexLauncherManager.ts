@@ -66,7 +66,7 @@ export class VortexLauncherManager {
     if (!Array.isArray(loadOrder)) {
       return [];
     }
-    return loadOrder.filter((x) => filterEntryWithInvalidId(x));
+    return loadOrder.filter((x) => !!x && !!x.data && filterEntryWithInvalidId(x));
   };
 
   public loadLoadOrderVortex = (): vetypes.LoadOrder => {

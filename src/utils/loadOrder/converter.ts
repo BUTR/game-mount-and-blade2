@@ -28,6 +28,7 @@ export const persistenceToVortex = (
         },
       };
     })
+    .filter((x) => x.data !== undefined)
     .sort((x, y) => x.data!.index - y.data!.index);
   return loadOrderConverted;
 };
@@ -47,12 +48,14 @@ export const vortexToLibraryVM = (
   loadOrder: VortexLoadOrderStorage,
   allModules: Readonly<IModuleCache>
 ): vetypes.ModuleViewModel[] => {
-  const modules = loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((entry) => allModules[entry.id]!);
+  const modules = loadOrder
+    .map<vetypes.ModuleInfoExtendedWithMetadata>((entry) => allModules[entry.id]!)
+    .filter((x) => x !== undefined);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
   const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => {
-    const module = allModules[entry.id]!;
-    return entry.data
+    const module = allModules[entry.id];
+    return entry.data && module
       ? {
           moduleInfoExtended: module,
           isValid:
