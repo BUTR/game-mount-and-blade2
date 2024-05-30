@@ -14,8 +14,8 @@ import {
   getInstallPathBLSE,
   testBLSE,
   installBLSE,
-  didDeployBLSE,
   didPurgeBLSE,
+  didDeployEvent,
   addedFiles,
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
@@ -39,6 +39,8 @@ const main = (context: types.IExtensionContext): boolean => {
       sortOnDeploy: {},
     },
   };
+
+  const getLOManager = () => LoadOrderManager.getInstance(context.api, launcherManager);
 
   context.registerReducer([`settings`, GAME_ID], reducer);
 
@@ -71,7 +73,7 @@ const main = (context: types.IExtensionContext): boolean => {
   }
   */
 
-  context.registerLoadOrder(new LoadOrderManager(context.api, launcherManager));
+  context.registerLoadOrder(getLOManager());
 
   context.registerMainPage('savegame', 'Saves', SaveList, new SavePageOptions(context, launcherManager));
 
@@ -118,6 +120,19 @@ const main = (context: types.IExtensionContext): boolean => {
     toBluebird<void>(async () => {
       context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
 
+      context.api.events.on('gamemode-activated', async (gameId: string) => {
+        if (GAME_ID !== gameId) {
+          return;
+        }
+        try {
+          await getLOManager().deserializeLoadOrder();
+          return;
+        } catch (err) {
+          context.api.showErrorNotification?.('Failed to deserialize load order file', err);
+          return;
+        }
+      });
+
       /*
       // TODO: Provide compatibility info for Game Version -> Mod Version from the BUTR Site
       const proxy = new ModAnalyzerProxy(context.api);
@@ -139,7 +154,7 @@ const main = (context: types.IExtensionContext): boolean => {
 
       // TODO: lister to profile switch events and check for BLSE
       // Set BLSE CLI as primary tool on deployment if no primary tool is set
-      context.api.onAsync('did-deploy', (profileId: string) => didDeployBLSE(context.api, profileId));
+      context.api.onAsync('did-deploy', (profileId: string) => didDeployEvent(context.api, profileId, getLOManager));
       // Remove BLSE CLI as primary tool on purge if it is set
       context.api.onAsync('did-purge', (profileId: string) => didPurgeBLSE(context.api, profileId));
     })
