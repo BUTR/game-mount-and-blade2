@@ -1,6 +1,6 @@
 import path from 'path';
 import { Dirent, readFileSync } from 'fs';
-import { actions, fs, selectors, types } from 'vortex-api';
+import { actions, fs, selectors, types, util } from 'vortex-api';
 import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
 import {
   vortexToLibrary,
@@ -286,13 +286,12 @@ export class VortexLauncherManager {
    */
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
     const discovery = selectors.currentGameDiscovery(this._api.getState());
-    Object.values(discovery.tools ?? {}).forEach((tool) => {
-      if (tool.id && tool.id.endsWith('-cli')) {
-        tool.parameters = gameParameters;
-      }
-    });
-
-    this._api.store?.dispatch(actions.setGameParameters(GAME_ID, { parameters: gameParameters }));
+    const cliTools = Object.values(discovery.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
+    const batchedActions = cliTools.map((tool) =>
+      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: gameParameters }, true)
+    );
+    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: gameParameters });
+    util.batchDispatch(this._api.store?.dispatch, [...batchedActions, gameParamAction]);
   };
   /**
    * Callback
