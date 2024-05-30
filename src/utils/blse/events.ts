@@ -2,6 +2,24 @@ import { actions, selectors, types } from 'vortex-api';
 import { findBLSEMod } from './shared';
 import { GAME_ID } from '../../common';
 import { hasSettingsInterfacePrimaryTool } from '../vortex';
+import { LoadOrderManager } from '../loadOrder';
+
+/**
+ * Event function, be careful
+ */
+export const didDeployEvent = async (
+  api: types.IExtensionApi,
+  profileId: string,
+  getLOManager: () => LoadOrderManager
+) => {
+  try {
+    await getLOManager().deserializeLoadOrder();
+  } catch (err) {
+    api.showErrorNotification?.('Failed to deserialize load order file', err);
+  }
+
+  return didDeployBLSE(api, profileId);
+};
 
 /**
  * Event function, be careful

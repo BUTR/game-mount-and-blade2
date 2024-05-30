@@ -15,6 +15,7 @@ import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
 import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
+  private static _instance: LoadOrderManager;
   private _api: types.IExtensionApi;
   private _manager: VortexLauncherManager;
   private _isInitialized = false;
@@ -30,6 +31,17 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   public usageInstructions?: React.ComponentType<unknown>;
   public noCollectionGeneration = true;
+
+  public static getInstance(api?: types.IExtensionApi, manager?: VortexLauncherManager): LoadOrderManager {
+    if (!LoadOrderManager._instance) {
+      if (api === undefined || manager === undefined) {
+        throw new Error('IniStructure is not context aware');
+      }
+      LoadOrderManager._instance = new LoadOrderManager(api, manager);
+    }
+
+    return LoadOrderManager._instance;
+  }
 
   constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
     this._api = api;
