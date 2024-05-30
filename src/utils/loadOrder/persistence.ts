@@ -23,7 +23,7 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
     const loFileName = getLoadOrderFileName(profileId);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = fs.readFileSync(loFilePath, 'utf8');
-    
+
     const loadOrder: PersistenceLoadOrderStorage = JSON.parse(fileContents);
     return loadOrder.filter((x) => !!x && filterEntryWithInvalidId(x));
   } catch {

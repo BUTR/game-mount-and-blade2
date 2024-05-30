@@ -49,7 +49,8 @@ export const addBLSETools = async (api: types.IExtensionApi, discovery: types.ID
       workingDirectory: path.join(discovery.path, pathBase),
       hidden: false,
       custom: true,
-      defaultPrimary: id === `blse-cli`,
+      defaultPrimary: false, // setting as true whn not installed causes a warning
+      //defaultPrimary: id === `blse-cli`,
     };
     addDiscoveredTool(api, tool);
   }

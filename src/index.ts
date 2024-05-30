@@ -17,7 +17,6 @@ import {
   didDeployBLSE,
   didPurgeBLSE,
   addedFiles,
-  ModAnalyzerProxy,
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';

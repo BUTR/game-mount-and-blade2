@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.7
+* Fixed the tool warning
+* Fixed the tools lacking CLI args
+* Fixed "game not found"
+---------------------------------------------------------------------------------------------------
+Version: 1.0.6
+* Fixed unexpected undefined module infos, should fix most of the issues we had reported
+---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+* Fixed BOM handling
+---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+* Added extension version log just in case
+---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+* More Validation issues fixed, some exceptions now log an error instead of propagating it
+* Do not throw on faulty mod metadata
+---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+* Validation fixes
+* Load Order not being an array fix
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+* Initial release
+---------------------------------------------------------------------------------------------------
