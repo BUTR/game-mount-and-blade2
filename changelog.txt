@@ -3,7 +3,6 @@ Version: 1.0.7
 * Fixed the tool warning
 * Fixed the tools lacking CLI args
 * Fixed "game not found"
-* Fixed CLI args not being set on Vortex launch
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.6
 * Fixed unexpected undefined module infos, should fix most of the issues we had reported
