@@ -13,9 +13,10 @@ on:
     branches: [ master ]
 
 jobs:
-  get-version:
+  get-package-version:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    name: Get Version
+    name: Get Package Version
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
@@ -26,6 +27,30 @@ jobs:
         uses: beaconbrigade/package-json-version@v0.3
         with:
           path: .
+
+  get-changelog-info:
+    if: github.ref == 'refs/heads/master'
+    name: Get Changelog Info
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.changelog.outputs.version }}
+      description: ${{ steps.changelog.outputs.description }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install and Run ChangelogParser
+        id: changelog
+        run: |
+          dotnet tool install -g Bannerlord.ChangelogParser
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+
+          echo "version=$(bannerlord_changelog_parser latestversion -f "$PWD/changelog.txt")" >> $GITHUB_OUTPUT
+
+          echo "description<<$EOF" >> $GITHUB_OUTPUT
+          echo "$(bannerlord_changelog_parser description -f "$PWD/changelog.txt")" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+        shell: bash
 
   build-and-test:
     name: Build and Test
@@ -52,28 +77,28 @@ jobs:
   #         GITHUB          #
   ###########################
   publish-on-github:
-    if: github.ref == 'refs/heads/master'
-    needs: [get-version, build-and-test]
+    if: github.ref == 'refs/heads/master' && needs.get-package-version.outputs.version == needs.get-changelog-info.outputs.version
+    needs: [get-package-version, get-changelog-info, build-and-test]
     uses: BUTR/workflows/.github/workflows/release-github.yml@master
     with:
       mod_id: game-mount-and-blade2
-      mod_version: ${{ needs.get-version.outputs.version }}
-      mod_description: Download and drag the archive onto the lower right drop zone in Vortex's Extensions page.
+      mod_version: ${{ needs.get-changelog-info.outputs.version }}
+      mod_description: ${{ needs.get-changelog-info.outputs.description }}
       artifact_name: game-mount-and-blade2
 
   ###########################
   #        NEXUSMODS        #
   ###########################
   publish-on-nexusmods:
-    if: github.ref == 'refs/heads/master'
-    needs: [get-version, build-and-test]
+    if: github.ref == 'refs/heads/master' && needs.get-package-version.outputs.version == needs.get-changelog-info.outputs.version
+    needs: [get-package-version, get-changelog-info, build-and-test]
     uses: BUTR/workflows/.github/workflows/release-nexusmods.yml@master
     with:
       nexusmods_game_id: site
       nexusmods_mod_id: 875
       mod_filename: game-mount-and-blade2
-      mod_version: ${{ needs.get-version.outputs.version }}
-      mod_description: "Download and drag the archive onto the lower right drop zone in Vortex's Extensions page."
+      mod_version: ${{ needs.get-changelog-info.outputs.version }}
+      mod_description: ${{ needs.get-changelog-info.outputs.description }}
       artifact_name: game-mount-and-blade2
       append_v_to_version: false
     secrets:

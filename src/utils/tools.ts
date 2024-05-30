@@ -36,21 +36,16 @@ export const addBLSETools = async (api: types.IExtensionApi, discovery: types.ID
   ];
   for (const x of tools) {
     const { id, name, exe } = x;
-    const pathBase = getBinaryPath(discovery.store);
-    const pathExe = path.join(pathBase, exe);
     const tool: types.IDiscoveredTool = {
       id: id,
       name: name,
       logo: `blse.png`,
-      executable: () => pathExe,
-      requiredFiles: [pathExe],
-      path: path.join(discovery.path, pathExe),
-      relative: true,
-      workingDirectory: path.join(discovery.path, pathBase),
+      path: path.join(discovery.path, getBinaryPath(discovery.store), exe),
+      requiredFiles: [exe],
       hidden: false,
       custom: true,
-      defaultPrimary: false, // setting as true whn not installed causes a warning
-      //defaultPrimary: id === `blse-cli`,
+      defaultPrimary: id === `blse-cli`,
+      executable: () => '',
     };
     addDiscoveredTool(api, tool);
   }
@@ -68,13 +63,11 @@ export const addOfficialCLITool = (api: types.IExtensionApi, discovery: types.ID
     id: `vanilla-cli`,
     name: `Official Bannerlord`,
     logo: `tw_launcher.png`,
-    executable: () => pathExe,
-    requiredFiles: [pathExe],
     path: path.join(discovery.path, pathExe),
-    relative: true,
-    workingDirectory: path.join(discovery.path, pathBase),
+    requiredFiles: [BANNERLORD_EXE],
     hidden: false,
     custom: false,
+    executable: () => '',
   };
   addDiscoveredTool(api, tool);
 };
@@ -84,20 +77,15 @@ export const addOfficialLauncherTool = (api: types.IExtensionApi, discovery: typ
     throw new Error(`discovery.path is undefined!`);
   }
 
-  const pathBase = getBinaryPath(discovery.store);
-  const pathExe = path.join(pathBase, BANNERLORD_EXE_LAUNCHER);
-
   const tool: types.IDiscoveredTool = {
     id: `vanilla-launcher`,
     name: `Official Bannerlord Launcher`,
     logo: `tw_launcher.png`,
-    executable: () => pathExe,
-    requiredFiles: [pathExe],
-    path: path.join(discovery.path, pathExe),
-    relative: true,
-    workingDirectory: path.join(discovery.path, pathBase),
+    requiredFiles: [BANNERLORD_EXE_LAUNCHER],
+    path: path.join(discovery.path, getBinaryPath(discovery.store), BANNERLORD_EXE_LAUNCHER),
     hidden: false,
     custom: false,
+    executable: () => '',
   };
   addDiscoveredTool(api, tool);
 };
@@ -115,21 +103,16 @@ export const addModdingKitTool = (
     return;
   }
 
-  const pathBase = getBinaryModdingPath(discovery.store);
-  const pathExe = path.join(pathBase, BANNERLORD_EXE_LAUNCHER);
-
   const tool: types.IDiscoveredTool = {
     id: `bannerlord-sdk`,
     name: `Modding Kit`,
     logo: `tw_launcher.png`,
-    executable: () => pathExe,
-    requiredFiles: [pathExe],
-    path: path.join(discovery.path, pathExe),
-    relative: true,
+    path: path.join(discovery.path, getBinaryModdingPath(discovery.store), BANNERLORD_EXE_LAUNCHER),
+    requiredFiles: [BANNERLORD_EXE_LAUNCHER],
     exclusive: true,
-    workingDirectory: path.join(discovery.path, pathBase),
     hidden: hidden ?? false,
     custom: false,
+    executable: () => '',
   };
   addDiscoveredTool(api, tool);
 };
