@@ -7,6 +7,7 @@ import {
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,
   BINARY_FOLDER_STANDARD_MODDING_KIT,
+  GAME_ID,
 } from '../common';
 
 export const getBinaryPath = (store: string | undefined): string => {
@@ -21,7 +22,7 @@ export const getBannerlordMainExe = (discoveryPath: string | undefined, api: typ
   const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
   const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
 
-  const discovery = selectors.currentGameDiscovery(api.getState());
+  const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -55,7 +56,7 @@ export const getBannerlordToolExe = (
   const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
   const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
 
-  const discovery = selectors.currentGameDiscovery(api.getState());
+  const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
