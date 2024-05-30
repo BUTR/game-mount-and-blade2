@@ -14,7 +14,7 @@ export const findGame = async (): Promise<types.IGameStoreEntry> => {
 
 type HasId = {
   id: string;
-}
+};
 const hasId = (persistent: HasId): persistent is HasId => {
   return !!persistent.id && persistent.id !== '';
 };

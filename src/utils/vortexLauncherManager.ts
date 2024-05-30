@@ -286,12 +286,12 @@ export class VortexLauncherManager {
    */
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
     const discovery = selectors.currentGameDiscovery(this._api.getState());
-    Object.values(discovery.tools ?? {}).forEach(tool => {
+    Object.values(discovery.tools ?? {}).forEach((tool) => {
       if (tool.id && tool.id.endsWith('-cli')) {
         tool.parameters = gameParameters;
       }
     });
-    
+
     this._api.store?.dispatch(actions.setGameParameters(GAME_ID, { parameters: gameParameters }));
   };
   /**
