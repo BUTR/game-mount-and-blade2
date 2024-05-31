@@ -1,8 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import path from 'path';
-import { actions, selectors, types, util, log } from 'vortex-api';
-import { setCurrentSave, setSortOnDeploy } from './actions';
+import { selectors, types, log } from 'vortex-api';
 import { GAME_ID } from './common';
 import { BannerlordGame } from './game';
 import {
@@ -17,6 +16,9 @@ import {
   didPurgeEvent,
   didDeployEvent,
   addedFiles,
+  SaveManager,
+  reducer,
+  actionsSettings,
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';
@@ -27,25 +29,14 @@ const main = (context: types.IExtensionContext): boolean => {
 
   const launcherManager = new VortexLauncherManager(context.api);
 
+  const getLoadOrderManager = () => LoadOrderManager.getInstance(context.api, launcherManager);
+  const getSaveManager = () => SaveManager.getInstance(context.api, launcherManager);
+
   // Register Settings
-  const reducer: types.IReducerSpec = {
-    reducers: {
-      [setSortOnDeploy as never]: (state, payload) =>
-        util.setSafe(state, [`sortOnDeploy`, payload.profileId], payload.sort),
-      [actions.setLoadOrder as never]: (state, payload) => util.setSafe(state, [payload.id], payload.order),
-      [setCurrentSave as never]: (state, payload) => util.setSafe(state, [`saveList`], payload),
-    },
-    defaults: {
-      sortOnDeploy: {},
-    },
-  };
-
-  const getLOManager = () => LoadOrderManager.getInstance(context.api, launcherManager);
-
   context.registerReducer([`settings`, GAME_ID], reducer);
 
   const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) =>
-    context.api.store?.dispatch(setSortOnDeploy(profileId, sort));
+    context.api.store?.dispatch(actionsSettings.setSortOnDeploy(profileId, sort));
   const settingsProps = () => ({
     t: context.api.translate,
     onSetSortOnDeploy: settingsOnSetSortOnDeploy,
@@ -73,9 +64,14 @@ const main = (context: types.IExtensionContext): boolean => {
   }
   */
 
-  context.registerLoadOrder(getLOManager());
+  context.registerLoadOrder(getLoadOrderManager());
 
-  context.registerMainPage('savegame', 'Saves', SaveList, new SavePageOptions(context, launcherManager));
+  context.registerMainPage(
+    'savegame',
+    'Saves',
+    SaveList,
+    new SavePageOptions(context, launcherManager, getSaveManager())
+  );
 
   // Register Installer.
   context.registerInstaller(
@@ -125,10 +121,15 @@ const main = (context: types.IExtensionContext): boolean => {
           return;
         }
         try {
-          await getLOManager().deserializeLoadOrder();
-          return;
+          await getLoadOrderManager().deserializeLoadOrder();
         } catch (err) {
           context.api.showErrorNotification?.('Failed to deserialize load order file', err);
+          return;
+        }
+        try {
+          getSaveManager().reloadSave();
+        } catch (err) {
+          context.api.showErrorNotification?.('Failed to reload the currect save file', err);
           return;
         }
       });
@@ -154,7 +155,9 @@ const main = (context: types.IExtensionContext): boolean => {
 
       // TODO: lister to profile switch events and check for BLSE
       // Set BLSE CLI as primary tool on deployment if no primary tool is set
-      context.api.onAsync('did-deploy', (profileId: string) => didDeployEvent(context.api, profileId, getLOManager));
+      context.api.onAsync('did-deploy', (profileId: string) =>
+        didDeployEvent(context.api, profileId, getLoadOrderManager)
+      );
       // Remove BLSE CLI as primary tool on purge if it is set
       context.api.onAsync('did-purge', (profileId: string) => didPurgeEvent(context.api, profileId));
     })

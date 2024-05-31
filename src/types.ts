@@ -79,13 +79,18 @@ export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterf
  * Vortex
  */
 export interface ISettingsWithBannerlord extends types.ISettings {
-  [GAME_ID]?: {
-    saveList?: {
-      saveName?: string;
-    };
-    sortOnDeploy: {
-      [profileId: string]: boolean;
-    };
+  [GAME_ID]?: IBannerlordSettings;
+}
+
+/**
+ * Vortex
+ */
+export interface IBannerlordSettings {
+  saveName: {
+    [profileId: string]: string | null;
+  };
+  sortOnDeploy: {
+    [profileId: string]: boolean;
   };
 }
 

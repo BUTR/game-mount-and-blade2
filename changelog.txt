@@ -2,6 +2,7 @@
 Version: 1.0.10
 * Fixed interference with other games
 * Fixed CLI parameters passing
+* Fixed current save tracking on Vortex launch
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.9
 * Fixed primary tool persistence

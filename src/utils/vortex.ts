@@ -10,7 +10,7 @@ import {
   getPathExistsAsync,
   isStoreSteam,
   isStoreXbox,
-  nameIn,
+  nameof,
   recommendBLSE,
 } from '.';
 import { BLSE_CLI_EXE, GAME_ID, XBOX_ID } from '../common';
@@ -21,14 +21,21 @@ import {
   IStatePersistentWithLoadOrder,
 } from '../types';
 
-type requiresLauncherResult = {
+type HasSettings = {
+  settings: types.ISettings;
+};
+
+type RequiresLauncherResult = {
   launcher: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  addInfo?: any;
+  addInfo?: unknown;
 };
 
 export const hasPersistentLoadOrder = (persistent: IStatePersistent): persistent is IStatePersistentWithLoadOrder => {
-  return typeof (persistent as never)[nameIn<IStatePersistentWithLoadOrder>().loadOrder] === 'object';
+  return typeof (persistent as never)[nameof<IStatePersistentWithLoadOrder>('loadOrder')] === 'object';
+};
+
+export const hasSettings = (hasSettings: unknown): hasSettings is HasSettings => {
+  return typeof (hasSettings as never)[nameof<HasSettings>('settings')] === 'object';
 };
 
 export const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord => {
@@ -38,7 +45,7 @@ export const hasSettingsBannerlord = (settings: types.ISettings): settings is IS
 export const hasSettingsInterfacePrimaryTool = (
   settings: types.ISettingsInterface
 ): settings is ISettingsInterfaceWithPrimaryTool => {
-  return typeof (settings as never)[nameIn<ISettingsInterfaceWithPrimaryTool>().primaryTool] === 'object';
+  return typeof (settings as never)[nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool')] === 'object';
 };
 
 const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
@@ -91,7 +98,7 @@ export const setup = async (
   await prepareForModding(api, discovery, manager);
 };
 
-export const requiresLauncher = async (store?: string): Promise<requiresLauncherResult> => {
+export const requiresLauncher = async (store?: string): Promise<RequiresLauncherResult> => {
   if (isStoreXbox(store)) {
     return {
       launcher: `xbox`,

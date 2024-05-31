@@ -9,6 +9,7 @@ import {
   ModAnalyzerProxy,
   VortexLauncherManager,
   versionToString,
+  actionsLoadOrder,
 } from '..';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
@@ -16,6 +17,7 @@ import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStora
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static _instance: LoadOrderManager;
+
   private _api: types.IExtensionApi;
   private _manager: VortexLauncherManager;
   private _isInitialized = false;
@@ -91,14 +93,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   }
 
   private forceRefresh = (): void => {
-    const profileId = selectors.activeProfile(this._api.getState()).id;
-    const action = {
-      type: 'SET_FB_FORCE_UPDATE',
-      payload: {
-        profileId,
-      },
-    };
-    this._api.store?.dispatch(action);
+    const profile = selectors.activeProfile(this._api.getState());
+    this._api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {

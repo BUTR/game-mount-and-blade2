@@ -13,6 +13,7 @@ import {
   hasPersistentLoadOrder,
   libraryToLibraryVM,
   filterEntryWithInvalidId,
+  actionsLoadOrder,
 } from '.';
 import { GAME_ID } from '../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
@@ -503,17 +504,9 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
+    const profile = selectors.activeProfile(this._api.getState());
     const loadOrder = libraryVMToVortex(this._api, moduleViewModels);
-
-    const profileId = selectors.activeProfile(this._api.getState()).id;
-    const action = {
-      type: 'SET_FB_LOAD_ORDER',
-      payload: {
-        profileId,
-        loadOrder,
-      },
-    };
-    this._api.store?.dispatch(action);
+    this._api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
   };
   /**
    * Callback

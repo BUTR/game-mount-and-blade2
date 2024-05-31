@@ -10,7 +10,7 @@ import { LoadOrderManager } from '../loadOrder';
 export const didDeployEvent = async (
   api: types.IExtensionApi,
   profileId: string,
-  getLOManager: () => LoadOrderManager
+  getLoadOrderManager: () => LoadOrderManager
 ) => {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
@@ -19,7 +19,7 @@ export const didDeployEvent = async (
   }
 
   try {
-    await getLOManager().deserializeLoadOrder();
+    await getLoadOrderManager().deserializeLoadOrder();
   } catch (err) {
     api.showErrorNotification?.('Failed to deserialize load order file', err);
   }
@@ -27,9 +27,6 @@ export const didDeployEvent = async (
   return didDeployBLSE(api, state, profile);
 };
 
-/**
- * Event function, be careful
- */
 const didDeployBLSE = async (api: types.IExtensionApi, state: types.IState, profile: types.IProfile) => {
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
     return Promise.resolve();
@@ -48,6 +45,9 @@ const didDeployBLSE = async (api: types.IExtensionApi, state: types.IState, prof
   return Promise.resolve();
 };
 
+/**
+ * Event function, be careful
+ */
 export const didPurgeEvent = async (api: types.IExtensionApi, profileId: string) => {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
@@ -58,9 +58,6 @@ export const didPurgeEvent = async (api: types.IExtensionApi, profileId: string)
   await didPurgeBLSE(api, state, profile);
 };
 
-/**
- * Event function, be careful
- */
 const didPurgeBLSE = async (api: types.IExtensionApi, state: types.IState, profile: types.IProfile) => {
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
     return Promise.resolve();

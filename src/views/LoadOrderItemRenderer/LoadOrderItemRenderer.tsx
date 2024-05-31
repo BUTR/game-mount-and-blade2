@@ -1,12 +1,11 @@
-/* eslint-disable */
 import * as React from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
-import { actions, Icon, selectors, tooltip, types, util } from 'vortex-api';
+import { Icon, selectors, tooltip, types, util } from 'vortex-api';
 import { IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
-import { versionToString, VortexLauncherManager } from '../../utils';
+import { versionToString, VortexLauncherManager, actionsLoadOrder } from '../../utils';
 import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
 import { types as vetypes, Utils } from '@butr/vortexextensionnative';
 import { TooltipImage } from '../Controls';
@@ -23,7 +22,7 @@ interface IBaseProps {
 interface IConnectedProps {
   loadOrder: types.FBLOLoadOrder;
   profile: types.IProfile;
-  modState: any;
+  modState: unknown;
 }
 
 export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
@@ -33,7 +32,8 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
   const name = item.loEntry.name ? `${item.loEntry.name}` : `${item.loEntry.id}`;
   const version = versionToString(item.loEntry.data?.moduleInfoExtended.version);
 
-  const position = loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
+  const position =
+    loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
 
   let classes = ['load-order-entry'];
   if (className !== undefined) {
@@ -45,12 +45,12 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
   }
 
   const onStatusChange = React.useCallback(
-    (evt: any) => {
+    (evt: React.BaseSyntheticEvent<Event, HTMLInputElement & Checkbox, HTMLInputElement>) => {
       const entry = {
         ...item.loEntry,
         enabled: evt.target.checked,
       };
-      api.store?.dispatch(actions.setFBLoadOrderEntry(profile.id, entry));
+      api.store?.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, entry));
     },
     [api, item, profile]
   );
@@ -71,20 +71,22 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
     <ListGroupItem key={name} className={classes.join(' ')} ref={props.item.setRef}>
       <Icon className="drag-handle-icon" name="drag-handle" />
       <p className="load-order-index">{position}</p>
-      {renderValidationError(props)}
-      {renderModuleIcon(item.loEntry)}
-      <p className="load-order-name">{name} ({version})</p>
-      {renderExternalBanner(item.loEntry)}
-      {renderCompatibilityInfo(props)}
-      {renderModuleDuplicates(props, item.loEntry)}
-      {renderModuleProviderIcon(item.loEntry)}
+      {RenderValidationError(props)}
+      {RenderModuleIcon(item.loEntry)}
+      <p className="load-order-name">
+        {name} ({version})
+      </p>
+      {RenderExternalBanner(item.loEntry)}
+      {RenderCompatibilityInfo(props)}
+      {RenderModuleDuplicates(props, item.loEntry)}
+      {RenderModuleProviderIcon(item.loEntry)}
       {checkBox()}
       {lock()}
     </ListGroupItem>
   );
 }
 
-function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
+function RenderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
   const isOfficial = item.data !== undefined && item.data.moduleInfoExtended.isOfficial;
   const isCommunity = item.data !== undefined && !item.data.moduleInfoExtended.isOfficial;
   const dependencies = item.data !== undefined ? Utils.getDependencyHint(item.data.moduleInfoExtended) : '';
@@ -94,9 +96,9 @@ function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>)
       <TooltipImage
         src={TW_LOGO}
         className="official-module-logo"
-        style={{ width: `1.5em`, height: `1.5em`, }}
-        tooltip={dependencies} >
-      </TooltipImage>
+        style={{ width: `1.5em`, height: `1.5em` }}
+        tooltip={dependencies}
+      ></TooltipImage>
     );
   }
 
@@ -106,37 +108,34 @@ function renderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>)
         src={MODULE_LOGO}
         className="community-module-logo"
         style={{ width: `1.5em`, height: `1.5em`, color: `#D69846` }}
-        tooltip={dependencies} >
-      </TooltipImage>
+        tooltip={dependencies}
+      ></TooltipImage>
     );
   }
 
-  return (
-    <TooltipImage
-      src={""}
-      style={{ width: `1.5em`, height: `1.5em`, }}
-      tooltip={dependencies} >
-    </TooltipImage>
-  );
+  return <TooltipImage src={''} style={{ width: `1.5em`, height: `1.5em` }} tooltip={dependencies}></TooltipImage>;
 }
 
-function renderValidationError(props: IBaseProps): JSX.Element | null {
+function RenderValidationError(props: IBaseProps): JSX.Element | null {
   const { invalidEntries, loEntry } = props.item;
   const invalidEntryList =
     invalidEntries !== undefined
-      ? invalidEntries.filter((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase()).map(x => x.reason).join('\n')
+      ? invalidEntries
+          .filter((inv) => inv.id.toLowerCase() === loEntry.id.toLowerCase())
+          .map((x) => x.reason)
+          .join('\n')
       : undefined;
   return invalidEntryList !== undefined && invalidEntryList !== '' ? (
     <tooltip.Icon
       className="fblo-invalid-entry"
       name="feedback-error"
-      style={{ width: `1.5em`, height: `1.5em`, }}
-      tooltip={invalidEntryList}>
-    </tooltip.Icon>
+      style={{ width: `1.5em`, height: `1.5em` }}
+      tooltip={invalidEntryList}
+    ></tooltip.Icon>
   ) : null;
 }
 
-function renderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+function RenderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
   const [t] = useTranslation(['common']);
   return isExternal(item) ? (
     <div className="load-order-unmanaged-banner">
@@ -146,54 +145,58 @@ function renderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelDa
   ) : null;
 }
 
-function renderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
+function RenderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
   const [t] = useTranslation(['common']);
-  
+
   if (isSteamWorksop(item)) {
     return (
       <TooltipImage
         src={STEAM_LOGO}
-        style={{ width: `1.5em`, height: `1.5em`, }}
-        tooltip={t('Managed by Steam')} >
-      </TooltipImage>
+        style={{ width: `1.5em`, height: `1.5em` }}
+        tooltip={t('Managed by Steam')}
+      ></TooltipImage>
     );
   }
 
-  return (
-    <div style={{ width: `1.5em`, height: `1.5em`, }} />
-  );
+  return <div style={{ width: `1.5em`, height: `1.5em` }} />;
 }
 
-function renderModuleDuplicates(props: IBaseProps, item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
+function RenderModuleDuplicates(
+  props: IBaseProps,
+  item: types.IFBLOLoadOrderEntry<IVortexViewModelData>
+): JSX.Element | null {
   const { availableProviders } = props;
-  
+
   if (availableProviders.length <= 1) {
-    return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+    return <div style={{ width: `1.5em`, height: `1.5em` }} />;
   }
 
   if (item.data?.moduleInfoExtended.moduleProviderType) {
-    const redundantProviders = availableProviders.filter((provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType);
+    const redundantProviders = availableProviders.filter(
+      (provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType
+    );
     return (
       <tooltip.Icon
         className="nexus-id-invalid"
         name="feedback-warning"
-        style={{ width: `1.5em`, height: `1.5em`, }}
-        tooltip={`The mod is also installed via ${redundantProviders.join(', ')}!`}>
-      </tooltip.Icon>
+        style={{ width: `1.5em`, height: `1.5em` }}
+        tooltip={`The mod is also installed via ${redundantProviders.join(', ')}!`}
+      ></tooltip.Icon>
     );
   }
 
-  return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+  return <div style={{ width: `1.5em`, height: `1.5em` }} />;
 }
 
-function renderCompatibilityInfo(props: IBaseProps): JSX.Element {
+function RenderCompatibilityInfo(props: IBaseProps): JSX.Element {
   const { compatibilityInfo: compatibilityScore, item, manager } = props;
 
   if (compatibilityScore === undefined) {
-    return <div style={{ width: `1.5em`, height: `1.5em`, }} />;
+    return <div style={{ width: `1.5em`, height: `1.5em` }} />;
   }
 
-  const hasRecommendation = compatibilityScore.recommendedVersion !== undefined && compatibilityScore.recommendedVersion !== null;
+  const hasRecommendation =
+    compatibilityScore.recommendedVersion !== undefined && compatibilityScore.recommendedVersion !== null;
 
   // TODO: Take from BLSE translation
   const NL = '\n';
@@ -206,16 +209,14 @@ function renderCompatibilityInfo(props: IBaseProps): JSX.Element {
     ? `Based on BUTR analytics:${NL}${NL}Compatibility Score ${SCORE}%${NL}${NL}Suggesting to update to ${RECOMMENDEDVERSION}.${NL}Compatibility Score ${RECOMMENDEDSCORE}%${NL}${NL}${RECOMMENDEDVERSION} has a better compatibility for game ${GAMEVERSION} rather than ${CURRENTVERSION}!`
     : `Based on BUTR analytics:${NL}${NL}Update is not required.${NL}Compatibility Score ${SCORE}%${NL}${NL}${CURRENTVERSION} is one of the best version for game ${GAMEVERSION}`;
 
-  const color = compatibilityScore.score >= 75
-    ? 'green' : compatibilityScore.score >= 50
-    ? 'yellow' : 'red';
+  const color = compatibilityScore.score >= 75 ? 'green' : compatibilityScore.score >= 50 ? 'yellow' : 'red';
 
   return (
     <tooltip.Icon
-      style={{color: color, width: `1.5em`, height: `1.5em`}}
+      style={{ color: color, width: `1.5em`, height: `1.5em` }}
       name="feedback-error"
-      tooltip={hint}>
-    </tooltip.Icon>
+      tooltip={hint}
+    ></tooltip.Icon>
   );
 }
 
@@ -240,4 +241,3 @@ function mapStateToProps(state: types.IState): IConnectedProps {
     modState: util.getSafe(profile, ['modState'], empty),
   };
 }
-
