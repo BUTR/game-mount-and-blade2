@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import I18next from 'i18next';
 import { More, Toggle, selectors, types } from 'vortex-api';
-import { hasSettingsBannerlord } from '../../utils';
+import { getSortOnDeployFromSettings, hasSettingsBannerlord } from '../../utils';
 import { IMoreProps } from 'vortex-api/lib/controls/More';
 
 interface IBaseProps {
@@ -50,10 +50,7 @@ export const Settings = (props: IBaseProps): JSX.Element => {
 
 const mapState = (state: types.IState): IConnectedProps => {
   const profileId = selectors.activeProfile(state).id;
-  let autoSortOnDeploy = true;
-  if (hasSettingsBannerlord(state.settings)) {
-    autoSortOnDeploy = state.settings.mountandblade2bannerlord?.sortOnDeploy[profileId] ?? true;
-  }
+  const autoSortOnDeploy = getSortOnDeployFromSettings(state, profileId) || true;
   return {
     profileId,
     autoSortOnDeploy: autoSortOnDeploy,

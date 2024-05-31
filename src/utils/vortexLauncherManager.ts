@@ -13,6 +13,7 @@ import {
   hasPersistentLoadOrder,
   libraryToLibraryVM,
   filterEntryWithInvalidId,
+  actionsLoadOrder,
 } from '.';
 import { GAME_ID } from '../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
@@ -285,12 +286,14 @@ export class VortexLauncherManager {
    * Callback
    */
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
+    const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
+
     const discovery = selectors.currentGameDiscovery(this._api.getState());
     const cliTools = Object.values(discovery.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
-      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: gameParameters }, true)
+      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
     );
-    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: gameParameters });
+    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: [params] });
     util.batchDispatch(this._api.store?.dispatch, [...batchedActions, gameParamAction]);
   };
   /**
@@ -501,17 +504,9 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
+    const profile = selectors.activeProfile(this._api.getState());
     const loadOrder = libraryVMToVortex(this._api, moduleViewModels);
-
-    const profileId = selectors.activeProfile(this._api.getState()).id;
-    const action = {
-      type: 'SET_FB_LOAD_ORDER',
-      payload: {
-        profileId,
-        loadOrder,
-      },
-    };
-    this._api.store?.dispatch(action);
+    this._api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
   };
   /**
    * Callback

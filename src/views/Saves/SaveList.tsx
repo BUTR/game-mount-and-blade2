@@ -22,8 +22,7 @@ import {
   getNameDuplicatesError,
 } from './saveUtils';
 import { ISaveGame } from './types';
-import { setCurrentSave } from '../../actions';
-import { VortexLauncherManager, hasSettingsBannerlord, versionToString } from '../../utils';
+import { SaveManager, VortexLauncherManager, versionToString } from '../../utils';
 import { IItemRendererProps, IModuleCache } from '../../types';
 import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar';
 import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
@@ -34,6 +33,7 @@ import { findBLSEMod, isModActive } from '../../utils/blse/shared';
 type IOwnProps = IItemRendererProps & {
   launcherManager: VortexLauncherManager;
   context: types.IExtensionContext;
+  saveManager: SaveManager;
 };
 
 interface IBaseState {
@@ -66,7 +66,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   constructor(props: IComponentProps) {
     super(props);
 
-    const { launcherManager, context } = props;
+    const { launcherManager, context, saveManager } = props;
 
     const vortexState = context.api.getState();
     const vortexActiveProfile = selectors.activeProfile(vortexState);
@@ -87,21 +87,18 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // get list of save games
     this.OnRefreshList();
 
-    // get stored save game from vortex state
-    if (hasSettingsBannerlord(vortexState.settings)) {
-      this.storedSaveGameName = vortexState.settings.mountandblade2bannerlord?.saveList?.saveName ?? undefined;
-    }
-
+    this.storedSaveGameName = saveManager.getSave() ?? 'No Save';
     if (this.storedSaveGameName) {
       const foundSave = Object.values(this.savesGames).find((value) => value.name === this.storedSaveGameName);
       if (foundSave) {
         this.setState({ selectedSave: foundSave, selectedRow: foundSave });
       } else {
         this.storedSaveGameName = 'No Save';
+        saveManager.setSave(null);
       }
     } else {
       this.storedSaveGameName = 'No Save';
-      context.api.store?.dispatch(setCurrentSave(this.storedSaveGameName));
+      saveManager.setSave(null);
     }
 
     this.mStaticButtons = [
@@ -314,7 +311,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //console.log(`BANNERLORD: Radio_OnChange(${saveGame.name}) saveGame=`);
     //console.log(saveGame);
 
-    const { launcherManager, context } = this.props;
+    const { saveManager } = this.props;
 
     // get current state object
     let { selectedSave } = this.state;
@@ -325,12 +322,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // save it in local state
     this.setState({ selectedSave });
 
-    // set vortex state so it stored between sessions
-    context.api.store?.dispatch(setCurrentSave(saveGame.name));
-    //console.log(context.api.getState());
-
-    // set on launcher. if this is 'no save' then just send empty string
-    launcherManager.setSaveFile(saveGame.name === 'No Save' ? '' : saveGame.name);
+    saveManager.setSave(saveGame.name);
   }
 
   private checkIssues(
