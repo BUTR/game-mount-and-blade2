@@ -285,12 +285,14 @@ export class VortexLauncherManager {
    * Callback
    */
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
+    const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
+
     const discovery = selectors.currentGameDiscovery(this._api.getState());
     const cliTools = Object.values(discovery.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
-      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: gameParameters }, true)
+      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
     );
-    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: gameParameters });
+    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: [params] });
     util.batchDispatch(this._api.store?.dispatch, [...batchedActions, gameParamAction]);
   };
   /**

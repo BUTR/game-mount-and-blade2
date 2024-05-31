@@ -14,7 +14,7 @@ import {
   getInstallPathBLSE,
   testBLSE,
   installBLSE,
-  didPurgeBLSE,
+  didPurgeEvent,
   didDeployEvent,
   addedFiles,
 } from './utils';
@@ -156,7 +156,7 @@ const main = (context: types.IExtensionContext): boolean => {
       // Set BLSE CLI as primary tool on deployment if no primary tool is set
       context.api.onAsync('did-deploy', (profileId: string) => didDeployEvent(context.api, profileId, getLOManager));
       // Remove BLSE CLI as primary tool on purge if it is set
-      context.api.onAsync('did-purge', (profileId: string) => didPurgeBLSE(context.api, profileId));
+      context.api.onAsync('did-purge', (profileId: string) => didPurgeEvent(context.api, profileId));
     })
   );
   // Register Callbacks

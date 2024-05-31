@@ -12,25 +12,25 @@ export const didDeployEvent = async (
   profileId: string,
   getLOManager: () => LoadOrderManager
 ) => {
-  try {
-    await getLOManager().deserializeLoadOrder();
-  } catch (err) {
-    api.showErrorNotification?.('Failed to deserialize load order file', err);
-  }
-
-  return didDeployBLSE(api, profileId);
-};
-
-/**
- * Event function, be careful
- */
-export const didDeployBLSE = async (api: types.IExtensionApi, profileId: string) => {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
   if (profile.gameId !== GAME_ID) {
     return Promise.resolve();
   }
 
+  try {
+    await getLOManager().deserializeLoadOrder();
+  } catch (err) {
+    api.showErrorNotification?.('Failed to deserialize load order file', err);
+  }
+
+  return didDeployBLSE(api, state, profile);
+};
+
+/**
+ * Event function, be careful
+ */
+const didDeployBLSE = async (api: types.IExtensionApi, state: types.IState, profile: types.IProfile) => {
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
     return Promise.resolve();
   }
@@ -48,16 +48,20 @@ export const didDeployBLSE = async (api: types.IExtensionApi, profileId: string)
   return Promise.resolve();
 };
 
-/**
- * Event function, be careful
- */
-export const didPurgeBLSE = async (api: types.IExtensionApi, profileId: string) => {
+export const didPurgeEvent = async (api: types.IExtensionApi, profileId: string) => {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
   if (profile.gameId !== GAME_ID) {
     return Promise.resolve();
   }
 
+  await didPurgeBLSE(api, state, profile);
+};
+
+/**
+ * Event function, be careful
+ */
+const didPurgeBLSE = async (api: types.IExtensionApi, state: types.IState, profile: types.IProfile) => {
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
     return Promise.resolve();
   }
