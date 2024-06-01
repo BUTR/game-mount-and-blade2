@@ -3,6 +3,7 @@ import { findBLSEMod } from './shared';
 import { GAME_ID } from '../../common';
 import { hasSettingsInterfacePrimaryTool } from '../vortex';
 import { LoadOrderManager } from '../loadOrder';
+import { GetLoadOrderManager } from '../../types';
 
 /**
  * Event function, be careful
@@ -10,7 +11,7 @@ import { LoadOrderManager } from '../loadOrder';
 export const didDeployEvent = async (
   api: types.IExtensionApi,
   profileId: string,
-  getLoadOrderManager: () => LoadOrderManager
+  getLoadOrderManager: GetLoadOrderManager
 ) => {
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);

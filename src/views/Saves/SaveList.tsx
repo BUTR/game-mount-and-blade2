@@ -22,8 +22,8 @@ import {
   getNameDuplicatesError,
 } from './saveUtils';
 import { ISaveGame } from './types';
-import { SaveManager, VortexLauncherManager, versionToString } from '../../utils';
-import { IItemRendererProps, IModuleCache } from '../../types';
+import { versionToString } from '../../utils';
+import { GetLauncherManager, GetSaveManager, IItemRendererProps, IModuleCache } from '../../types';
 import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar';
 import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
 import { IExtensibleProps } from 'vortex-api/lib/types/IExtensionProvider';
@@ -31,9 +31,9 @@ import { IBaseProps as ITableBaseProps } from 'vortex-api/lib/controls/Table';
 import { findBLSEMod, isModActive } from '../../utils/blse/shared';
 
 type IOwnProps = IItemRendererProps & {
-  launcherManager: VortexLauncherManager;
   context: types.IExtensionContext;
-  saveManager: SaveManager;
+  getLauncherManager: GetLauncherManager;
+  getSaveManager: GetSaveManager;
 };
 
 interface IBaseState {
@@ -66,7 +66,9 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   constructor(props: IComponentProps) {
     super(props);
 
-    const { launcherManager, context, saveManager } = props;
+    const { getLauncherManager, context, getSaveManager } = props;
+    const launcherManager = getLauncherManager();
+    const saveManager = getSaveManager();
 
     const vortexState = context.api.getState();
     const vortexActiveProfile = selectors.activeProfile(vortexState);
@@ -311,7 +313,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //console.log(`BANNERLORD: Radio_OnChange(${saveGame.name}) saveGame=`);
     //console.log(saveGame);
 
-    const { saveManager } = this.props;
+    const { getSaveManager } = this.props;
+    const saveManager = getSaveManager();
 
     // get current state object
     let { selectedSave } = this.state;
@@ -374,7 +377,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   private OnRefreshList() {
-    const { launcherManager } = this.props;
+    const { getLauncherManager } = this.props;
+    const launcherManager = getLauncherManager();
 
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
     const allModules = launcherManager.getAllModules();
@@ -474,7 +478,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     //console.log(modules);
   }
   private ParseSave(saveGame: ISaveGame) {
-    const { launcherManager } = this.props;
+    const { getLauncherManager } = this.props;
+    const launcherManager = getLauncherManager();
     const { loadOrder } = this.state;
 
     const allModules = launcherManager.getAllModules();
@@ -494,7 +499,8 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.setState({ loadOrder: newLoadOrder });
   }
   private ValidateSave(saveGame: ISaveGame) {
-    const { launcherManager } = this.props;
+    const { getLauncherManager } = this.props;
+    const launcherManager = getLauncherManager();
 
     const allModules = launcherManager.getAllModules();
 

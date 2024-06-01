@@ -4,15 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 import { Icon, selectors, tooltip, types, util } from 'vortex-api';
-import { IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
-import { versionToString, VortexLauncherManager, actionsLoadOrder } from '../../utils';
+import { GetLauncherManager, IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
+import { versionToString, actionsLoadOrder } from '../../utils';
 import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
 import { types as vetypes, Utils } from '@butr/vortexextensionnative';
 import { TooltipImage } from '../Controls';
 
 interface IBaseProps {
   api: types.IExtensionApi;
-  manager: VortexLauncherManager;
+  getLauncherManager: GetLauncherManager;
   className?: string;
   item: types.IFBLOItemRendererProps;
   availableProviders: vetypes.ModuleProviderType[];
@@ -84,6 +84,7 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
       {lock()}
     </ListGroupItem>
   );
+  // We can render a folder icon via `icon-browse`
 }
 
 function RenderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
@@ -189,7 +190,7 @@ function RenderModuleDuplicates(
 }
 
 function RenderCompatibilityInfo(props: IBaseProps): JSX.Element {
-  const { compatibilityInfo: compatibilityScore, item, manager } = props;
+  const { compatibilityInfo: compatibilityScore, item, getLauncherManager } = props;
 
   if (compatibilityScore === undefined) {
     return <div style={{ width: `1.5em`, height: `1.5em` }} />;
@@ -204,7 +205,7 @@ function RenderCompatibilityInfo(props: IBaseProps): JSX.Element {
   const CURRENTVERSION = versionToString(item.loEntry.data?.moduleInfoExtended.version);
   const RECOMMENDEDSCORE = compatibilityScore.recommendedScore ?? 0;
   const RECOMMENDEDVERSION = compatibilityScore.recommendedVersion ?? '';
-  const GAMEVERSION = manager.getGameVersionVortex();
+  const GAMEVERSION = getLauncherManager().getGameVersionVortex();
   const hint = hasRecommendation
     ? `Based on BUTR analytics:${NL}${NL}Compatibility Score ${SCORE}%${NL}${NL}Suggesting to update to ${RECOMMENDEDVERSION}.${NL}Compatibility Score ${RECOMMENDEDSCORE}%${NL}${NL}${RECOMMENDEDVERSION} has a better compatibility for game ${GAMEVERSION} rather than ${CURRENTVERSION}!`
     : `Based on BUTR analytics:${NL}${NL}Update is not required.${NL}Compatibility Score ${SCORE}%${NL}${NL}${CURRENTVERSION} is one of the best version for game ${GAMEVERSION}`;

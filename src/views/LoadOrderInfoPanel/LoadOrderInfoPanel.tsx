@@ -42,6 +42,12 @@ export function LoadOrderInfoPanel(props: IBaseProps) {
           </li>
           <li>
             {t(
+              `Othewise to properly run the game with the selected mods from Vortex, either run without a primary tool set or use 'Bannerlord Software Extended'` +
+                `when BLSE is installed or use 'Official Bannerlord' when BLSE is not installed.`
+            )}
+          </li>
+          <li>
+            {t(
               `Optional: Manually drag and drop mods to different positions in the load order (for testing different overrides). Mods further down the list override mods further up.`
             )}
           </li>
