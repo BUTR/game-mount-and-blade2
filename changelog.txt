@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.11
+* Made the library lazy loaded, should not be loaded anymore when not required
+---------------------------------------------------------------------------------------------------
 Version: 1.0.10
 * Fixed interference with other games
 * Fixed CLI parameters passing

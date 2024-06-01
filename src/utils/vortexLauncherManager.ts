@@ -19,6 +19,19 @@ import { GAME_ID } from '../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
 
 export class VortexLauncherManager {
+  private static _instance: VortexLauncherManager;
+
+  public static getInstance(api?: types.IExtensionApi): VortexLauncherManager {
+    if (!VortexLauncherManager._instance) {
+      if (api === undefined) {
+        throw new Error('IniStructure is not context aware');
+      }
+      VortexLauncherManager._instance = new VortexLauncherManager(api);
+    }
+
+    return VortexLauncherManager._instance;
+  }
+
   private _launcherManager: NativeLauncherManager;
   private _api: types.IExtensionApi;
 

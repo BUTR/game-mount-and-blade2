@@ -27,10 +27,9 @@ import { version } from '../package.json';
 const main = (context: types.IExtensionContext): boolean => {
   log('info', `Extension Version: ${version}`);
 
-  const launcherManager = new VortexLauncherManager(context.api);
-
-  const getLoadOrderManager = () => LoadOrderManager.getInstance(context.api, launcherManager);
-  const getSaveManager = () => SaveManager.getInstance(context.api, launcherManager);
+  const getLauncherManager = () => VortexLauncherManager.getInstance(context.api);
+  const getLoadOrderManager = () => LoadOrderManager.getInstance(context.api, getLauncherManager);
+  const getSaveManager = () => SaveManager.getInstance(context.api, getLauncherManager);
 
   // Register Settings
   context.registerReducer([`settings`, GAME_ID], reducer);
@@ -46,7 +45,7 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register Settings
 
   // Register Game
-  context.registerGame(new BannerlordGame(context.api, launcherManager));
+  context.registerGame(new BannerlordGame(context.api, getLauncherManager));
 
   /*
   // Register Collection Feature
@@ -70,7 +69,7 @@ const main = (context: types.IExtensionContext): boolean => {
     'savegame',
     'Saves',
     SaveList,
-    new SavePageOptions(context, launcherManager, getSaveManager())
+    new SavePageOptions(context, getLauncherManager, getSaveManager)
   );
 
   // Register Installer.
@@ -91,8 +90,14 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerInstaller(
     `bannerlord-module-installer`,
     25,
-    toBluebird(launcherManager.testModule),
-    toBluebird(launcherManager.installModule)
+    toBluebird(async (files: string[], gameId: string) => {
+      const launcherManager = getLauncherManager();
+      return await launcherManager.testModule(files, gameId);
+    }),
+    toBluebird(async (files: string[], destinationPath: string) => {
+      const launcherManager = getLauncherManager();
+      return await launcherManager.installModule(files, destinationPath);
+    })
   );
   context.registerModType(
     'bannerlord-module',
@@ -104,12 +109,44 @@ const main = (context: types.IExtensionContext): boolean => {
   // Register Installer.
 
   // Register AutoSort button
-  const autoSortIcon = launcherManager.isSorting() ? `spinner` : `loot-sort`;
-  const autoSortAction = (_instanceIds?: string[]): boolean | void => launcherManager.autoSort();
-  const autoSortCondition = (_instanceIds?: string[]): boolean =>
-    selectors.activeGameId(context.api.getState()) === GAME_ID;
-  context.registerAction(`fb-load-order-icons`, 200, autoSortIcon, {}, `Auto Sort`, autoSortAction, autoSortCondition);
+  context.registerAction(
+    `fb-load-order-icons`,
+    200,
+    `loot-sort`,
+    {},
+    `Auto Sort`,
+    (_instanceIds?: string[]): boolean | void => {
+      const launcherManager = getLauncherManager();
+      launcherManager.autoSort();
+    },
+    (_instanceIds?: string[]): boolean => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
   // Register AutoSort button
+
+  // Register Fetch Compatibility Scores button
+  /* Disabled for now because the name is too long
+  context.registerAction(
+    `fb-load-order-icons`,
+    201,
+    `changelog`,
+    {},
+    `Fetch Compatibility Scores`,
+    (_instanceIds?: string[]): boolean | void => {
+      const loadOrderManager = getLoadOrderManager();
+      loadOrderManager.updateCompatibilityScores();
+    },
+    (_instanceIds?: string[]): boolean => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
+  */
+  // Register Fetch Compatibility Scores button
 
   // Register Callbacks
   context.once(
@@ -121,13 +158,15 @@ const main = (context: types.IExtensionContext): boolean => {
           return;
         }
         try {
-          await getLoadOrderManager().deserializeLoadOrder();
+          const loadOrderManager = getLoadOrderManager();
+          await loadOrderManager.deserializeLoadOrder();
         } catch (err) {
           context.api.showErrorNotification?.('Failed to deserialize load order file', err);
           return;
         }
         try {
-          getSaveManager().reloadSave();
+          const saveManager = getSaveManager();
+          saveManager.reloadSave();
         } catch (err) {
           context.api.showErrorNotification?.('Failed to reload the currect save file', err);
           return;

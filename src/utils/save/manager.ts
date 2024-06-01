@@ -1,26 +1,27 @@
 import { selectors, types } from 'vortex-api';
-import { actionsSave, getSaveFromSettings, VortexLauncherManager } from '..';
+import { actionsSave, getSaveFromSettings } from '..';
+import { GetLauncherManager } from '../../types';
 
 export class SaveManager {
-  private static _instance: SaveManager;
+  private static instance: SaveManager;
 
-  private _api: types.IExtensionApi;
-  private _manager: VortexLauncherManager;
-
-  public static getInstance(api?: types.IExtensionApi, manager?: VortexLauncherManager): SaveManager {
-    if (!SaveManager._instance) {
-      if (api === undefined || manager === undefined) {
+  public static getInstance(api?: types.IExtensionApi, getLauncherManager?: GetLauncherManager): SaveManager {
+    if (!SaveManager.instance) {
+      if (api === undefined || getLauncherManager === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      SaveManager._instance = new SaveManager(api, manager);
+      SaveManager.instance = new SaveManager(api, getLauncherManager);
     }
 
-    return SaveManager._instance;
+    return SaveManager.instance;
   }
 
-  constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
-    this._api = api;
-    this._manager = manager;
+  private api: types.IExtensionApi;
+  private getLauncherManager: GetLauncherManager;
+
+  constructor(api: types.IExtensionApi, getLauncherManager: GetLauncherManager) {
+    this.api = api;
+    this.getLauncherManager = getLauncherManager;
   }
 
   public reloadSave(): void {
@@ -29,7 +30,7 @@ export class SaveManager {
   }
 
   public getSave = (): string | null => {
-    const state = this._api.getState();
+    const state = this.api.getState();
     const profile = selectors.activeProfile(state);
 
     return getSaveFromSettings(state, profile.id);
@@ -40,9 +41,11 @@ export class SaveManager {
       saveId = null;
     }
 
-    const state = this._api.getState();
+    const state = this.api.getState();
     const profile = selectors.activeProfile(state);
-    this._api.store?.dispatch(actionsSave.setCurrentSave(profile.id, saveId));
-    this._manager.setSaveFile(saveId ?? '');
+    this.api.store?.dispatch(actionsSave.setCurrentSave(profile.id, saveId));
+
+    const launcherManager = this.getLauncherManager();
+    launcherManager.setSaveFile(saveId ?? '');
   };
 }

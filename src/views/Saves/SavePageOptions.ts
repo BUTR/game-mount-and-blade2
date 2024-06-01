@@ -1,20 +1,24 @@
 import { selectors, types } from 'vortex-api';
 import { GAME_ID } from '../../common';
-import { SaveManager, VortexLauncherManager } from '../../utils';
+import { GetLauncherManager, GetSaveManager } from '../../types';
 
 export class SavePageOptions implements types.IMainPageOptions {
   private context: types.IExtensionContext;
-  private launcherManager: VortexLauncherManager;
-  private saveManager: SaveManager;
+  private getLauncherManager: GetLauncherManager;
+  private getSaveManager: GetSaveManager;
 
   public id = 'bannerlord-saves';
   public hotkey = 'A';
   public group: 'dashboard' | 'global' | 'per-game' | 'support' | 'hidden' = 'per-game';
 
-  constructor(context: types.IExtensionContext, launcherManager: VortexLauncherManager, saveManager: SaveManager) {
+  constructor(
+    context: types.IExtensionContext,
+    getLauncherManager: GetLauncherManager,
+    getSaveManager: GetSaveManager
+  ) {
     this.context = context;
-    this.launcherManager = launcherManager;
-    this.saveManager = saveManager;
+    this.getLauncherManager = getLauncherManager;
+    this.getSaveManager = getSaveManager;
   }
 
   public visible = () => {
@@ -26,7 +30,7 @@ export class SavePageOptions implements types.IMainPageOptions {
   public props = () => ({
     context: this.context,
     t: this.context.api.translate,
-    launcherManager: this.launcherManager,
-    saveManager: this.saveManager,
+    getLauncherManager: this.getLauncherManager,
+    getSaveManager: this.getSaveManager,
   });
 }

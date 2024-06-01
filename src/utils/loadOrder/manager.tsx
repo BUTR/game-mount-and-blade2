@@ -7,22 +7,37 @@ import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
   ModAnalyzerProxy,
-  VortexLauncherManager,
   versionToString,
   actionsLoadOrder,
 } from '..';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
-import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
+import {
+  GetLauncherManager,
+  IModuleCompatibilityInfoCache,
+  RequiredProperties,
+  VortexLoadOrderStorage,
+} from '../../types';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
-  private static _instance: LoadOrderManager;
+  private static instance: LoadOrderManager;
 
-  private _api: types.IExtensionApi;
-  private _manager: VortexLauncherManager;
-  private _isInitialized = false;
-  private _allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
-  private _compatibilityScores: IModuleCompatibilityInfoCache = {};
+  public static getInstance(api?: types.IExtensionApi, getLauncherManager?: GetLauncherManager): LoadOrderManager {
+    if (!LoadOrderManager.instance) {
+      if (api === undefined || getLauncherManager === undefined) {
+        throw new Error('IniStructure is not context aware');
+      }
+      LoadOrderManager.instance = new LoadOrderManager(api, getLauncherManager);
+    }
+
+    return LoadOrderManager.instance;
+  }
+
+  private api: types.IExtensionApi;
+  private getLauncherManager: GetLauncherManager;
+  private isInitialized = false;
+  private allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
+  private compatibilityScores: IModuleCompatibilityInfoCache = {};
 
   public gameId: string = GAME_ID;
   public toggleableEntries = true;
@@ -34,32 +49,21 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public usageInstructions?: React.ComponentType<unknown>;
   public noCollectionGeneration = true;
 
-  public static getInstance(api?: types.IExtensionApi, manager?: VortexLauncherManager): LoadOrderManager {
-    if (!LoadOrderManager._instance) {
-      if (api === undefined || manager === undefined) {
-        throw new Error('IniStructure is not context aware');
-      }
-      LoadOrderManager._instance = new LoadOrderManager(api, manager);
-    }
-
-    return LoadOrderManager._instance;
-  }
-
-  constructor(api: types.IExtensionApi, manager: VortexLauncherManager) {
-    this._api = api;
-    this._manager = manager;
-    this.usageInstructions = () => <LoadOrderInfoPanel refresh={refresh} />;
+  constructor(api: types.IExtensionApi, getLauncherManager: GetLauncherManager) {
+    this.api = api;
+    this.getLauncherManager = getLauncherManager;
+    this.usageInstructions = () => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
 
     this.customItemRenderer = ({ className = '', item }) => {
-      const availableProviders = this._allModules
+      const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
         .map((x) => x.moduleProviderType);
-      const compatibilityScore = this._compatibilityScores[item.loEntry.id];
+      const compatibilityScore = this.compatibilityScores[item.loEntry.id];
 
       return (
         <BannerlordItemRenderer
           api={api}
-          manager={manager}
+          getLauncherManager={getLauncherManager}
           item={item}
           className={className}
           key={item.loEntry.id}
@@ -68,46 +72,50 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         />
       );
     };
-    const refresh = () => {
-      const proxy = new ModAnalyzerProxy(this._api);
-      const gameVersion = this._manager.getGameVersionVortex();
-      const query: IModAnalyzerRequestQuery = {
-        gameVersion: gameVersion,
-        modules: this._allModules.map<IModAnalyzerRequestModule>((x) => ({
-          moduleId: x.id,
-          moduleVersion: versionToString(x.version),
-        })),
-      };
-      proxy.analyze(query).then((result) => {
-        this._compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-          map[curr.moduleId] = {
-            score: curr.compatibility,
-            recommendedScore: curr.recommendedCompatibility,
-            recommendedVersion: curr.recommendedModuleVersion,
-          };
-          return map;
-        }, {});
-        this.forceRefresh();
-      });
-    };
   }
 
+  public updateCompatibilityScores = () => {
+    const proxy = new ModAnalyzerProxy(this.api);
+    const launcherManager = this.getLauncherManager();
+    const gameVersion = launcherManager.getGameVersionVortex();
+    const query: IModAnalyzerRequestQuery = {
+      gameVersion: gameVersion,
+      modules: this.allModules.map<IModAnalyzerRequestModule>((x) => ({
+        moduleId: x.id,
+        moduleVersion: versionToString(x.version),
+      })),
+    };
+    proxy.analyze(query).then((result) => {
+      this.compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+        map[curr.moduleId] = {
+          score: curr.compatibility,
+          recommendedScore: curr.recommendedCompatibility,
+          recommendedVersion: curr.recommendedModuleVersion,
+        };
+        return map;
+      }, {});
+      this.forceRefresh();
+    });
+  };
+
   private forceRefresh = (): void => {
-    const profile = selectors.activeProfile(this._api.getState());
-    this._api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
+    const profile = selectors.activeProfile(this.api.getState());
+    this.api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(loadOrder);
-    this._manager.saveLoadOrderVortex(loadOrderConverted);
+    const launcherManager = this.getLauncherManager();
+    launcherManager.saveLoadOrderVortex(loadOrderConverted);
     return Promise.resolve();
   };
 
   private setParameters = (loadOrder: vetypes.LoadOrder): void => {
-    if (!this._isInitialized) {
-      this._isInitialized = true;
+    if (!this.isInitialized) {
+      this.isInitialized = true;
       // We automatically set the modules to launch on save, but not on first load
-      this._manager.setModulesToLaunch(loadOrder);
+      const launcherManager = this.getLauncherManager();
+      launcherManager.setModulesToLaunch(loadOrder);
     }
   };
   private checkSavedLoadOrder = (autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
@@ -116,7 +124,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     );
     if (autoSort && savedLoadOrderIssues.length > 0) {
       // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
-      this._api.sendNotification?.({
+      this.api.sendNotification?.({
         type: 'warning',
         message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${savedLoadOrderIssues.join(
           `\n *`
@@ -126,7 +134,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   };
   private checkOrderByLoadOrderResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): void => {
     if (autoSort && result.issues) {
-      this._api.sendNotification?.({
+      this.api.sendNotification?.({
         type: 'warning',
         message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${result.issues.join(
           `\n`
@@ -141,7 +149,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     if (!result || !result.orderedModuleViewModels || !result.result) {
       if (autoSort) {
         // The user is not expecting a sort operation, so don't give the notification
-        this._api.sendNotification?.({
+        this.api.sendNotification?.({
           type: 'error',
           message: `Failed to correct the Load Order! Keeping the original list as-is.`,
         });
@@ -164,24 +172,24 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     return excludedLoadOrder;
   };
   public deserializeLoadOrder = (): Promise<VortexLoadOrderStorage> => {
-    const firstLoad = this._isInitialized;
     const autoSort = true; // TODO: get from settings
+    const launcherManager = this.getLauncherManager();
 
     // Make sure the LauncherManager has the latest module list
-    this._manager.refreshModules();
-    this._allModules = this._manager.getAllModulesWithDuplicates();
+    launcherManager.refreshModules();
+    this.allModules = launcherManager.getAllModulesWithDuplicates();
 
     // Get the saved Load Order
-    const allModules = this._manager.getAllModules();
-    const savedLoadOrder = this._manager.loadLoadOrderVortex();
-    const savedLoadOrderVortex = libraryToVortex(this._api, allModules, savedLoadOrder);
+    const allModules = launcherManager.getAllModules();
+    const savedLoadOrder = launcherManager.loadLoadOrderVortex();
+    const savedLoadOrderVortex = libraryToVortex(this.api, allModules, savedLoadOrder);
 
     this.checkSavedLoadOrder(autoSort, savedLoadOrderVortex);
 
     // Apply the Load Order to the list of modules
     // Useful when there are new modules or old modules are missing
     // The output wil wil contain the auto sorted list of modules
-    const result = this._manager.orderByLoadOrder(savedLoadOrder);
+    const result = launcherManager.orderByLoadOrder(savedLoadOrder);
     if (!this.checkResult(autoSort, result)) {
       this.setParameters(savedLoadOrder);
       return Promise.resolve(savedLoadOrderVortex);
@@ -192,7 +200,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
     // Use the sorted to closest valid state Load Order
     if (autoSort) {
-      const loadOrderVortex = libraryVMToVortex(this._api, result.orderedModuleViewModels);
+      const loadOrderVortex = libraryVMToVortex(this.api, result.orderedModuleViewModels);
       this.setParameters(libraryVMToLibrary(result.orderedModuleViewModels));
       return Promise.resolve(loadOrderVortex);
     }
@@ -200,7 +208,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
     const excludedSavedLoadOrder = this.getExcludedLoadOrder(savedLoadOrder, result);
     this.setParameters(excludedSavedLoadOrder);
-    return Promise.resolve(libraryToVortex(this._api, allModules, excludedSavedLoadOrder));
+    return Promise.resolve(libraryToVortex(this.api, allModules, excludedSavedLoadOrder));
   };
 
   public validate = (_prev: VortexLoadOrderStorage, curr: VortexLoadOrderStorage): Promise<types.IValidationResult> => {
