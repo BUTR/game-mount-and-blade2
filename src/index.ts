@@ -40,7 +40,7 @@ const main = (context: types.IExtensionContext): boolean => {
     t: context.api.translate,
     onSetSortOnDeploy: settingsOnSetSortOnDeploy,
   });
-  const settingsVisible = () => selectors.activeProfile(context.api.getState()).gameId === GAME_ID;
+  const settingsVisible = () => selectors.activeProfile(context.api.getState())?.gameId === GAME_ID;
   context.registerSettings(`Interface`, Settings, settingsProps, settingsVisible, 51);
   // Register Settings
 
