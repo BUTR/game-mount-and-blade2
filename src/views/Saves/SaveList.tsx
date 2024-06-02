@@ -17,13 +17,19 @@ import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextension
 import {
   getModulesByName,
   getLoadOrderIssues,
-  getMismatchedModuleVersionsWarning,
-  getMissingModuleNamesError,
-  getNameDuplicatesError,
+  getMismatchedModuleVersions,
+  getMissingModuleNames,
+  getNameDuplicates,
 } from './saveUtils';
 import { ISaveGame } from './types';
 import { versionToString } from '../../utils';
-import { GetLauncherManager, GetSaveManager, IItemRendererProps, IModuleCache } from '../../types';
+import {
+  GetLauncherManager,
+  GetLocalizationManager,
+  GetSaveManager,
+  IItemRendererProps,
+  IModuleCache,
+} from '../../types';
 import { IBaseProps as IIconBarBaseProps } from 'vortex-api/lib/controls/IconBar';
 import { IActionControlProps } from 'vortex-api/lib/controls/ActionControl';
 import { IExtensibleProps } from 'vortex-api/lib/types/IExtensionProvider';
@@ -34,6 +40,7 @@ type IOwnProps = IItemRendererProps & {
   context: types.IExtensionContext;
   getLauncherManager: GetLauncherManager;
   getSaveManager: GetSaveManager;
+  getLocalizationManager: GetLocalizationManager;
 };
 
 interface IBaseState {
@@ -54,6 +61,9 @@ const IconWrapper = IconBar as React.ComponentType<
   IIconBarBaseProps & IActionControlProps & IExtensibleProps & React.HTMLAttributes<unknown>
 >;
 
+export type ISaveListProps = IComponentProps;
+
+// TODO: Reload on localization change
 export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   private mStaticButtons: types.IActionDefinition[];
   private saveGameActions: ITableRowAction[];
@@ -66,9 +76,11 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   constructor(props: IComponentProps) {
     super(props);
 
-    const { getLauncherManager, context, getSaveManager } = props;
+    const { context, getLauncherManager, getSaveManager, getLocalizationManager } = props;
     const launcherManager = getLauncherManager();
     const saveManager = getSaveManager();
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
 
     const vortexState = context.api.getState();
     const vortexActiveProfile = selectors.activeProfile(vortexState);
@@ -87,7 +99,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     });
 
     // get list of save games
-    this.OnRefreshList();
+    this.reloadSaves();
 
     this.storedSaveGameName = saveManager.getSave() ?? 'No Save';
     if (this.storedSaveGameName) {
@@ -110,9 +122,9 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
           id: `btn-refresh-list`,
           key: `btn-refresh-list`,
           icon: `refresh`,
-          text: `Refresh List`,
+          text: t(`Refresh`),
           className: `load-order-refresh-list`,
-          onClick: () => this.OnRefreshList(),
+          onClick: () => this.reloadSaves(),
         }),
       },
     ];
@@ -130,42 +142,42 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       },
       {
         id: 'name',
-        name: 'Name',
+        name: t('{=JtelOsIW}Name'),
         calc: (data: [string, ISaveGame]) => data[1].name,
         placement: 'both',
         edit: {},
       },
       {
         id: 'characterName',
-        name: 'Character',
+        name: t('{=OJsGrGVi}Character'),
         calc: (data: [string, ISaveGame]) => data[1].characterName ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'mainHeroLevel',
-        name: 'Level',
+        name: t('{=JxpEEQdF}Level'),
         calc: (data: [string, ISaveGame]) => data[1].mainHeroLevel ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'dayLong',
-        name: 'Days',
+        name: t('{=qkkTPycE}Days'),
         calc: (data: [string, ISaveGame]) => data[1].dayLong?.toFixed(0) ?? '',
         placement: 'both',
         edit: {},
       },
       {
         id: 'status',
-        name: 'Status',
-        customRenderer: (data: [string, ISaveGame]) => this.GetStatusCustomRenderer(data[1]),
+        name: t('Status'),
+        customRenderer: (data: [string, ISaveGame]) => this.StatusCustomRenderer(data[1]),
         placement: 'both',
         edit: {},
       },
       {
         id: 'applicationVersion',
-        name: 'Version',
+        name: t('{=14WBFIS1}Version'),
         calc: (data: [string, ISaveGame]) =>
           data[1].applicationVersion ? versionToString(data[1].applicationVersion) : '',
         placement: 'both',
@@ -173,7 +185,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       },
       {
         id: 'creationTime',
-        name: 'Created',
+        name: t('{=aYWWDkKX}CreatedAt'),
         calc: (data: [string, ISaveGame]) => ticksToDate(data[1].creationTime)?.toLocaleString(),
         placement: 'both',
         edit: {},
@@ -182,19 +194,26 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   public override render(): JSX.Element {
-    const { t } = this.props;
+    const { context } = this.props;
+
+    const t = context.api.translate;
 
     return (
       <MainPage>
         <MainPage.Header>
-          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t!} />
+          <IconWrapper group="bannerlord-saves-icons" staticElements={this.mStaticButtons} className="menubar" t={t} />
         </MainPage.Header>
         <MainPage.Body>{this.renderContent(this.saveGameActions)}</MainPage.Body>
       </MainPage>
     );
   }
+
   private renderContent(saveActions: ITableRowAction[]) {
+    const { getLocalizationManager } = this.props;
     const { selectedRow, selectedSave } = this.state;
+
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
 
     return (
       <Panel>
@@ -202,11 +221,16 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
           <FlexLayout type="column">
             <FlexLayout.Fixed id="instructions">
               <p>
-                Instructions: Select a row to see more information and use the radio buttons to select the save to
-                launch the game. If you don&apos;t want to launch with a save, choose the &apos;No Save&apos; option at
-                the top.
+                {t(
+                  `Instructions: Select a row to see more information and use the radio buttons to select the save to ` +
+                    `launch the game. If you don't want to launch with a save, choose the 'No Save' option at` +
+                    `the top.`
+                )}
               </p>
-              <p>Currently selected save: {selectedSave?.name}</p>
+              <p>
+                {t(`Currently selected save: `)}
+                {selectedSave?.name}
+              </p>
             </FlexLayout.Fixed>
 
             <FlexLayout type="row">
@@ -232,6 +256,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       </Panel>
     );
   }
+
   private Table_OnChangeSelection(saveGame: ISaveGame) {
     // when a row is selected
 
@@ -253,6 +278,11 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     this.setState({ selectedRow });
   }
   private RenderSidebar(saveGame: ISaveGame | undefined): JSX.Element {
+    const { getLocalizationManager } = this.props;
+
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
+
     // if nothing is selected
     if (!saveGame) {
       return <></>;
@@ -262,10 +292,34 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     return (
       <>
         {<h3>{saveGame.name}</h3>}
-        {this.GetIssueRenderSnippet('Missing Modules', saveGame.missingModules)}
-        {this.GetIssueRenderSnippet('Duplicate Modules', saveGame.duplicateModules)}
-        {this.GetIssueRenderSnippet('Version Mismatches', saveGame.mismatchedModuleVersions)}
-        {this.GetIssueRenderSnippet('Load Order issues', saveGame.loadOrderIssues)}
+        {this.GetIssueRenderSnippet(
+          t('{=HvvA78sZ}Load Order Issues:{NL}{LOADORDERISSUES}', {
+            NL: '',
+            LOADORDERISSUES: '',
+          }),
+          saveGame.loadOrderIssues
+        )}
+        {this.GetIssueRenderSnippet(
+          t('{=GtDRbC3m}Missing Modules:{NL}{MODULES}', {
+            NL: '',
+            MODULES: '',
+          }),
+          saveGame.missingModules
+        )}
+        {this.GetIssueRenderSnippet(
+          t('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', {
+            NL: '',
+            MODULENAMES: '',
+          }),
+          saveGame.duplicateModules
+        )}
+        {this.GetIssueRenderSnippet(
+          t('{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}', {
+            NL: '',
+            MODULEVERSIONS: '',
+          }),
+          saveGame.mismatchedModuleVersions
+        )}
       </>
     );
   }
@@ -274,7 +328,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     if (issue && issue.length) {
       return (
         <>
-          <p>{issueHeading}:</p>
+          <p>{issueHeading}</p>
           <ul>
             {issue.map((object, i) => (
               <li key={i}>{object}</li>
@@ -284,12 +338,7 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       );
     }
 
-    // default to returning empty fragment
-    return (
-      <>
-        <p>No {issueHeading}</p>
-      </>
-    );
+    return <></>;
   }
 
   // Table
@@ -325,7 +374,11 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // save it in local state
     this.setState({ selectedSave });
 
-    saveManager.setSave(saveGame.name);
+    if (saveGame.index !== 0) {
+      saveManager.setSave(saveGame.name);
+    } else {
+      saveManager.setSave(null);
+    }
   }
 
   private checkIssues(
@@ -348,7 +401,12 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
   }
 
   // Table
-  private GetStatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
+  private StatusCustomRenderer(saveGame: ISaveGame): JSX.Element {
+    const { getLocalizationManager } = this.props;
+
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
+
     let iconName = 'toggle-enabled';
     let colorName = 'var(--brand-success)';
     let issues: string[] = [];
@@ -357,28 +415,36 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
       saveGame.loadOrderIssues,
       iconName,
       colorName,
-      'load order issues'
+      t('load order issues')
     );
-    [iconName, colorName, issues] = this.checkIssues(saveGame.missingModules, iconName, colorName, 'missing modules');
+    [iconName, colorName, issues] = this.checkIssues(
+      saveGame.missingModules,
+      iconName,
+      colorName,
+      t('missing modules')
+    );
     [iconName, colorName, issues] = this.checkIssues(
       saveGame.duplicateModules,
       iconName,
       colorName,
-      'duplicate modules'
+      t('duplicate modules')
     );
     [iconName, colorName, issues] = this.checkIssues(
       saveGame.mismatchedModuleVersions,
       iconName,
       colorName,
-      'version mismatches'
+      t('version mismatches')
     );
 
     return <tooltip.Icon name={iconName} tooltip={issues.join('\n')} style={{ color: colorName }} />;
   }
 
-  private OnRefreshList() {
-    const { getLauncherManager } = this.props;
+  private reloadSaves() {
+    const { getLauncherManager, getLocalizationManager } = this.props;
+
     const launcherManager = getLauncherManager();
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
 
     const saves: vetypes.SaveMetadata[] = launcherManager.getSaveFiles();
     const allModules = launcherManager.getAllModules();
@@ -388,70 +454,18 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
     // add starting entry to top of list (didn't work as numbers got added first, but we are setting the index anyway to sort later)
     this.savesGames['nosave'] = {
       index: 0,
-      name: 'No Save',
+      name: t('No Save'),
       modules: {},
     };
 
     // add savesDict as starting object and keep adding to it
     saves.reduce((prev: { [name: string]: ISaveGame }, current, currentIndex) => {
-      if (!current['Modules']) {
+      const saveGame = this.createSaveGame(allModules, current, currentIndex);
+      if (!saveGame) {
         return prev;
       }
 
-      const saveGame: ISaveGame = {
-        index: currentIndex + 1,
-        name: current.Name,
-        applicationVersion:
-          current['ApplicationVersion'] !== undefined
-            ? BannerlordModuleManager.parseApplicationVersion(current['ApplicationVersion'])
-            : undefined,
-        creationTime: current['CreationTime'] !== undefined ? parseInt(current['CreationTime']) : undefined,
-        characterName: current['CharacterName'],
-        mainHeroGold: current['MainHeroGold'] !== undefined ? parseInt(current['MainHeroGold']) : undefined,
-        mainHeroLevel: current['MainHeroLevel'] !== undefined ? parseInt(current['MainHeroLevel']) : undefined,
-        dayLong: current['DayLong'] !== undefined ? parseFloat(current['DayLong']) : undefined,
-
-        clanBannerCode: current['ClanBannerCode'],
-        clanFiefs: current['ClanFiefs'] !== undefined ? parseInt(current['ClanFiefs']) : undefined,
-        clanInfluence: current['ClanInfluence'] !== undefined ? parseFloat(current['ClanInfluence']) : undefined,
-
-        mainPartyFood: current['MainPartyFood'] !== undefined ? parseFloat(current['MainPartyFood']) : undefined,
-        mainPartyHealthyMemberCount:
-          current['MainPartyHealthyMemberCount'] !== undefined
-            ? parseInt(current['MainPartyHealthyMemberCount'])
-            : undefined,
-        mainPartyPrisonerMemberCount:
-          current['MainPartyPrisonerMemberCount'] !== undefined
-            ? parseInt(current['MainPartyPrisonerMemberCount'])
-            : undefined,
-        mainPartyWoundedMemberCount:
-          current['MainPartyWoundedMemberCount'] !== undefined
-            ? parseInt(current['MainPartyWoundedMemberCount'])
-            : undefined,
-        version: current['Version'] !== undefined ? parseInt(current['Version']) : undefined,
-        modules: {}, // blank dictionary for now
-      };
-
-      // build up modules dictionary?
-      const moduleNames = current['Modules'].split(';');
-
-      const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
-      for (const module of moduleNames) {
-        const key = module;
-        const moduleValue = current['Module_' + module];
-        if (!moduleValue) {
-          continue;
-        }
-
-        const version = BannerlordModuleManager.parseApplicationVersion(moduleValue);
-        if (version.changeSet === saveChangeSet) {
-          version.changeSet = 0;
-        }
-        saveGame.modules[key] = version;
-      }
-
-      this.ParseSave(saveGame);
-      this.ValidateSave(saveGame);
+      this.parseSave(allModules, saveGame);
       prev[current.Name] = saveGame;
 
       return prev;
@@ -464,33 +478,27 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     this.sortedSaveGames = Object.entries(this.savesGames).sort((a, b) => a[1].index - b[1].index);
 
-    //console.log(this.savesGames);
-    //console.log(this.sortedSaveGames);
-
     this.setState({
       saves,
       allModules: allModules,
     });
-
-    //console.log(`BANNERLORD: OnRefreshList() this.savesDict= saves=`);
-    //console.log(this.savesGames);
-    //console.log(saves);
-    //console.log(modules);
   }
-  private ParseSave(saveGame: ISaveGame) {
-    const { getLauncherManager } = this.props;
-    const launcherManager = getLauncherManager();
+
+  private parseSave(allModules: Readonly<IModuleCache>, saveGame: ISaveGame) {
+    const { getLocalizationManager } = this.props;
     const { loadOrder } = this.state;
 
-    const allModules = launcherManager.getAllModules();
+    const localizationManager = getLocalizationManager();
+    const t = localizationManager.localize;
+
     const allModulesByName = getModulesByName(allModules);
-    const unknownId = launcherManager.localize('{=kxqLbSqe}(Unknown ID)', {});
+    const unknownId = t('{=kxqLbSqe}(Unknown ID)');
     const newLoadOrder = { ...loadOrder };
 
     Object.keys(saveGame.modules).forEach((current) => {
       const moduleId = allModulesByName[current]?.id ?? `${current} ${unknownId}`;
       if (moduleId !== undefined) {
-        newLoadOrder[saveGame.name] = launcherManager.localize('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {
+        newLoadOrder[saveGame.name] = t('{=sd6M4KRd}Load Order:{NL}{LOADORDER}', {
           LOADORDER: moduleId,
         });
       }
@@ -498,59 +506,73 @@ export class SaveList extends ComponentEx<IComponentProps, IComponentState> {
 
     this.setState({ loadOrder: newLoadOrder });
   }
-  private ValidateSave(saveGame: ISaveGame) {
-    const { getLauncherManager } = this.props;
-    const launcherManager = getLauncherManager();
 
-    const allModules = launcherManager.getAllModules();
+  private createSaveGame(allModules: Readonly<IModuleCache>, current: vetypes.SaveMetadata, currentIndex: number) {
+    if (!current['Modules']) {
+      return undefined;
+    }
 
-    /*
-    if (nameDuplicates !== undefined) {
-      errorHints[saveGame.name] = launcherManager.localize('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', {
-        MODULENAMES: Object.values(nameDuplicates).join('\n'),
-      });
-      this.setState({ errorHints });
-      return;
-    }*/
+    const { getLocalizationManager } = this.props;
 
-    saveGame.duplicateModules = getNameDuplicatesError(saveGame, launcherManager, allModules);
-    saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, launcherManager, allModules);
-    saveGame.missingModules = getMissingModuleNamesError(saveGame, launcherManager, allModules);
-    saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, allModules);
+    const localizationManager = getLocalizationManager();
 
-    //console.log(`BANNERLORD: ValidateSave() saveGame=`);
-    //console.log(saveGame);
+    const saveGame: ISaveGame = {
+      index: currentIndex + 1,
+      name: current.Name,
+      applicationVersion:
+        current['ApplicationVersion'] !== undefined
+          ? BannerlordModuleManager.parseApplicationVersion(current['ApplicationVersion'])
+          : undefined,
+      creationTime: current['CreationTime'] !== undefined ? parseInt(current['CreationTime']) : undefined,
+      characterName: current['CharacterName'],
+      mainHeroGold: current['MainHeroGold'] !== undefined ? parseInt(current['MainHeroGold']) : undefined,
+      mainHeroLevel: current['MainHeroLevel'] !== undefined ? parseInt(current['MainHeroLevel']) : undefined,
+      dayLong: current['DayLong'] !== undefined ? parseFloat(current['DayLong']) : undefined,
 
-    /*
-    if (loadOrderIssues.length > 0 || missingModules.length > 0) {
-      let str = '';
-      if (loadOrderIssues.length > 0) {
-        str += launcherManager.localize('{=HvvA78sZ}Load Order Issues:{NL}{LOADORDERISSUES}', {
-          LOADORDERISSUES: loadOrderIssues.join('\n\n'),
-        });
-        str += missingModules !== undefined ? '\n\n\n' : '';
+      clanBannerCode: current['ClanBannerCode'],
+      clanFiefs: current['ClanFiefs'] !== undefined ? parseInt(current['ClanFiefs']) : undefined,
+      clanInfluence: current['ClanInfluence'] !== undefined ? parseFloat(current['ClanInfluence']) : undefined,
+
+      mainPartyFood: current['MainPartyFood'] !== undefined ? parseFloat(current['MainPartyFood']) : undefined,
+      mainPartyHealthyMemberCount:
+        current['MainPartyHealthyMemberCount'] !== undefined
+          ? parseInt(current['MainPartyHealthyMemberCount'])
+          : undefined,
+      mainPartyPrisonerMemberCount:
+        current['MainPartyPrisonerMemberCount'] !== undefined
+          ? parseInt(current['MainPartyPrisonerMemberCount'])
+          : undefined,
+      mainPartyWoundedMemberCount:
+        current['MainPartyWoundedMemberCount'] !== undefined
+          ? parseInt(current['MainPartyWoundedMemberCount'])
+          : undefined,
+      version: current['Version'] !== undefined ? parseInt(current['Version']) : undefined,
+      modules: {}, // blank dictionary for now
+    };
+
+    // build up modules dictionary?
+    const moduleNames = current['Modules'].split(';');
+
+    const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
+    for (const module of moduleNames) {
+      const key = module;
+      const moduleValue = current['Module_' + module];
+      if (!moduleValue) {
+        continue;
       }
-      if (missingModules.length > 0) {
-        str += launcherManager.localize('{=GtDRbC3m}Missing Modules:{NL}{MODULES}', {
-          MODULES: missingModules.join('\n'),
-        });
+
+      const version = BannerlordModuleManager.parseApplicationVersion(moduleValue);
+      if (version.changeSet === saveChangeSet) {
+        version.changeSet = 0;
       }
-      errorHints[saveGame.name] = str;
-      this.setState({ errorHints });
-      return;
-    }*/
+      saveGame.modules[key] = version;
+    }
 
-    //saveGame.mismatchedModuleVersions = getMismatchedModuleVersionsWarning(saveGame, launcherManager, allModules);
+    saveGame.duplicateModules = getNameDuplicates(allModules);
+    saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, allModules);
+    saveGame.missingModules = getMissingModuleNames(saveGame, allModules);
+    saveGame.mismatchedModuleVersions = getMismatchedModuleVersions(saveGame, localizationManager, allModules);
 
-    /*
-    if (mismatchedModuleVersions !== undefined) {
-      warningHints[saveGame.name] = launcherManager.localize(
-        '{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}',
-        {
-          MODULEVERSIONS: mismatchedModuleVersions,
-        }
-      );
-      this.setState({ warningHints });
-    }*/
+    return saveGame;
   }
 }

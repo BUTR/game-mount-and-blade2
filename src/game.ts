@@ -3,11 +3,12 @@ import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
 import { findGame, getBannerlordMainExe, requiresLauncher, setup } from './utils';
-import { GetLauncherManager } from './types';
+import { GetLauncherManager, GetLocalizationManager } from './types';
 
 export class BannerlordGame implements types.IGame {
   private _api: types.IExtensionApi;
   private _getLauncherManager: GetLauncherManager;
+  private _getLocalizationManager: GetLocalizationManager;
 
   public id: string = GAME_ID;
   public name = `Mount & Blade II: Bannerlord (BUTR)`;
@@ -30,9 +31,14 @@ export class BannerlordGame implements types.IGame {
     customOpenModsPath: MODULES,
   };
 
-  constructor(api: types.IExtensionApi, getLauncherManager: GetLauncherManager) {
+  constructor(
+    api: types.IExtensionApi,
+    getLauncherManager: GetLauncherManager,
+    getLocalizationManager: GetLocalizationManager
+  ) {
     this._api = api;
     this._getLauncherManager = getLauncherManager;
+    this._getLocalizationManager = getLocalizationManager;
   }
 
   public queryPath = toBluebird<string | types.IGameStoreEntry>(async (): Promise<string | types.IGameStoreEntry> => {
@@ -49,8 +55,7 @@ export class BannerlordGame implements types.IGame {
     return getBannerlordMainExe(discoveredPath, this._api);
   };
   public setup = toBluebird(async (discovery: types.IDiscoveryResult) => {
-    const launcherManager = this._getLauncherManager();
-    await setup(this._api, discovery, launcherManager);
+    await setup(this._api, discovery, this._getLauncherManager, this._getLocalizationManager);
   });
   //public requiresLauncher = toBluebird(async (_gamePath: string, store?: string) => {
   //  return await requiresLauncher(store);

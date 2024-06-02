@@ -1,10 +1,14 @@
 import * as React from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
-import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 import { Icon, selectors, tooltip, types, util } from 'vortex-api';
-import { GetLauncherManager, IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
+import {
+  GetLauncherManager,
+  GetLocalizationManager,
+  IModuleCompatibilityInfo,
+  IVortexViewModelData,
+} from '../../types';
 import { versionToString, actionsLoadOrder } from '../../utils';
 import { MODULE_LOGO, STEAM_LOGO, TW_LOGO } from '../../common';
 import { types as vetypes, Utils } from '@butr/vortexextensionnative';
@@ -13,6 +17,7 @@ import { TooltipImage } from '../Controls';
 interface IBaseProps {
   api: types.IExtensionApi;
   getLauncherManager: GetLauncherManager;
+  getLocalizationManager: GetLocalizationManager;
   className?: string;
   item: types.IFBLOItemRendererProps;
   availableProviders: vetypes.ModuleProviderType[];
@@ -76,10 +81,10 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
       <p className="load-order-name">
         {name} ({version})
       </p>
-      {RenderExternalBanner(item.loEntry)}
+      {RenderExternalBanner(props, item.loEntry)}
       {RenderCompatibilityInfo(props)}
       {RenderModuleDuplicates(props, item.loEntry)}
-      {RenderModuleProviderIcon(item.loEntry)}
+      {RenderModuleProviderIcon(props, item.loEntry)}
       {checkBox()}
       {lock()}
     </ListGroupItem>
@@ -87,7 +92,7 @@ export function BannerlordItemRenderer(props: IBaseProps): JSX.Element {
   // We can render a folder icon via `icon-browse`
 }
 
-function RenderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
+function RenderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>) {
   const isOfficial = item.data !== undefined && item.data.moduleInfoExtended.isOfficial;
   const isCommunity = item.data !== undefined && !item.data.moduleInfoExtended.isOfficial;
   const dependencies = item.data !== undefined ? Utils.getDependencyHint(item.data.moduleInfoExtended) : '';
@@ -117,7 +122,7 @@ function RenderModuleIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>)
   return <TooltipImage src={''} style={{ width: `1.5em`, height: `1.5em` }} tooltip={dependencies}></TooltipImage>;
 }
 
-function RenderValidationError(props: IBaseProps): JSX.Element | null {
+function RenderValidationError(props: IBaseProps) {
   const { invalidEntries, loEntry } = props.item;
   const invalidEntryList =
     invalidEntries !== undefined
@@ -136,8 +141,12 @@ function RenderValidationError(props: IBaseProps): JSX.Element | null {
   ) : null;
 }
 
-function RenderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element | null {
-  const [t] = useTranslation(['common']);
+function RenderExternalBanner(props: IBaseProps, item: types.IFBLOLoadOrderEntry<IVortexViewModelData>) {
+  const { getLocalizationManager } = props;
+
+  const localizationManager = getLocalizationManager();
+  const t = localizationManager.localize;
+
   return isExternal(item) ? (
     <div className="load-order-unmanaged-banner">
       <Icon className="external-caution-logo" name="feedback-warning" />
@@ -146,8 +155,11 @@ function RenderExternalBanner(item: types.IFBLOLoadOrderEntry<IVortexViewModelDa
   ) : null;
 }
 
-function RenderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewModelData>): JSX.Element {
-  const [t] = useTranslation(['common']);
+function RenderModuleProviderIcon(props: IBaseProps, item: types.IFBLOLoadOrderEntry<IVortexViewModelData>) {
+  const { getLocalizationManager } = props;
+
+  const localizationManager = getLocalizationManager();
+  const t = localizationManager.localize;
 
   if (isSteamWorksop(item)) {
     return (
@@ -162,26 +174,30 @@ function RenderModuleProviderIcon(item: types.IFBLOLoadOrderEntry<IVortexViewMod
   return <div style={{ width: `1.5em`, height: `1.5em` }} />;
 }
 
-function RenderModuleDuplicates(
-  props: IBaseProps,
-  item: types.IFBLOLoadOrderEntry<IVortexViewModelData>
-): JSX.Element | null {
-  const { availableProviders } = props;
+function RenderModuleDuplicates(props: IBaseProps, item: types.IFBLOLoadOrderEntry<IVortexViewModelData>) {
+  const { getLocalizationManager, availableProviders } = props;
+
+  const localizationManager = getLocalizationManager();
+  const t = localizationManager.localize;
 
   if (availableProviders.length <= 1) {
     return <div style={{ width: `1.5em`, height: `1.5em` }} />;
   }
 
   if (item.data?.moduleInfoExtended.moduleProviderType) {
-    const redundantProviders = availableProviders.filter(
-      (provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType
-    );
+    //const redundantProviders = availableProviders.filter(
+    //  (provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType
+    //);
+    // tooltip={t(`The mod is also installed via ${redundantProviders.join(', ')}!`)}
     return (
       <tooltip.Icon
         className="nexus-id-invalid"
         name="feedback-warning"
         style={{ width: `1.5em`, height: `1.5em` }}
-        tooltip={`The mod is also installed via ${redundantProviders.join(', ')}!`}
+        tooltip={t(
+          `{=kfMQEOFS}The Module is installed in the game's /Modules folder and on Steam Workshop!{NL}` +
+            `The /Modules version will be used!`
+        )}
       ></tooltip.Icon>
     );
   }
@@ -189,26 +205,41 @@ function RenderModuleDuplicates(
   return <div style={{ width: `1.5em`, height: `1.5em` }} />;
 }
 
-function RenderCompatibilityInfo(props: IBaseProps): JSX.Element {
-  const { compatibilityInfo: compatibilityScore, item, getLauncherManager } = props;
+function RenderCompatibilityInfo(props: IBaseProps) {
+  const { compatibilityInfo: compatibilityScore, item, getLauncherManager, getLocalizationManager } = props;
 
   if (compatibilityScore === undefined) {
     return <div style={{ width: `1.5em`, height: `1.5em` }} />;
   }
 
+  const launcherManager = getLauncherManager();
+  const localizationManager = getLocalizationManager();
+  const t = localizationManager.localize;
+
   const hasRecommendation =
     compatibilityScore.recommendedVersion !== undefined && compatibilityScore.recommendedVersion !== null;
 
-  // TODO: Take from BLSE translation
-  const NL = '\n';
-  const SCORE = compatibilityScore.score;
-  const CURRENTVERSION = versionToString(item.loEntry.data?.moduleInfoExtended.version);
-  const RECOMMENDEDSCORE = compatibilityScore.recommendedScore ?? 0;
-  const RECOMMENDEDVERSION = compatibilityScore.recommendedVersion ?? '';
-  const GAMEVERSION = getLauncherManager().getGameVersionVortex();
   const hint = hasRecommendation
-    ? `Based on BUTR analytics:${NL}${NL}Compatibility Score ${SCORE}%${NL}${NL}Suggesting to update to ${RECOMMENDEDVERSION}.${NL}Compatibility Score ${RECOMMENDEDSCORE}%${NL}${NL}${RECOMMENDEDVERSION} has a better compatibility for game ${GAMEVERSION} rather than ${CURRENTVERSION}!`
-    : `Based on BUTR analytics:${NL}${NL}Update is not required.${NL}Compatibility Score ${SCORE}%${NL}${NL}${CURRENTVERSION} is one of the best version for game ${GAMEVERSION}`;
+    ? t(
+        `{=HdnFwgVB}Based on BUTR analytics:{NL}{NL}Compatibility Score {SCORE}%{NL}{NL}Suggesting to update to {RECOMMENDEDVERSION}.{NL}Compatibility Score {RECOMMENDEDSCORE}%{NL}{NL}{RECOMMENDEDVERSION} has a better compatibility for game {GAMEVERSION} rather than {CURRENTVERSION}!`,
+        {
+          NL: '\n',
+          SCORE: compatibilityScore.score.toString(),
+          RECOMMENDEDVERSION: compatibilityScore.recommendedVersion?.toString() ?? '',
+          RECOMMENDEDSCORE: compatibilityScore.recommendedScore?.toString() ?? '',
+          GAMEVERSION: launcherManager.getGameVersionVortex(),
+          CURRENTVERSION: versionToString(item.loEntry.data?.moduleInfoExtended.version),
+        }
+      )
+    : t(
+        `{=HdnFwgVA}Based on BUTR analytics:{NL}{NL}Update is not requiured.{NL}Compatibility Score {SCORE}%{NL}{NL}{CURRENTVERSION} is one of the best version for game {GAMEVERSION}`,
+        {
+          NL: '\n',
+          SCORE: compatibilityScore.score.toString(),
+          CURRENTVERSION: versionToString(item.loEntry.data?.moduleInfoExtended.version),
+          GAMEVERSION: launcherManager.getGameVersionVortex(),
+        }
+      );
 
   const color = compatibilityScore.score >= 75 ? 'green' : compatibilityScore.score >= 50 ? 'yellow' : 'red';
 

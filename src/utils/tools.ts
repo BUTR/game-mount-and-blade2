@@ -1,3 +1,4 @@
+// TODO: Translate tool titles?
 import path from 'path';
 import { actions, types } from 'vortex-api';
 import { getBinaryModdingPath, getBinaryPath, isStoreSteam } from '.';

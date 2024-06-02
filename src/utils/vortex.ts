@@ -1,7 +1,6 @@
 import path from 'path';
 import { types, util } from 'vortex-api';
 import {
-  VortexLauncherManager,
   addBLSETools,
   addModdingKitTool,
   addOfficialCLITool,
@@ -19,6 +18,8 @@ import {
   ISettingsInterfaceWithPrimaryTool,
   IStatePersistent,
   IStatePersistentWithLoadOrder,
+  GetLocalizationManager,
+  GetLauncherManager,
 } from '../types';
 
 type HasSettings = {
@@ -57,7 +58,8 @@ const launchGameStore = async (api: types.IExtensionApi, store: string): Promise
 const prepareForModding = async (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
-  manager: VortexLauncherManager
+  getLauncherManager: GetLauncherManager,
+  getLocalizationManager: GetLocalizationManager
 ): Promise<void> => {
   if (!discovery.path) {
     throw new Error(`discovery.path is undefined!`);
@@ -68,7 +70,7 @@ const prepareForModding = async (
   // maybe just ask the user to always install BLSE via Vortex?
   const binaryPath = path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE);
   if (!(await getPathExistsAsync(binaryPath))) {
-    recommendBLSE(api);
+    recommendBLSE(api, getLocalizationManager);
   }
 
   if (isStoreSteam(discovery.store)) {
@@ -76,14 +78,16 @@ const prepareForModding = async (
   }
 
   if (discovery.store) {
-    manager.setStore(discovery.store);
+    const launcherManager = getLauncherManager();
+    launcherManager.setStore(discovery.store);
   }
 };
 
 export const setup = async (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
-  manager: VortexLauncherManager
+  getLauncherManager: GetLauncherManager,
+  getLocalizationManager: GetLocalizationManager
 ): Promise<void> => {
   if (!discovery.path) {
     throw new Error(`discovery.path is undefined!`);
@@ -95,7 +99,7 @@ export const setup = async (
   addModdingKitTool(api, discovery);
   await addBLSETools(api, discovery);
 
-  await prepareForModding(api, discovery, manager);
+  await prepareForModding(api, discovery, getLauncherManager, getLocalizationManager);
 };
 
 export const requiresLauncher = async (store?: string): Promise<RequiresLauncherResult> => {

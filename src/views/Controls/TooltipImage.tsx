@@ -15,7 +15,7 @@ export class TooltipImage extends React.Component<ImgProps, unknown> {
   public override render() {
     const { tooltip, placement, ...relayProps } = this.props;
 
-    const classes = ['fake-link'].concat((this.props.className || '').split(' '));
+    const classes = ['fake-link'].concat((this.props.className ?? '').split(' '));
 
     if (typeof this.props.tooltip === 'string') {
       return (
@@ -27,7 +27,7 @@ export class TooltipImage extends React.Component<ImgProps, unknown> {
       const tooltip = <Popover id={this.props.id}>{this.props.tooltip}</Popover>;
 
       return (
-        <OverlayTrigger overlay={tooltip} placement={this.props.placement || 'bottom'} delayShow={300} delayHide={150}>
+        <OverlayTrigger overlay={tooltip} placement={this.props.placement ?? 'bottom'} delayShow={300} delayHide={150}>
           <a className={classes.join(' ')}>
             <img {...relayProps} />
           </a>

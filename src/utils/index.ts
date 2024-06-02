@@ -1,6 +1,7 @@
 export * from './blse';
 export * from './butr';
 export * from './loadOrder';
+export * from './localization';
 export * from './module';
 export * from './redux';
 export * from './save';

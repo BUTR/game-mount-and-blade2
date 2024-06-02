@@ -29,7 +29,7 @@ const isValidSubMod = (subModId: string, mods: IMods): boolean => {
   // The mods map should only include mods that have been included in the
   //  collection or this won't work.
   const modIds = Object.keys(mods);
-  const subModIds = modIds.reduce((accum, id) => accum.concat([id], mods[id]?.attributes?.subModIds || []), Array<string>());
+  const subModIds = modIds.reduce((accum, id) => accum.concat([id], mods[id]?.attributes?.subModIds ?? []), Array<string>());
 
   return subModIds.map((id) => id.toLowerCase()).includes(subModId.toLowerCase());
 };
