@@ -6,10 +6,41 @@ export type SetSortOnDeployPayload = {
   sort: boolean;
 };
 
+export type SetUnblockFilesPayload = {
+  profileId: string;
+  unblockFiles: boolean;
+};
+
+export type SetFixCommonIssuesPayload = {
+  profileId: string;
+  fixCommonIssues: boolean;
+};
+
+export type SetBetaSortingPayload = {
+  profileId: string;
+  betaSorting: boolean;
+};
+
 export const setSortOnDeploy = createAction<string, boolean, SetSortOnDeployPayload>(
   `${EXTENSION_BASE_ID}_SET_SORT_ON_DEPLOY`,
   (profileId: string, sort: boolean) => ({
     profileId,
     sort,
+  })
+);
+
+export const setFixCommonIssues = createAction<string, boolean, SetFixCommonIssuesPayload>(
+  `${EXTENSION_BASE_ID}_SET_FIX_COMMON_ISSUES`,
+  (profileId: string, fixCommonIssues: boolean) => ({
+    profileId,
+    fixCommonIssues,
+  })
+);
+
+export const setBetaSorting = createAction<string, boolean, SetBetaSortingPayload>(
+  `${EXTENSION_BASE_ID}_SET_BETA_SORTING`,
+  (profileId: string, betaSorting: boolean) => ({
+    profileId,
+    betaSorting,
   })
 );

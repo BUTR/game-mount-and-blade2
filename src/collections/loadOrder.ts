@@ -43,7 +43,7 @@ export const importLoadOrder = toBluebird(async (api: types.IExtensionApi, colle
 
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
-    throw new CollectionParseError(collection?.info?.name || ``, `Invalid profile id`);
+    throw new CollectionParseError(collection?.info?.name ?? ``, `Invalid profile id`);
   }
 
   // The mods need to be deployed in order for the load order to be imported correctly.

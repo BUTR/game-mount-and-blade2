@@ -14,12 +14,12 @@
     <string id="LXlsSS8t" text="修复常见问题"/>
     <string id="J9VbkLW4" text="修复常见问题，例如 0Harmony.dll 加载于 游戏目录/bin"/>
     <string id="vUAqDj9H" text="紧凑模组列表"/>
-    <string id="Qn1aPNQM" text="缩小Mods列表"/>
+    <string id="Qn1aPNQM" text="使得各个 Mod 栏（框）更小更紧凑"/>
     <string id="GUWbD65T" text="禁用二进制兼容检测"/>
     <string id="lmpQeQBS" text="禁用启动器检测Mods的二进制兼容性"/>
     <string id="iD27wEq7" text="隐藏骑手图像"/>
     <string id="LaPvZjwC" text="隐藏右方骑手图像，使启动器更紧凑"/>
-    <string id="JT7QnJJA" text="解锁dll"/>
+    <string id="JT7QnJJA" text="解锁dll文件"/>
     <string id="VMIp4503" text="解锁 游戏目录/Modules 中所有的dll文件"/>
     <string id="RDLKkiVk" text="解锁"/>
     <string id="QJSBiZdJ" text="测试版自动排序"/>
@@ -27,9 +27,10 @@
     <string id="1zt99vTt" text="更大的启动器"/>
     <string id="XUSDSpvf" text="使启动器变得更高"/>
     <string id="IsR2rbnG" text="恢复“游戏”选项备份"/>
-    <string id="uKUsA3Sp" text="BUTRLoader 在首次启动时会进行备份。这将恢复该备份"/>
+    <string id="uKUsA3Sp" text="LauncherEx 在首次启动时会进行备份。这将恢复该备份"/>
     <string id="TLDgPay9" text="恢复"/>
     <string id="5XzSM7RN" text="恢复“引擎”选项备份"/>
+    <string id="JusnHy6S" text="启动 Windows DPI 缩放以移除 UI 界面模糊"/>
 
     <!-- BUTRLauncherSavesVM -->
     <string id="JtelOsIW" text="名称"/>
@@ -97,7 +98,7 @@
 
     <string id="hgew15HH" text="继续导入？"/>
 
-    <string id="tqjPGPtP" text="BUTRLoader 在游戏根目录检测到 0Harmony.dll！{NL}这将导致游戏无法运行，删掉它吗？"/>
+    <string id="tqjPGPtP" text="LauncherEx 在游戏根目录检测到 0Harmony.dll！{NL}这将导致游戏无法运行，删掉它吗？"/>
 
     <string id="J3Uh6MV4" text="模组列表缺失 '{ID}' {VERSION}"/>
     <string id="3eQSr6wt" text="缺失 '{ID}' {VERSION}"/>
@@ -110,13 +111,21 @@
     <string id="4KFwqKgG" text="'{ID}' 模组同时作为前置并与其他模组冲突"/>
     <string id="9DRB6yXv" text="'{ID}' 模组同时作为前置并加载顺序冲突"/>
     <string id="RC1V9BbP" text="循环依赖。 '{TARGETID}' 和 '{SOURCEID}' 相互需要"/>
-    <string id="s3xbuejE" text="'{TARGETID}' 应当在 '{SOURCEID}' 之前加载"/>
-    <string id="2ALJB7z2" text="'{TARGETID}' 应当在 '{SOURCEID}' 之后加载"/>
+    <string id="s3xbuejE" text="'{SOURCEID}' 应当在 '{TARGETID}' 之前加载"/>
+    <string id="2ALJB7z2" text="'{SOURCEID}' 应当在 '{TARGETID}' 之后加载"/>
 
     <!-- Dependency Constructor -->
     <string id="8ldMJPhQ" text=" （可选）"/>
     <string id="f9hYP7mk" text="需要模组："/>
     <string id="eGJ387f7" text="冲突模组："/>
     <string id="eW76jyd7" text="需要在其之前加载："/>
+
+
+    <string id="HdnFwgVA" text="基于BUTR分析工具：{NL}{NL}无需更新。{NL}兼容性评分：{SCORE}%{NL}{NL}{CURRENTVERSION}版本目前最适合本体{GAMEVERSION}版本。"/>
+    <string id="HdnFwgVB" text="基于BUTR分析工具：{NL}{NL}兼容性评分：{SCORE}%{NL}{NL}推荐更新到{RECOMMENDEDVERSION}版本。{NL}兼容性评分：{RECOMMENDEDSCORE}%{NL}{NL}相比{CURRENTVERSION}版本，{RECOMMENDEDVERSION}版本更适合本体{GAMEVERSION}版本。"/>
+   
+    <string id="q5quVWMI" text="勾选所有模组"/>
+    <string id="H5nMY4WU" text="刷新模组"/>
+    <string id="zXWdahH9" text="获取更新建议{NL}点击此按钮，将模组列表发送到BUTR服务器，获取兼容性评分和推荐版本。{NL}数据基于ButterLib的崩溃报告。{NL}{NL}（需要连网）"/>
   </strings>
 </LanguageData>

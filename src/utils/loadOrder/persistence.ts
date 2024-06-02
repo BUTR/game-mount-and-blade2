@@ -19,8 +19,8 @@ const getLoadOrderFilePath = (api: types.IExtensionApi, loadOrderFileName: strin
  */
 export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderStorage => {
   try {
-    const profileId = selectors.activeProfile(api.getState()).id;
-    const loFileName = getLoadOrderFileName(profileId);
+    const profile = selectors.activeProfile(api.getState());
+    const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = fs.readFileSync(loFilePath, 'utf8');
 
@@ -38,8 +38,8 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
  */
 export const writeLoadOrder = (api: types.IExtensionApi, loadOrder: PersistenceLoadOrderStorage): void => {
   try {
-    const profileId = selectors.activeProfile(api.getState()).id;
-    const loFileName = getLoadOrderFileName(profileId);
+    const profile = selectors.activeProfile(api.getState());
+    const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     //await fs.ensureDirWritableS(path.dirname(loFilePath));
     fs.writeFileSync(loFilePath, JSON.stringify(Object.values(loadOrder), null, 2), { encoding: 'utf8' });

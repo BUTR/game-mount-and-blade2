@@ -1,6 +1,6 @@
 import { BannerlordModuleManager, types as vetypes, Utils } from '@butr/vortexextensionnative';
 import { ISaveGame } from './types';
-import { VortexLauncherManager, versionToString } from '../../utils';
+import { LocalizationManager, VortexLauncherManager, versionToString } from '../../utils';
 import { IModuleCache } from '../../types';
 
 type MismatchedModule = {
@@ -23,11 +23,7 @@ export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName
   }, {});
 };
 
-export const getNameDuplicatesError = (
-  saveGame: Readonly<ISaveGame>,
-  manager: VortexLauncherManager,
-  allModules: Readonly<IModuleCache>
-): string[] | undefined => {
+export const getNameDuplicates = (allModules: Readonly<IModuleCache>): string[] | undefined => {
   const allModulesByName = getModulesByName(allModules);
 
   const moduleNames = Object.keys(allModulesByName);
@@ -41,20 +37,12 @@ export const getNameDuplicatesError = (
 
   if (duplicates.length !== 0) {
     return duplicates;
-    /*
-    return launcherManager.localize('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', {
-      MODULENAMES: duplicates.join('\n'),
-    });*/
   }
 
   return undefined;
 };
 
-export const getMissingModuleNamesError = (
-  saveGame: Readonly<ISaveGame>,
-  manager: VortexLauncherManager,
-  allModules: Readonly<IModuleCache>
-): Array<string> => {
+export const getMissingModuleNames = (saveGame: Readonly<ISaveGame>, allModules: Readonly<IModuleCache>) => {
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules).reduce<string[]>((map, current) => {
     if (!allModulesByName[current]) {
@@ -64,11 +52,13 @@ export const getMissingModuleNamesError = (
   }, []);
 };
 
-export const getMismatchedModuleVersionsWarning = (
+export const getMismatchedModuleVersions = (
   saveGame: Readonly<ISaveGame>,
-  manager: VortexLauncherManager,
+  localizationManager: LocalizationManager,
   allModules: Readonly<IModuleCache>
-): string[] | undefined => {
+) => {
+  const t = localizationManager.localize;
+
   const allModulesByName = getModulesByName(allModules);
   const mismatchedVersions = Object.keys(saveGame.modules).reduce<MismatchedModuleMap>((map, moduleName) => {
     // is the module even installed?
@@ -90,7 +80,7 @@ export const getMismatchedModuleVersionsWarning = (
 
   const mismatchedVersionsLocalized = Object.values(mismatchedVersions).map<string>((current) => {
     const module = allModulesByName[current.name]!;
-    return manager.localize('{=nYVWoomO}{MODULEID}. Required {REQUIREDVERSION}. Actual {ACTUALVERSION}', {
+    return t('{=nYVWoomO}{MODULEID}. Required {REQUIREDVERSION}. Actual {ACTUALVERSION}', {
       MODULEID: module.id,
       REQUIREDVERSION: versionToString(current.save),
       ACTUALVERSION: versionToString(current.installed),
@@ -99,20 +89,12 @@ export const getMismatchedModuleVersionsWarning = (
 
   if (mismatchedVersionsLocalized.length !== 0) {
     return mismatchedVersionsLocalized;
-    /*
-    return launcherManager.localize('{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}', {
-      MODULEMODULESNAMES: mismatchedVersionsLocalized.join('\n\n'),
-    });*/
   }
 
   return undefined;
 };
 
-export const getLoadOrderIssues = (
-  saveGame: ISaveGame,
-  manager: VortexLauncherManager,
-  allModules: Readonly<IModuleCache>
-): Array<string> => {
+export const getLoadOrderIssues = (saveGame: ISaveGame, allModules: Readonly<IModuleCache>) => {
   const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)
     .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])

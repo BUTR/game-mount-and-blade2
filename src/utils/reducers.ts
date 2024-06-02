@@ -1,6 +1,15 @@
 import { actions, types, util } from 'vortex-api';
-import { actionsSettings, actionsSave, ReducerHandler, ReducerHandlerState, createReducer, nameof } from '.';
+import {
+  actionsSettings,
+  actionsSave,
+  ReducerHandlerState,
+  createReducer,
+  nameof as nameof2,
+  ReducerHandler,
+  i18nToBannerlord,
+} from '.';
 import { IBannerlordSettings } from '../types';
+import { Utils } from '@butr/vortexextensionnative';
 
 // TODO: Ask IDCs to provider a proper type system?
 type SetLoadOrderPayload = {
@@ -8,29 +17,53 @@ type SetLoadOrderPayload = {
   order: unknown[];
 };
 
-const setSaveInState = (state: ReducerHandlerState, payload: actionsSave.SetCurrentSavePayload) => {
-  return util.setSafe(state, [nameof<IBannerlordSettings>('saveName'), payload.profileId], payload.saveId);
+type SetLanguagePayload = string;
+
+const nameof = nameof2<IBannerlordSettings>;
+
+const setSortOnDeploy = (state: ReducerHandlerState, payload: actionsSettings.SetSortOnDeployPayload) => {
+  return util.setSafe(state, [nameof('sortOnDeploy'), payload.profileId], payload.sort);
 };
 
-const setSortOnDeployInState = (state: ReducerHandlerState, payload: actionsSettings.SetSortOnDeployPayload) => {
-  return util.setSafe(state, [nameof<IBannerlordSettings>('sortOnDeploy'), payload.profileId], payload.sort);
+const setFixCommonIssues = (state: ReducerHandlerState, payload: actionsSettings.SetFixCommonIssuesPayload) => {
+  return util.setSafe(state, [nameof('fixCommonIssues'), payload.profileId], payload.fixCommonIssues);
 };
 
-const setLoadOrderInState = (state: ReducerHandlerState, payload: SetLoadOrderPayload) => {
+const setBetaSorting = (state: ReducerHandlerState, payload: actionsSettings.SetBetaSortingPayload) => {
+  return util.setSafe(state, [nameof('betaSorting'), payload.profileId], payload.betaSorting);
+};
+
+const setCurrentSave = (state: ReducerHandlerState, payload: actionsSave.SetCurrentSavePayload) => {
+  return util.setSafe(state, [nameof('saveName'), payload.profileId], payload.saveId);
+};
+
+const setLoadOrder = (state: ReducerHandlerState, payload: SetLoadOrderPayload) => {
   return util.setSafe(state, [payload.id], payload.order);
 };
 
+const setLanguage = (state: ReducerHandlerState, payload: SetLanguagePayload) => {
+  Utils.setLanguage(i18nToBannerlord(payload));
+  return state;
+};
+
 const getReducers = () => {
-  const reducers: { [key: string]: ReducerHandler<unknown> } = {};
-  createReducer(actionsSettings.setSortOnDeploy, setSortOnDeployInState, reducers);
-  createReducer(actions.setLoadOrder, setLoadOrderInState, reducers);
-  createReducer(actionsSave.setCurrentSave, setSaveInState, reducers);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const reducers: { [key: string]: ReducerHandler<any> } = {};
+  createReducer(actionsSettings.setSortOnDeploy, setSortOnDeploy, reducers);
+  createReducer(actionsSettings.setFixCommonIssues, setFixCommonIssues, reducers);
+  createReducer(actionsSettings.setBetaSorting, setBetaSorting, reducers);
+  createReducer(actionsSave.setCurrentSave, setCurrentSave, reducers);
+  createReducer(actions.setLoadOrder, setLoadOrder, reducers);
+  // TODO: The smartass solution didn't work here, so I had to do it manually
+  //createReducer(actions.setLanguage, setLanguage, reducer);
+  reducers[actions.setLanguage.getType()] = setLanguage;
   return reducers;
 };
 
 const getDefaults = () => ({
-  [nameof<IBannerlordSettings>('sortOnDeploy')]: {},
-  [nameof<IBannerlordSettings>('saveName')]: {},
+  [nameof('sortOnDeploy')]: {},
+  [nameof('fixCommonIssues')]: {},
+  [nameof('saveName')]: {},
 });
 
 export const reducer: types.IReducerSpec = {

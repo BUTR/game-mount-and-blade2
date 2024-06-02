@@ -19,33 +19,50 @@ import {
   SaveManager,
   reducer,
   actionsSettings,
+  LocalizationManager,
 } from './utils';
 import { SaveList, SavePageOptions, Settings } from './views';
 import { IAddedFiles } from './types';
 import { version } from '../package.json';
+import { ISettingsProps } from './views/Settings/Settings';
 
 const main = (context: types.IExtensionContext): boolean => {
   log('info', `Extension Version: ${version}`);
 
-  const getLauncherManager = () => VortexLauncherManager.getInstance(context.api);
-  const getLoadOrderManager = () => LoadOrderManager.getInstance(context.api, getLauncherManager);
-  const getSaveManager = () => SaveManager.getInstance(context.api, getLauncherManager);
+  const getLocalizationManager = () => {
+    return LocalizationManager.getInstance(context.api);
+  };
+  const getLauncherManager = () => {
+    return VortexLauncherManager.getInstance(context.api, getLocalizationManager);
+  };
+  const getLoadOrderManager = () => {
+    return LoadOrderManager.getInstance(context.api, getLauncherManager, getLocalizationManager);
+  };
+  const getSaveManager = () => {
+    return SaveManager.getInstance(context.api, getLauncherManager);
+  };
 
-  // Register Settings
   context.registerReducer([`settings`, GAME_ID], reducer);
 
-  const settingsOnSetSortOnDeploy = (profileId: string, sort: boolean) =>
-    context.api.store?.dispatch(actionsSettings.setSortOnDeploy(profileId, sort));
-  const settingsProps = () => ({
-    t: context.api.translate,
-    onSetSortOnDeploy: settingsOnSetSortOnDeploy,
-  });
-  const settingsVisible = () => selectors.activeProfile(context.api.getState()).gameId === GAME_ID;
-  context.registerSettings(`Interface`, Settings, settingsProps, settingsVisible, 51);
-  // Register Settings
+  context.registerSettings(
+    `Interface`,
+    Settings,
+    (): ISettingsProps => ({
+      getLocalizationManager: getLocalizationManager,
+      onSetSortOnDeploy: (profileId: string, sort: boolean) =>
+        context.api.store?.dispatch(actionsSettings.setSortOnDeploy(profileId, sort)),
+      onSetFixCommonIssues: (profileId: string, fixCommonIssues: boolean) =>
+        context.api.store?.dispatch(actionsSettings.setFixCommonIssues(profileId, fixCommonIssues)),
+      onSetBetaSorting: (profileId: string, betaSorting: boolean) =>
+        context.api.store?.dispatch(actionsSettings.setBetaSorting(profileId, betaSorting)),
+    }),
+    () => {
+      return selectors.activeGameId(context.api.getState()) === GAME_ID;
+    },
+    51
+  );
 
-  // Register Game
-  context.registerGame(new BannerlordGame(context.api, getLauncherManager));
+  context.registerGame(new BannerlordGame(context.api, getLauncherManager, getLocalizationManager));
 
   /*
   // Register Collection Feature
@@ -69,10 +86,9 @@ const main = (context: types.IExtensionContext): boolean => {
     'savegame',
     'Saves',
     SaveList,
-    new SavePageOptions(context, getLauncherManager, getSaveManager)
+    new SavePageOptions(context, getLauncherManager, getSaveManager, getLocalizationManager)
   );
 
-  // Register Installer.
   context.registerInstaller(
     'bannerlord-blse-installer',
     30,
@@ -106,9 +122,7 @@ const main = (context: types.IExtensionContext): boolean => {
     (game) => getInstallPathModule(context.api, game),
     toBluebird(isModTypeModule)
   );
-  // Register Installer.
 
-  // Register AutoSort button
   context.registerAction(
     `fb-load-order-icons`,
     200,
@@ -125,9 +139,7 @@ const main = (context: types.IExtensionContext): boolean => {
       return gameId === GAME_ID;
     }
   );
-  // Register AutoSort button
 
-  // Register Fetch Compatibility Scores button
   /* Disabled for now because the name is too long
   context.registerAction(
     `fb-load-order-icons`,
@@ -146,7 +158,6 @@ const main = (context: types.IExtensionContext): boolean => {
     }
   );
   */
-  // Register Fetch Compatibility Scores button
 
   // Register Callbacks
   context.once(
@@ -195,7 +206,7 @@ const main = (context: types.IExtensionContext): boolean => {
       // TODO: lister to profile switch events and check for BLSE
       // Set BLSE CLI as primary tool on deployment if no primary tool is set
       context.api.onAsync('did-deploy', (profileId: string) =>
-        didDeployEvent(context.api, profileId, getLoadOrderManager)
+        didDeployEvent(context.api, profileId, getLocalizationManager, getLoadOrderManager)
       );
       // Remove BLSE CLI as primary tool on purge if it is set
       context.api.onAsync('did-purge', (profileId: string) => didPurgeEvent(context.api, profileId));

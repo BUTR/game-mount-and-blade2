@@ -1,11 +1,12 @@
 import { selectors, types } from 'vortex-api';
 import { GAME_ID } from '../../common';
-import { GetLauncherManager, GetSaveManager } from '../../types';
+import { GetLauncherManager, GetLocalizationManager, GetSaveManager } from '../../types';
 
 export class SavePageOptions implements types.IMainPageOptions {
   private context: types.IExtensionContext;
   private getLauncherManager: GetLauncherManager;
   private getSaveManager: GetSaveManager;
+  private getLocalizationManager: GetLocalizationManager;
 
   public id = 'bannerlord-saves';
   public hotkey = 'A';
@@ -14,11 +15,13 @@ export class SavePageOptions implements types.IMainPageOptions {
   constructor(
     context: types.IExtensionContext,
     getLauncherManager: GetLauncherManager,
-    getSaveManager: GetSaveManager
+    getSaveManager: GetSaveManager,
+    getLocalizationManager: GetLocalizationManager
   ) {
     this.context = context;
     this.getLauncherManager = getLauncherManager;
     this.getSaveManager = getSaveManager;
+    this.getLocalizationManager = getLocalizationManager;
   }
 
   public visible = () => {
@@ -29,8 +32,8 @@ export class SavePageOptions implements types.IMainPageOptions {
   };
   public props = () => ({
     context: this.context,
-    t: this.context.api.translate,
     getLauncherManager: this.getLauncherManager,
     getSaveManager: this.getSaveManager,
+    getLocalizationManager: this.getLocalizationManager,
   });
 }

@@ -14,19 +14,23 @@ import {
   libraryToLibraryVM,
   filterEntryWithInvalidId,
   actionsLoadOrder,
+  getBetaSortingFromSettings,
 } from '.';
 import { GAME_ID } from '../common';
-import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
+import { GetLocalizationManager, IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
 
 export class VortexLauncherManager {
   private static _instance: VortexLauncherManager;
 
-  public static getInstance(api?: types.IExtensionApi): VortexLauncherManager {
+  public static getInstance(
+    api?: types.IExtensionApi,
+    getLocalizationManager?: GetLocalizationManager
+  ): VortexLauncherManager {
     if (!VortexLauncherManager._instance) {
-      if (api === undefined) {
+      if (api === undefined || getLocalizationManager === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      VortexLauncherManager._instance = new VortexLauncherManager(api);
+      VortexLauncherManager._instance = new VortexLauncherManager(api, getLocalizationManager);
     }
 
     return VortexLauncherManager._instance;
@@ -34,8 +38,9 @@ export class VortexLauncherManager {
 
   private _launcherManager: NativeLauncherManager;
   private _api: types.IExtensionApi;
+  private _getLocalizationManager: GetLocalizationManager;
 
-  public constructor(api: types.IExtensionApi) {
+  public constructor(api: types.IExtensionApi, getLocalizationManager: GetLocalizationManager) {
     this._launcherManager = new NativeLauncherManager(
       this.setGameParameters,
       this.loadLoadOrder,
@@ -55,15 +60,7 @@ export class VortexLauncherManager {
     );
 
     this._api = api;
-
-    fs.readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
-      if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith('.xml')) {
-        const content: string = fs.readFileSync(`${__dirname}/${d.name}`, {
-          encoding: 'utf8',
-        });
-        this._launcherManager.loadLocalization(content);
-      }
-    });
+    this._getLocalizationManager = getLocalizationManager;
   }
 
   /**
@@ -71,12 +68,12 @@ export class VortexLauncherManager {
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this._api.getState();
-    const profileId = selectors.activeProfile(state).id;
+    const profile = selectors.activeProfile(state);
     if (!hasPersistentLoadOrder(state.persistent)) {
       return [];
     }
 
-    const loadOrder = state.persistent.loadOrder[profileId] ?? [];
+    const loadOrder = state.persistent.loadOrder[profile.id] ?? [];
     if (!Array.isArray(loadOrder)) {
       return [];
     }
@@ -263,16 +260,6 @@ export class VortexLauncherManager {
   };
 
   /**
-   *
-   * @param template
-   * @param values
-   * @returns
-   */
-  public localize = (template: string, values: { [key: string]: string }): string => {
-    return this._launcherManager.localizeString(template, values);
-  };
-
-  /**
    * Sets the game store manually, since the launcher manager is not perfect.
    */
   public setStore = (storeId: string) => {
@@ -390,12 +377,15 @@ export class VortexLauncherManager {
     message: string,
     filters: vetypes.FileFilter[]
   ): Promise<string> => {
+    const localizationManager = this._getLocalizationManager();
+    const t = localizationManager.localize;
+
     switch (type) {
       case 'warning': {
         const messageFull = message.split('--CONTENT-SPLIT--', 2).join('\n');
         const result = await this._api.showDialog?.('question', title, { message: messageFull }, [
-          { label: 'No', action: () => 'false' },
-          { label: 'Yes', action: () => 'true' },
+          { label: t('No'), action: () => 'false' },
+          { label: t('Yes'), action: () => 'true' },
         ]);
         return result?.action ?? '';
       }
@@ -525,11 +515,11 @@ export class VortexLauncherManager {
    * Callback
    */
   private getOptions = (): vetypes.LauncherOptions => {
+    const profile = selectors.activeProfile(this._api.getState());
+    const betaSorting = getBetaSortingFromSettings(this._api, profile.id) ?? false;
+
     return {
-      language: 'English',
-      unblockFiles: true,
-      fixCommonIssues: true,
-      betaSorting: false,
+      betaSorting: betaSorting,
     };
   };
   /**
@@ -537,7 +527,7 @@ export class VortexLauncherManager {
    */
   private getState = (): vetypes.LauncherState => {
     return {
-      isSingleplayer: true,
+      isSingleplayer: true, // We don't support multiplayer yet
     };
   };
 }

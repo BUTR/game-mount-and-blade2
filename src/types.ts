@@ -1,13 +1,14 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { GAME_ID } from './common';
-import { LoadOrderManager, SaveManager, VortexLauncherManager } from './utils';
+import { LoadOrderManager, LocalizationManager, SaveManager, VortexLauncherManager } from './utils';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
 export type GetLauncherManager = () => VortexLauncherManager;
 export type GetLoadOrderManager = () => LoadOrderManager;
 export type GetSaveManager = () => SaveManager;
+export type GetLocalizationManager = () => LocalizationManager;
 
 export interface IModuleCompatibilityInfoCache {
   [moduleId: string]: IModuleCompatibilityInfo;
@@ -95,6 +96,12 @@ export interface IBannerlordSettings {
     [profileId: string]: string | null;
   };
   sortOnDeploy: {
+    [profileId: string]: boolean;
+  };
+  fixCommonIssues: {
+    [profileId: string]: boolean;
+  };
+  betaSorting: {
     [profileId: string]: boolean;
   };
 }

@@ -2,7 +2,7 @@ import { gte } from 'semver';
 import { actions, selectors, types, util } from 'vortex-api';
 import { IFileInfo } from '@nexusmods/nexus-api/lib';
 import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../../common';
-import { IBannerlordMod, IBannerlordModStorage } from '../../types';
+import { GetLocalizationManager, IBannerlordMod, IBannerlordModStorage } from '../../types';
 
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;
@@ -73,11 +73,18 @@ export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   }
 };
 
-export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean): Promise<void> => {
+export const downloadBLSE = async (
+  api: types.IExtensionApi,
+  getLocalizationManager: GetLocalizationManager,
+  update?: boolean
+): Promise<void> => {
+  const localizationManager = getLocalizationManager();
+  const t = localizationManager.localize;
+
   api.dismissNotification?.('blse-missing');
   api.sendNotification?.({
     id: 'blse-installing',
-    message: update ? 'Updating BLSE' : 'Installing BLSE',
+    message: update ? t('Updating BLSE') : t('Installing BLSE'),
     type: 'activity',
     noDismiss: true,
     allowSuppress: false,
@@ -110,15 +117,15 @@ export const downloadBLSE = async (api: types.IExtensionApi, update?: boolean): 
     const modId = await util.toPromise<string>((cb) =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb)
     );
-    const profileId = selectors.activeProfile(api.getState()).id;
-    await actions.setModsEnabled(api, profileId, [modId], true, {
+    const profile = selectors.activeProfile(api.getState());
+    await actions.setModsEnabled(api, profile.id, [modId], true, {
       allowAutoDeploy: false,
       installed: true,
     });
 
     await deployBLSE(api);
   } catch (err) {
-    api.showErrorNotification?.('Failed to download/install BLSE', err);
+    api.showErrorNotification?.(t('Failed to download/install BLSE'), err);
     util.opn(BLSE_URL).catch(() => null);
   } finally {
     api.dismissNotification?.('blse-installing');

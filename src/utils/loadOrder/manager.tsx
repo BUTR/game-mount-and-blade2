@@ -14,6 +14,7 @@ import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
 import {
   GetLauncherManager,
+  GetLocalizationManager,
   IModuleCompatibilityInfoCache,
   RequiredProperties,
   VortexLoadOrderStorage,
@@ -22,12 +23,16 @@ import {
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager;
 
-  public static getInstance(api?: types.IExtensionApi, getLauncherManager?: GetLauncherManager): LoadOrderManager {
+  public static getInstance(
+    api?: types.IExtensionApi,
+    getLauncherManager?: GetLauncherManager,
+    getLocalizationManager?: GetLocalizationManager
+  ): LoadOrderManager {
     if (!LoadOrderManager.instance) {
-      if (api === undefined || getLauncherManager === undefined) {
+      if (api === undefined || getLauncherManager === undefined || getLocalizationManager === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      LoadOrderManager.instance = new LoadOrderManager(api, getLauncherManager);
+      LoadOrderManager.instance = new LoadOrderManager(api, getLauncherManager, getLocalizationManager);
     }
 
     return LoadOrderManager.instance;
@@ -35,6 +40,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   private api: types.IExtensionApi;
   private getLauncherManager: GetLauncherManager;
+  private getLocalizationManager: GetLocalizationManager;
   private isInitialized = false;
   private allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
   private compatibilityScores: IModuleCompatibilityInfoCache = {};
@@ -49,10 +55,17 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public usageInstructions?: React.ComponentType<unknown>;
   public noCollectionGeneration = true;
 
-  constructor(api: types.IExtensionApi, getLauncherManager: GetLauncherManager) {
+  constructor(
+    api: types.IExtensionApi,
+    getLauncherManager: GetLauncherManager,
+    getLocalizationManager: GetLocalizationManager
+  ) {
     this.api = api;
     this.getLauncherManager = getLauncherManager;
-    this.usageInstructions = () => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
+    this.getLocalizationManager = getLocalizationManager;
+    this.usageInstructions = () => (
+      <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} getLocalizationManager={getLocalizationManager} />
+    );
 
     this.customItemRenderer = ({ className = '', item }) => {
       const availableProviders = this.allModules
@@ -64,6 +77,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         <BannerlordItemRenderer
           api={api}
           getLauncherManager={getLauncherManager}
+          getLocalizationManager={getLocalizationManager}
           item={item}
           className={className}
           key={item.loEntry.id}
@@ -119,6 +133,9 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     }
   };
   private checkSavedLoadOrder = (autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
+    const localizationManager = this.getLocalizationManager();
+    const t = localizationManager.localize;
+
     const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
       loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
     );
@@ -126,19 +143,24 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
       this.api.sendNotification?.({
         type: 'warning',
-        message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${savedLoadOrderIssues.join(
-          `\n *`
-        )}`,
+        message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
+          NL: '\n',
+          REASONS: savedLoadOrderIssues.join(`\n`),
+        }),
       });
     }
   };
   private checkOrderByLoadOrderResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): void => {
+    const localizationManager = this.getLocalizationManager();
+    const t = localizationManager.localize;
+
     if (autoSort && result.issues) {
       this.api.sendNotification?.({
         type: 'warning',
-        message: `The Saved Load Order was re-sorted with the default algorithm!\nReasons:\n${result.issues.join(
-          `\n`
-        )}`,
+        message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
+          NL: '\n',
+          REASONS: result.issues.join(`\n`),
+        }),
       });
     }
   };
@@ -146,12 +168,15 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     autoSort: boolean,
     result: vetypes.OrderByLoadOrderResult
   ): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
+    const localizationManager = this.getLocalizationManager();
+    const t = localizationManager.localize;
+
     if (!result || !result.orderedModuleViewModels || !result.result) {
       if (autoSort) {
         // The user is not expecting a sort operation, so don't give the notification
         this.api.sendNotification?.({
           type: 'error',
-          message: `Failed to correct the Load Order! Keeping the original list as-is.`,
+          message: t(`{=sLf3eIpH}Failed to order the module list!`),
         });
       }
       return false;
@@ -212,7 +237,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   };
 
   public validate = (_prev: VortexLoadOrderStorage, curr: VortexLoadOrderStorage): Promise<types.IValidationResult> => {
-    const modules = (curr || []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) =>
+    const modules = (curr ?? []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) =>
       entry.data && entry.enabled ? entry.data.moduleInfoExtended : []
     );
     //const validationManager = ValidationManager.fromVortex(curr);
@@ -221,9 +246,10 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     for (const enabledModule of modules) {
       const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(modules, enabledModule);
       for (const issue of loadOrderIssues) {
+        const localizedIssue = Utils.renderModuleIssue(issue);
         invalidResults.push({
           id: issue.target.id,
-          reason: issue.reason,
+          reason: localizedIssue,
         });
       }
     }

@@ -16,7 +16,7 @@ export const genCollectionsData = toBluebird(async (context: IExtensionContext, 
   const { api } = context;
   const state = api.getState();
   const mods = util.getSafe<IMods>(state, [`persistent`, `mods`, gameId], {});
-  const loadOrder = await exportLoadOrder(api.getState(), includedMods, mods) || {};
+  const loadOrder = await exportLoadOrder(api.getState(), includedMods, mods) ?? {};
   const collectionData: ICollectionMB = {
     loadOrder,
     info: {
