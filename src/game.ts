@@ -20,7 +20,7 @@ export class BannerlordGame implements types.IGame {
     gog: GOG_IDS.map((x) => ({ id: x })),
     epic: [{ id: EPICAPP_ID }],
   };
-  public requiredFiles: string[] = [];
+  public requiredFiles: string[] = ['bin', 'Modules'];
   public parameters: string[] = [];
   public requiresCleanup = true;
   public details: { [key: string]: unknown } = {

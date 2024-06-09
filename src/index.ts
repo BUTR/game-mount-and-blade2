@@ -42,12 +42,12 @@ const main = (context: types.IExtensionContext): boolean => {
     return SaveManager.getInstance(context.api, getLauncherManager);
   };
 
-  context.registerReducer([`settings`, GAME_ID], reducer);
+  context.registerReducer(/*path:*/ [`settings`, GAME_ID], /*spec:*/ reducer);
 
   context.registerSettings(
-    `Interface`,
-    Settings,
-    (): ISettingsProps => ({
+    /*title:*/ `Interface`,
+    /*element:*/ Settings,
+    /*props?:*/ (): ISettingsProps => ({
       getLocalizationManager: getLocalizationManager,
       onSetSortOnDeploy: (profileId: string, sort: boolean) =>
         context.api.store?.dispatch(actionsSettings.setSortOnDeploy(profileId, sort)),
@@ -56,10 +56,10 @@ const main = (context: types.IExtensionContext): boolean => {
       onSetBetaSorting: (profileId: string, betaSorting: boolean) =>
         context.api.store?.dispatch(actionsSettings.setBetaSorting(profileId, betaSorting)),
     }),
-    () => {
+    /*visible?:*/ () => {
       return selectors.activeGameId(context.api.getState()) === GAME_ID;
     },
-    51
+    /*priority?:*/ 51
   );
 
   context.registerGame(new BannerlordGame(context.api, getLauncherManager, getLocalizationManager));
@@ -80,60 +80,60 @@ const main = (context: types.IExtensionContext): boolean => {
   }
   */
 
-  context.registerLoadOrder(getLoadOrderManager());
+  context.registerLoadOrder(/*gameInfo:*/ getLoadOrderManager());
 
   context.registerMainPage(
-    'savegame',
-    'Saves',
-    SaveList,
-    new SavePageOptions(context, getLauncherManager, getSaveManager, getLocalizationManager)
+    /*icon:*/ 'savegame',
+    /*title:*/ 'Saves',
+    /*element:*/ SaveList,
+    /*options:*/ new SavePageOptions(context, getLauncherManager, getSaveManager, getLocalizationManager)
   );
 
   context.registerInstaller(
-    'bannerlord-blse-installer',
-    30,
-    toBluebird(testBLSE),
-    toBluebird((files: string[]) => installBLSE(context.api, files))
+    /*id:*/ 'bannerlord-blse-installer',
+    /*priority:*/ 30,
+    /*testSupported:*/ toBluebird(testBLSE),
+    /*install:*/ toBluebird((files: string[]) => installBLSE(context.api, files))
   );
   context.registerModType(
-    'bannerlord-blse',
-    30,
-    (gameId) => gameId === GAME_ID,
-    (game) => getInstallPathBLSE(context.api, game),
-    toBluebird(isModTypeBLSE)
+    /*id:*/ 'bannerlord-blse',
+    /*priority:*/ 30,
+    /*isSupported:*/ (gameId) => gameId === GAME_ID,
+    /*getPath:*/ (game) => getInstallPathBLSE(context.api, game),
+    /*test:*/ toBluebird(isModTypeBLSE)
   );
 
   context.registerInstaller(
-    `bannerlord-module-installer`,
-    25,
-    toBluebird(async (files: string[], gameId: string) => {
+    /*id:*/ `bannerlord-module-installer`,
+    /*priority:*/ 25,
+    /*testSupported:*/ toBluebird(async (files: string[], gameId: string) => {
       const launcherManager = getLauncherManager();
       return await launcherManager.testModule(files, gameId);
     }),
-    toBluebird(async (files: string[], destinationPath: string) => {
+    /*install:*/ toBluebird(async (files: string[], destinationPath: string) => {
       const launcherManager = getLauncherManager();
       return await launcherManager.installModule(files, destinationPath);
     })
   );
   context.registerModType(
-    'bannerlord-module',
-    25,
-    (gameId) => gameId === GAME_ID,
-    (game) => getInstallPathModule(context.api, game),
-    toBluebird(isModTypeModule)
+    /*id:*/ 'bannerlord-module',
+    /*priority:*/ 25,
+    /*isSupported:*/ (gameId) => gameId === GAME_ID,
+    /*getPath:*/ (game) => getInstallPathModule(context.api, game),
+    /*test:*/ toBluebird(isModTypeModule)
   );
 
   context.registerAction(
-    `fb-load-order-icons`,
-    200,
-    `loot-sort`,
-    {},
-    `Auto Sort`,
-    (_instanceIds?: string[]): boolean | void => {
+    /*group:*/ `fb-load-order-icons`,
+    /*position:*/ 200,
+    /*iconOrComponent:*/ `loot-sort`,
+    /*options:*/ {},
+    /*titleOrProps?:*/ `Auto Sort`,
+    /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
       const launcherManager = getLauncherManager();
       launcherManager.autoSort();
     },
-    (_instanceIds?: string[]): boolean => {
+    /*condition?:*/ (_instanceIds?: string[]): boolean => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;

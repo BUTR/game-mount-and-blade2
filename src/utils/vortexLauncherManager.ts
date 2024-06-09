@@ -289,7 +289,7 @@ export class VortexLauncherManager {
     const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
 
     const discovery = selectors.currentGameDiscovery(this._api.getState());
-    const cliTools = Object.values(discovery.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
+    const cliTools = Object.values(discovery?.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
       actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
     );
@@ -419,7 +419,7 @@ export class VortexLauncherManager {
   private getInstallPath = (): string => {
     const state = this._api.getState();
     const discovery = selectors.currentGameDiscovery(state);
-    return discovery.path ?? '';
+    return discovery?.path ?? '';
   };
   /**
    * Callback

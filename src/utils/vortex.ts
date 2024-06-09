@@ -16,7 +16,6 @@ import { BLSE_CLI_EXE, GAME_ID, XBOX_ID } from '../common';
 import {
   ISettingsWithBannerlord,
   ISettingsInterfaceWithPrimaryTool,
-  IStatePersistent,
   IStatePersistentWithLoadOrder,
   GetLocalizationManager,
   GetLauncherManager,
@@ -31,22 +30,20 @@ type RequiresLauncherResult = {
   addInfo?: unknown;
 };
 
-export const hasPersistentLoadOrder = (persistent: IStatePersistent): persistent is IStatePersistentWithLoadOrder => {
-  return typeof (persistent as never)[nameof<IStatePersistentWithLoadOrder>('loadOrder')] === 'object';
+export const hasPersistentLoadOrder = (persistent: object): persistent is IStatePersistentWithLoadOrder => {
+  return nameof<IStatePersistentWithLoadOrder>('loadOrder') in persistent;
 };
 
-export const hasSettings = (hasSettings: unknown): hasSettings is HasSettings => {
-  return typeof (hasSettings as never)[nameof<HasSettings>('settings')] === 'object';
+export const hasSettings = (hasSettings: object): hasSettings is HasSettings => {
+  return nameof<HasSettings>('settings') in hasSettings;
 };
 
-export const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord => {
-  return typeof (settings as never)[GAME_ID] === 'object';
+export const hasSettingsBannerlord = (settings: object): settings is ISettingsWithBannerlord => {
+  return GAME_ID in settings;
 };
 
-export const hasSettingsInterfacePrimaryTool = (
-  settings: types.ISettingsInterface
-): settings is ISettingsInterfaceWithPrimaryTool => {
-  return typeof (settings as never)[nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool')] === 'object';
+export const hasSettingsInterfacePrimaryTool = (settings: object): settings is ISettingsInterfaceWithPrimaryTool => {
+  return nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool') in settings;
 };
 
 const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
