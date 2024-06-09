@@ -67,7 +67,7 @@ export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   await util.toPromise((cb) => api.events.emit('start-quick-discovery', () => cb(null)));
 
   const discovery = selectors.currentGameDiscovery(api.getState());
-  const tool = discovery.tools?.['blse-cli'];
+  const tool = discovery?.tools?.['blse-cli'];
   if (tool) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));
   }
