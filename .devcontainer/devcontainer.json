@@ -21,6 +21,9 @@
       "version": "18.17.1",
       "nodeGypDependencies": "true"
     },
+    "ghcr.io/devcontainers/features/python:1": {
+
+    },
 		"ghcr.io/devcontainers/features/powershell:1": {
       "version": "latest"
 		}
@@ -30,6 +33,7 @@
 		"ghcr.io/devcontainers/features/git",
 		"ghcr.io/butr/devcontainer/7z",
 		"ghcr.io/devcontainers/features/node",
+		"ghcr.io/devcontainers/features/python",
 		"ghcr.io/devcontainers/features/powershell"
 	],
   "mounts": [

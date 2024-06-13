@@ -1,19 +1,19 @@
-import React from 'react';
-import { util, tooltip } from 'vortex-api';
-import { GetLocalizationManager } from '../../types';
+import React, { useCallback } from 'react';
+import { tooltip, util } from 'vortex-api';
+import { useLocalization } from '../../utils';
 
-interface IBaseProps {
+interface IProps {
   refresh: () => void;
-  getLocalizationManager: GetLocalizationManager;
 }
 
-export function LoadOrderInfoPanel(props: IBaseProps) {
-  const { refresh, getLocalizationManager } = props;
+export type LoadOrderInfoPanelProps = IProps;
 
-  const localizationManager = getLocalizationManager();
-  const t = localizationManager.localize;
+export const LoadOrderInfoPanel = (props: IProps) => {
+  const { refresh } = props;
 
-  const openWiki = React.useCallback(() => {
+  const { localize: t } = useLocalization();
+
+  const openWiki = useCallback(() => {
     util.opn(`https://wiki.nexusmods.com/index.php/Modding_Bannerlord_with_Vortex`).catch(() => null);
   }, []);
   const hint = t(
@@ -93,4 +93,4 @@ export function LoadOrderInfoPanel(props: IBaseProps) {
       </div>
     </>
   );
-}
+};

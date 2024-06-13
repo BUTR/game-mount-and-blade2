@@ -1,4 +1,4 @@
-import { hasSettings, hasSettingsBannerlord } from '..';
+import { hasSettings, hasSettingsBannerlord } from '../vortex';
 
 export const getSortOnDeployFromSettings = (state: object, profileId: string) => {
   if (!hasSettings(state)) {

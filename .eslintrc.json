@@ -5,7 +5,8 @@
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    }
+    },
+    "project": "./tsconfig.json"
   },
   "env": {
     "browser": true,
@@ -24,7 +25,7 @@
     "plugin:prettier/recommended",
     "plugin:@typescript-eslint/recommended"
   ],
-  "plugins": ["prettier", "react", "react-hooks", "@typescript-eslint"],
+  "plugins": ["prettier", "react", "react-hooks", "@typescript-eslint", "import"],
   "rules": {
     "eqeqeq": "error",
     "no-console": "warn",
@@ -38,6 +39,30 @@
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
 
+    "sort-imports": 
+    [
+      "error", 
+      { 
+        "ignoreCase": true, 
+        "ignoreDeclarationSort": true 
+      }
+    ],
+
+    "import/order": [
+      1, 
+      { 
+        "groups": 
+          [
+            "external", 
+            "builtin", 
+            "internal", 
+            "sibling", 
+            "parent", 
+            "index"
+          ]
+      } 
+    ],
+
     "@typescript-eslint/naming-convention": [
       "warn",
       {
@@ -49,6 +74,7 @@
         }
       }
     ],
+    
     "no-restricted-imports": [
       "warn",
       {

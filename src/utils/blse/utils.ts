@@ -1,8 +1,10 @@
 import { gte } from 'semver';
 import { actions, selectors, types, util } from 'vortex-api';
 import { IFileInfo } from '@nexusmods/nexus-api/lib';
-import { GAME_ID, BLSE_MOD_ID, BLSE_URL } from '../../common';
-import { GetLocalizationManager, IBannerlordMod, IBannerlordModStorage } from '../../types';
+import { BLSE_MOD_ID, BLSE_URL, GAME_ID } from '../../common';
+import { IBannerlordMod } from '../../types';
+import { hasPersistentBannerlordMods } from '../vortex';
+import { LocalizationManager } from '../localization';
 
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;
@@ -13,7 +15,10 @@ const isModBLSE = (mod: IBannerlordMod) => {
 
 export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefined => {
   const state = api.getState();
-  const mods = (state.persistent.mods[GAME_ID] as IBannerlordModStorage) ?? {};
+
+  if (hasPersistentBannerlordMods(state.persistent) === false) return undefined;
+
+  const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
 
   if (blseMods.length === 0) return undefined;
@@ -51,7 +56,10 @@ export const findBLSEDownload = (api: types.IExtensionApi): string | undefined =
 
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
   const state = api.getState();
-  const mods = (state.persistent.mods[GAME_ID] as IBannerlordModStorage) ?? {};
+
+  if (hasPersistentBannerlordMods(state.persistent) === false) return false;
+
+  const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
 
   if (blseMods.length === 0) {
@@ -73,18 +81,13 @@ export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   }
 };
 
-export const downloadBLSE = async (
-  api: types.IExtensionApi,
-  getLocalizationManager: GetLocalizationManager,
-  update?: boolean
-): Promise<void> => {
-  const localizationManager = getLocalizationManager();
-  const t = localizationManager.localize;
+export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate?: boolean): Promise<void> => {
+  const { localize: t } = LocalizationManager.getInstance(api);
 
   api.dismissNotification?.('blse-missing');
   api.sendNotification?.({
     id: 'blse-installing',
-    message: update ? t('Updating BLSE') : t('Installing BLSE'),
+    message: shouldUpdate ? t('Updating BLSE') : t('Installing BLSE'),
     type: 'activity',
     noDismiss: true,
     allowSuppress: false,

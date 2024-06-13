@@ -52,7 +52,7 @@ export const i18nToBannerlord = (languageCode: string) => {
 export class LocalizationManager {
   private static instance: LocalizationManager;
 
-  public static getInstance(api?: types.IExtensionApi): LocalizationManager {
+  public static getInstance(api: types.IExtensionApi): LocalizationManager {
     if (!LocalizationManager.instance) {
       if (api === undefined) {
         throw new Error('IniStructure is not context aware');
@@ -77,13 +77,12 @@ export class LocalizationManager {
         this.initializedLocalization = true;
       }
 
-      return Utils.localizeString(template, {
-        ns: I18N_NAMESPACE,
-        ...values,
-      });
+      return Utils.localizeString(template, values);
     }
-    this.api.translate('', {});
-    return this.api.translate(template, values);
+    return this.api.translate(template, {
+      ns: I18N_NAMESPACE,
+      ...values,
+    });
   };
 
   private initializeLocalization = () => {

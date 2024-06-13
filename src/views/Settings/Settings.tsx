@@ -1,30 +1,26 @@
-import React from 'react';
+import React, { ComponentType, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { More, Toggle, selectors, types } from 'vortex-api';
-import { getBetaSortingFromSettings, getFixCommonIssuesFromSettings, getSortOnDeployFromSettings } from '../../utils';
+import { More, selectors, Toggle, types } from 'vortex-api';
 import { IMoreProps } from 'vortex-api/lib/controls/More';
-import { GetLocalizationManager } from '../../types';
+import {
+  getBetaSortingFromSettings,
+  getFixCommonIssuesFromSettings,
+  getSortOnDeployFromSettings,
+  useLocalization,
+} from '../../utils';
 
-export interface ISettingsProps {
-  getLocalizationManager: GetLocalizationManager;
+interface IProps {
   onSetSortOnDeploy: (profileId: string, sort: boolean) => void;
   onSetFixCommonIssues: (profileId: string, fixCommonIssues: boolean) => void;
   onSetBetaSorting: (profileId: string, betaSorting: boolean) => void;
 }
 
-interface IConnectedProps {
-  profileId: string;
-  autoSortOnDeploy: boolean;
-  fixCommonIssues: boolean;
-  betaSorting: boolean;
-}
+export type SettingsProps = IProps;
 
-const MoreWrapper = More as React.ComponentType<IMoreProps>;
-
-export const Settings = (props: ISettingsProps): JSX.Element => {
-  const { getLocalizationManager, onSetSortOnDeploy, onSetFixCommonIssues, onSetBetaSorting } = props;
+export const Settings = (props: IProps) => {
+  const { onSetSortOnDeploy, onSetFixCommonIssues, onSetBetaSorting } = props;
   const { profileId, autoSortOnDeploy, fixCommonIssues, betaSorting } = useSelector(mapState);
-  const setSortCallback = React.useCallback(
+  const setSortCallback = useCallback(
     (value) => {
       if (profileId !== undefined) {
         onSetSortOnDeploy(profileId, value);
@@ -32,7 +28,7 @@ export const Settings = (props: ISettingsProps): JSX.Element => {
     },
     [profileId, onSetSortOnDeploy]
   );
-  const fixCommonIssuesCallback = React.useCallback(
+  const fixCommonIssuesCallback = useCallback(
     (value) => {
       if (profileId !== undefined) {
         onSetFixCommonIssues(profileId, value);
@@ -40,7 +36,7 @@ export const Settings = (props: ISettingsProps): JSX.Element => {
     },
     [profileId, onSetFixCommonIssues]
   );
-  const betaSortingCallback = React.useCallback(
+  const betaSortingCallback = useCallback(
     (value) => {
       if (profileId !== undefined) {
         onSetBetaSorting(profileId, value);
@@ -49,8 +45,8 @@ export const Settings = (props: ISettingsProps): JSX.Element => {
     [profileId, onSetBetaSorting]
   );
 
-  const localizationManager = getLocalizationManager();
-  const t = localizationManager.localize;
+  const { localize: t } = useLocalization();
+
   return (
     <div>
       <Toggle checked={autoSortOnDeploy} onToggle={setSortCallback}>
@@ -82,7 +78,7 @@ export const Settings = (props: ISettingsProps): JSX.Element => {
   );
 };
 
-const mapState = (state: types.IState): IConnectedProps => {
+const mapState = (state: types.IState) => {
   const profile = selectors.activeProfile(state);
   const sortOnDeploy = getSortOnDeployFromSettings(state, profile.id) ?? true;
   const fixCommonIssues = getFixCommonIssuesFromSettings(state, profile.id) ?? true;
@@ -95,4 +91,4 @@ const mapState = (state: types.IState): IConnectedProps => {
   };
 };
 
-export default Settings;
+const MoreWrapper = More as ComponentType<IMoreProps>;

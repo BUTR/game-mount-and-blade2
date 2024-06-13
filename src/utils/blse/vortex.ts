@@ -1,16 +1,14 @@
 import { actions, selectors, types } from 'vortex-api';
-import { findBLSEMod, deployBLSE, downloadBLSE, isModActive, findBLSEDownload } from './shared';
-import { GetLocalizationManager } from '../../types';
 import { LocalizationManager } from '../localization';
+import { deployBLSE, downloadBLSE, findBLSEDownload, findBLSEMod, isModActive } from '.';
 
 const sendNotification = (
   api: types.IExtensionApi,
-  localizationManager: LocalizationManager,
   title: string,
   actionTitle: string,
   action: (dismiss: types.NotificationDismiss) => void
 ) => {
-  const t = localizationManager.localize;
+  const { localize: t } = LocalizationManager.getInstance(api);
 
   api.sendNotification?.({
     id: 'blse-missing',
@@ -26,9 +24,8 @@ const sendNotification = (
   });
 };
 
-export const recommendBLSE = (api: types.IExtensionApi, getLocalizationManager: GetLocalizationManager) => {
-  const localizationManager = getLocalizationManager();
-  const t = localizationManager.localize;
+export const recommendBLSE = (api: types.IExtensionApi) => {
+  const { localize: t } = LocalizationManager.getInstance(api);
 
   const profile = selectors.activeProfile(api.getState());
 
@@ -41,7 +38,7 @@ export const recommendBLSE = (api: types.IExtensionApi, getLocalizationManager: 
         api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
         deployBLSE(api).then(() => dismiss());
       };
-      sendNotification(api, localizationManager, t('BLSE is not enabled'), t('Enable'), action);
+      sendNotification(api, t('BLSE is not enabled'), t('Enable'), action);
       return;
     }
   }
@@ -55,13 +52,43 @@ export const recommendBLSE = (api: types.IExtensionApi, getLocalizationManager: 
       });
       deployBLSE(api).then(() => dismiss());
     };
-    sendNotification(api, localizationManager, t('BLSE is not installed'), t('Install'), action);
+    sendNotification(api, t('BLSE is not installed'), t('Install'), action);
     return;
   }
 
   // Non existent
   const action = (dismiss: types.NotificationDismiss) => {
-    downloadBLSE(api, getLocalizationManager).then(() => dismiss());
+    downloadBLSE(api).then(() => dismiss());
   };
-  sendNotification(api, localizationManager, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
+  sendNotification(api, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
+};
+
+export const forceInstallBLSE = async (api: types.IExtensionApi) => {
+  const { localize: t } = LocalizationManager.getInstance(api);
+
+  api.sendNotification?.({
+    id: 'blse-required',
+    type: 'info',
+    title: t('BLSE Required'),
+    message: t('BLSE is required by the collection. Ensuring it is installed...'),
+  });
+
+  const profile = selectors.activeProfile(api.getState());
+
+  const blseMod = findBLSEMod(api);
+  if (blseMod) {
+    // Found but not enabled
+    const blseIsActive = isModActive(profile, blseMod);
+    if (!blseIsActive) {
+      api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
+      await deployBLSE(api);
+    }
+  }
+
+  const blseDownload = findBLSEDownload(api);
+  if (blseDownload) {
+    await deployBLSE(api);
+  }
+
+  downloadBLSE(api);
 };

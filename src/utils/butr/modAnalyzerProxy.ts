@@ -1,28 +1,6 @@
-import * as https from 'https';
 import { log, types } from 'vortex-api';
-
-export interface IModAnalyzerRequestModule {
-  moduleId: string;
-  moduleVersion?: string;
-}
-
-export interface IModAnalyzerRequestQuery {
-  gameVersion: string;
-  modules: IModAnalyzerRequestModule[];
-}
-
-export interface IModAnalyzerResultModule {
-  moduleId: string;
-  compatibility: number;
-  recommendedCompatibility: number | undefined;
-  recommendedModuleVersion?: string | undefined;
-}
-
-export interface IModAnalyzerResult {
-  modules: IModAnalyzerResultModule[];
-}
-
-const BUTR_HOST = 'sitenexusmods.butr.link';
+import * as https from 'https';
+import { BUTR_HOST, IModAnalyzerRequestQuery, IModAnalyzerResult } from '.';
 
 export class ModAnalyzerProxy {
   private mAPI: types.IExtensionApi;

@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+* Added collection support
+---------------------------------------------------------------------------------------------------
 Version: 1.0.13
 * Added mandatory folders for manual game path hint
 * Fixed undefined tools bug 

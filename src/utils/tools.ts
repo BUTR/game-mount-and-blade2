@@ -1,14 +1,15 @@
 // TODO: Translate tool titles?
-import path from 'path';
 import { actions, types } from 'vortex-api';
-import { getBinaryModdingPath, getBinaryPath, isStoreSteam } from '.';
+import path from 'path';
+import { getBinaryModdingPath, getBinaryPath } from './game';
+import { isStoreSteam } from './store';
 import {
-  GAME_ID,
+  BANNERLORD_EXE,
+  BANNERLORD_EXE_LAUNCHER,
   BLSE_CLI_EXE,
   BLSE_LAUNCHER_EXE,
   BLSE_LAUNCHEREX_EXE,
-  BANNERLORD_EXE,
-  BANNERLORD_EXE_LAUNCHER,
+  GAME_ID,
 } from '../common';
 
 // TODO: Reuse tool creation code

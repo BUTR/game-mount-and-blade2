@@ -1,1 +1,1 @@
-export { LoadOrderInfoPanel } from './LoadOrderInfoPanel';
+export * from './LoadOrderInfoPanel';

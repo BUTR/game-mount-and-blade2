@@ -1,24 +1,19 @@
-import path from 'path';
 import { types, util } from 'vortex-api';
-import {
-  addBLSETools,
-  addModdingKitTool,
-  addOfficialCLITool,
-  addOfficialLauncherTool,
-  getBinaryPath,
-  getPathExistsAsync,
-  isStoreSteam,
-  isStoreXbox,
-  nameof,
-  recommendBLSE,
-} from '.';
+import path from 'path';
+import { nameof } from './nameof';
+import { getBinaryPath } from './game';
+import { getPathExistsAsync } from './util';
+import { recommendBLSE } from './blse';
+import { isStoreSteam, isStoreXbox } from './store';
+import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
+import { VortexLauncherManager } from './launcher';
 import { BLSE_CLI_EXE, GAME_ID, XBOX_ID } from '../common';
 import {
-  ISettingsWithBannerlord,
   ISettingsInterfaceWithPrimaryTool,
+  ISettingsWithBannerlord,
+  IStatePersistent,
+  IStatePersistentWithBannerlordMods,
   IStatePersistentWithLoadOrder,
-  GetLocalizationManager,
-  GetLauncherManager,
 } from '../types';
 
 type HasSettings = {
@@ -30,21 +25,26 @@ type RequiresLauncherResult = {
   addInfo?: unknown;
 };
 
-export const hasPersistentLoadOrder = (persistent: object): persistent is IStatePersistentWithLoadOrder => {
-  return nameof<IStatePersistentWithLoadOrder>('loadOrder') in persistent;
-};
+export const hasPersistentLoadOrder = (
+  statePersistent: IStatePersistent
+): statePersistent is IStatePersistentWithLoadOrder =>
+  nameof<IStatePersistentWithLoadOrder>('loadOrder') in statePersistent;
 
-export const hasSettings = (hasSettings: object): hasSettings is HasSettings => {
-  return nameof<HasSettings>('settings') in hasSettings;
-};
+export const hasPersistentBannerlordMods = (
+  statePersistent: IStatePersistent
+): statePersistent is IStatePersistentWithBannerlordMods =>
+  nameof<IStatePersistentWithBannerlordMods>('mods') in statePersistent && GAME_ID in statePersistent.mods;
 
-export const hasSettingsBannerlord = (settings: object): settings is ISettingsWithBannerlord => {
-  return GAME_ID in settings;
-};
+export const hasSettings = (hasSettings: object): hasSettings is HasSettings =>
+  nameof<HasSettings>('settings') in hasSettings;
 
-export const hasSettingsInterfacePrimaryTool = (settings: object): settings is ISettingsInterfaceWithPrimaryTool => {
-  return nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool') in settings;
-};
+export const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord =>
+  GAME_ID in settings;
+
+export const hasSettingsInterfacePrimaryTool = (
+  settings: types.ISettingsInterface
+): settings is ISettingsInterfaceWithPrimaryTool =>
+  nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool') in settings;
 
 const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
   await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch(() => {
@@ -52,12 +52,7 @@ const launchGameStore = async (api: types.IExtensionApi, store: string): Promise
   });
 };
 
-const prepareForModding = async (
-  api: types.IExtensionApi,
-  discovery: types.IDiscoveryResult,
-  getLauncherManager: GetLauncherManager,
-  getLocalizationManager: GetLocalizationManager
-): Promise<void> => {
+const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   if (!discovery.path) {
     throw new Error(`discovery.path is undefined!`);
   }
@@ -67,7 +62,7 @@ const prepareForModding = async (
   // maybe just ask the user to always install BLSE via Vortex?
   const binaryPath = path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE);
   if (!(await getPathExistsAsync(binaryPath))) {
-    recommendBLSE(api, getLocalizationManager);
+    recommendBLSE(api);
   }
 
   if (isStoreSteam(discovery.store)) {
@@ -75,17 +70,13 @@ const prepareForModding = async (
   }
 
   if (discovery.store) {
-    const launcherManager = getLauncherManager();
+    const launcherManager = VortexLauncherManager.getInstance(api);
+
     launcherManager.setStore(discovery.store);
   }
 };
 
-export const setup = async (
-  api: types.IExtensionApi,
-  discovery: types.IDiscoveryResult,
-  getLauncherManager: GetLauncherManager,
-  getLocalizationManager: GetLocalizationManager
-): Promise<void> => {
+export const setup = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   if (!discovery.path) {
     throw new Error(`discovery.path is undefined!`);
   }
@@ -96,7 +87,7 @@ export const setup = async (
   addModdingKitTool(api, discovery);
   await addBLSETools(api, discovery);
 
-  await prepareForModding(api, discovery, getLauncherManager, getLocalizationManager);
+  await prepareForModding(api, discovery);
 };
 
 export const requiresLauncher = async (store?: string): Promise<RequiresLauncherResult> => {

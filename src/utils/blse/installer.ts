@@ -1,7 +1,7 @@
-import path from 'path';
 import { selectors, types } from 'vortex-api';
-import { isStoreXbox } from '..';
-import { GAME_ID, BLSE_CLI_EXE, BINARY_FOLDER_XBOX, BINARY_FOLDER_STANDARD } from '../../common';
+import path from 'path';
+import { isStoreXbox } from '../store';
+import { BINARY_FOLDER_STANDARD, BINARY_FOLDER_XBOX, BLSE_CLI_EXE, GAME_ID } from '../../common';
 
 export const installBLSE = async (api: types.IExtensionApi, files: string[]): Promise<types.IInstallResult> => {
   const discovery = selectors.currentGameDiscovery(api.getState());

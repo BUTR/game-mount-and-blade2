@@ -1,14 +1,8 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { GAME_ID } from './common';
-import { LoadOrderManager, LocalizationManager, SaveManager, VortexLauncherManager } from './utils';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
-
-export type GetLauncherManager = () => VortexLauncherManager;
-export type GetLoadOrderManager = () => LoadOrderManager;
-export type GetSaveManager = () => SaveManager;
-export type GetLocalizationManager = () => LocalizationManager;
 
 export interface IModuleCompatibilityInfoCache {
   [moduleId: string]: IModuleCompatibilityInfo;
@@ -118,6 +112,14 @@ export interface IStatePersistentWithLoadOrder extends IStatePersistent {
   loadOrder: {
     [profileId: string]: VortexLoadOrderStorage;
   };
+}
+
+export interface IModTableWithBannerlord extends types.IModTable {
+  [GAME_ID]: IBannerlordModStorage;
+}
+
+export interface IStatePersistentWithBannerlordMods extends IStatePersistent {
+  mods: IModTableWithBannerlord;
 }
 
 /**

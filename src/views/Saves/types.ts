@@ -23,3 +23,16 @@ export interface ISaveGame {
   missingModules?: string[] | undefined;
   mismatchedModuleVersions?: string[] | undefined;
 }
+
+export type MismatchedModule = {
+  name: string;
+  installed: vetypes.ApplicationVersion;
+  save: vetypes.ApplicationVersion;
+};
+export type MismatchedModuleMap = {
+  [name: string]: MismatchedModule;
+};
+
+export type ModulesByName = {
+  [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
+};

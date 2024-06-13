@@ -1,20 +1,15 @@
 import { actions, selectors, types } from 'vortex-api';
-import { findBLSEMod } from './shared';
-import { GAME_ID } from '../../common';
 import { hasSettingsInterfacePrimaryTool } from '../vortex';
-import { GetLoadOrderManager, GetLocalizationManager } from '../../types';
+import { GAME_ID } from '../../common';
+import { LocalizationManager } from '../localization';
+import { LoadOrderManager } from '../loadOrder';
+import { findBLSEMod } from '.';
 
 /**
  * Event function, be careful
  */
-export const didDeployEvent = async (
-  api: types.IExtensionApi,
-  profileId: string,
-  getLocalizationManager: GetLocalizationManager,
-  getLoadOrderManager: GetLoadOrderManager
-) => {
-  const localizationManager = getLocalizationManager();
-  const t = localizationManager.localize;
+export const didDeployEvent = async (api: types.IExtensionApi, profileId: string) => {
+  const { localize: t } = LocalizationManager.getInstance(api);
 
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
@@ -23,7 +18,8 @@ export const didDeployEvent = async (
   }
 
   try {
-    await getLoadOrderManager().deserializeLoadOrder();
+    const loadOrderManager = LoadOrderManager.getInstance(api);
+    await loadOrderManager.deserializeLoadOrder();
   } catch (err) {
     api.showErrorNotification?.(t('Failed to deserialize load order file'), err);
   }

@@ -1,2 +1,2 @@
-export { SaveList } from './SaveList';
-export { SavePageOptions } from './SavePageOptions';
+export * from './SavePage';
+export * from './SavePageOptions';

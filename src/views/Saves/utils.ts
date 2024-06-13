@@ -1,20 +1,8 @@
-import { BannerlordModuleManager, types as vetypes, Utils } from '@butr/vortexextensionnative';
-import { ISaveGame } from './types';
-import { LocalizationManager, VortexLauncherManager, versionToString } from '../../utils';
+import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
+import { types } from 'vortex-api';
+import { ISaveGame, MismatchedModuleMap, ModulesByName } from './types';
+import { LocalizationManager, versionToString, VortexLauncherManager } from '../../utils';
 import { IModuleCache } from '../../types';
-
-type MismatchedModule = {
-  name: string;
-  installed: vetypes.ApplicationVersion;
-  save: vetypes.ApplicationVersion;
-};
-type MismatchedModuleMap = {
-  [name: string]: MismatchedModule;
-};
-
-type ModulesByName = {
-  [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
-};
 
 export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName => {
   return Object.values(modules).reduce<ModulesByName>((map, current) => {
@@ -53,11 +41,11 @@ export const getMissingModuleNames = (saveGame: Readonly<ISaveGame>, allModules:
 };
 
 export const getMismatchedModuleVersions = (
+  api: types.IExtensionApi,
   saveGame: Readonly<ISaveGame>,
-  localizationManager: LocalizationManager,
   allModules: Readonly<IModuleCache>
 ) => {
-  const t = localizationManager.localize;
+  const { localize: t } = LocalizationManager.getInstance(api);
 
   const allModulesByName = getModulesByName(allModules);
   const mismatchedVersions = Object.keys(saveGame.modules).reduce<MismatchedModuleMap>((map, moduleName) => {

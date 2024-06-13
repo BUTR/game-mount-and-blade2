@@ -1,14 +1,18 @@
 // eslint-disable-next-line no-restricted-imports
 import Bluebird from 'bluebird';
-import path from 'path';
 import { fs, log, selectors, types, util } from 'vortex-api';
+import path from 'path';
 import { GAME_ID } from '../common';
 import { IAddedFiles } from '../types';
 
 /**
  * Event function, be careful
  */
-export const addedFiles = async (api: types.IExtensionApi, profileId: string, files: IAddedFiles[]): Promise<void> => {
+export const addedFilesEvent = async (
+  api: types.IExtensionApi,
+  profileId: string,
+  files: IAddedFiles[]
+): Promise<void> => {
   const state = api.getState();
 
   const profile = selectors.profileById(state, profileId);

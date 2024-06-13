@@ -1,27 +1,26 @@
 import { selectors, types } from 'vortex-api';
-import { actionsSave, getSaveFromSettings } from '..';
-import { GetLauncherManager } from '../../types';
+import { actionsSave } from '../save';
+import { getSaveFromSettings } from '../settings';
+import { VortexLauncherManager } from '../launcher';
 
 export class SaveManager {
   private static instance: SaveManager;
 
-  public static getInstance(api?: types.IExtensionApi, getLauncherManager?: GetLauncherManager): SaveManager {
+  public static getInstance(api: types.IExtensionApi): SaveManager {
     if (!SaveManager.instance) {
-      if (api === undefined || getLauncherManager === undefined) {
+      if (api === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      SaveManager.instance = new SaveManager(api, getLauncherManager);
+      SaveManager.instance = new SaveManager(api);
     }
 
     return SaveManager.instance;
   }
 
   private api: types.IExtensionApi;
-  private getLauncherManager: GetLauncherManager;
 
-  constructor(api: types.IExtensionApi, getLauncherManager: GetLauncherManager) {
+  constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.getLauncherManager = getLauncherManager;
   }
 
   public reloadSave(): void {
@@ -45,7 +44,7 @@ export class SaveManager {
     const profile = selectors.activeProfile(state);
     this.api.store?.dispatch(actionsSave.setCurrentSave(profile.id, saveId));
 
-    const launcherManager = this.getLauncherManager();
+    const launcherManager = VortexLauncherManager.getInstance(this.api);
     launcherManager.setSaveFile(saveId ?? '');
   };
 }

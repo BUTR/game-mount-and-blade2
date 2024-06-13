@@ -1,13 +1,14 @@
 import { types } from 'vortex-api';
-import { types as vetypes, BannerlordModuleManager } from '@butr/vortexextensionnative';
-import { ValidationManager, getModIds } from '../';
+import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
 import {
-  VortexLoadOrderStorage,
-  VortexLoadOrderEntry,
-  PersistenceLoadOrderStorage,
   IModuleCache,
   IPersistenceLoadOrderEntry,
+  PersistenceLoadOrderStorage,
+  VortexLoadOrderEntry,
+  VortexLoadOrderStorage,
 } from '../../types';
+import { ValidationManager } from '../validationManager';
+import { getModIds } from '../moduleUtil';
 
 export const persistenceToVortex = (
   api: types.IExtensionApi,
@@ -30,6 +31,17 @@ export const persistenceToVortex = (
     })
     .filter((x) => x.data !== undefined)
     .sort((x, y) => x.data!.index - y.data!.index);
+  return loadOrderConverted;
+};
+
+export const vortexToPersistence = (loadOrder: VortexLoadOrderStorage): PersistenceLoadOrderStorage => {
+  const loadOrderConverted = Object.values(loadOrder).map<IPersistenceLoadOrderEntry>((x, index) => ({
+    id: x.id,
+    name: x.name,
+    isSelected: x.enabled,
+    isDisabled: !!x.locked && (x.locked === `true` || x.locked === `always`),
+    index: index,
+  }));
   return loadOrderConverted;
 };
 

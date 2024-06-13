@@ -1,14 +1,14 @@
-import path from 'path';
 import { fs, selectors, types } from 'vortex-api';
-import { isStoreStandard, isStoreXbox } from '.';
+import path from 'path';
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_XBOX,
   BINARY_FOLDER_STANDARD,
-  BINARY_FOLDER_XBOX,
   BINARY_FOLDER_STANDARD_MODDING_KIT,
+  BINARY_FOLDER_XBOX,
   GAME_ID,
 } from '../common';
+import { isStoreStandard, isStoreXbox } from '.';
 
 export const getBinaryPath = (store: string | undefined): string => {
   return path.join(`bin`, isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD);

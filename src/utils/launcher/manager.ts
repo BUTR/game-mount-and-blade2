@@ -1,47 +1,44 @@
-import path from 'path';
-import { Dirent, readFileSync } from 'fs';
 import { actions, fs, selectors, types, util } from 'vortex-api';
-import { NativeLauncherManager, BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
+import { BannerlordModuleManager, NativeLauncherManager, types as vetypes } from '@butr/vortexextensionnative';
+import { Dirent, readFileSync } from 'fs';
+import path from 'path';
+import { hasPersistentLoadOrder } from '../vortex';
 import {
-  vortexToLibrary,
-  libraryVMToVortex,
-  vortexToLibraryVM,
-  persistenceToVortex,
-  libraryToPersistence,
-  writeLoadOrder,
-  readLoadOrder,
-  hasPersistentLoadOrder,
-  libraryToLibraryVM,
-  filterEntryWithInvalidId,
   actionsLoadOrder,
-  getBetaSortingFromSettings,
-} from '.';
-import { GAME_ID } from '../common';
-import { GetLocalizationManager, IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../types';
+  libraryToLibraryVM,
+  libraryToPersistence,
+  libraryVMToVortex,
+  persistenceToVortex,
+  readLoadOrder,
+  vortexToLibrary,
+  vortexToLibraryVM,
+  writeLoadOrder,
+} from '../loadOrder';
+import { getBetaSortingFromSettings } from '../settings';
+import { filterEntryWithInvalidId } from '../util';
+import { GAME_ID } from '../../common';
+import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../../types';
+import { LocalizationManager } from '../localization';
 
 export class VortexLauncherManager {
   private static _instance: VortexLauncherManager;
 
-  public static getInstance(
-    api?: types.IExtensionApi,
-    getLocalizationManager?: GetLocalizationManager
-  ): VortexLauncherManager {
+  public static getInstance(api: types.IExtensionApi): VortexLauncherManager {
     if (!VortexLauncherManager._instance) {
-      if (api === undefined || getLocalizationManager === undefined) {
+      if (api === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      VortexLauncherManager._instance = new VortexLauncherManager(api, getLocalizationManager);
+      VortexLauncherManager._instance = new VortexLauncherManager(api);
     }
 
     return VortexLauncherManager._instance;
   }
 
-  private _launcherManager: NativeLauncherManager;
-  private _api: types.IExtensionApi;
-  private _getLocalizationManager: GetLocalizationManager;
+  private launcherManager: NativeLauncherManager;
+  private api: types.IExtensionApi;
 
-  public constructor(api: types.IExtensionApi, getLocalizationManager: GetLocalizationManager) {
-    this._launcherManager = new NativeLauncherManager(
+  public constructor(api: types.IExtensionApi) {
+    this.launcherManager = new NativeLauncherManager(
       this.setGameParameters,
       this.loadLoadOrder,
       this.saveLoadOrder,
@@ -59,15 +56,14 @@ export class VortexLauncherManager {
       this.getState
     );
 
-    this._api = api;
-    this._getLocalizationManager = getLocalizationManager;
+    this.api = api;
   }
 
   /**
    * Gets the LoadOrder from Vortex's Load Order Page
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
-    const state = this._api.getState();
+    const state = this.api.getState();
     const profile = selectors.activeProfile(state);
     if (!hasPersistentLoadOrder(state.persistent)) {
       return [];
@@ -81,11 +77,11 @@ export class VortexLauncherManager {
   };
 
   public loadLoadOrderVortex = (): vetypes.LoadOrder => {
-    return this._launcherManager.loadLoadOrder();
+    return this.launcherManager.loadLoadOrder();
   };
 
   public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void => {
-    this._launcherManager.saveLoadOrder(loadOrder);
+    this.launcherManager.saveLoadOrder(loadOrder);
   };
 
   /**
@@ -93,7 +89,7 @@ export class VortexLauncherManager {
    * And update the LO for the CLI.
    */
   public refreshGameParameters = () => {
-    this._launcherManager.refreshGameParameters();
+    this.launcherManager.refreshGameParameters();
   };
 
   /**
@@ -102,12 +98,12 @@ export class VortexLauncherManager {
    * Will refresh the Validation Cache
    */
   public refreshModules = (): void => {
-    this._launcherManager.refreshModules();
+    this.launcherManager.refreshModules();
     this.refreshGameParameters();
   };
 
   public setModulesToLaunch = (loadOrder: vetypes.LoadOrder): void => {
-    this._launcherManager.setGameParameterLoadOrder(loadOrder);
+    this.launcherManager.setGameParameterLoadOrder(loadOrder);
     this.refreshGameParameters();
   };
 
@@ -116,7 +112,7 @@ export class VortexLauncherManager {
    * @param saveName if null will exclude if from the CLI
    */
   public setSaveFile = (saveName: string) => {
-    this._launcherManager.setGameParameterSaveFile(saveName);
+    this.launcherManager.setGameParameterSaveFile(saveName);
     this.refreshGameParameters();
   };
 
@@ -125,7 +121,7 @@ export class VortexLauncherManager {
    * @param saveName if null will exclude if from the CLI
    */
   public setContinueLastSaveFile = (value: boolean) => {
-    this._launcherManager.setGameParameterContinueLastSaveFile(value);
+    this.launcherManager.setGameParameterContinueLastSaveFile(value);
     this.refreshGameParameters();
   };
 
@@ -135,7 +131,7 @@ export class VortexLauncherManager {
    * @return
    */
   public getAllModules = (): Readonly<IModuleCache> => {
-    return this._launcherManager.getModules().reduce<IModuleCache>((map, current) => {
+    return this.launcherManager.getModules().reduce<IModuleCache>((map, current) => {
       map[current.id] = current;
       return map;
     }, {});
@@ -146,7 +142,7 @@ export class VortexLauncherManager {
    * @return
    */
   public getAllModulesWithDuplicates = (): vetypes.ModuleInfoExtendedWithMetadata[] => {
-    return this._launcherManager.getAllModules();
+    return this.launcherManager.getAllModules();
   };
 
   /**
@@ -155,21 +151,21 @@ export class VortexLauncherManager {
    * @returns
    */
   public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
-    return this._launcherManager.orderByLoadOrder(loadOrder);
+    return this.launcherManager.orderByLoadOrder(loadOrder);
   };
 
   /**
    * A simple wrapper for Vortex that returns a promise
    */
   public getGameVersionVortexAsync = (): Promise<string> => {
-    return Promise.resolve(this._launcherManager.getGameVersion());
+    return Promise.resolve(this.launcherManager.getGameVersion());
   };
 
   /**
    * A simple wrapper for Vortex that returns a promise
    */
   public getGameVersionVortex = (): string => {
-    return this._launcherManager.getGameVersion();
+    return this.launcherManager.getGameVersion();
   };
 
   /**
@@ -183,7 +179,7 @@ export class VortexLauncherManager {
       });
     }
 
-    const result = this._launcherManager.testModule(files);
+    const result = this.launcherManager.testModule(files);
     const transformedResult: types.ISupportedResult = {
       supported: result.supported,
       requiredFiles: result.requiredFiles,
@@ -207,7 +203,7 @@ export class VortexLauncherManager {
     )!;
     moduleInfo.path = subModuleRelFilePath; // TODO: fix the library
 
-    const result = this._launcherManager.installModule(files, [moduleInfo]);
+    const result = this.launcherManager.installModule(files, [moduleInfo]);
     const subModsIds = Array<string>();
     const transformedResult: types.IInstallResult = {
       instructions: result.instructions.reduce<types.IInstruction[]>((map, current) => {
@@ -242,21 +238,21 @@ export class VortexLauncherManager {
    * @returns
    */
   public isSorting = (): boolean => {
-    return this._launcherManager.isSorting();
+    return this.launcherManager.isSorting();
   };
 
   /**
    *
    */
   public autoSort = () => {
-    this._launcherManager.sort();
+    this.launcherManager.sort();
   };
 
   /**
    *
    */
   public getSaveFiles = (): vetypes.SaveMetadata[] => {
-    return this._launcherManager.getSaveFiles();
+    return this.launcherManager.getSaveFiles();
   };
 
   /**
@@ -265,19 +261,19 @@ export class VortexLauncherManager {
   public setStore = (storeId: string) => {
     switch (storeId) {
       case VortexStoreIds.Steam:
-        this._launcherManager.setGameStore(`Steam`);
+        this.launcherManager.setGameStore(`Steam`);
         break;
       case VortexStoreIds.GOG:
-        this._launcherManager.setGameStore(`GOG`);
+        this.launcherManager.setGameStore(`GOG`);
         break;
       case VortexStoreIds.Epic:
-        this._launcherManager.setGameStore(`Epic`);
+        this.launcherManager.setGameStore(`Epic`);
         break;
       case VortexStoreIds.Xbox:
-        this._launcherManager.setGameStore(`Xbox`);
+        this.launcherManager.setGameStore(`Xbox`);
         break;
       default:
-        this._launcherManager.setGameStore(`Unknown`);
+        this.launcherManager.setGameStore(`Unknown`);
         break;
     }
   };
@@ -288,13 +284,13 @@ export class VortexLauncherManager {
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
     const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
 
-    const discovery = selectors.currentGameDiscovery(this._api.getState());
+    const discovery = selectors.currentGameDiscovery(this.api.getState());
     const cliTools = Object.values(discovery?.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
       actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
     );
     const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: [params] });
-    util.batchDispatch(this._api.store?.dispatch, [...batchedActions, gameParamAction]);
+    util.batchDispatch(this.api.store?.dispatch, [...batchedActions, gameParamAction]);
   };
   /**
    * Callback
@@ -303,7 +299,7 @@ export class VortexLauncherManager {
   private loadLoadOrder = (): vetypes.LoadOrder => {
     const allModules = this.getAllModules();
 
-    const savedLoadOrder = persistenceToVortex(this._api, allModules, readLoadOrder(this._api));
+    const savedLoadOrder = persistenceToVortex(this.api, allModules, readLoadOrder(this.api));
 
     let index = savedLoadOrder.length;
     for (const module of Object.values(allModules)) {
@@ -327,7 +323,7 @@ export class VortexLauncherManager {
    * Saves the Load Order in Vortex's permantent storage
    */
   private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void => {
-    writeLoadOrder(this._api, libraryToPersistence(loadOrder));
+    writeLoadOrder(this.api, libraryToPersistence(loadOrder));
   };
   /**
    * Callback
@@ -335,7 +331,7 @@ export class VortexLauncherManager {
   private sendNotification = (id: string, type: vetypes.NotificationType, message: string, delayMS: number): void => {
     switch (type) {
       case 'hint':
-        this._api.sendNotification?.({
+        this.api.sendNotification?.({
           id: id,
           type: 'activity',
           message: message,
@@ -343,7 +339,7 @@ export class VortexLauncherManager {
         });
         break;
       case 'info':
-        this._api.sendNotification?.({
+        this.api.sendNotification?.({
           id: id,
           type: 'info',
           message: message,
@@ -351,7 +347,7 @@ export class VortexLauncherManager {
         });
         break;
       case 'warning':
-        this._api.sendNotification?.({
+        this.api.sendNotification?.({
           id: id,
           type: 'warning',
           message: message,
@@ -359,7 +355,7 @@ export class VortexLauncherManager {
         });
         break;
       case 'error':
-        this._api.sendNotification?.({
+        this.api.sendNotification?.({
           id: id,
           type: 'error',
           message: message,
@@ -377,13 +373,12 @@ export class VortexLauncherManager {
     message: string,
     filters: vetypes.FileFilter[]
   ): Promise<string> => {
-    const localizationManager = this._getLocalizationManager();
-    const t = localizationManager.localize;
+    const { localize: t } = LocalizationManager.getInstance(this.api);
 
     switch (type) {
       case 'warning': {
         const messageFull = message.split('--CONTENT-SPLIT--', 2).join('\n');
-        const result = await this._api.showDialog?.('question', title, { message: messageFull }, [
+        const result = await this.api.showDialog?.('question', title, { message: messageFull }, [
           { label: t('No'), action: () => 'false' },
           { label: t('Yes'), action: () => 'true' },
         ]);
@@ -394,7 +389,7 @@ export class VortexLauncherManager {
           name: x.name,
           extensions: x.extensions,
         }));
-        const result = await this._api.selectFile({
+        const result = await this.api.selectFile({
           filters: filtersTransformed,
         });
         return result;
@@ -405,7 +400,7 @@ export class VortexLauncherManager {
           name: x.name,
           extensions: x.extensions,
         }));
-        const result = await this._api.saveFile({
+        const result = await this.api.saveFile({
           filters: filtersTransformed,
           defaultPath: fileName,
         });
@@ -417,7 +412,7 @@ export class VortexLauncherManager {
    * Callback
    */
   private getInstallPath = (): string => {
-    const state = this._api.getState();
+    const state = this.api.getState();
     const discovery = selectors.currentGameDiscovery(state);
     return discovery?.path ?? '';
   };
@@ -507,16 +502,16 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
-    const profile = selectors.activeProfile(this._api.getState());
-    const loadOrder = libraryVMToVortex(this._api, moduleViewModels);
-    this._api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
+    const profile = selectors.activeProfile(this.api.getState());
+    const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
+    this.api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
   };
   /**
    * Callback
    */
   private getOptions = (): vetypes.LauncherOptions => {
-    const profile = selectors.activeProfile(this._api.getState());
-    const betaSorting = getBetaSortingFromSettings(this._api, profile.id) ?? false;
+    const profile = selectors.activeProfile(this.api.getState());
+    const betaSorting = getBetaSortingFromSettings(this.api, profile.id) ?? false;
 
     return {
       betaSorting: betaSorting,

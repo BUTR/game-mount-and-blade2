@@ -1,71 +1,49 @@
-import React from 'react';
-import { types, selectors } from 'vortex-api';
+import React, { ComponentType } from 'react';
+import { selectors, types } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { vortexToLibrary, libraryToVortex, libraryVMToVortex, libraryVMToLibrary } from '.';
-import {
-  IModAnalyzerRequestModule,
-  IModAnalyzerRequestQuery,
-  ModAnalyzerProxy,
-  versionToString,
-  actionsLoadOrder,
-} from '..';
+import { IModAnalyzerRequestModule, IModAnalyzerRequestQuery, ModAnalyzerProxy } from '../butr';
+import { actionsLoadOrder } from '../loadOrder';
+import { versionToString } from '../version';
 import { GAME_ID } from '../../common';
-import { LoadOrderInfoPanel, BannerlordItemRenderer } from '../../views';
-import {
-  GetLauncherManager,
-  GetLocalizationManager,
-  IModuleCompatibilityInfoCache,
-  RequiredProperties,
-  VortexLoadOrderStorage,
-} from '../../types';
+import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../../views';
+import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
+import { VortexLauncherManager } from '../launcher';
+import { LocalizationManager } from '../localization';
+import { libraryToVortex, libraryVMToLibrary, libraryVMToVortex, vortexToLibrary } from '.';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager;
 
-  public static getInstance(
-    api?: types.IExtensionApi,
-    getLauncherManager?: GetLauncherManager,
-    getLocalizationManager?: GetLocalizationManager
-  ): LoadOrderManager {
+  public static getInstance(api: types.IExtensionApi): LoadOrderManager {
     if (!LoadOrderManager.instance) {
-      if (api === undefined || getLauncherManager === undefined || getLocalizationManager === undefined) {
+      if (api === undefined) {
         throw new Error('IniStructure is not context aware');
       }
-      LoadOrderManager.instance = new LoadOrderManager(api, getLauncherManager, getLocalizationManager);
+      LoadOrderManager.instance = new LoadOrderManager(api);
     }
 
     return LoadOrderManager.instance;
   }
 
   private api: types.IExtensionApi;
-  private getLauncherManager: GetLauncherManager;
-  private getLocalizationManager: GetLocalizationManager;
   private isInitialized = false;
   private allModules: vetypes.ModuleInfoExtendedWithMetadata[] = [];
   private compatibilityScores: IModuleCompatibilityInfoCache = {};
 
   public gameId: string = GAME_ID;
   public toggleableEntries = true;
-  public customItemRenderer?: React.ComponentType<{
+  public customItemRenderer?: ComponentType<{
     className?: string;
     item: types.IFBLOItemRendererProps;
   }>;
 
-  public usageInstructions?: React.ComponentType<unknown>;
+  public usageInstructions?: ComponentType<unknown>;
   public noCollectionGeneration = true;
 
-  constructor(
-    api: types.IExtensionApi,
-    getLauncherManager: GetLauncherManager,
-    getLocalizationManager: GetLocalizationManager
-  ) {
+  constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.getLauncherManager = getLauncherManager;
-    this.getLocalizationManager = getLocalizationManager;
-    this.usageInstructions = () => (
-      <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} getLocalizationManager={getLocalizationManager} />
-    );
+    this.usageInstructions = () => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
 
     this.customItemRenderer = ({ className = '', item }) => {
       const availableProviders = this.allModules
@@ -74,10 +52,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       const compatibilityScore = this.compatibilityScores[item.loEntry.id];
 
       return (
-        <BannerlordItemRenderer
+        <LoadOrderItemRenderer
           api={api}
-          getLauncherManager={getLauncherManager}
-          getLocalizationManager={getLocalizationManager}
           item={item}
           className={className}
           key={item.loEntry.id}
@@ -90,7 +66,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   public updateCompatibilityScores = () => {
     const proxy = new ModAnalyzerProxy(this.api);
-    const launcherManager = this.getLauncherManager();
+    const launcherManager = VortexLauncherManager.getInstance(this.api);
     const gameVersion = launcherManager.getGameVersionVortex();
     const query: IModAnalyzerRequestQuery = {
       gameVersion: gameVersion,
@@ -119,7 +95,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(loadOrder);
-    const launcherManager = this.getLauncherManager();
+    const launcherManager = VortexLauncherManager.getInstance(this.api);
     launcherManager.saveLoadOrderVortex(loadOrderConverted);
     return Promise.resolve();
   };
@@ -128,13 +104,12 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     if (!this.isInitialized) {
       this.isInitialized = true;
       // We automatically set the modules to launch on save, but not on first load
-      const launcherManager = this.getLauncherManager();
+      const launcherManager = VortexLauncherManager.getInstance(this.api);
       launcherManager.setModulesToLaunch(loadOrder);
     }
   };
   private checkSavedLoadOrder = (autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
-    const localizationManager = this.getLocalizationManager();
-    const t = localizationManager.localize;
+    const { localize: t } = LocalizationManager.getInstance(this.api);
 
     const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
       loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
@@ -151,8 +126,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     }
   };
   private checkOrderByLoadOrderResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): void => {
-    const localizationManager = this.getLocalizationManager();
-    const t = localizationManager.localize;
+    const { localize: t } = LocalizationManager.getInstance(this.api);
 
     if (autoSort && result.issues) {
       this.api.sendNotification?.({
@@ -168,8 +142,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     autoSort: boolean,
     result: vetypes.OrderByLoadOrderResult
   ): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
-    const localizationManager = this.getLocalizationManager();
-    const t = localizationManager.localize;
+    const { localize: t } = LocalizationManager.getInstance(this.api);
 
     if (!result || !result.orderedModuleViewModels || !result.result) {
       if (autoSort) {
@@ -198,7 +171,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   };
   public deserializeLoadOrder = (): Promise<VortexLoadOrderStorage> => {
     const autoSort = true; // TODO: get from settings
-    const launcherManager = this.getLauncherManager();
+    const launcherManager = VortexLauncherManager.getInstance(this.api);
 
     // Make sure the LauncherManager has the latest module list
     launcherManager.refreshModules();
