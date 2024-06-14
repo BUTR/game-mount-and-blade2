@@ -53,7 +53,6 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
       return (
         <LoadOrderItemRenderer
-          api={api}
           item={item}
           className={className}
           key={item.loEntry.id}

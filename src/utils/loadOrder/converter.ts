@@ -80,7 +80,10 @@ export const vortexToLibraryVM = (
   });
   return loadOrderConverted;
 };
-export const libraryVMToVortex = (api: types.IExtensionApi, loadOrder: vetypes.ModuleViewModel[]): types.LoadOrder => {
+export const libraryVMToVortex = (
+  api: types.IExtensionApi,
+  loadOrder: vetypes.ModuleViewModel[]
+): VortexLoadOrderStorage => {
   const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
     const modId = getModIds(api, curr.moduleInfoExtended.id);
     return {

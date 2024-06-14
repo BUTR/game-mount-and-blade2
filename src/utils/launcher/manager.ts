@@ -16,7 +16,7 @@ import {
 } from '../loadOrder';
 import { getBetaSortingFromSettings } from '../settings';
 import { filterEntryWithInvalidId } from '../util';
-import { GAME_ID } from '../../common';
+import { GAME_ID, SUB_MODS_IDS } from '../../common';
 import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../../types';
 import { LocalizationManager } from '../localization';
 
@@ -226,7 +226,7 @@ export class VortexLauncherManager {
     };
     transformedResult.instructions.push({
       type: 'attribute',
-      key: 'subModsIds',
+      key: SUB_MODS_IDS,
       value: subModsIds,
     });
 

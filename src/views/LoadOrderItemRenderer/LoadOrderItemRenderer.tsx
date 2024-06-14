@@ -1,7 +1,7 @@
-import React, { BaseSyntheticEvent, useCallback } from 'react';
+import React, { BaseSyntheticEvent, useCallback, useContext } from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
-import { useSelector } from 'react-redux';
-import { Icon, selectors, tooltip, types } from 'vortex-api';
+import { useSelector, useStore } from 'react-redux';
+import { Icon, MainContext, selectors, tooltip, types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { IModuleCompatibilityInfo, IVortexViewModelData } from '../../types';
 import { actionsLoadOrder, hasPersistentLoadOrder, useLocalization, versionToString } from '../../utils';
@@ -9,7 +9,6 @@ import { CompatibilityInfo, ModuleIcon, TooltipImage } from '../Controls';
 import { STEAM_LOGO } from '../../common';
 
 interface IProps {
-  api: types.IExtensionApi;
   className?: string;
   item: types.IFBLOItemRendererProps;
   availableProviders: vetypes.ModuleProviderType[];
@@ -19,12 +18,14 @@ interface IProps {
 export type LoadOrderItemRendererProps = IProps;
 
 export const LoadOrderItemRenderer = (props: IProps) => {
-  const { api, className, item, availableProviders, compatibilityInfo } = props;
+  const { className, item, availableProviders, compatibilityInfo } = props;
   const { loadOrder, profile } = useSelector(mapState);
 
   const key = item.loEntry.id;
   const name = item.loEntry.name ? `${item.loEntry.name}` : `${item.loEntry.id}`;
-  const version = versionToString(item.loEntry.data?.moduleInfoExtended.version);
+  const version = item.loEntry.data?.moduleInfoExtended.version
+    ? versionToString(item.loEntry.data.moduleInfoExtended.version)
+    : 'ERROR';
 
   const position =
     loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
@@ -38,15 +39,17 @@ export const LoadOrderItemRenderer = (props: IProps) => {
     classes = classes.concat('external');
   }
 
+  const store = useStore();
+
   const onStatusChange = useCallback(
     (evt: BaseSyntheticEvent<Event, HTMLInputElement & Checkbox, HTMLInputElement>) => {
       const entry = {
         ...item.loEntry,
         enabled: evt.target.checked,
       };
-      api.store?.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, entry));
+      store.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, entry));
     },
-    [api, item, profile]
+    [store, item, profile]
   );
 
   const checkBox = () =>

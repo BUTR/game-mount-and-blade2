@@ -11,6 +11,8 @@ export const I18N_NAMESPACE = `game-mount-and-blade2`;
 
 export const SUBMODULE_FILE = `SubModule.xml`;
 
+export const SUB_MODS_IDS = `subModsIds`;
+
 export const BINARY_FOLDER_STANDARD = `Win64_Shipping_Client`;
 export const BINARY_FOLDER_STANDARD_MODDING_KIT = `Win64_Shipping_wEditor`;
 export const BINARY_FOLDER_XBOX = `Gaming.Desktop.x64_Shipping_Client`;

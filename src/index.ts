@@ -2,23 +2,30 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { log, selectors, types } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
-import { ICollection } from '@nexusmods/nexus-api';
 import path from 'path';
 import {
   actionsSettings,
   addedFilesEvent,
+  cloneCollectionGeneralData,
+  cloneCollectionModOptionsData,
   didDeployEvent,
   didPurgeEvent,
-  genCollectionsData,
+  genCollectionGeneralData,
+  genCollectionModOptionsData,
   getInstallPathBLSE,
   getInstallPathModule,
-  hasCollection,
-  IBannerlordCollections,
+  hasContextWithCollectionFeature,
+  hasGeneralData,
+  hasLegacyData,
+  hasModOptionsData,
+  ICollectionData,
   installBLSE,
   isModTypeBLSE,
   isModTypeModule,
   LoadOrderManager,
-  parseCollectionsData,
+  parseCollectionGeneralData,
+  parseCollectionLegacyData,
+  parseCollectionModOptionsData,
   reducer,
   SaveManager,
   testBLSE,
@@ -26,8 +33,8 @@ import {
 } from './utils';
 import { GAME_ID } from './common';
 import {
-  BannerlordDataView,
-  BannerlordModOptionsView,
+  BannerlordGeneralDataView,
+  BannerlordModOptionsDataView,
   SavePage,
   SavePageOptions,
   Settings,
@@ -61,68 +68,81 @@ const main = (context: types.IExtensionContext): boolean => {
 
   context.registerGame(new BannerlordGame(context.api));
 
-  if (hasCollection(context.optional)) {
+  if (hasContextWithCollectionFeature(context)) {
     context.optional.registerCollectionFeature(
       /*id:*/ `${GAME_ID}_load_order`,
-      /*generate:*/ toBluebird(async (gameId: string, includedMods: string[]) => {
+      /*generate:*/ async (gameId: string, includedMods: string[], _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
-          return [];
+          return {};
         }
-        return genCollectionsData(context.api, includedMods);
-      }),
-      /*parse:*/ toBluebird(async (gameId: string, collection: ICollection) => {
-        if (GAME_ID !== gameId) {
-          return;
-        }
-        const coll = collection as IBannerlordCollections;
-        return await parseCollectionsData(context.api, coll);
-      }),
-      /*clone:*/ toBluebird(async (gameId: string, _collection: ICollection, _from: types.IMod, _to: types.IMod) => {
+        return genCollectionGeneralData(context.api, includedMods);
+      },
+      /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        return;
-      }),
+        if (hasLegacyData(collection)) {
+          await parseCollectionLegacyData(context.api, collection);
+        }
+
+        if (hasGeneralData(collection)) {
+          await parseCollectionGeneralData(context.api, collection);
+        }
+      },
+      /*clone:*/
+      async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
+        if (GAME_ID !== gameId) {
+          return;
+        }
+        if (!hasGeneralData(collection)) {
+          return;
+        }
+        cloneCollectionGeneralData(context.api, gameId, collection, from, to);
+      },
       /*title:*/ (t: TFunction) => {
-        return t(`Bannerlord Data`);
+        return t(`Requirements & Load Order`);
       },
       /*condition?:*/ (_state: types.IState, gameId: string) => {
         return gameId === GAME_ID;
       },
-      /*editComponent?:*/ BannerlordDataView
+      /*editComponent?:*/ BannerlordGeneralDataView
     );
 
-    // context.optional.registerCollectionFeature(
-    //   /*id:*/ `${GAME_ID}_mod_options`,
-    //   /*generate:*/ toBluebird(async (gameId: string, includedMods: string[]) => {
-    //     if (GAME_ID !== gameId) {
-    //       return [];
-    //     }
-    //     return genCollectionsData(context.api, includedMods);
-    //   }),
-    //   /*parse:*/ toBluebird(async (gameId: string, collection: ICollection) => {
-    //     if (GAME_ID !== gameId) {
-    //       return;
-    //     }
-    //     const coll = collection as IBannerlordCollections;
-    //     return await parseCollectionsData(context.api, coll);
-    //   }),
-    //   /*clone:*/ toBluebird(async (gameId: string, _collection: ICollection, _from: types.IMod, _to: types.IMod) => {
-    //     if (GAME_ID !== gameId) {
-    //       return;
-    //     }
-
-    //     return;
-    //   }),
-    //   /*title:*/ (t: TFunction) => {
-    //     return t(`Bannerlord Mod Options`);
-    //   },
-    //   /*condition?:*/ (_state: types.IState, gameId: string) => {
-    //     return gameId === GAME_ID;
-    //   },
-    //   /*editComponent?:*/ BannerlordModOptionsView
-    // );
+    context.optional.registerCollectionFeature(
+      /*id:*/ `${GAME_ID}_mod_options`,
+      /*generate:*/ async (gameId: string, _includedMods: string[], mod: types.IMod) => {
+        if (GAME_ID !== gameId) {
+          return {};
+        }
+        return genCollectionModOptionsData(context.api, mod);
+      },
+      /*parse:*/ async (gameId: string, collection: ICollectionData) => {
+        if (GAME_ID !== gameId) {
+          return;
+        }
+        if (!hasModOptionsData(collection)) {
+          return;
+        }
+        await parseCollectionModOptionsData(context.api, collection);
+      },
+      /*clone:*/ async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
+        if (GAME_ID !== gameId) {
+          return;
+        }
+        if (!hasModOptionsData(collection)) {
+          return;
+        }
+        cloneCollectionModOptionsData(context.api, gameId, collection, from, to);
+      },
+      /*title:*/ (t: TFunction) => {
+        return t(`Mod Options`);
+      },
+      /*condition?:*/ (_state: types.IState, gameId: string) => {
+        return gameId === GAME_ID;
+      },
+      /*editComponent?:*/ BannerlordModOptionsDataView
+    );
   }
 
   context.registerLoadOrder(/*gameInfo:*/ LoadOrderManager.getInstance(context.api));

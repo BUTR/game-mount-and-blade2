@@ -1,38 +1,66 @@
-// eslint-disable-next-line no-restricted-imports
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
-import { ICollection, IRevision } from '@nexusmods/nexus-api';
-import { ComponentType } from 'react';
-import { PersistenceLoadOrderStorage } from '../../types';
+import { IExtendedInterfaceProps } from 'collections/src/types/IExtendedInterfaceProps';
+import { ICollection as ICollectionDataToExport } from 'collections/src/types/ICollection';
+import { IExtensionFeature } from 'collections/src/util/extension';
+import { IStatePersistent, PersistenceLoadOrderStorage } from '../../types';
+import { PersistentModOptionsEntry } from '../modoptions';
 
-export interface ICollectionFeatureProps {
-  t: types.TFunction;
-  gameId: string;
-  collection: types.IMod;
-  revisionInfo: IRevision;
+export interface ICollectionData extends ICollectionDataToExport {}
+
+export type IncludedModOptions = {
+  includedModOptions?: PersistentModOptionsEntry[];
+};
+
+export type ModAttributesWithCollection<T = unknown> = types.IMod['attributes'] & {
+  collection?: T;
+};
+
+export interface IModWithCollection<T = unknown> extends types.IMod {
+  attributes?: ModAttributesWithCollection<T>;
 }
 
-export interface IHasExtensionContextCollectionFeature {
+export interface IModWithIncludedModOptions extends IModWithCollection<IncludedModOptions> {}
+
+export interface IStatePersistentWithModsWithIncludedModOptions extends IStatePersistent {
+  mods: {
+    [gameId: string]: {
+      [modId: string]: IModWithCollection<IncludedModOptions>;
+    };
+  };
+}
+
+export interface ICollectionFeatureProps extends IExtendedInterfaceProps {}
+
+export interface ICollectionFeature {
   registerCollectionFeature: (
-    id: string,
+    id: IExtensionFeature['id'],
 
-    generate: (gameId: string, includedMods: string[]) => Bluebird<unknown>,
+    generate: IExtensionFeature['generate'],
+    parse: IExtensionFeature['parse'],
+    clone: IExtensionFeature['clone'],
 
-    parse: (gameId: string, collection: ICollection) => Bluebird<void>,
-
-    clone: (gameId: string, collection: ICollection, from: types.IMod, to: types.IMod) => Bluebird<void>,
-
-    title: (t: types.TFunction) => string,
-
-    condition?: (state: types.IState, gameId: string) => boolean,
-
-    editComponent?: ComponentType<ICollectionFeatureProps>
+    title: IExtensionFeature['title'],
+    condition?: IExtensionFeature['condition'],
+    editComponent?: IExtensionFeature['editComponent']
   ) => void;
 }
 
-export interface IBannerlordCollectionsData {
-  hasBLSE: boolean;
-  loadOrder: PersistenceLoadOrderStorage;
+export interface IExtensionContextWithCollectionFeature extends types.IExtensionContext {
+  optional: ICollectionFeature;
 }
 
-export interface IBannerlordCollections extends ICollection, IBannerlordCollectionsData {}
+export interface ICollectionGeneralData {
+  hasBLSE: boolean;
+  suggestedLoadOrder: PersistenceLoadOrderStorage;
+}
+export interface ICollectionDataWithGeneralData extends ICollectionData, ICollectionGeneralData {}
+
+export interface ICollectionLegacyData {
+  loadOrder: types.LoadOrder; // TODO: check what the data is
+}
+export interface ICollectionDataWithLegacyData extends ICollectionData, ICollectionLegacyData {}
+
+export interface ICollectionSettingsData {
+  includedModOptions: PersistentModOptionsEntry[];
+}
+export interface ICollectionDataWithSettingsData extends ICollectionData, ICollectionSettingsData {}

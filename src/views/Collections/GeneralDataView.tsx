@@ -7,13 +7,13 @@ import {
   IModuleCompatibilityInfoCache,
   IPersistenceLoadOrderEntry,
   IVortexViewModelData,
+  PersistenceLoadOrderStorage,
   VortexLoadOrderStorage,
 } from '../../types';
 import {
-  genCollectionsData,
+  genCollectionGeneralData,
   hasPersistentBannerlordMods,
   hasPersistentLoadOrder,
-  IBannerlordCollectionsData,
   ICollectionFeatureProps,
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
@@ -27,11 +27,12 @@ import { CompatibilityInfo as CompatibilityInfo, ModuleIcon } from '../Controls'
 
 interface IProps extends ICollectionFeatureProps {}
 
-export type BannerlordDataViewProps = ICollectionFeatureProps;
+export type BannerlordGeneralDataViewProps = ICollectionFeatureProps;
 
-export const BannerlordDataView = (props: IProps) => {
+export const BannerlordGeneralDataView = (props: IProps) => {
   const [compatibilityInfoCache, setCompatibilityInfoCache] = useState<IModuleCompatibilityInfoCache>({});
-  const [collectionData, setCollectionData] = useState<IBannerlordCollectionsData>({ hasBLSE: false, loadOrder: [] });
+  const [hasBLSE, setHasBLSE] = useState<boolean>(false);
+  const [persistentLoadOrder, setPersistentLoadOrder] = useState<PersistenceLoadOrderStorage>([]);
 
   const { loadOrder, mods } = useSelector(mapState);
   const launcherManager = useLauncher();
@@ -39,13 +40,12 @@ export const BannerlordDataView = (props: IProps) => {
   const context = useContext(MainContext);
 
   useEffect(() => {
-    const data = genCollectionsData(context.api, Object.keys(mods));
-    setCollectionData(data);
+    const data = genCollectionGeneralData(context.api, Object.keys(mods));
+    setHasBLSE(data.hasBLSE);
+    setPersistentLoadOrder(data.suggestedLoadOrder);
   }, [context.api, mods]);
 
   const { localize: t } = useLocalization();
-
-  const { hasBLSE, loadOrder: persistentLoadOrder } = collectionData;
 
   const refreshCompatibilityScores = () => {
     getCompatibilityScores(context.api, launcherManager).then((cache) => {
@@ -62,8 +62,7 @@ export const BannerlordDataView = (props: IProps) => {
 
   return persistentLoadOrder && Object.values(persistentLoadOrder).length !== 0 ? (
     <div style={{ overflow: 'auto' }}>
-      <h4>{t('Configuration')}</h4>
-      <ConfigurationInfo hasBLSE={hasBLSE} />
+      <Requirements hasBLSE={hasBLSE} />
       <h4>{t('Load Order')}</h4>
       <tooltip.Button tooltip={hint} onClick={refreshCompatibilityScores}>
         {t('Update Compatibility Score')}
@@ -79,9 +78,14 @@ export const BannerlordDataView = (props: IProps) => {
       </p>
       <LoadOrderEditInfo />
       <ListGroup id="collections-load-order-list">
-        {Object.values(persistentLoadOrder).map((x) => {
-          EntryView(x, loadOrder, compatibilityInfoCache);
-        })}
+        {Object.values(persistentLoadOrder).map((entry) => (
+          <EntryView
+            key={entry.id}
+            entry={entry}
+            loadOrder={loadOrder}
+            compatibilityInfoCache={compatibilityInfoCache}
+          />
+        ))}
       </ListGroup>
     </div>
   ) : (
@@ -129,11 +133,14 @@ const openLoadOrderPage = (api: types.IExtensionApi) => {
   api.events.emit('show-main-page', 'file-based-loadorder');
 };
 
-const EntryView = (
-  entry: IPersistenceLoadOrderEntry | undefined,
-  loadOrder: VortexLoadOrderStorage,
-  compatibilityInfoCache: IModuleCompatibilityInfoCache
-) => {
+type EntryViewProps = {
+  entry: IPersistenceLoadOrderEntry;
+  loadOrder: VortexLoadOrderStorage;
+  compatibilityInfoCache: IModuleCompatibilityInfoCache;
+};
+const EntryView = (props: EntryViewProps) => {
+  const { entry, loadOrder, compatibilityInfoCache } = props;
+
   if (!entry) {
     return null;
   }
@@ -180,17 +187,20 @@ const OptionalBanner = (props: { item: types.IFBLOLoadOrderEntry<IVortexViewMode
   ) : null;
 };
 
-const ConfigurationInfo = (props: { hasBLSE: boolean }) => {
+const Requirements = (props: { hasBLSE: boolean }) => {
   const { hasBLSE } = props;
 
   const { localize: t } = useLocalization();
 
   return (
-    <ListGroup id="collections-load-order-list">
-      <span>{t('Require BLSE to be installed')}</span>
-      <span>{': '}</span>
-      {hasBLSE ? <span>{t('Yes')}</span> : <span>{t('No')}</span>}
-    </ListGroup>
+    <>
+      <h4>{t('Requirements')}</h4>
+      <ListGroup id="collections-load-order-list">
+        <span>{t('Require BLSE to be installed')}</span>
+        <span>{': '}</span>
+        {hasBLSE ? <span>{t('Yes')}</span> : <span>{t('No')}</span>}
+      </ListGroup>
+    </>
   );
 };
 

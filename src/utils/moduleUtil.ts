@@ -1,4 +1,5 @@
 import { selectors, types } from 'vortex-api';
+import { SUB_MODS_IDS } from '../common';
 
 type ModIdResult = {
   id: string;
@@ -13,10 +14,10 @@ export const getModIds = (api: types.IExtensionApi, moduleId: string): ModIdResu
   const gameId = selectors.activeGameId(state);
   const gameMods = state.persistent.mods[gameId] ?? {};
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
-    if (!mod.attributes || !mod.attributes['subModsIds']) {
+    if (!mod.attributes || !mod.attributes[SUB_MODS_IDS]) {
       return arr;
     }
-    const subModsIds: Set<string> = new Set(mod.attributes['subModsIds']);
+    const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
     if (subModsIds.has(moduleId)) {
       arr.push({
         id: mod.attributes['modId'],
