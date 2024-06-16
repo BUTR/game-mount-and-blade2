@@ -1,10 +1,16 @@
 import { actions, types, util } from 'vortex-api';
 import { Utils } from '@butr/vortexextensionnative';
+import { createReducer, ReducerHandler, ReducerHandlerState } from './redux';
 import { nameof as nameof2 } from '../nameof';
-import { actionsSave } from '../save';
-import { actionsSettings, IBannerlordSettings } from '../settings';
+import { actionsSave, SetCurrentSavePayload } from '../save';
+import {
+  actionsSettings,
+  IBannerlordSettings,
+  SetBetaSortingPayload,
+  SetFixCommonIssuesPayload,
+  SetSortOnDeployPayload,
+} from '../settings';
 import { i18nToBannerlord } from '../localization';
-import { createReducer, ReducerHandler, ReducerHandlerState } from '.';
 
 // TODO: Ask IDCs to provider a proper type system?
 type SetLoadOrderPayload = {
@@ -16,31 +22,19 @@ type SetLanguagePayload = string;
 
 const nameof = nameof2<IBannerlordSettings>;
 
-const setSortOnDeploy = (
-  state: ReducerHandlerState,
-  payload: actionsSettings.SetSortOnDeployPayload
-): ReducerHandlerState => {
+const setSortOnDeploy = (state: ReducerHandlerState, payload: SetSortOnDeployPayload): ReducerHandlerState => {
   return util.setSafe(state, [nameof('sortOnDeploy'), payload.profileId], payload.sort);
 };
 
-const setFixCommonIssues = (
-  state: ReducerHandlerState,
-  payload: actionsSettings.SetFixCommonIssuesPayload
-): ReducerHandlerState => {
+const setFixCommonIssues = (state: ReducerHandlerState, payload: SetFixCommonIssuesPayload): ReducerHandlerState => {
   return util.setSafe(state, [nameof('fixCommonIssues'), payload.profileId], payload.fixCommonIssues);
 };
 
-const setBetaSorting = (
-  state: ReducerHandlerState,
-  payload: actionsSettings.SetBetaSortingPayload
-): ReducerHandlerState => {
+const setBetaSorting = (state: ReducerHandlerState, payload: SetBetaSortingPayload): ReducerHandlerState => {
   return util.setSafe(state, [nameof('betaSorting'), payload.profileId], payload.betaSorting);
 };
 
-const setCurrentSave = (
-  state: ReducerHandlerState,
-  payload: actionsSave.SetCurrentSavePayload
-): ReducerHandlerState => {
+const setCurrentSave = (state: ReducerHandlerState, payload: SetCurrentSavePayload): ReducerHandlerState => {
   return util.setSafe(state, [nameof('saveName'), payload.profileId], payload.saveId);
 };
 

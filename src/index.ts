@@ -22,9 +22,6 @@ import {
   genCollectionGeneralData,
   genCollectionModOptionsData,
   hasContextWithCollectionFeature,
-  hasGeneralData,
-  hasLegacyData,
-  hasModOptionsData,
   ICollectionData,
   parseCollectionGeneralData,
   parseCollectionLegacyData,
@@ -68,35 +65,26 @@ const main = (context: types.IExtensionContext): boolean => {
   if (hasContextWithCollectionFeature(context)) {
     context.optional.registerCollectionFeature(
       /*id:*/ `${GAME_ID}_load_order`,
-      /*generate:*/ (gameId: string, includedMods: string[], _mod: types.IMod) => {
+      /*generate:*/ async (gameId: string, includedMods: string[], _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
-          return Promise.resolve({});
+          return {};
         }
-        return Promise.resolve(genCollectionGeneralData(context.api, includedMods));
+        return await genCollectionGeneralData(context.api, includedMods);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        if (hasLegacyData(collection)) {
-          parseCollectionLegacyData(context.api, collection);
-        }
-
-        if (hasGeneralData(collection)) {
-          await parseCollectionGeneralData(context.api, collection);
-        }
+        await parseCollectionLegacyData(context.api, collection);
+        await parseCollectionGeneralData(context.api, collection);
       },
       /*clone:*/
-      (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
+      async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
-          return Promise.resolve();
+          return;
         }
-        if (!hasGeneralData(collection)) {
-          return Promise.resolve();
-        }
-        cloneCollectionGeneralData(context.api, gameId, collection, from, to);
-        return Promise.resolve();
+        await cloneCollectionGeneralData(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
         return t(`Requirements & Load Order`);
@@ -109,29 +97,24 @@ const main = (context: types.IExtensionContext): boolean => {
 
     context.optional.registerCollectionFeature(
       /*id:*/ `${GAME_ID}_mod_options`,
-      /*generate:*/ (gameId: string, _includedMods: string[], mod: types.IMod) => {
+      /*generate:*/ async (gameId: string, _includedMods: string[], mod: types.IMod) => {
         if (GAME_ID !== gameId) {
-          return Promise.resolve({});
+          return {};
         }
-        genCollectionModOptionsData(context.api, mod);
-        return Promise.resolve({});
+        return await genCollectionModOptionsData(context.api, mod);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
-        if (!hasModOptionsData(collection)) {
-          return;
-        }
+
         await parseCollectionModOptionsData(context.api, collection, mod);
       },
       /*clone:*/ async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
-        if (!hasModOptionsData(collection)) {
-          return;
-        }
+
         await cloneCollectionModOptionsData(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
@@ -233,7 +216,7 @@ const main = (context: types.IExtensionContext): boolean => {
       }
 
       await gamemodeActivatedLoadOrder(context.api);
-      gamemodeActivatedSave(context.api);
+      await gamemodeActivatedSave(context.api);
     });
 
     context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {
@@ -255,18 +238,17 @@ const main = (context: types.IExtensionContext): boolean => {
       }
 
       await didDeployLoadOrder(context.api);
-      didDeployBLSE(context.api);
+      await didDeployBLSE(context.api);
     });
 
-    context.api.onAsync('did-purge', (profileId: string) => {
+    context.api.onAsync('did-purge', async (profileId: string) => {
       const state = context.api.getState();
       const profile: types.IProfile | undefined = selectors.profileById(state, profileId);
       if (profile?.gameId !== GAME_ID) {
-        return Promise.resolve();
+        return;
       }
 
-      didPurgeBLSE(context.api);
-      return Promise.resolve();
+      await didPurgeBLSE(context.api);
     });
 
     context.api.onAsync('will-remove-mod', async (gameId: string, modId: string) => {

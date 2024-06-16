@@ -1,4 +1,4 @@
-export * as actionsLoadOrder from './actions';
+export * from './actions';
 export * from './converters';
 export * from './events';
 export * from './hooks';

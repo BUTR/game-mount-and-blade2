@@ -3,7 +3,7 @@
 import { types } from 'vortex-api';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const setFBForceUpdate = (profileId: string) => ({
+const setFBForceUpdate = (profileId: string) => ({
   type: 'SET_FB_FORCE_UPDATE',
   payload: {
     profileId,
@@ -11,7 +11,7 @@ export const setFBForceUpdate = (profileId: string) => ({
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrderEntry) => ({
+const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrderEntry) => ({
   type: 'SET_FB_LOAD_ORDER_ENTRY',
   payload: {
     profileId,
@@ -20,19 +20,15 @@ export const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrder
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const setFBLoadOrder = (profileId: string, loadOrder: types.LoadOrder) => ({
+const setFBLoadOrder = (profileId: string, loadOrder: types.LoadOrder) => ({
   type: 'SET_FB_LOAD_ORDER',
   payload: {
     profileId,
     loadOrder,
   },
 });
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const setLoadOrder = (profileId: string, loadOrder: types.LoadOrder) => ({
-  type: 'SET_LOAD_ORDER',
-  payload: {
-    id: profileId,
-    prder: loadOrder,
-  },
-});
+export const actionsLoadOrder = {
+  setFBForceUpdate,
+  setFBLoadOrderEntry,
+  setFBLoadOrder,
+};

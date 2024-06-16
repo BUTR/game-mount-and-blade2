@@ -1,13 +1,13 @@
 import { actions, types } from 'vortex-api';
+import { findBLSEMod } from './utils';
 import { hasSettingsInterfacePrimaryTool } from '../vortex';
 import { GAME_ID } from '../common';
-import { findBLSEMod } from '.';
 
-export const didDeployBLSE = (api: types.IExtensionApi): void => {
+export const didDeployBLSE = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState();
 
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
-    return;
+    return Promise.resolve();
   }
 
   const primaryTool = state.settings.interface.primaryTool.mountandblade2bannerlord;
@@ -19,25 +19,29 @@ export const didDeployBLSE = (api: types.IExtensionApi): void => {
   if (!blseMod && primaryTool === 'blse-cli') {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
+
+  return Promise.resolve();
 };
 
 /**
  * Event function, be careful
  */
-export const didPurgeBLSE = (api: types.IExtensionApi): void => {
+export const didPurgeBLSE = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState();
 
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
-    return;
+    return Promise.resolve();
   }
 
   const primaryTool = state.settings.interface.primaryTool.mountandblade2bannerlord;
   if (primaryTool !== 'blse-cli') {
-    return;
+    return Promise.resolve();
   }
 
   const blseMod = findBLSEMod(state);
   if (blseMod) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
+
+  return Promise.resolve();
 };

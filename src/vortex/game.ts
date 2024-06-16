@@ -1,5 +1,6 @@
 import { fs, selectors, types } from 'vortex-api';
 import path from 'path';
+import { isStoreStandard, isStoreXbox } from './store';
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_XBOX,
@@ -8,7 +9,6 @@ import {
   BINARY_FOLDER_XBOX,
   GAME_ID,
 } from '../common';
-import { isStoreStandard, isStoreXbox } from '.';
 
 export const getBinaryPath = (store: string | undefined): string => {
   return path.join(`bin`, isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD);

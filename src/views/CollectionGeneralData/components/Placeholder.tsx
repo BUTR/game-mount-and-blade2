@@ -1,7 +1,7 @@
 import React from 'react';
 import { EmptyPlaceholder } from 'vortex-api';
+import { OpenLoadOrderButton } from './OpenLoadOrderButton';
 import { useLocalization } from '../../../localization';
-import { OpenLoadOrderButton } from '.';
 
 export const Placeholder = (): JSX.Element => {
   const { localize: t } = useLocalization();

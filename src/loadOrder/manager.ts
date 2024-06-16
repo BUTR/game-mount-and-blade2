@@ -1,7 +1,11 @@
 import { ComponentType } from 'react';
 import { selectors, types } from 'vortex-api';
-import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
+import { IInvalidResult, IValidationResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
+import { vortexToLibrary } from './converters';
+import { actionsLoadOrder } from './actions';
+import { orderCurrentLoadOrderByExternalLoadOrder } from './utils';
+import { readLoadOrder } from './vortex';
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
@@ -12,10 +16,6 @@ import { GAME_ID } from '../common';
 import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../views';
 import { IVortexViewModelData, VortexLoadOrderStorage } from '../types';
 import { versionToString, VortexLauncherManager } from '../launcher';
-import { LocalizationManager } from '../localization';
-import { RequiredProperties } from '../types';
-import { actionsLoadOrder } from '.';
-import { libraryToVortex, libraryVMToLibrary, libraryVMToVortex, vortexToLibrary } from '.';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager | undefined;
@@ -97,8 +97,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     this.api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
-  public serializeLoadOrder = (loadOrder: VortexLoadOrderStorage): Promise<void> => {
-    const loadOrderConverted = vortexToLibrary(loadOrder);
+  public serializeLoadOrder = (newLO: VortexLoadOrderStorage, prevLO: VortexLoadOrderStorage): Promise<void> => {
+    const loadOrderConverted = vortexToLibrary(newLO);
     const launcherManager = VortexLauncherManager.getInstance(this.api);
     launcherManager.saveLoadOrderVortex(loadOrderConverted);
     return Promise.resolve();
@@ -112,112 +112,26 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       launcherManager.setModulesToLaunch(loadOrder);
     }
   };
-  private checkSavedLoadOrder = (autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
-    const { localize: t } = LocalizationManager.getInstance(this.api);
 
-    const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
-      loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
-    );
-    if (autoSort && savedLoadOrderIssues.length > 0) {
-      // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
-      this.api.sendNotification?.({
-        type: 'warning',
-        message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
-          NL: '\n',
-          REASONS: savedLoadOrderIssues.join(`\n`),
-        }),
-      });
-    }
-  };
-  private checkOrderByLoadOrderResult = (autoSort: boolean, result: vetypes.OrderByLoadOrderResult): void => {
-    const { localize: t } = LocalizationManager.getInstance(this.api);
-
-    if (autoSort && result.issues) {
-      this.api.sendNotification?.({
-        type: 'warning',
-        message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
-          NL: '\n',
-          REASONS: result.issues.join(`\n`),
-        }),
-      });
-    }
-  };
-  private checkResult = (
-    autoSort: boolean,
-    result: vetypes.OrderByLoadOrderResult
-  ): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
-    const { localize: t } = LocalizationManager.getInstance(this.api);
-
-    if (result === undefined || !result.orderedModuleViewModels || result.result === undefined || !result.result) {
-      if (autoSort) {
-        // The user is not expecting a sort operation, so don't give the notification
-        this.api.sendNotification?.({
-          type: 'error',
-          message: t(`{=sLf3eIpH}Failed to order the module list!`),
-        });
-      }
-      return false;
-    }
-    return true;
-  };
-  private getExcludedLoadOrder = (
-    loadOrder: vetypes.LoadOrder,
-    result: vetypes.OrderByLoadOrderResult
-  ): vetypes.LoadOrder => {
-    const excludedLoadOrder = Object.entries(loadOrder).reduce<vetypes.LoadOrder>((arr, curr) => {
-      const [id, entry] = curr;
-      if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === entry.id)) {
-        arr[id] = entry;
-      }
-      return arr;
-    }, {});
-    return excludedLoadOrder;
-  };
-  public deserializeLoadOrder = (): Promise<VortexLoadOrderStorage> => {
-    const autoSort = true; // TODO: get from settings
+  public deserializeLoadOrder = async (): Promise<VortexLoadOrderStorage> => {
     const launcherManager = VortexLauncherManager.getInstance(this.api);
 
     // Make sure the LauncherManager has the latest module list
     launcherManager.refreshModules();
-    this.allModules = launcherManager.getAllModulesWithDuplicates();
-
-    // Get the saved Load Order
     const allModules = launcherManager.getAllModules();
-    const savedLoadOrder = launcherManager.loadLoadOrderVortex();
-    const savedLoadOrderVortex = libraryToVortex(this.api, allModules, savedLoadOrder);
 
-    this.checkSavedLoadOrder(autoSort, savedLoadOrderVortex);
+    const persistenceLoadOrder = readLoadOrder(this.api);
 
-    // Apply the Load Order to the list of modules
-    // Useful when there are new modules or old modules are missing
-    // The output wil wil contain the auto sorted list of modules
-    const result = launcherManager.orderByLoadOrder(savedLoadOrder);
-    if (!this.checkResult(autoSort, result)) {
-      this.setParameters(savedLoadOrder);
-      return Promise.resolve(savedLoadOrderVortex);
-    }
-
-    // Not even sure this will trigger
-    this.checkOrderByLoadOrderResult(autoSort, result);
-
-    // Use the sorted to closest valid state Load Order
-    if (autoSort) {
-      const loadOrderVortex = libraryVMToVortex(this.api, result.orderedModuleViewModels);
-      this.setParameters(libraryVMToLibrary(result.orderedModuleViewModels));
-      return Promise.resolve(loadOrderVortex);
-    }
-
-    // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-    const excludedSavedLoadOrder = this.getExcludedLoadOrder(savedLoadOrder, result);
-    this.setParameters(excludedSavedLoadOrder);
-    return Promise.resolve(libraryToVortex(this.api, allModules, excludedSavedLoadOrder));
+    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(this.api, allModules, persistenceLoadOrder);
+    this.setParameters(vortexToLibrary(loadOrder));
+    return loadOrder;
   };
 
-  public validate = (_prev: VortexLoadOrderStorage, curr: VortexLoadOrderStorage): Promise<types.IValidationResult> => {
-    const modules = (curr ?? []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) =>
+  public validate = (prevLO: VortexLoadOrderStorage, newLO: VortexLoadOrderStorage): Promise<IValidationResult> => {
+    const modules = (newLO ?? []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) =>
       entry.data && entry.enabled ? entry.data.moduleInfoExtended : []
     );
-    //const validationManager = ValidationManager.fromVortex(curr);
+    //const validationManager = ValidationManager.fromVortex(newLO);
 
     const invalidResults = Array<IInvalidResult>();
     for (const enabledModule of modules) {

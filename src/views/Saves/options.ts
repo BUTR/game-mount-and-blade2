@@ -1,6 +1,6 @@
 import { selectors, types } from 'vortex-api';
+import { SavePageProps } from './pages/SavePage';
 import { GAME_ID } from '../../common';
-import { SavePageProps } from '.';
 
 export class SavePageOptions implements types.IMainPageOptions {
   private context: types.IExtensionContext;

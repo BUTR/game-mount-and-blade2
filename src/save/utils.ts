@@ -1,7 +1,7 @@
 import { selectors, types } from 'vortex-api';
+import { actionsSave } from './actions';
 import { VortexLauncherManager } from '../launcher';
 import { getSaveFromSettings } from '../settings';
-import { actionsSave } from '.';
 
 export const reloadSave = (api: types.IExtensionApi): void => {
   const state = api.getState();

@@ -1,6 +1,6 @@
 import { actions, selectors, types } from 'vortex-api';
+import { deployBLSE, downloadBLSE, findBLSEDownload, findBLSEMod, isModActive } from './utils';
 import { LocalizationManager } from '../localization';
-import { deployBLSE, downloadBLSE, findBLSEDownload, findBLSEMod, isModActive } from '.';
 
 const sendNotification = (
   api: types.IExtensionApi,

@@ -1,6 +1,7 @@
 import { log } from 'vortex-api';
 import { request, RequestOptions } from 'https';
-import { BUTR_HOST, IModAnalyzerRequestQuery, IModAnalyzerResult } from '.';
+import { BUTR_HOST } from './const';
+import { IModAnalyzerRequestQuery, IModAnalyzerResult } from './types';
 
 export class ModAnalyzerProxy {
   private options: RequestOptions;

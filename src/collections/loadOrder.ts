@@ -1,8 +1,9 @@
-import { actions, selectors, types, util } from 'vortex-api';
+import { selectors, types, util } from 'vortex-api';
+import { ICollectionDataWithGeneralData } from './types';
+import { CollectionParseError } from './errors';
 import { GAME_ID } from '../common';
 import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from '../types';
-import { actionsLoadOrder, persistenceToVortex } from '../loadOrder';
-import { CollectionParseError, ICollectionDataWithGeneralData } from '.';
+import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
 
 const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== 'collection';
@@ -49,11 +50,11 @@ export const genCollectionGeneralLoadOrder = (
   return filteredLoadOrder;
 };
 
-export const parseCollectionGeneralLoadOrder = (
+export const parseCollectionGeneralLoadOrder = async (
   api: types.IExtensionApi,
   modules: Readonly<IModuleCache>,
   collection: ICollectionDataWithGeneralData
-): void => {
+): Promise<void> => {
   const state = api.getState();
 
   const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
@@ -61,8 +62,9 @@ export const parseCollectionGeneralLoadOrder = (
     throw new CollectionParseError(collection.info.name || '', 'Invalid profile id');
   }
 
-  const loadOrder = persistenceToVortex(api, modules, collection.suggestedLoadOrder);
+  const suggestedLoadOrder = collection.suggestedLoadOrder;
 
-  api.store?.dispatch(actions.setLoadOrder(profileId, loadOrder));
-  api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profileId));
+  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, modules, suggestedLoadOrder);
+
+  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
 };

@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Utils } from '@butr/vortexextensionnative';
+import { TooltipImage } from './TooltipImage';
 import { IVortexViewModelData } from '../../../types';
 import { MODULE_LOGO, TW_LOGO } from '../../../common';
-import { TooltipImage } from '.';
 
 export type ModuleIconProps = {
   data: IVortexViewModelData | undefined;

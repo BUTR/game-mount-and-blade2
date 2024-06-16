@@ -1,17 +1,12 @@
 import { selectors, types } from 'vortex-api';
+import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
+import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrder } from './loadOrder';
+import { CollectionParseError } from './errors';
 import { GAME_ID } from '../common';
 import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../vortex';
 import { findBLSEMod, forceInstallBLSE, isModActive } from '../blse';
 import { vortexToPersistence } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
-import {
-  CollectionParseError,
-  genCollectionGeneralLoadOrder,
-  ICollectionData,
-  ICollectionDataWithGeneralData,
-  ICollectionGeneralData,
-  parseCollectionGeneralLoadOrder,
-} from '.';
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
@@ -19,7 +14,7 @@ import {
 export const genCollectionGeneralData = (
   api: types.IExtensionApi,
   includedModIds: string[]
-): ICollectionGeneralData => {
+): Promise<ICollectionGeneralData> => {
   const state = api.getState();
 
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
@@ -37,7 +32,7 @@ export const genCollectionGeneralData = (
     hasBLSE: hasBLSE,
     suggestedLoadOrder: vortexToPersistence(collectionLoadOrder),
   };
-  return collectionData;
+  return Promise.resolve(collectionData);
 };
 
 /**
@@ -45,8 +40,12 @@ export const genCollectionGeneralData = (
  */
 export const parseCollectionGeneralData = async (
   api: types.IExtensionApi,
-  collection: ICollectionDataWithGeneralData
+  collection: ICollectionData
 ): Promise<void> => {
+  if (!hasGeneralData(collection)) {
+    return;
+  }
+
   const state = api.getState();
   const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile: types.IProfile | undefined = selectors.profileById(state, profileId ?? '');
@@ -58,7 +57,7 @@ export const parseCollectionGeneralData = async (
 
   const launcherManager = VortexLauncherManager.getInstance(api);
   const modules = launcherManager.getAllModules();
-  parseCollectionGeneralLoadOrder(api, modules, collection);
+  await parseCollectionGeneralLoadOrder(api, modules, collection);
 
   if (hasBLSE) {
     await forceInstallBLSE(api);
@@ -71,14 +70,19 @@ export const parseCollectionGeneralData = async (
 export const cloneCollectionGeneralData = (
   api: types.IExtensionApi,
   gameId: string,
-  collection: ICollectionDataWithGeneralData,
+  collection: ICollectionData,
   from: types.IMod,
   to: types.IMod
-): void => {
+): Promise<void> => {
+  if (!hasGeneralData(collection)) {
+    return Promise.resolve();
+  }
+
   // we don't need to do anything, since it's based on the LO
+  return Promise.resolve();
 };
 
-export const hasGeneralData = (collection: ICollectionData): collection is ICollectionDataWithGeneralData => {
+const hasGeneralData = (collection: ICollectionData): collection is ICollectionDataWithGeneralData => {
   const collectionData = collection as ICollectionDataWithGeneralData;
   if (!collectionData.hasBLSE) {
     return false;

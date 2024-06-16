@@ -1,7 +1,7 @@
 import React from 'react';
+import { IssueSnippet } from './IssueSnippet';
 import { ISaveGame } from '../types';
 import { useLocalization } from '../../../localization';
-import { IssueSnippet } from '.';
 
 export type SidebarProps = {
   save: ISaveGame | null;

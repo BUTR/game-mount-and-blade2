@@ -1,16 +1,15 @@
 import { actions, types, util } from 'vortex-api';
-import { nameof } from '../nameof';
-import { getGlobalSettings, getSpecialSettings, overrideModOptions } from '../modoptions';
-import { LocalizationManager } from '../localization';
 import {
-  hasIncludedModOptions,
-  hasModAttributeCollection,
   ICollectionData,
   ICollectionDataWithSettingsData,
   ICollectionSettingsData,
   IModAttributesWithCollection,
   IncludedModOptions,
-} from '.';
+} from './types';
+import { hasIncludedModOptions, hasModAttributeCollection } from './utils';
+import { nameof } from '../nameof';
+import { getGlobalSettings, getSpecialSettings, overrideModOptions } from '../modoptions';
+import { LocalizationManager } from '../localization';
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
@@ -18,12 +17,12 @@ import {
 export const genCollectionModOptionsData = (
   api: types.IExtensionApi,
   collectionMod: types.IMod
-): ICollectionSettingsData => {
+): Promise<ICollectionSettingsData> => {
   if (!hasIncludedModOptions(collectionMod)) {
     const emptyData: ICollectionSettingsData = {
       includedModOptions: [],
     };
-    return emptyData;
+    return Promise.resolve(emptyData);
   }
 
   const includedModOptions = collectionMod.attributes?.collection?.includedModOptions ?? [];
@@ -31,7 +30,7 @@ export const genCollectionModOptionsData = (
   const collectionData: ICollectionSettingsData = {
     includedModOptions: includedModOptions,
   };
-  return collectionData;
+  return Promise.resolve(collectionData);
 };
 
 /**
@@ -40,10 +39,14 @@ export const genCollectionModOptionsData = (
 export const cloneCollectionModOptionsData = async (
   api: types.IExtensionApi,
   gameId: string,
-  collection: ICollectionDataWithSettingsData,
+  collection: ICollectionData,
   from: types.IMod,
   to: types.IMod
 ): Promise<void> => {
+  if (!hasModOptionsData(collection)) {
+    return;
+  }
+
   if (!hasModAttributeCollection(to) || to.attributes?.collection === undefined || to.attributes.collection === null) {
     return;
   }
@@ -70,9 +73,13 @@ export const cloneCollectionModOptionsData = async (
  */
 export const parseCollectionModOptionsData = async (
   api: types.IExtensionApi,
-  collection: ICollectionDataWithSettingsData,
+  collection: ICollectionData,
   mod: types.IMod
 ): Promise<void> => {
+  if (!hasModOptionsData(collection)) {
+    return;
+  }
+
   const includedModOptions = collection.includedModOptions;
 
   if (includedModOptions === undefined || !includedModOptions.length) {
@@ -104,7 +111,7 @@ export const parseCollectionModOptionsData = async (
   await overrideModOptions(mod, includedModOptions);
 };
 
-export const hasModOptionsData = (collection: ICollectionData): collection is ICollectionDataWithSettingsData => {
+const hasModOptionsData = (collection: ICollectionData): collection is ICollectionDataWithSettingsData => {
   const collectionData = collection as ICollectionDataWithSettingsData;
   if (collectionData.includedModOptions === undefined) {
     return false;

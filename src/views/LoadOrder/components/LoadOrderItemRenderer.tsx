@@ -3,6 +3,10 @@ import { Checkbox, ListGroupItem } from 'react-bootstrap';
 import { useSelector, useStore } from 'react-redux';
 import { Icon, selectors, types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
+import { ValidationError } from './ValidationError';
+import { ExternalBanner } from './ExternalBanner';
+import { ModuleDuplicates } from './ModuleDuplicates';
+import { ModuleProviderIcon } from './ModuleProviderIcon';
 import { IVortexViewModelData, VortexLoadOrderStorage } from '../../../types';
 import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
@@ -10,7 +14,6 @@ import { IModuleCompatibilityInfo } from '../../../butr';
 import { versionToString } from '../../../launcher';
 import { actionsLoadOrder } from '../../../loadOrder';
 import { hasPersistentLoadOrder } from '../../../vortex';
-import { ExternalBanner, ModuleDuplicates, ModuleProviderIcon, ValidationError } from '.';
 
 interface IFromState {
   profile: types.IProfile | undefined;

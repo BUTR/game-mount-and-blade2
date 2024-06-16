@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { MainContext } from 'vortex-api';
-import { VortexLauncherManager } from '.';
+import { VortexLauncherManager } from './manager';
 
 export const useLauncher = (): VortexLauncherManager => {
   const context = useContext(MainContext);

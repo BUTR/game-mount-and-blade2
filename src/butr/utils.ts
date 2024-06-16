@@ -1,11 +1,7 @@
 import { types } from 'vortex-api';
+import { IModAnalyzerRequestModule, IModAnalyzerRequestQuery, IModuleCompatibilityInfoCache } from './types';
+import { ModAnalyzerProxy } from './modAnalyzerProxy';
 import { versionToString, VortexLauncherManager } from '../launcher';
-import {
-  IModAnalyzerRequestModule,
-  IModAnalyzerRequestQuery,
-  IModuleCompatibilityInfoCache,
-  ModAnalyzerProxy,
-} from '.';
 
 export const getCompatibilityScores = async (api: types.IExtensionApi): Promise<IModuleCompatibilityInfoCache> => {
   const launcherManager = VortexLauncherManager.getInstance(api);

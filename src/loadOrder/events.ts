@@ -1,6 +1,6 @@
 import { types } from 'vortex-api';
+import { LoadOrderManager } from './manager';
 import { LocalizationManager } from '../localization';
-import { LoadOrderManager } from '.';
 
 /**
  * Event function, be careful

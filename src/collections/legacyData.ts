@@ -1,19 +1,26 @@
-import { actions, selectors, types } from 'vortex-api';
+import { selectors, types } from 'vortex-api';
+import { ICollectionData, ICollectionDataWithLegacyData } from './types';
+import { CollectionParseError } from './errors';
 import { GAME_ID, SUB_MODS_IDS } from '../common';
-import { actionsLoadOrder } from '../loadOrder';
+import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
-import { VortexLoadOrderStorage } from '../types';
+import { PersistenceLoadOrderStorage } from '../types';
 import { hasPersistentBannerlordMods } from '../vortex';
-import { CollectionParseError, ICollectionData, ICollectionDataWithLegacyData } from '.';
 
-export const parseCollectionLegacyData = (
+export const parseCollectionLegacyData = async (
   api: types.IExtensionApi,
-  collection: ICollectionDataWithLegacyData
-): void => {
-  parseLegacyLoadOrder(api, collection);
+  collection: ICollectionData
+): Promise<void> => {
+  if (!hasLegacyData(collection)) {
+    return;
+  }
+  await parseLegacyLoadOrder(api, collection);
 };
 
-const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionDataWithLegacyData): void => {
+const parseLegacyLoadOrder = async (
+  api: types.IExtensionApi,
+  collection: ICollectionDataWithLegacyData
+): Promise<void> => {
   const state = api.getState();
 
   const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
@@ -26,36 +33,36 @@ const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionD
   }
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const modules = launcherManager.getAllModules();
+  const allModules = launcherManager.getAllModules();
 
-  const vortexLoadOrder = Object.entries(collection.loadOrder)
-    .filter(([id]) => {
-      return modules[id] || state.persistent.mods[GAME_ID]?.[id];
-    })
-    .reduce<VortexLoadOrderStorage>((accum, [id, entry]) => {
-      const mod = state.persistent.mods[GAME_ID]?.[id];
-      const modIds: string[] =
-        mod?.attributes?.[SUB_MODS_IDS] !== undefined ? mod.attributes[SUB_MODS_IDS] ?? [] : [id];
-      modIds.forEach((modId) => {
-        if (modules[modId]) {
-          accum.push({
-            id: modId,
-            name: entry.name ?? id,
-            enabled: entry.enabled,
-            locked: entry.locked ?? 'false',
-            modId: mod?.id ?? undefined!,
-            data: entry.data,
-          });
-        }
-      });
-      return accum;
-    }, []);
+  const suggestedLoadOrderEntries = Object.entries(collection.loadOrder);
+  const suggestedLoadOrder = suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>((arr, [id, entry], idx) => {
+    if (!allModules[id] && !state.persistent.mods[GAME_ID]?.[id]) {
+      return arr;
+    }
 
-  api.store?.dispatch(actions.setLoadOrder(profileId, vortexLoadOrder));
-  api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profileId));
+    const mod = state.persistent.mods[GAME_ID]?.[id];
+    const modIds: string[] = mod?.attributes?.[SUB_MODS_IDS] !== undefined ? mod.attributes[SUB_MODS_IDS] ?? [] : [id];
+    modIds.forEach((modId) => {
+      if (allModules[modId]) {
+        arr.push({
+          id: modId,
+          name: entry.name ?? id,
+          isSelected: entry.enabled,
+          isDisabled: entry.locked !== undefined && (entry.locked === `true` || entry.locked === `always`),
+          index: idx,
+        });
+      }
+    });
+    return arr;
+  }, []);
+
+  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, allModules, suggestedLoadOrder);
+
+  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
 };
 
-export const hasLegacyData = (collection: ICollectionData): collection is ICollectionDataWithLegacyData => {
+const hasLegacyData = (collection: ICollectionData): collection is ICollectionDataWithLegacyData => {
   const collectionData = collection as ICollectionDataWithLegacyData;
   if (collectionData.loadOrder === undefined) {
     return false;

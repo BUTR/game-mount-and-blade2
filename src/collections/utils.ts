@@ -1,24 +1,24 @@
 import { types } from 'vortex-api';
-import { GAME_ID } from '../common';
-import { IStatePersistent } from '../types';
 import {
-  IExtensionContextWithCollectionFeature as IExtensionContextWithCollection,
+  IExtensionContextWithCollectionFeature,
   IModWithCollection,
   IModWithIncludedModOptions,
   IncludedModOptions,
-  IStatePersistentWithModsWithIncludedModOptions as IStatePersistentWithCollectionMod,
-} from '.';
+  IStatePersistentWithModsWithIncludedModOptions,
+} from './types';
+import { GAME_ID } from '../common';
+import { IStatePersistent } from '../types';
 
 export const hasContextWithCollectionFeature = (
   context: types.IExtensionContext
-): context is IExtensionContextWithCollection => {
+): context is IExtensionContextWithCollectionFeature => {
   return context.optional.registerCollectionFeature;
 };
 
 export const hasStatePersistentCollectionModWithIncludedModOptions = (
   statePersistent: IStatePersistent,
   collectionId: string
-): statePersistent is IStatePersistentWithCollectionMod => {
+): statePersistent is IStatePersistentWithModsWithIncludedModOptions => {
   if (!statePersistent.mods[GAME_ID]) {
     return false;
   }

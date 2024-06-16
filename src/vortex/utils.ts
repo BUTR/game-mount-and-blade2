@@ -1,23 +1,19 @@
 import { types, util } from 'vortex-api';
 import path from 'path';
+import {
+  ISettingsInterfaceWithPrimaryTool,
+  IStatePersistentWithBannerlordMods,
+  IStatePersistentWithLoadOrder,
+} from './types';
+import { isStoreSteam, isStoreXbox } from './store';
+import { getBinaryPath } from './game';
+import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
 import { nameof } from '../nameof';
 import { getPathExistsAsync } from '../utils';
 import { recommendBLSE } from '../blse';
 import { VortexLauncherManager } from '../launcher';
 import { BLSE_CLI_EXE, EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
 import { IStatePersistent } from '../types';
-import {
-  addBLSETools,
-  addModdingKitTool,
-  addOfficialCLITool,
-  addOfficialLauncherTool,
-  getBinaryPath,
-  ISettingsInterfaceWithPrimaryTool,
-  isStoreSteam,
-  isStoreXbox,
-  IStatePersistentWithBannerlordMods,
-  IStatePersistentWithLoadOrder,
-} from '.';
 
 type HasSettings = {
   settings: types.ISettings;

@@ -1,7 +1,7 @@
 import { types } from 'vortex-api';
+import { ISettingsWithBannerlord } from './types';
 import { hasSettings } from '../vortex';
 import { GAME_ID } from '../common';
-import { ISettingsWithBannerlord } from '.';
 
 const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord => GAME_ID in settings;
 

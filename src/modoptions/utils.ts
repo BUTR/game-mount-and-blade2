@@ -1,7 +1,7 @@
 import { fs, types, util } from 'vortex-api';
 import turbowalk from 'turbowalk';
 import path from 'path';
-import { ModOptionsEntry, ModOptionsEntryType, ModOptionsStorage, PersistentModOptionsEntry } from '.';
+import { ModOptionsEntry, ModOptionsEntryType, ModOptionsStorage, PersistentModOptionsEntry } from './types';
 
 export const getSettingsPath = (): string => {
   return path.join(util.getVortexPath('documents'), 'Mount and Blade II Bannerlord', 'Configs', 'ModSettings');

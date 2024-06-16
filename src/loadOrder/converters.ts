@@ -1,5 +1,6 @@
 import { types } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
+import { getModIds } from './utils';
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -8,7 +9,6 @@ import {
   VortexLoadOrderStorage,
 } from '../types';
 import { ValidationManager } from '../validation';
-import { getModIds } from '.';
 
 export const persistenceToVortex = (
   api: types.IExtensionApi,
@@ -31,6 +31,20 @@ export const persistenceToVortex = (
     })
     .filter((x) => x.data)
     .sort((x, y) => x.data!.index - y.data!.index);
+  return loadOrderConverted;
+};
+
+export const persistenceToLibrary = (loadOrder: PersistenceLoadOrderStorage): vetypes.LoadOrder => {
+  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {
+    map[curr.id] = {
+      id: curr.id,
+      name: curr.name,
+      isSelected: curr.isSelected,
+      isDisabled: curr.isDisabled,
+      index: curr.index,
+    };
+    return map;
+  }, {});
   return loadOrderConverted;
 };
 

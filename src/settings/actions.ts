@@ -21,7 +21,7 @@ export type SetBetaSortingPayload = {
   betaSorting: boolean;
 };
 
-export const setSortOnDeploy = createAction<string, boolean, SetSortOnDeployPayload>(
+const setSortOnDeploy = createAction<string, boolean, SetSortOnDeployPayload>(
   `${EXTENSION_BASE_ID}_SET_SORT_ON_DEPLOY`,
   (profileId: string, sort: boolean) => ({
     profileId,
@@ -29,7 +29,7 @@ export const setSortOnDeploy = createAction<string, boolean, SetSortOnDeployPayl
   })
 );
 
-export const setFixCommonIssues = createAction<string, boolean, SetFixCommonIssuesPayload>(
+const setFixCommonIssues = createAction<string, boolean, SetFixCommonIssuesPayload>(
   `${EXTENSION_BASE_ID}_SET_FIX_COMMON_ISSUES`,
   (profileId: string, fixCommonIssues: boolean) => ({
     profileId,
@@ -37,10 +37,16 @@ export const setFixCommonIssues = createAction<string, boolean, SetFixCommonIssu
   })
 );
 
-export const setBetaSorting = createAction<string, boolean, SetBetaSortingPayload>(
+const setBetaSorting = createAction<string, boolean, SetBetaSortingPayload>(
   `${EXTENSION_BASE_ID}_SET_BETA_SORTING`,
   (profileId: string, betaSorting: boolean) => ({
     profileId,
     betaSorting,
   })
 );
+
+export const actionsSettings = {
+  setSortOnDeploy,
+  setFixCommonIssues,
+  setBetaSorting,
+};
