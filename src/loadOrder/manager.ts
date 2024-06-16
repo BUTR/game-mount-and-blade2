@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { selectors, types } from 'vortex-api';
 import { IInvalidResult, IValidationResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { vortexToLibrary } from './converters';
+import { libraryToPersistence, vortexToLibrary } from './converters';
 import { actionsLoadOrder } from './actions';
 import { orderCurrentLoadOrderByExternalLoadOrder } from './utils';
 import { readLoadOrder } from './vortex';
@@ -118,11 +118,14 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
     // Make sure the LauncherManager has the latest module list
     launcherManager.refreshModules();
+    this.allModules = launcherManager.getAllModulesWithDuplicates();
+
+    // Get the saved Load Order
     const allModules = launcherManager.getAllModules();
+    const savedLoadOrder = launcherManager.loadLoadOrderVortex();
+    const savedLoadOrderPersistence = libraryToPersistence(savedLoadOrder);
 
-    const persistenceLoadOrder = readLoadOrder(this.api);
-
-    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(this.api, allModules, persistenceLoadOrder);
+    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(this.api, allModules, savedLoadOrderPersistence);
     this.setParameters(vortexToLibrary(loadOrder));
     return loadOrder;
   };
