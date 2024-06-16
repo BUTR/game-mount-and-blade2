@@ -1,6 +1,6 @@
 import { types } from 'vortex-api';
-import { IStatePersistent } from '../../types';
 import { GAME_ID } from '../../common';
+import { IStatePersistent } from '../../types';
 import {
   IExtensionContextWithCollectionFeature as IExtensionContextWithCollection,
   IModWithCollection,

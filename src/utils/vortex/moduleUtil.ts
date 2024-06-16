@@ -1,5 +1,5 @@
 import { selectors, types } from 'vortex-api';
-import { SUB_MODS_IDS } from '../common';
+import { SUB_MODS_IDS } from '../../common';
 
 type ModIdResult = {
   id: string;

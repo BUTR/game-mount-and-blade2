@@ -2,10 +2,7 @@ import { fs, types, util } from 'vortex-api';
 import { Utils } from '@butr/vortexextensionnative';
 import { Dirent } from 'fs';
 import { I18N_NAMESPACE } from '../../common';
-
-export type TranslateValues = {
-  [value: string]: string;
-};
+import { TranslateValues } from '.';
 
 export const i18nToBannerlord = (languageCode: string): string => {
   switch (languageCode) {

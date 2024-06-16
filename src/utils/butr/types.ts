@@ -18,3 +18,13 @@ export interface IModAnalyzerResultModule {
 export interface IModAnalyzerResult {
   modules: IModAnalyzerResultModule[];
 }
+
+export interface IModuleCompatibilityInfoCache {
+  [moduleId: string]: IModuleCompatibilityInfo;
+}
+
+export interface IModuleCompatibilityInfo {
+  score: number;
+  recommendedScore: number | null;
+  recommendedVersion: string | null;
+}

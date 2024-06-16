@@ -1,17 +1,22 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { GAME_ID } from './common';
 
-export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
+export type IStatePersistent = types.IState['persistent'];
 
-export interface IModuleCompatibilityInfoCache {
-  [moduleId: string]: IModuleCompatibilityInfo;
+export type IModAttributes = types.IMod['attributes'];
+
+export interface IBannerlordModAttributes {
+  modId: number;
+  version: string;
+  source: string;
 }
 
-export interface IModuleCompatibilityInfo {
-  score: number;
-  recommendedScore: number | null;
-  recommendedVersion: string | null;
+export interface IBannerlordMod extends types.IMod {
+  attributes?: IBannerlordModAttributes;
+}
+
+export interface IBannerlordModStorage {
+  [modId: string]: IBannerlordMod;
 }
 
 export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
@@ -32,94 +37,6 @@ export interface IVortexViewModelData {
 
 export interface IModuleCache {
   [moduleId: string]: vetypes.ModuleInfoExtendedWithMetadata;
-}
-
-/**
- * Vortex
- */
-export interface IItemRendererProps<T = unknown> {
-  className: string;
-  item: T;
-  onRef: (ref: unknown) => unknown;
-}
-
-/**
- * Vortex
- */
-export interface IBannerlordModStorage {
-  [modId: string]: IBannerlordMod;
-}
-
-/**
- * Vortex
- */
-export interface IBannerlordMod extends types.IMod {
-  attributes?: IBannerlordModAttributes;
-}
-
-/**
- * Vortex
- */
-export interface IBannerlordModAttributes {
-  modId: number;
-  version: string;
-  source: string;
-}
-
-/**
- * Vortex
- */
-export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterface {
-  primaryTool: {
-    [GAME_ID]?: string;
-  };
-}
-
-/**
- * Vortex
- */
-export interface ISettingsWithBannerlord extends types.ISettings {
-  [GAME_ID]?: IBannerlordSettings;
-}
-
-/**
- * Vortex
- */
-export interface IBannerlordSettings {
-  saveName: {
-    [profileId: string]: string | null;
-  };
-  sortOnDeploy: {
-    [profileId: string]: boolean;
-  };
-  fixCommonIssues: {
-    [profileId: string]: boolean;
-  };
-  betaSorting: {
-    [profileId: string]: boolean;
-  };
-}
-
-/**
- * Vortex
- */
-export type IStatePersistent = types.IState['persistent'];
-
-/**
- * Vortex
- */
-export interface IStatePersistentWithLoadOrder extends IStatePersistent {
-  loadOrder: {
-    [profileId: string]: VortexLoadOrderStorage;
-  };
-}
-
-export interface IModTableWithBannerlord extends types.IModTable {
-  [GAME_ID]: IBannerlordModStorage;
-}
-
-export interface IStatePersistentWithBannerlordMods extends IStatePersistent {
-  mods: IModTableWithBannerlord;
 }
 
 /**

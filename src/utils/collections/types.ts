@@ -1,7 +1,7 @@
 import { types } from 'vortex-api';
 import { ICollection as ICollectionDataToExport } from 'collections/src/types/ICollection';
 import { IExtensionFeature } from 'collections/src/util/extension';
-import { IStatePersistent, PersistenceLoadOrderStorage } from '../../types';
+import { IModAttributes, IStatePersistent, PersistenceLoadOrderStorage } from '../../types';
 import { PersistentModOptionsEntry } from '../modoptions';
 
 export interface ICollectionData extends ICollectionDataToExport {}
@@ -10,12 +10,12 @@ export type IncludedModOptions = {
   includedModOptions?: PersistentModOptionsEntry[];
 };
 
-export type ModAttributesWithCollection<T = unknown> = types.IMod['attributes'] & {
+export type IModAttributesWithCollection<T = unknown> = IModAttributes & {
   collection?: T;
 };
 
 export interface IModWithCollection<T = unknown> extends types.IMod {
-  attributes?: ModAttributesWithCollection<T>;
+  attributes?: IModAttributesWithCollection<T>;
 }
 
 export interface IModWithIncludedModOptions extends IModWithCollection<IncludedModOptions> {}

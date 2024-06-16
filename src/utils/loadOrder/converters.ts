@@ -7,8 +7,8 @@ import {
   VortexLoadOrderEntry,
   VortexLoadOrderStorage,
 } from '../../types';
-import { ValidationManager } from '../validationManager';
-import { getModIds } from '../moduleUtil';
+import { ValidationManager } from '../validation';
+import { getModIds } from '../vortex';
 
 export const persistenceToVortex = (
   api: types.IExtensionApi,

@@ -3,19 +3,15 @@ import { ListGroup } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { MainContext, selectors, tooltip, types } from 'vortex-api';
 import { LoadOrderEditInfo, LoadOrderEntry, Placeholder, Requirements } from '../components';
-import {
-  IBannerlordModStorage,
-  IModuleCompatibilityInfoCache,
-  PersistenceLoadOrderStorage,
-  VortexLoadOrderStorage,
-} from '../../../types';
+import { IBannerlordModStorage, PersistenceLoadOrderStorage, VortexLoadOrderStorage } from '../../../types';
 import {
   genCollectionGeneralData,
+  getCompatibilityScores,
   hasPersistentBannerlordMods,
   hasPersistentLoadOrder,
+  IModuleCompatibilityInfoCache,
   useLocalization,
 } from '../../../utils';
-import { getCompatibilityScores } from '../utils';
 import { ICollectionFeatureProps } from '../../types';
 
 interface IFromState {

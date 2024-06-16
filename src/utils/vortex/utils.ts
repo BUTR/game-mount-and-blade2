@@ -1,20 +1,20 @@
 import { types, util } from 'vortex-api';
 import path from 'path';
-import { nameof } from './nameof';
-import { getBinaryPath } from './game';
-import { getPathExistsAsync } from './util';
-import { recommendBLSE } from './blse';
-import { isStoreSteam, isStoreXbox } from './store';
 import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
-import { VortexLauncherManager } from './launcher';
-import { BLSE_CLI_EXE, GAME_ID, XBOX_ID } from '../common';
+import { getBinaryPath } from './game';
+import { nameof } from '../nameof';
+import { getPathExistsAsync } from '../util';
+import { recommendBLSE } from '../blse';
+import { VortexLauncherManager } from '../launcher';
+import { BLSE_CLI_EXE, EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../../common';
+import { IStatePersistent } from '../../types';
 import {
   ISettingsInterfaceWithPrimaryTool,
-  ISettingsWithBannerlord,
-  IStatePersistent,
+  isStoreSteam,
+  isStoreXbox,
   IStatePersistentWithBannerlordMods,
   IStatePersistentWithLoadOrder,
-} from '../types';
+} from '.';
 
 type HasSettings = {
   settings: types.ISettings;
@@ -37,9 +37,6 @@ export const hasPersistentBannerlordMods = (
 
 export const hasSettings = (hasSettings: object): hasSettings is HasSettings =>
   nameof<HasSettings>('settings') in hasSettings;
-
-export const hasSettingsBannerlord = (settings: types.ISettings): settings is ISettingsWithBannerlord =>
-  GAME_ID in settings;
 
 export const hasSettingsInterfacePrimaryTool = (
   settings: types.ISettingsInterface
@@ -106,4 +103,8 @@ export const requiresLauncher = (store?: string): RequiresLauncherResult => {
   }
   // The API doesn't expect undefined, but it's allowed
   return undefined!;
+};
+
+export const findGame = async (): Promise<types.IGameStoreEntry> => {
+  return await util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString(), ...GOG_IDS, XBOX_ID]);
 };

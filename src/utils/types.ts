@@ -1,5 +1,1 @@
-import { ReactNode } from 'react';
-
-export interface IChildrenProps {
-  children?: ReactNode;
-}
+export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;

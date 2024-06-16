@@ -2,9 +2,9 @@ import { gte } from 'semver';
 import { actions, selectors, types, util } from 'vortex-api';
 import { IFileInfo } from '@nexusmods/nexus-api/lib';
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID } from '../../common';
-import { IBannerlordMod } from '../../types';
 import { hasPersistentBannerlordMods } from '../vortex';
 import { LocalizationManager } from '../localization';
+import { IBannerlordMod } from '../../types';
 
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;

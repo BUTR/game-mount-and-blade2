@@ -2,8 +2,8 @@
 import Bluebird from 'bluebird';
 import { fs, log, selectors, types, util } from 'vortex-api';
 import path from 'path';
-import { GAME_ID } from '../common';
-import { IAddedFiles } from '../types';
+import { GAME_ID } from '../../common';
+import { IAddedFiles } from '../../types';
 
 /**
  * Event function, be careful

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ListGroupItem } from 'react-bootstrap';
-import { IModuleCompatibilityInfoCache, IPersistenceLoadOrderEntry, VortexLoadOrderStorage } from '../../../types';
-import { versionToString } from '../../../utils';
+import { IPersistenceLoadOrderEntry, VortexLoadOrderStorage } from '../../../types';
+import { IModuleCompatibilityInfoCache, versionToString } from '../../../utils';
 import { CompatibilityInfo, isOptional, ModuleIcon, OptionalBanner } from '../../Shared';
 
 export type LoadOrderEntryProps = {

@@ -1,5 +1,4 @@
-import { fs, types, util } from 'vortex-api';
-import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
+import { fs } from 'vortex-api';
 
 export const getPathExistsAsync = async (path: string): Promise<boolean> => {
   return await fs
@@ -8,17 +7,6 @@ export const getPathExistsAsync = async (path: string): Promise<boolean> => {
     .catch(() => false);
 };
 
-export const findGame = async (): Promise<types.IGameStoreEntry> => {
-  return await util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString(), ...GOG_IDS, XBOX_ID]);
-};
-
-type HasId = {
-  id: string;
-};
-const hasId = (persistent: HasId): persistent is HasId => {
-  return !!persistent.id && persistent.id !== '';
-};
-
-export const filterEntryWithInvalidId = (entry: HasId): boolean => {
-  return hasId(entry);
+export const filterEntryWithInvalidId = (entry: { id: string }): boolean => {
+  return entry.id !== undefined && entry.id !== '';
 };

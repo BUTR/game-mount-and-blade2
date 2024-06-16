@@ -1,6 +1,6 @@
 import { selectors, types } from 'vortex-api';
 import path from 'path';
-import { isStoreXbox } from '../store';
+import { isStoreXbox } from '../vortex';
 import { BINARY_FOLDER_STANDARD, BINARY_FOLDER_XBOX, BLSE_CLI_EXE, GAME_ID } from '../../common';
 
 export const installBLSE = (api: types.IExtensionApi, files: string[]): Promise<types.IInstallResult> => {

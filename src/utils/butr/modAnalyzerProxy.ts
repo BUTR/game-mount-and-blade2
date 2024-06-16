@@ -1,9 +1,9 @@
-import { log, types } from 'vortex-api';
-import * as https from 'https';
+import { log } from 'vortex-api';
+import { request, RequestOptions } from 'https';
 import { BUTR_HOST, IModAnalyzerRequestQuery, IModAnalyzerResult } from '.';
 
 export class ModAnalyzerProxy {
-  private options: https.RequestOptions;
+  private options: RequestOptions;
   constructor() {
     this.options = {
       host: BUTR_HOST,
@@ -19,26 +19,24 @@ export class ModAnalyzerProxy {
 
   public async analyze(query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
     return new Promise((resolve, reject) => {
-      const req = https
-        .request(this.options, (res) => {
-          let body = Buffer.from([]);
-          res
-            .on('error', (err) => reject(err))
-            .on('data', (chunk) => {
-              body = Buffer.concat([body, chunk]);
-            })
-            .on('end', () => {
-              const textual = body.toString('utf8');
-              try {
-                const parsed = JSON.parse(textual);
-                resolve(parsed);
-              } catch (err) {
-                log('error', 'failed to parse butr mod analyzer response', textual);
-                reject(err);
-              }
-            });
-        })
-        .on('error', (err) => reject(err));
+      const req = request(this.options, (res) => {
+        let body = Buffer.from([]);
+        res
+          .on('error', (err) => reject(err))
+          .on('data', (chunk) => {
+            body = Buffer.concat([body, chunk]);
+          })
+          .on('end', () => {
+            const textual = body.toString('utf8');
+            try {
+              const parsed = JSON.parse(textual);
+              resolve(parsed);
+            } catch (err) {
+              log('error', 'failed to parse butr mod analyzer response', textual);
+              reject(err);
+            }
+          });
+      }).on('error', (err) => reject(err));
       req.write(JSON.stringify(query));
       req.end();
     });

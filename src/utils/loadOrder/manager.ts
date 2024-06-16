@@ -1,20 +1,21 @@
-import React, { ComponentType } from 'react';
+import { ComponentType } from 'react';
 import { selectors, types } from 'vortex-api';
 import { IInvalidResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { IModAnalyzerRequestModule, IModAnalyzerRequestQuery, ModAnalyzerProxy } from '../butr';
-import { actionsLoadOrder } from '../loadOrder';
+import {
+  IModAnalyzerRequestModule,
+  IModAnalyzerRequestQuery,
+  IModuleCompatibilityInfoCache,
+  ModAnalyzerProxy,
+} from '../butr';
 import { versionToString } from '../version';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../../views';
-import {
-  IModuleCompatibilityInfoCache,
-  IVortexViewModelData,
-  RequiredProperties,
-  VortexLoadOrderStorage,
-} from '../../types';
+import { IVortexViewModelData, VortexLoadOrderStorage } from '../../types';
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
+import { RequiredProperties } from '../types';
+import { actionsLoadOrder } from '.';
 import { libraryToVortex, libraryVMToLibrary, libraryVMToVortex, vortexToLibrary } from '.';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
@@ -45,7 +46,10 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.usageInstructions = (): JSX.Element => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
+    this.usageInstructions = (): JSX.Element =>
+      LoadOrderInfoPanel({
+        refresh: this.updateCompatibilityScores,
+      });
 
     this.customItemRenderer = ({ className = '', item }): JSX.Element => {
       const availableProviders = this.allModules
@@ -53,15 +57,12 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         .map((x) => x.moduleProviderType);
       const compatibilityScore = this.compatibilityScores[item.loEntry.id];
 
-      return (
-        <LoadOrderItemRenderer
-          item={item}
-          className={className}
-          key={item.loEntry.id}
-          availableProviders={availableProviders}
-          compatibilityInfo={compatibilityScore}
-        />
-      );
+      return LoadOrderItemRenderer({
+        item: item,
+        className: className,
+        availableProviders: availableProviders,
+        compatibilityInfo: compatibilityScore,
+      });
     };
   }
 

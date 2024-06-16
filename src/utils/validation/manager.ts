@@ -1,5 +1,5 @@
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { VortexLoadOrderStorage } from '../types';
+import { VortexLoadOrderStorage } from '../../types';
 
 export class ValidationManager implements vetypes.IValidationManager {
   static fromVortex = (loadOrder: VortexLoadOrderStorage): ValidationManager => {

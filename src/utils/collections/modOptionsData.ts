@@ -8,8 +8,8 @@ import {
   ICollectionData,
   ICollectionDataWithSettingsData,
   ICollectionSettingsData,
+  IModAttributesWithCollection,
   IncludedModOptions,
-  ModAttributesWithCollection,
 } from '.';
 
 /**
@@ -61,7 +61,7 @@ export const cloneCollectionModOptionsData = async (
     availableIncludedModOptions
   );
   api.store?.dispatch(
-    actions.setModAttribute(gameId, to.id, nameof<ModAttributesWithCollection>('collection'), attributes)
+    actions.setModAttribute(gameId, to.id, nameof<IModAttributesWithCollection>('collection'), attributes)
   );
 };
 

@@ -10,6 +10,7 @@ export const createReducer = <P, M>(
   actionCreator: BaseActionCreator<ComplexActionCreator<P, M>>,
   action: ReducerHandler<P>,
   reducers: { [key: string]: ReducerHandler<P> }
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) => {
   reducers[actionCreator.getType()] = action;
 };

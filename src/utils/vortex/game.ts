@@ -7,7 +7,7 @@ import {
   BINARY_FOLDER_STANDARD_MODDING_KIT,
   BINARY_FOLDER_XBOX,
   GAME_ID,
-} from '../common';
+} from '../../common';
 import { isStoreStandard, isStoreXbox } from '.';
 
 export const getBinaryPath = (store: string | undefined): string => {

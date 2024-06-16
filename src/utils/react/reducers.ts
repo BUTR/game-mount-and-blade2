@@ -1,11 +1,10 @@
 import { actions, types, util } from 'vortex-api';
 import { Utils } from '@butr/vortexextensionnative';
-import { nameof as nameof2 } from './nameof';
-import { actionsSave } from './save';
-import { actionsSettings } from './settings';
-import { i18nToBannerlord } from './localization';
 import { createReducer, ReducerHandler, ReducerHandlerState } from './redux';
-import { IBannerlordSettings } from '../types';
+import { nameof as nameof2 } from '../nameof';
+import { actionsSave } from '../save';
+import { actionsSettings, IBannerlordSettings } from '../settings';
+import { i18nToBannerlord } from '../localization';
 
 // TODO: Ask IDCs to provider a proper type system?
 type SetLoadOrderPayload = {
