@@ -25,11 +25,11 @@ const parseLegacyLoadOrder = async (
 
   const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
-    throw new CollectionParseError(collection.info.name || '', 'Invalid profile id');
+    throw new CollectionParseError(collection.info.name ?? '', 'Invalid profile id');
   }
 
   if (!hasPersistentBannerlordMods(state.persistent)) {
-    throw new CollectionParseError(collection.info.name || '', 'No mods were found');
+    throw new CollectionParseError(collection.info.name ?? '', 'No mods were found');
   }
 
   const launcherManager = VortexLauncherManager.getInstance(api);
