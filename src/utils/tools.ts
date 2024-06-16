@@ -14,12 +14,12 @@ import {
 
 // TODO: Reuse tool creation code
 
-const addDiscoveredTool = (api: types.IExtensionApi, tool: types.IDiscoveredTool) => {
-  return api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, tool.id, tool, false));
+const addDiscoveredTool = (api: types.IExtensionApi, tool: types.IDiscoveredTool): void => {
+  api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, tool.id, tool, false));
 };
 
-export const addBLSETools = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
-  if (!discovery.path) {
+export const addBLSETools = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
@@ -54,7 +54,7 @@ export const addBLSETools = async (api: types.IExtensionApi, discovery: types.ID
 };
 
 export const addOfficialCLITool = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
-  if (!discovery.path) {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
@@ -75,7 +75,7 @@ export const addOfficialCLITool = (api: types.IExtensionApi, discovery: types.ID
 };
 
 export const addOfficialLauncherTool = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
-  if (!discovery.path) {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
@@ -97,7 +97,7 @@ export const addModdingKitTool = (
   discovery: types.IDiscoveryResult,
   hidden?: boolean
 ): void => {
-  if (!discovery.path) {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 

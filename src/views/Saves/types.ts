@@ -24,6 +24,10 @@ export interface ISaveGame {
   mismatchedModuleVersions?: string[] | undefined;
 }
 
+export interface ISaveList {
+  [name: string]: ISaveGame;
+}
+
 export type MismatchedModule = {
   name: string;
   installed: vetypes.ApplicationVersion;

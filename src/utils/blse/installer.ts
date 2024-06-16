@@ -3,9 +3,9 @@ import path from 'path';
 import { isStoreXbox } from '../store';
 import { BINARY_FOLDER_STANDARD, BINARY_FOLDER_XBOX, BLSE_CLI_EXE, GAME_ID } from '../../common';
 
-export const installBLSE = async (api: types.IExtensionApi, files: string[]): Promise<types.IInstallResult> => {
-  const discovery = selectors.currentGameDiscovery(api.getState());
-  if (!discovery) {
+export const installBLSE = (api: types.IExtensionApi, files: string[]): Promise<types.IInstallResult> => {
+  const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(api.getState());
+  if (discovery === undefined) {
     return Promise.resolve({
       instructions: [],
     });
@@ -21,13 +21,13 @@ export const installBLSE = async (api: types.IExtensionApi, files: string[]): Pr
       source: file,
       destination: file,
     }));
-  return {
+  return Promise.resolve({
     instructions: instructions,
-  };
+  });
 };
 
 export const testBLSE = (files: string[], gameId: string): Promise<types.ISupportedResult> => {
-  const supported = gameId === GAME_ID && !!files.find((file) => path.basename(file) === BLSE_CLI_EXE);
+  const supported = gameId === GAME_ID && files.find((file) => path.basename(file) === BLSE_CLI_EXE) !== undefined;
   return Promise.resolve({
     supported,
     requiredFiles: [],

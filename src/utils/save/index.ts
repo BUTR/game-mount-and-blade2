@@ -1,3 +1,3 @@
 export * as actionsSave from './actions';
-export * from './hooks';
-export * from './manager';
+export * from './events';
+export * from './utils';

@@ -10,8 +10,8 @@ export interface IModuleCompatibilityInfoCache {
 
 export interface IModuleCompatibilityInfo {
   score: number;
-  recommendedScore?: number | undefined;
-  recommendedVersion?: string | undefined;
+  recommendedScore: number | null;
+  recommendedVersion: string | null;
 }
 
 export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];

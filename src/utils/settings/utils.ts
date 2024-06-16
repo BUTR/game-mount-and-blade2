@@ -1,6 +1,6 @@
 import { hasSettings, hasSettingsBannerlord } from '../vortex';
 
-export const getSortOnDeployFromSettings = (state: object, profileId: string) => {
+export const getSortOnDeployFromSettings = (state: object, profileId: string): boolean | null => {
   if (!hasSettings(state)) {
     return null;
   }
@@ -9,10 +9,10 @@ export const getSortOnDeployFromSettings = (state: object, profileId: string) =>
     return null;
   }
 
-  return state.settings.mountandblade2bannerlord?.sortOnDeploy?.[profileId];
+  return state.settings.mountandblade2bannerlord?.sortOnDeploy?.[profileId] ?? null;
 };
 
-export const getFixCommonIssuesFromSettings = (state: object, profileId: string) => {
+export const getFixCommonIssuesFromSettings = (state: object, profileId: string): boolean | null => {
   if (!hasSettings(state)) {
     return null;
   }
@@ -21,10 +21,10 @@ export const getFixCommonIssuesFromSettings = (state: object, profileId: string)
     return null;
   }
 
-  return state.settings.mountandblade2bannerlord?.fixCommonIssues?.[profileId];
+  return state.settings.mountandblade2bannerlord?.fixCommonIssues?.[profileId] ?? null;
 };
 
-export const getBetaSortingFromSettings = (state: object, profileId: string) => {
+export const getBetaSortingFromSettings = (state: object, profileId: string): boolean | null => {
   if (!hasSettings(state)) {
     return null;
   }
@@ -33,10 +33,10 @@ export const getBetaSortingFromSettings = (state: object, profileId: string) => 
     return null;
   }
 
-  return state.settings.mountandblade2bannerlord?.betaSorting?.[profileId];
+  return state.settings.mountandblade2bannerlord?.betaSorting?.[profileId] ?? null;
 };
 
-export const getSaveFromSettings = (state: object, profileId: string) => {
+export const getSaveFromSettings = (state: object, profileId: string): string | null => {
   if (!hasSettings(state)) {
     return null;
   }

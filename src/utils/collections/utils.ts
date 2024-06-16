@@ -36,7 +36,7 @@ export const hasModAttributeCollection = <T = unknown>(mod: types.IMod): mod is 
     return false;
   }
 
-  if (!modWithIncludedModOptions.attributes.collection) {
+  if (modWithIncludedModOptions.attributes.collection === undefined) {
     return false;
   }
 

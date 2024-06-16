@@ -21,13 +21,10 @@ import { IModuleCache, VortexLoadOrderStorage, VortexStoreIds } from '../../type
 import { LocalizationManager } from '../localization';
 
 export class VortexLauncherManager {
-  private static _instance: VortexLauncherManager;
+  private static _instance: VortexLauncherManager | undefined;
 
   public static getInstance(api: types.IExtensionApi): VortexLauncherManager {
     if (!VortexLauncherManager._instance) {
-      if (api === undefined) {
-        throw new Error('IniStructure is not context aware');
-      }
       VortexLauncherManager._instance = new VortexLauncherManager(api);
     }
 
@@ -64,7 +61,7 @@ export class VortexLauncherManager {
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this.api.getState();
-    const profile = selectors.activeProfile(state);
+    const profile: types.IProfile | undefined = selectors.activeProfile(state);
     if (!hasPersistentLoadOrder(state.persistent)) {
       return [];
     }
@@ -73,7 +70,7 @@ export class VortexLauncherManager {
     if (!Array.isArray(loadOrder)) {
       return [];
     }
-    return loadOrder.filter((x) => !!x && !!x.data && filterEntryWithInvalidId(x));
+    return loadOrder.filter((x) => x?.data && filterEntryWithInvalidId(x));
   };
 
   public loadLoadOrderVortex = (): vetypes.LoadOrder => {
@@ -88,7 +85,7 @@ export class VortexLauncherManager {
    * Will trigger the LauncherManager to pull the @property {moduleViewModels}
    * And update the LO for the CLI.
    */
-  public refreshGameParameters = () => {
+  public refreshGameParameters = (): void => {
     this.launcherManager.refreshGameParameters();
   };
 
@@ -111,7 +108,7 @@ export class VortexLauncherManager {
    * Will update the CLI args with the save name
    * @param saveName if null will exclude if from the CLI
    */
-  public setSaveFile = (saveName: string) => {
+  public setSaveFile = (saveName: string): void => {
     this.launcherManager.setGameParameterSaveFile(saveName);
     this.refreshGameParameters();
   };
@@ -120,7 +117,7 @@ export class VortexLauncherManager {
    * Will update the CLI args with continuing the latest save file
    * @param saveName if null will exclude if from the CLI
    */
-  public setContinueLastSaveFile = (value: boolean) => {
+  public setContinueLastSaveFile = (value: boolean): void => {
     this.launcherManager.setGameParameterContinueLastSaveFile(value);
     this.refreshGameParameters();
   };
@@ -216,7 +213,7 @@ export class VortexLauncherManager {
             });
             break;
           case 'ModuleInfo':
-            if (current.moduleInfo !== undefined) {
+            if (current.moduleInfo) {
               subModsIds.push(current.moduleInfo.id);
             }
             break;
@@ -244,7 +241,7 @@ export class VortexLauncherManager {
   /**
    *
    */
-  public autoSort = () => {
+  public autoSort = (): void => {
     this.launcherManager.sort();
   };
 
@@ -258,7 +255,7 @@ export class VortexLauncherManager {
   /**
    * Sets the game store manually, since the launcher manager is not perfect.
    */
-  public setStore = (storeId: string) => {
+  public setStore = (storeId: string): void => {
     switch (storeId) {
       case VortexStoreIds.Steam:
         this.launcherManager.setGameStore(`Steam`);
@@ -284,7 +281,7 @@ export class VortexLauncherManager {
   private setGameParameters = (_executable: string, gameParameters: string[]): void => {
     const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
 
-    const discovery = selectors.currentGameDiscovery(this.api.getState());
+    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(this.api.getState());
     const cliTools = Object.values(discovery?.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
       actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
@@ -303,7 +300,7 @@ export class VortexLauncherManager {
 
     let index = savedLoadOrder.length;
     for (const module of Object.values(allModules)) {
-      if (savedLoadOrder.find((x) => x.id === module.id) === undefined)
+      if (!savedLoadOrder.find((x) => x.id === module.id))
         savedLoadOrder.push({
           id: module.id,
           enabled: false,
@@ -378,11 +375,20 @@ export class VortexLauncherManager {
     switch (type) {
       case 'warning': {
         const messageFull = message.split('--CONTENT-SPLIT--', 2).join('\n');
+        const no = t('No');
+        const yes = t('Yes');
         const result = await this.api.showDialog?.('question', title, { message: messageFull }, [
-          { label: t('No'), action: () => 'false' },
-          { label: t('Yes'), action: () => 'true' },
+          { label: no },
+          { label: yes },
         ]);
-        return result?.action ?? '';
+        switch (result?.action) {
+          case yes:
+            return 'true';
+          case no:
+            return 'false';
+          default:
+            return '';
+        }
       }
       case 'fileOpen': {
         const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
@@ -413,7 +419,7 @@ export class VortexLauncherManager {
    */
   private getInstallPath = (): string => {
     const state = this.api.getState();
-    const discovery = selectors.currentGameDiscovery(state);
+    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
     return discovery?.path ?? '';
   };
   /**
@@ -491,7 +497,7 @@ export class VortexLauncherManager {
     const allModules = this.getAllModules();
     const existingModuleViewModels = this.getModuleViewModels() ?? [];
     const modulesToConvert = Object.values(allModules).filter(
-      (x) => existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id) === undefined
+      (x) => !existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id)
     );
 
     const viewModels = libraryToLibraryVM(modulesToConvert);
@@ -502,7 +508,7 @@ export class VortexLauncherManager {
    * Callback
    */
   private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
-    const profile = selectors.activeProfile(this.api.getState());
+    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
     this.api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
   };
@@ -510,7 +516,7 @@ export class VortexLauncherManager {
    * Callback
    */
   private getOptions = (): vetypes.LauncherOptions => {
-    const profile = selectors.activeProfile(this.api.getState());
+    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     const betaSorting = getBetaSortingFromSettings(this.api, profile.id) ?? false;
 
     return {

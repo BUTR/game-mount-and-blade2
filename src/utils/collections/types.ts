@@ -1,5 +1,4 @@
 import { types } from 'vortex-api';
-import { IExtendedInterfaceProps } from 'collections/src/types/IExtendedInterfaceProps';
 import { ICollection as ICollectionDataToExport } from 'collections/src/types/ICollection';
 import { IExtensionFeature } from 'collections/src/util/extension';
 import { IStatePersistent, PersistenceLoadOrderStorage } from '../../types';
@@ -28,8 +27,6 @@ export interface IStatePersistentWithModsWithIncludedModOptions extends IStatePe
     };
   };
 }
-
-export interface ICollectionFeatureProps extends IExtendedInterfaceProps {}
 
 export interface ICollectionFeature {
   registerCollectionFeature: (

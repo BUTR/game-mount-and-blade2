@@ -7,19 +7,21 @@ import { actionsLoadOrder } from '../loadOrder';
 import { versionToString } from '../version';
 import { GAME_ID } from '../../common';
 import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../../views';
-import { IModuleCompatibilityInfoCache, RequiredProperties, VortexLoadOrderStorage } from '../../types';
+import {
+  IModuleCompatibilityInfoCache,
+  IVortexViewModelData,
+  RequiredProperties,
+  VortexLoadOrderStorage,
+} from '../../types';
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
 import { libraryToVortex, libraryVMToLibrary, libraryVMToVortex, vortexToLibrary } from '.';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
-  private static instance: LoadOrderManager;
+  private static instance: LoadOrderManager | undefined;
 
   public static getInstance(api: types.IExtensionApi): LoadOrderManager {
     if (!LoadOrderManager.instance) {
-      if (api === undefined) {
-        throw new Error('IniStructure is not context aware');
-      }
       LoadOrderManager.instance = new LoadOrderManager(api);
     }
 
@@ -35,7 +37,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public toggleableEntries = true;
   public customItemRenderer?: ComponentType<{
     className?: string;
-    item: types.IFBLOItemRendererProps;
+    item: Omit<types.IFBLOItemRendererProps, 'loEntry'> & { loEntry: types.IFBLOLoadOrderEntry<IVortexViewModelData> };
   }>;
 
   public usageInstructions?: ComponentType<unknown>;
@@ -43,9 +45,9 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.usageInstructions = () => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
+    this.usageInstructions = (): JSX.Element => <LoadOrderInfoPanel refresh={this.updateCompatibilityScores} />;
 
-    this.customItemRenderer = ({ className = '', item }) => {
+    this.customItemRenderer = ({ className = '', item }): JSX.Element => {
       const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
         .map((x) => x.moduleProviderType);
@@ -63,8 +65,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     };
   }
 
-  public updateCompatibilityScores = () => {
-    const proxy = new ModAnalyzerProxy(this.api);
+  public updateCompatibilityScores = (): void => {
+    const proxy = new ModAnalyzerProxy();
     const launcherManager = VortexLauncherManager.getInstance(this.api);
     const gameVersion = launcherManager.getGameVersionVortex();
     const query: IModAnalyzerRequestQuery = {
@@ -74,21 +76,24 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         moduleVersion: versionToString(x.version),
       })),
     };
-    proxy.analyze(query).then((result) => {
-      this.compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-        map[curr.moduleId] = {
-          score: curr.compatibility,
-          recommendedScore: curr.recommendedCompatibility,
-          recommendedVersion: curr.recommendedModuleVersion,
-        };
-        return map;
-      }, {});
-      this.forceRefresh();
-    });
+    proxy
+      .analyze(query)
+      .then((result) => {
+        this.compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+          map[curr.moduleId] = {
+            score: curr.compatibility,
+            recommendedScore: curr.recommendedCompatibility,
+            recommendedVersion: curr.recommendedModuleVersion,
+          };
+          return map;
+        }, {});
+        this.forceRefresh();
+      })
+      .catch(() => {});
   };
 
   private forceRefresh = (): void => {
-    const profile = selectors.activeProfile(this.api.getState());
+    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     this.api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
@@ -143,7 +148,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   ): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
     const { localize: t } = LocalizationManager.getInstance(this.api);
 
-    if (!result || !result.orderedModuleViewModels || !result.result) {
+    if (result === undefined || !result.orderedModuleViewModels || result.result === undefined || !result.result) {
       if (autoSort) {
         // The user is not expecting a sort operation, so don't give the notification
         this.api.sendNotification?.({

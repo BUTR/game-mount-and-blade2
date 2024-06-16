@@ -3,11 +3,9 @@ import * as https from 'https';
 import { BUTR_HOST, IModAnalyzerRequestQuery, IModAnalyzerResult } from '.';
 
 export class ModAnalyzerProxy {
-  private mAPI: types.IExtensionApi;
-  private mOptions: https.RequestOptions;
-  constructor(api: types.IExtensionApi) {
-    this.mAPI = api;
-    this.mOptions = {
+  private options: https.RequestOptions;
+  constructor() {
+    this.options = {
       host: BUTR_HOST,
       method: 'POST',
       protocol: 'https:',
@@ -22,7 +20,7 @@ export class ModAnalyzerProxy {
   public async analyze(query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
     return new Promise((resolve, reject) => {
       const req = https
-        .request(this.mOptions, (res) => {
+        .request(this.options, (res) => {
           let body = Buffer.from([]);
           res
             .on('error', (err) => reject(err))

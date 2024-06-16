@@ -7,5 +7,7 @@ export const getInstallPathBLSE = (api: types.IExtensionApi, game: types.IGame):
 };
 
 export const isModTypeBLSE = (instructions: types.IInstruction[]): boolean => {
-  return instructions.some((inst) => inst.type === 'copy' && inst.source && inst.source.endsWith(BLSE_CLI_EXE));
+  return instructions.some(
+    (inst) => inst.type === 'copy' && inst.source !== undefined && inst.source.endsWith(BLSE_CLI_EXE)
+  );
 };

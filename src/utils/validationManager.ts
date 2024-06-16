@@ -5,13 +5,13 @@ export class ValidationManager implements vetypes.IValidationManager {
   static fromVortex = (loadOrder: VortexLoadOrderStorage): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
       const module = loadOrder.find((x) => x.id === moduleId);
-      return !!module && module.enabled;
+      return module !== undefined && module.enabled;
     });
   };
   static fromLibrary = (loadOrder: vetypes.LoadOrder): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
       const module = loadOrder[moduleId];
-      return !!module && module.isSelected;
+      return module !== undefined && module.isSelected;
     });
   };
 

@@ -7,7 +7,7 @@ export type TranslateValues = {
   [value: string]: string;
 };
 
-export const i18nToBannerlord = (languageCode: string) => {
+export const i18nToBannerlord = (languageCode: string): string => {
   switch (languageCode) {
     case 'pt-BR':
       return 'Português (BR)';
@@ -50,13 +50,10 @@ export const i18nToBannerlord = (languageCode: string) => {
 };
 
 export class LocalizationManager {
-  private static instance: LocalizationManager;
+  private static instance: LocalizationManager | undefined;
 
   public static getInstance(api: types.IExtensionApi): LocalizationManager {
     if (!LocalizationManager.instance) {
-      if (api === undefined) {
-        throw new Error('IniStructure is not context aware');
-      }
       LocalizationManager.instance = new LocalizationManager(api);
     }
 
@@ -85,7 +82,7 @@ export class LocalizationManager {
     });
   };
 
-  private initializeLocalization = () => {
+  private initializeLocalization = (): void => {
     fs.readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
       if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith('.xml')) {
         const content: string = fs.readFileSync(`${__dirname}/${d.name}`, {

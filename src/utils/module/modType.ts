@@ -7,5 +7,6 @@ export const getInstallPathModule = (api: types.IExtensionApi, game: types.IGame
 };
 
 export const isModTypeModule = (instructions: types.IInstruction[]): boolean => {
-  return instructions.some((instr) => instr.type === 'copy' && instr.destination?.endsWith(SUBMODULE_FILE));
+  const result = instructions.some((instr) => instr.type === 'copy' && instr.destination?.endsWith(SUBMODULE_FILE));
+  return result;
 };

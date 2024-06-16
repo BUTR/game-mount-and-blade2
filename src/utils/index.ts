@@ -4,6 +4,7 @@ export * from './collections';
 export * from './launcher';
 export * from './loadOrder';
 export * from './localization';
+export * from './modoptions';
 export * from './module';
 export * from './save';
 export * from './settings';

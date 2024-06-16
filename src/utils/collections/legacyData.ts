@@ -6,18 +6,18 @@ import { VortexLoadOrderStorage } from '../../types';
 import { hasPersistentBannerlordMods } from '../vortex';
 import { CollectionParseError, ICollectionData, ICollectionDataWithLegacyData } from '.';
 
-export const parseCollectionLegacyData = async (
+export const parseCollectionLegacyData = (
   api: types.IExtensionApi,
   collection: ICollectionDataWithLegacyData
-) => {
+): void => {
   parseLegacyLoadOrder(api, collection);
 };
 
-const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionDataWithLegacyData) => {
+const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionDataWithLegacyData): void => {
   const state = api.getState();
 
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-  if (!profileId) {
+  const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
+  if (profileId === undefined) {
     throw new CollectionParseError(collection.info.name || '', 'Invalid profile id');
   }
 
@@ -34,7 +34,8 @@ const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionD
     })
     .reduce<VortexLoadOrderStorage>((accum, [id, entry]) => {
       const mod = state.persistent.mods[GAME_ID]?.[id];
-      const modIds: string[] = mod?.attributes?.[SUB_MODS_IDS] ? mod.attributes[SUB_MODS_IDS] ?? [] : [id];
+      const modIds: string[] =
+        mod?.attributes?.[SUB_MODS_IDS] !== undefined ? mod.attributes[SUB_MODS_IDS] ?? [] : [id];
       modIds.forEach((modId) => {
         if (modules[modId]) {
           accum.push({
@@ -56,7 +57,7 @@ const parseLegacyLoadOrder = (api: types.IExtensionApi, collection: ICollectionD
 
 export const hasLegacyData = (collection: ICollectionData): collection is ICollectionDataWithLegacyData => {
   const collectionData = collection as ICollectionDataWithLegacyData;
-  if (!collectionData.loadOrder) {
+  if (collectionData.loadOrder === undefined) {
     return false;
   }
   return true;

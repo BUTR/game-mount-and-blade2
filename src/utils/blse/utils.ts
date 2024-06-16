@@ -9,13 +9,11 @@ import { LocalizationManager } from '../localization';
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;
 };
-const isModBLSE = (mod: IBannerlordMod) => {
+const isModBLSE = (mod: IBannerlordMod): boolean => {
   return mod.type === `bannerlord-blse` || (mod.attributes?.modId === 1 && mod.attributes?.source === `nexus`);
 };
 
-export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefined => {
-  const state = api.getState();
-
+export const findBLSEMod = (state: types.IState): IBannerlordMod | undefined => {
   if (hasPersistentBannerlordMods(state.persistent) === false) return undefined;
 
   const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
@@ -26,7 +24,7 @@ export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefine
   if (blseMods.length === 1) return blseMods[0];
 
   return blseMods.reduce<IBannerlordMod | undefined>((prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
-    if (prev === undefined) {
+    if (!prev) {
       return iter;
     }
     return gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0') ? iter : prev;
@@ -36,7 +34,7 @@ export const findBLSEMod = (api: types.IExtensionApi): IBannerlordMod | undefine
 export const findBLSEDownload = (api: types.IExtensionApi): string | undefined => {
   const state = api.getState();
   const downloadedFiles = state.persistent.downloads.files;
-  if (!downloadedFiles) {
+  if (downloadedFiles === undefined) {
     return undefined;
   }
 
@@ -66,7 +64,7 @@ export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
     return false;
   }
 
-  const profile = selectors.activeProfile(state);
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
   return blseMods.filter((x) => isModActive(profile, x)).length >= 1;
 };
 
@@ -74,14 +72,14 @@ export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   await util.toPromise((cb) => api.events.emit('deploy-mods', cb));
   await util.toPromise((cb) => api.events.emit('start-quick-discovery', () => cb(null)));
 
-  const discovery = selectors.currentGameDiscovery(api.getState());
+  const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(api.getState());
   const tool = discovery?.tools?.['blse-cli'];
   if (tool) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));
   }
 };
 
-export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate?: boolean): Promise<void> => {
+export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.dismissNotification?.('blse-missing');
@@ -93,14 +91,12 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate?: bool
     allowSuppress: false,
   });
 
-  if (api.ext?.ensureLoggedIn) {
-    await api.ext.ensureLoggedIn();
-  }
+  await api.ext?.ensureLoggedIn?.();
 
   try {
     const modFiles = (await api.ext.nexusGetModFiles?.(GAME_ID, BLSE_MOD_ID)) ?? [];
 
-    const fileTime = (input: IFileInfo) => Number.parseInt(input.uploaded_time, 10);
+    const fileTime = (input: IFileInfo): number => Number.parseInt(input.uploaded_time, 10);
 
     const file = modFiles.filter((file) => file.category_id === 1).sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
 
@@ -120,7 +116,7 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate?: bool
     const modId = await util.toPromise<string>((cb) =>
       api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb)
     );
-    const profile = selectors.activeProfile(api.getState());
+    const profile: types.IProfile | undefined = selectors.activeProfile(api.getState());
     await actions.setModsEnabled(api, profile.id, [modId], true, {
       allowAutoDeploy: false,
       installed: true,

@@ -19,10 +19,10 @@ export const getBinaryModdingPath = (_store: string | undefined): string => {
 };
 
 export const getBannerlordMainExe = (discoveryPath: string | undefined, api: types.IExtensionApi): string => {
-  const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
-  const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
+  const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
+  const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
 
-  const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -35,7 +35,7 @@ export const getBannerlordMainExe = (discoveryPath: string | undefined, api: typ
     return standard();
   }
 
-  if (!discovery.store && discoveryPath) {
+  if (discovery.store === undefined && discoveryPath !== undefined) {
     // Brute force the detection by manually checking the paths.
     try {
       fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
@@ -53,10 +53,10 @@ export const getBannerlordToolExe = (
   api: types.IExtensionApi,
   exe: string
 ): string => {
-  const standard = () => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
-  const xbox = () => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
+  const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
+  const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
 
-  const discovery = selectors.discoveryByGame(api.getState(), GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -69,7 +69,7 @@ export const getBannerlordToolExe = (
     return standard();
   }
 
-  if (!discovery.store && discoveryPath) {
+  if (discovery.store === undefined && discoveryPath !== undefined) {
     // Brute force the detection by manually checking the paths.
     try {
       fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));

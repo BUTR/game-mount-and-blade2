@@ -29,7 +29,7 @@ export const persistenceToVortex = (
         },
       };
     })
-    .filter((x) => x.data !== undefined)
+    .filter((x) => x.data)
     .sort((x, y) => x.data!.index - y.data!.index);
   return loadOrderConverted;
 };
@@ -39,7 +39,7 @@ export const vortexToPersistence = (loadOrder: VortexLoadOrderStorage): Persiste
     id: x.id,
     name: x.name,
     isSelected: x.enabled,
-    isDisabled: !!x.locked && (x.locked === `true` || x.locked === `always`),
+    isDisabled: x.locked !== undefined && (x.locked === `true` || x.locked === `always`),
     index: index,
   }));
   return loadOrderConverted;
@@ -62,7 +62,7 @@ export const vortexToLibraryVM = (
 ): vetypes.ModuleViewModel[] => {
   const modules = loadOrder
     .map<vetypes.ModuleInfoExtendedWithMetadata>((entry) => allModules[entry.id]!)
-    .filter((x) => x !== undefined);
+    .filter((x) => x);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
   const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => {
@@ -70,10 +70,9 @@ export const vortexToLibraryVM = (
     return entry.data && module
       ? {
           moduleInfoExtended: module,
-          isValid:
-            entry.enabled && BannerlordModuleManager.validateModule(modules, module, validationManager).length === 0,
+          isValid: entry.enabled && !BannerlordModuleManager.validateModule(modules, module, validationManager).length,
           isSelected: entry.enabled,
-          isDisabled: !!entry.locked && (entry.locked === `true` || entry.locked === `always`),
+          isDisabled: entry.locked !== undefined && (entry.locked === `true` || entry.locked === `always`),
           index: entry.data.index,
         }
       : [];
@@ -136,7 +135,7 @@ export const vortexToLibrary = (loadOrder: VortexLoadOrderStorage): vetypes.Load
       id: curr.id,
       name: curr.name,
       isSelected: curr.enabled,
-      isDisabled: !!curr.locked && (curr.locked === `true` || curr.locked === `always`),
+      isDisabled: curr.locked !== undefined && (curr.locked === `true` || curr.locked === `always`),
       index: loadOrder.indexOf(curr),
     };
     return map;
@@ -150,13 +149,13 @@ export const libraryToVortex = (
 ): VortexLoadOrderStorage => {
   const availableModules = Object.values(loadOrder)
     .map<vetypes.ModuleInfoExtendedWithMetadata>((curr) => allModules[curr.id]!)
-    .filter((x) => x !== undefined);
+    .filter((x) => x);
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
   const loadOrderConverted = Object.values(loadOrder)
     .map<VortexLoadOrderEntry>((curr) => {
       const module = allModules[curr.id];
-      if (module === undefined) {
+      if (!module) {
         return undefined!;
       }
 
@@ -169,12 +168,12 @@ export const libraryToVortex = (
         modId: modId[0]?.id ?? undefined!,
         data: {
           moduleInfoExtended: module,
-          isValid: moduleValidation && moduleValidation.length === 0,
+          isValid: !moduleValidation.length,
           isDisabled: false,
           index: curr.index,
         },
       };
     }, [])
-    .filter((x) => x !== undefined);
+    .filter((x) => x);
   return loadOrderConverted;
 };

@@ -4,12 +4,12 @@ import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from '../../type
 import { actionsLoadOrder, persistenceToVortex } from '../loadOrder';
 import { CollectionParseError, ICollectionDataWithGeneralData } from '.';
 
-const isValidMod = (mod: types.IMod) => {
+const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== 'collection';
 };
 
-const isModInCollection = (collectionMod: types.IMod, mod: IBannerlordMod) => {
-  if (collectionMod.rules === undefined) {
+const isModInCollection = (collectionMod: types.IMod, mod: IBannerlordMod): boolean => {
+  if (!collectionMod.rules) {
     return false;
   }
 
@@ -26,7 +26,7 @@ export const genCollectionGeneralLoadOrder = (
   // And we return the load order with the mods that are in the collection
   const filteredLoadOrder = loadOrder
     .filter((entry) => {
-      if (!entry.modId) {
+      if (entry.modId === undefined) {
         // We add the non existent LO entries as optionals
         return entry.data ? entry.enabled : false;
       }
@@ -53,11 +53,11 @@ export const parseCollectionGeneralLoadOrder = (
   api: types.IExtensionApi,
   modules: Readonly<IModuleCache>,
   collection: ICollectionDataWithGeneralData
-) => {
+): void => {
   const state = api.getState();
 
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-  if (!profileId) {
+  const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
+  if (profileId === undefined) {
     throw new CollectionParseError(collection.info.name || '', 'Invalid profile id');
   }
 

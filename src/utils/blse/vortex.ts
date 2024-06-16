@@ -7,7 +7,7 @@ const sendNotification = (
   title: string,
   actionTitle: string,
   action: (dismiss: types.NotificationDismiss) => void
-) => {
+): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.sendNotification?.({
@@ -24,46 +24,53 @@ const sendNotification = (
   });
 };
 
-export const recommendBLSE = (api: types.IExtensionApi) => {
+export const recommendBLSE = (api: types.IExtensionApi): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
-  const profile = selectors.activeProfile(api.getState());
+  const state = api.getState();
 
-  const blseMod = findBLSEMod(api);
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+
+  const blseMod = findBLSEMod(state);
   if (blseMod) {
     // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
     if (!blseIsActive) {
-      const action = (dismiss: types.NotificationDismiss) => {
+      const action = (dismiss: types.NotificationDismiss): void => {
         api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
-        deployBLSE(api).then(() => dismiss());
+        deployBLSE(api)
+          .catch(() => {})
+          .finally(() => dismiss());
       };
       sendNotification(api, t('BLSE is not enabled'), t('Enable'), action);
       return;
     }
+  } else {
+    const blseDownload = findBLSEDownload(api);
+    if (blseDownload !== undefined) {
+      // Downloaded but not installed
+      const action = (dismiss: types.NotificationDismiss): void => {
+        api.events.emit('start-install-download', blseDownload, {
+          allowAutoEnable: true,
+        });
+        deployBLSE(api)
+          .catch(() => {})
+          .finally(() => dismiss());
+      };
+      sendNotification(api, t('BLSE is not installed'), t('Install'), action);
+    } else {
+      // Non existent
+      const action = (dismiss: types.NotificationDismiss): void => {
+        downloadBLSE(api)
+          .catch(() => {})
+          .finally(() => dismiss());
+      };
+      sendNotification(api, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
+    }
   }
-
-  const blseDownload = findBLSEDownload(api);
-  if (blseDownload) {
-    // Downloaded but not installed
-    const action = (dismiss: types.NotificationDismiss) => {
-      api.events.emit('start-install-download', blseDownload, {
-        allowAutoEnable: true,
-      });
-      deployBLSE(api).then(() => dismiss());
-    };
-    sendNotification(api, t('BLSE is not installed'), t('Install'), action);
-    return;
-  }
-
-  // Non existent
-  const action = (dismiss: types.NotificationDismiss) => {
-    downloadBLSE(api).then(() => dismiss());
-  };
-  sendNotification(api, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
 };
 
-export const forceInstallBLSE = async (api: types.IExtensionApi) => {
+export const forceInstallBLSE = async (api: types.IExtensionApi): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.sendNotification?.({
@@ -73,9 +80,11 @@ export const forceInstallBLSE = async (api: types.IExtensionApi) => {
     message: t('BLSE is required by the collection. Ensuring it is installed...'),
   });
 
-  const profile = selectors.activeProfile(api.getState());
+  const state = api.getState();
 
-  const blseMod = findBLSEMod(api);
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+
+  const blseMod = findBLSEMod(state);
   if (blseMod) {
     // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
@@ -83,12 +92,14 @@ export const forceInstallBLSE = async (api: types.IExtensionApi) => {
       api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
       await deployBLSE(api);
     }
+  } else {
+    const blseDownload = findBLSEDownload(api);
+    if (blseDownload !== undefined) {
+      // Downloaded but not installed
+      await deployBLSE(api);
+    } else {
+      // Non existent
+      await downloadBLSE(api);
+    }
   }
-
-  const blseDownload = findBLSEDownload(api);
-  if (blseDownload) {
-    await deployBLSE(api);
-  }
-
-  downloadBLSE(api);
 };

@@ -11,8 +11,8 @@ export interface IModAnalyzerRequestQuery {
 export interface IModAnalyzerResultModule {
   moduleId: string;
   compatibility: number;
-  recommendedCompatibility: number | undefined;
-  recommendedModuleVersion?: string | undefined;
+  recommendedCompatibility: number | null;
+  recommendedModuleVersion: string | null;
 }
 
 export interface IModAnalyzerResult {

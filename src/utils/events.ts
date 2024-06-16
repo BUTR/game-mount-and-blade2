@@ -8,28 +8,22 @@ import { IAddedFiles } from '../types';
 /**
  * Event function, be careful
  */
-export const addedFilesEvent = async (
-  api: types.IExtensionApi,
-  profileId: string,
-  files: IAddedFiles[]
-): Promise<void> => {
+export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFiles[]): Promise<void> => {
   const state = api.getState();
 
-  const profile = selectors.profileById(state, profileId);
-  if (profile.gameId !== GAME_ID) {
-    return;
-  }
-
-  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, profile.gameId);
-  if (!discovery?.path) {
+  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, GAME_ID);
+  if (discovery?.path === undefined) {
     // Can't do anything without a discovery path.
     return;
   }
 
-  const game = util.getGame(profile.gameId);
-  const modPaths = game.getModPaths ? game.getModPaths(discovery.path) : {};
-  const installPath: string = selectors.installPathForGame(state, game.id);
-
+  const game = util.getGame(GAME_ID);
+  const modPaths = game.getModPaths?.(discovery.path) ?? {};
+  const installPath: string | undefined = selectors.installPathForGame(state, game.id);
+  if (installPath === undefined) {
+    // Can't do anything without a install path.
+    return;
+  }
   await Bluebird.map(files, async (entry: { filePath: string; candidates: string[] }) => {
     // only act if we definitively know which mod owns the file
     if (entry.candidates.length === 1) {

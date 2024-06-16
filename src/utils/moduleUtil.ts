@@ -11,10 +11,10 @@ type ModIdResult = {
  */
 export const getModIds = (api: types.IExtensionApi, moduleId: string): ModIdResult[] => {
   const state = api.getState();
-  const gameId = selectors.activeGameId(state);
+  const gameId: string | undefined = selectors.activeGameId(state);
   const gameMods = state.persistent.mods[gameId] ?? {};
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
-    if (!mod.attributes || !mod.attributes[SUB_MODS_IDS]) {
+    if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
       return arr;
     }
     const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);

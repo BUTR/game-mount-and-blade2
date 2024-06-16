@@ -53,7 +53,7 @@ const launchGameStore = async (api: types.IExtensionApi, store: string): Promise
 };
 
 const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
-  if (!discovery.path) {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
@@ -69,7 +69,7 @@ const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDis
     await launchGameStore(api, discovery.store);
   }
 
-  if (discovery.store) {
+  if (discovery.store !== undefined) {
     const launcherManager = VortexLauncherManager.getInstance(api);
 
     launcherManager.setStore(discovery.store);
@@ -77,7 +77,7 @@ const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDis
 };
 
 export const setup = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
-  if (!discovery.path) {
+  if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
@@ -85,12 +85,12 @@ export const setup = async (api: types.IExtensionApi, discovery: types.IDiscover
   addOfficialCLITool(api, discovery);
   addOfficialLauncherTool(api, discovery);
   addModdingKitTool(api, discovery);
-  await addBLSETools(api, discovery);
+  addBLSETools(api, discovery);
 
   await prepareForModding(api, discovery);
 };
 
-export const requiresLauncher = async (store?: string): Promise<RequiresLauncherResult> => {
+export const requiresLauncher = (store?: string): RequiresLauncherResult => {
   if (isStoreXbox(store)) {
     return {
       launcher: `xbox`,

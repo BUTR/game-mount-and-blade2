@@ -39,6 +39,26 @@
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
 
+    "require-await": "off",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/strict-boolean-expressions":
+    [
+      "error",
+      {
+        "allowString": true,
+        "allowNumber": true,
+        "allowNullableObject": true,
+        "allowNullableBoolean": false,
+        "allowNullableString": false,
+        "allowNullableNumber": false,
+        "allowNullableEnum": false,
+        "allowAny": false
+      }
+    ],
+
     "sort-imports": 
     [
       "error", 
@@ -73,6 +93,17 @@
           "match": true
         }
       }
+      // ,
+      // {
+      //   "selector": "method",
+      //   "format": ["camelCase"],
+      //   "leadingUnderscore": "allow",
+      //   "trailingUnderscore": "allow",
+      //   "custom": {
+      //     "regex": "^.*Async$",
+      //     "match": true
+      //   }
+      // }
     ],
     
     "no-restricted-imports": [
