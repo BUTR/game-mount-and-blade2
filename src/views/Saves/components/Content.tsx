@@ -1,9 +1,9 @@
 import React from 'react';
 import { Panel } from 'react-bootstrap';
 import { FlexLayout, ITableRowAction, Table, types } from 'vortex-api';
-import { Sidebar } from './Sidebar';
 import { ISaveGame } from '../types';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
+import { Sidebar } from '.';
 
 export type ContentProps = {
   selectedSave: ISaveGame | null;

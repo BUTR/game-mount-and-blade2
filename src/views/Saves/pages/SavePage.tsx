@@ -5,16 +5,11 @@ import { useSelector, useStore } from 'react-redux';
 import { Content, RadioView, StatusView } from '../components';
 import { ISaveGame } from '../types';
 import { getSaves } from '../utils';
-import {
-  actionsSave,
-  findBLSEMod,
-  getSaveFromSettings,
-  isModActive,
-  LocalizationManager,
-  useLocalization,
-  versionToString,
-  VortexLauncherManager,
-} from '../../../utils';
+import { LocalizationManager, useLocalization } from '../../../localization';
+import { actionsSave } from '../../../save';
+import { versionToString, VortexLauncherManager } from '../../../launcher';
+import { getSaveFromSettings } from '../../../settings';
+import { findBLSEMod, isModActive } from '../../../blse';
 
 interface IFromState {
   profile: types.IProfile | undefined;

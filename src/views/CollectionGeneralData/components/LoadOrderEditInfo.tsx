@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { FlexLayout, Icon, MainContext } from 'vortex-api';
 import { openLoadOrderPage } from '../utils';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 
 export const LoadOrderEditInfo = (): JSX.Element => {
   const { localize: t } = useLocalization();

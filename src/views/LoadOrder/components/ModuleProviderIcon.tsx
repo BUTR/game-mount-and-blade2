@@ -1,9 +1,9 @@
 import React from 'react';
 import { IVortexViewModelData } from '../../../types';
-import { useLocalization } from '../../../utils';
 import { TooltipImage } from '../../Shared';
 import { STEAM_LOGO } from '../../../common';
 import { isSteamWorksop } from '../utils';
+import { useLocalization } from '../../../localization';
 
 export type ModuleProviderIconProps = {
   data: IVortexViewModelData | undefined;

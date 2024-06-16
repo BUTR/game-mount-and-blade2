@@ -4,15 +4,11 @@ import { useSelector } from 'react-redux';
 import { MainContext, selectors, tooltip, types } from 'vortex-api';
 import { LoadOrderEditInfo, LoadOrderEntry, Placeholder, Requirements } from '../components';
 import { IBannerlordModStorage, PersistenceLoadOrderStorage, VortexLoadOrderStorage } from '../../../types';
-import {
-  genCollectionGeneralData,
-  getCompatibilityScores,
-  hasPersistentBannerlordMods,
-  hasPersistentLoadOrder,
-  IModuleCompatibilityInfoCache,
-  useLocalization,
-} from '../../../utils';
 import { ICollectionFeatureProps } from '../../types';
+import { getCompatibilityScores, IModuleCompatibilityInfoCache } from '../../../butr';
+import { genCollectionGeneralData } from '../../../collections';
+import { useLocalization } from '../../../localization';
+import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../../../vortex';
 
 interface IFromState {
   loadOrder: VortexLoadOrderStorage;

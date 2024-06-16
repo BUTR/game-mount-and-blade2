@@ -1,8 +1,9 @@
 import { types } from 'vortex-api';
 import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { ISaveGame, ISaveList, MismatchedModuleMap, ModulesByName } from './types';
-import { LocalizationManager, versionToString, VortexLauncherManager } from '../../utils';
 import { IModuleCache } from '../../types';
+import { LocalizationManager } from '../../localization';
+import { versionToString, VortexLauncherManager } from '../../launcher';
 
 const createSaveGame = (
   api: types.IExtensionApi,

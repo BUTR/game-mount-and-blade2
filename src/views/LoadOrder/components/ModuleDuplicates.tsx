@@ -2,7 +2,7 @@ import React from 'react';
 import { tooltip } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { IVortexViewModelData } from '../../../types';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 
 export type ModuleDuplicatesProps = {
   availableProviders: vetypes.ModuleProviderType[];

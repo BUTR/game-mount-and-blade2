@@ -1,8 +1,9 @@
 import React from 'react';
 import { ListGroupItem } from 'react-bootstrap';
 import { IPersistenceLoadOrderEntry, VortexLoadOrderStorage } from '../../../types';
-import { IModuleCompatibilityInfoCache, versionToString } from '../../../utils';
 import { CompatibilityInfo, isOptional, ModuleIcon, OptionalBanner } from '../../Shared';
+import { IModuleCompatibilityInfoCache } from '../../../butr';
+import { versionToString } from '../../../launcher';
 
 export type LoadOrderEntryProps = {
   entry: IPersistenceLoadOrderEntry | undefined;

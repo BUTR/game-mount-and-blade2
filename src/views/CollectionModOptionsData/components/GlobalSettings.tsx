@@ -1,6 +1,7 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { ModOptionsEntry, ModOptionsStorage, useLocalization } from '../../../utils';
+import { ModOptionsEntry, ModOptionsStorage } from '../../../modoptions';
+import { useLocalization } from '../../../localization';
 import { ModOptionsEntryView } from '.';
 
 export type GlobalSettingsProps = {

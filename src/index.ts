@@ -3,37 +3,6 @@ import Bluebird, { method as toBluebird } from 'bluebird';
 import { log, selectors, types } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
 import path from 'path';
-import {
-  actionsSettings,
-  addedFilesEvent,
-  cloneCollectionGeneralData,
-  cloneCollectionModOptionsData,
-  didDeployBLSE,
-  didDeployLoadOrder,
-  didPurgeBLSE,
-  gamemodeActivatedLoadOrder,
-  gamemodeActivatedSave,
-  genCollectionGeneralData,
-  genCollectionModOptionsData,
-  getInstallPathBLSE,
-  getInstallPathModule,
-  hasContextWithCollectionFeature,
-  hasGeneralData,
-  hasLegacyData,
-  hasModOptionsData,
-  ICollectionData,
-  installBLSE,
-  isModTypeBLSE,
-  isModTypeModule,
-  LoadOrderManager,
-  parseCollectionGeneralData,
-  parseCollectionLegacyData,
-  parseCollectionModOptionsData,
-  reducer,
-  testBLSE,
-  VortexLauncherManager,
-  willRemoveModCollections,
-} from './utils';
 import { GAME_ID } from './common';
 import {
   BannerlordGeneralDataPage,
@@ -45,6 +14,29 @@ import {
 } from './views';
 import { BannerlordGame } from './game';
 import { IAddedFiles } from './types';
+import { reducer } from './react';
+import { actionsSettings } from './settings';
+import {
+  cloneCollectionGeneralData,
+  cloneCollectionModOptionsData,
+  genCollectionGeneralData,
+  genCollectionModOptionsData,
+  hasContextWithCollectionFeature,
+  hasGeneralData,
+  hasLegacyData,
+  hasModOptionsData,
+  ICollectionData,
+  parseCollectionGeneralData,
+  parseCollectionLegacyData,
+  parseCollectionModOptionsData,
+  willRemoveModCollections,
+} from './collections';
+import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager } from './loadOrder';
+import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
+import { VortexLauncherManager } from './launcher';
+import { getInstallPathModule, isModTypeModule } from './module';
+import { gamemodeActivatedSave } from './save';
+import { addedFilesEvent } from './vortex';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings

@@ -4,9 +4,12 @@ import { useSelector, useStore } from 'react-redux';
 import { Icon, selectors, types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { IVortexViewModelData, VortexLoadOrderStorage } from '../../../types';
-import { actionsLoadOrder, hasPersistentLoadOrder, IModuleCompatibilityInfo, versionToString } from '../../../utils';
 import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
+import { IModuleCompatibilityInfo } from '../../../butr';
+import { versionToString } from '../../../launcher';
+import { actionsLoadOrder } from '../../../loadOrder';
+import { hasPersistentLoadOrder } from '../../../vortex';
 import { ExternalBanner, ModuleDuplicates, ModuleProviderIcon, ValidationError } from '.';
 
 interface IFromState {

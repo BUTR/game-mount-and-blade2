@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, types } from 'vortex-api';
-import { useLocalization } from '../../../utils';
 import { IVortexViewModelData } from '../../../types';
+import { useLocalization } from '../../../localization';
 
 export type OptionalBannerProps = {
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>;

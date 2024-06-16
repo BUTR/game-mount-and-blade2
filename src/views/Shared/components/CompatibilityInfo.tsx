@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { tooltip } from 'vortex-api';
 import { IVortexViewModelData } from '../../../types';
-import { IModuleCompatibilityInfo, useLauncher, useLocalization, versionToString } from '../../../utils';
+import { IModuleCompatibilityInfo } from '../../../butr';
+import { useLocalization } from '../../../localization';
+import { useLauncher, versionToString } from '../../../launcher';
 
 export type CompatibilityInfoProps = {
   data: IVortexViewModelData | undefined;

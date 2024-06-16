@@ -1,7 +1,7 @@
 import React from 'react';
 import { tooltip, types } from 'vortex-api';
 import { ISaveGame } from '../types';
-import { LocalizationManager } from '../../../utils';
+import { LocalizationManager } from '../../../localization';
 
 export type StatusViewProps = {
   api: types.IExtensionApi;

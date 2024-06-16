@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { tooltip, util } from 'vortex-api';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 
 export type LoadOrderInfoPanelProps = {
   refresh: () => void;

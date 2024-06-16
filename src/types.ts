@@ -1,6 +1,8 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 
+export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
+
 export type IStatePersistent = types.IState['persistent'];
 
 export type IModAttributes = types.IMod['attributes'];

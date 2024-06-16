@@ -2,7 +2,8 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { findGame, getBannerlordMainExe, setup, VortexLauncherManager } from './utils';
+import { findGame, getBannerlordMainExe, setup } from './vortex';
+import { VortexLauncherManager } from './launcher';
 
 export class BannerlordGame implements types.IGame {
   private api: types.IExtensionApi;

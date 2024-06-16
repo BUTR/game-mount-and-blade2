@@ -1,6 +1,6 @@
 import React from 'react';
 import { EmptyPlaceholder } from 'vortex-api';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 import { OpenLoadOrderButton } from '.';
 
 export const Placeholder = (): JSX.Element => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 
 export type RequirementsProps = {
   hasBLSE: boolean;

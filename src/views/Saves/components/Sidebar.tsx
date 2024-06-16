@@ -1,6 +1,6 @@
 import React from 'react';
 import { ISaveGame } from '../types';
-import { useLocalization } from '../../../utils';
+import { useLocalization } from '../../../localization';
 import { IssueSnippet } from '.';
 
 export type SidebarProps = {

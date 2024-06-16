@@ -1,21 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { types } from 'vortex-api';
-import {
-  getGlobalSettings,
-  getSpecialSettings,
-  hasStatePersistentCollectionModWithIncludedModOptions,
-  IncludedModOptions,
-  ModOptionsEntry,
-  ModOptionsStorage,
-  nameof,
-  PersistentModOptionsEntry,
-  readSettingsContent,
-  useLocalization,
-} from '../../../utils';
 import { GAME_ID } from '../../../common';
 import { GlobalSettings, Placeholder, SpecialSettings } from '../components';
 import { ICollectionFeatureProps } from '../../types';
+import { useLocalization } from '../../../localization';
+import {
+  getGlobalSettings,
+  getSpecialSettings,
+  ModOptionsEntry,
+  ModOptionsStorage,
+  PersistentModOptionsEntry,
+  readSettingsContent,
+} from '../../../modoptions';
+import { hasStatePersistentCollectionModWithIncludedModOptions, IncludedModOptions } from '../../../collections';
+import { nameof } from '../../../nameof';
 
 export type ModOptionsDataPageProps = ICollectionFeatureProps;
 
