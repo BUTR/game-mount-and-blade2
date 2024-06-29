@@ -68,7 +68,8 @@
   },
   "resolutions": {
     "@types/react": "^16.14.34",
-    "**/dir-compare/minimatch": "3.0.5"
+    "**/dir-compare/minimatch": "3.0.5",
+    "braces": "3.0.3"
   },
   "packageManager": "yarn@1.22.19"
 }
