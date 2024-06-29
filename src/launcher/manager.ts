@@ -1,6 +1,6 @@
-import { actions, fs, selectors, types, util } from 'vortex-api';
+import { actions, selectors, types, util } from 'vortex-api';
 import { BannerlordModuleManager, NativeLauncherManager, types as vetypes } from '@butr/vortexextensionnative';
-import { Dirent, readFileSync } from 'fs';
+import { Dirent, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'path';
 import { hasPersistentLoadOrder } from '../vortex';
 import {
@@ -177,11 +177,10 @@ export class VortexLauncherManager {
     }
 
     const result = this.launcherManager.testModule(files);
-    const transformedResult: types.ISupportedResult = {
+    return Promise.resolve({
       supported: result.supported,
       requiredFiles: result.requiredFiles,
-    };
-    return Promise.resolve(transformedResult);
+    });
   };
 
   /**
@@ -428,13 +427,13 @@ export class VortexLauncherManager {
   private readFileContent = (filePath: string, offset: number, length: number): Uint8Array | null => {
     try {
       if (offset === 0 && length === -1) {
-        return fs.readFileSync(filePath);
+        return readFileSync(filePath);
       } else if (offset >= 0 && length > 0) {
         // TODO: read the chunk we actually need, but there's no readFile()
         //const fd = fs.openSync(filePath, 'r');
         //const buffer = Buffer.alloc(length);
         //fs.readSync(fd, buffer, offset, length, 0);
-        return fs.readFileSync(filePath).slice(offset, offset + length);
+        return readFileSync(filePath).slice(offset, offset + length);
       } else {
         return null;
       }
@@ -447,7 +446,7 @@ export class VortexLauncherManager {
    */
   private writeFileContent = (filePath: string, data: Uint8Array): void => {
     try {
-      return fs.writeFileSync(filePath, data);
+      return writeFileSync(filePath, data);
     } catch {
       /* ignore error */
     }
@@ -457,8 +456,7 @@ export class VortexLauncherManager {
    */
   private readDirectoryFileList = (directoryPath: string): string[] | null => {
     try {
-      return fs
-        .readdirSync(directoryPath, { withFileTypes: true })
+      return readdirSync(directoryPath, { withFileTypes: true })
         .filter((x: Dirent) => x.isFile())
         .map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {
@@ -470,8 +468,7 @@ export class VortexLauncherManager {
    */
   private readDirectoryList = (directoryPath: string): string[] | null => {
     try {
-      return fs
-        .readdirSync(directoryPath, { withFileTypes: true })
+      return readdirSync(directoryPath, { withFileTypes: true })
         .filter((x: Dirent) => x.isDirectory())
         .map<string>((x: Dirent) => path.join(directoryPath, x.name));
     } catch {

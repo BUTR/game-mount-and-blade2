@@ -33,6 +33,7 @@ export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFil
       }
       const relPath = path.relative(modPaths[mod.type ?? ``]!, entry.filePath);
       const targetPath = path.join(installPath, mod.id, relPath);
+
       // copy the new file back into the corresponding mod, then delete it.
       //  That way, vortex will create a link to it with the correct
       //  deployment method and not ask the user any questions

@@ -84,7 +84,7 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
 
   const reloadSaves = useCallback(() => {
     const saveList = getSaves(context.api);
-    setSortedSaveGames(Object.entries(saveList).sort((a, b) => a[1].index - b[1].index));
+    setSortedSaveGames(Object.entries(saveList).sort(([, saveA], [, saveB]) => saveA.index - saveB.index));
 
     const foundSave = Object.values(saveList).find((value) => value.name === saveName);
     if (foundSave) {
@@ -152,28 +152,28 @@ const getTableAttributes = (
     {
       id: 'name',
       name: t('{=JtelOsIW}Name'),
-      calc: (data) => data[1].name,
+      calc: ([, save]) => save.name,
       placement: 'both',
       edit: {},
     },
     {
       id: 'characterName',
       name: t('{=OJsGrGVi}Character'),
-      calc: (data) => data[1].characterName ?? '',
+      calc: ([, save]) => save.characterName ?? '',
       placement: 'both',
       edit: {},
     },
     {
       id: 'mainHeroLevel',
       name: t('{=JxpEEQdF}Level'),
-      calc: (data) => data[1].mainHeroLevel ?? '',
+      calc: ([, save]) => save.mainHeroLevel ?? '',
       placement: 'both',
       edit: {},
     },
     {
       id: 'dayLong',
       name: t('{=qkkTPycE}Days'),
-      calc: (data) => data[1].dayLong?.toFixed(0) ?? '',
+      calc: ([, save]) => save.dayLong?.toFixed(0) ?? '',
       placement: 'both',
       edit: {},
     },
@@ -193,14 +193,14 @@ const getTableAttributes = (
     {
       id: 'applicationVersion',
       name: t('{=14WBFIS1}Version'),
-      calc: (data) => (data[1].applicationVersion ? versionToString(data[1].applicationVersion) : ''),
+      calc: ([, save]) => (save.applicationVersion ? versionToString(save.applicationVersion) : ''),
       placement: 'both',
       edit: {},
     },
     {
       id: 'creationTime',
       name: t('{=aYWWDkKX}CreatedAt'),
-      calc: (data) => ticksToDate(data[1].creationTime)?.toLocaleString(),
+      calc: ([, save]) => ticksToDate(save.creationTime)?.toLocaleString(),
       placement: 'both',
       edit: {},
     },

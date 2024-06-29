@@ -14,7 +14,7 @@ const isModBLSE = (mod: IBannerlordMod): boolean => {
 };
 
 export const findBLSEMod = (state: types.IState): IBannerlordMod | undefined => {
-  if (hasPersistentBannerlordMods(state.persistent) === false) return undefined;
+  if (!hasPersistentBannerlordMods(state.persistent)) return undefined;
 
   const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
@@ -39,9 +39,9 @@ export const findBLSEDownload = (api: types.IExtensionApi): string | undefined =
   }
 
   const blseFiles = Object.entries(downloadedFiles)
-    .filter((x) => x[1].game.includes(GAME_ID))
-    .filter((x) => x[1].modInfo?.['nexus']?.modInfo?.mod_id === 1)
-    .sort((x, y) => x[1].fileTime - y[1].fileTime);
+    .filter(([, download]) => download.game.includes(GAME_ID))
+    .filter(([, download]) => download.modInfo?.['nexus']?.modInfo?.mod_id === 1)
+    .sort(([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime);
 
   if (blseFiles.length === 0) {
     return undefined;
@@ -55,7 +55,7 @@ export const findBLSEDownload = (api: types.IExtensionApi): string | undefined =
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
   const state = api.getState();
 
-  if (hasPersistentBannerlordMods(state.persistent) === false) return false;
+  if (!hasPersistentBannerlordMods(state.persistent)) return false;
 
   const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));

@@ -31,9 +31,8 @@ import {
 import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager } from './loadOrder';
 import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
 import { VortexLauncherManager } from './launcher';
-import { getInstallPathModule, isModTypeModule } from './module';
 import { gamemodeActivatedSave } from './save';
-import { addedFilesEvent } from './vortex';
+import { addedFilesEvent, getInstallPathModule, isModTypeModule } from './vortex';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings

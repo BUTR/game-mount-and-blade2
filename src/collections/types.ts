@@ -53,7 +53,7 @@ export interface ICollectionGeneralData {
 export interface ICollectionDataWithGeneralData extends ICollectionData, ICollectionGeneralData {}
 
 export interface ICollectionLegacyData {
-  loadOrder: types.LoadOrder; // TODO: check what the data is
+  loadOrder: types.ILoadOrderEntry<never>[];
 }
 export interface ICollectionDataWithLegacyData extends ICollectionData, ICollectionLegacyData {}
 

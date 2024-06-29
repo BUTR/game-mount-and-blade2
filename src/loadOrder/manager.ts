@@ -6,6 +6,7 @@ import { libraryToPersistence, vortexToLibrary } from './converters';
 import { actionsLoadOrder } from './actions';
 import { orderCurrentLoadOrderByExternalLoadOrder } from './utils';
 import { readLoadOrder } from './vortex';
+import { IFBLOItemRendererProps } from './types';
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
@@ -37,7 +38,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public toggleableEntries = true;
   public customItemRenderer?: ComponentType<{
     className?: string;
-    item: Omit<types.IFBLOItemRendererProps, 'loEntry'> & { loEntry: types.IFBLOLoadOrderEntry<IVortexViewModelData> };
+    item: IFBLOItemRendererProps;
   }>;
 
   public usageInstructions?: ComponentType<unknown>;
@@ -136,7 +137,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     );
     //const validationManager = ValidationManager.fromVortex(newLO);
 
-    const invalidResults = Array<IInvalidResult>();
+    const invalidResults: IInvalidResult[] = [];
     for (const enabledModule of modules) {
       const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(modules, enabledModule);
       for (const issue of loadOrderIssues) {

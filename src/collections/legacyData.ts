@@ -14,6 +14,7 @@ export const parseCollectionLegacyData = async (
   if (!hasLegacyData(collection)) {
     return;
   }
+
   await parseLegacyLoadOrder(api, collection);
 };
 

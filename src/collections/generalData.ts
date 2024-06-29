@@ -28,11 +28,10 @@ export const genCollectionGeneralData = (
   const blseMod = findBLSEMod(state);
   const hasBLSE = blseMod !== undefined && isModActive(profile, blseMod);
 
-  const collectionData: ICollectionGeneralData = {
+  return Promise.resolve({
     hasBLSE: hasBLSE,
     suggestedLoadOrder: vortexToPersistence(collectionLoadOrder),
-  };
-  return Promise.resolve(collectionData);
+  });
 };
 
 /**

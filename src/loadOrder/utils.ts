@@ -115,16 +115,16 @@ export const orderCurrentLoadOrderByExternalLoadOrder = (
   const launcherManager = VortexLauncherManager.getInstance(api);
 
   const savedLoadOrder = persistenceToLibrary(persistenceLoadOrder);
-  const salecLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrder);
+  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrder);
 
-  checkSavedLoadOrder(api, autoSort, salecLoadOrderVortex);
+  checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
 
   // Apply the Load Order to the list of modules
   // Useful when there are new modules or old modules are missing
   // The output wil wil contain the auto sorted list of modules
   const result = launcherManager.orderByLoadOrder(savedLoadOrder);
   if (!checkResult(api, autoSort, result)) {
-    return Promise.resolve(salecLoadOrderVortex);
+    return Promise.resolve(savedLoadOrderVortex);
   }
 
   // Not even sure this will trigger

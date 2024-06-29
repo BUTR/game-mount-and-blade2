@@ -12,7 +12,7 @@ import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
 import { IModuleCompatibilityInfo } from '../../../butr';
 import { versionToString } from '../../../launcher';
-import { actionsLoadOrder } from '../../../loadOrder';
+import { actionsLoadOrder, IFBLOItemRendererProps } from '../../../loadOrder';
 import { hasPersistentLoadOrder } from '../../../vortex';
 
 interface IFromState {
@@ -22,7 +22,7 @@ interface IFromState {
 
 export type LoadOrderItemRendererProps = {
   className?: string;
-  item: Omit<types.IFBLOItemRendererProps, 'loEntry'> & { loEntry: types.IFBLOLoadOrderEntry<IVortexViewModelData> };
+  item: IFBLOItemRendererProps;
   availableProviders: vetypes.ModuleProviderType[];
   compatibilityInfo: IModuleCompatibilityInfo | undefined;
 };

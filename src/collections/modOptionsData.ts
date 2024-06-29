@@ -19,18 +19,16 @@ export const genCollectionModOptionsData = (
   collectionMod: types.IMod
 ): Promise<ICollectionSettingsData> => {
   if (!hasIncludedModOptions(collectionMod)) {
-    const emptyData: ICollectionSettingsData = {
+    return Promise.resolve({
       includedModOptions: [],
-    };
-    return Promise.resolve(emptyData);
+    });
   }
 
   const includedModOptions = collectionMod.attributes?.collection?.includedModOptions ?? [];
 
-  const collectionData: ICollectionSettingsData = {
+  return Promise.resolve({
     includedModOptions: includedModOptions,
-  };
-  return Promise.resolve(collectionData);
+  });
 };
 
 /**
