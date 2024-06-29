@@ -1,65 +1,69 @@
 {
-	"name": "NodeJS & Powershell & 7z",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"cacheFrom": [
-			"ghcr.io/butr/game-mount-and-blade2-devcontainer:latest"
-		]
-	},
-	"features": {
-		"ghcr.io/butr/devcontainer/upgrade:1": {
-
-		},
-		"ghcr.io/devcontainers/features/git:1": {
-      "version": "latest",
-      "ppa": "false"
+    "name": "NodeJS & Powershell & 7z",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "cacheFrom": [
+            "ghcr.io/butr/game-mount-and-blade2-devcontainer:latest"
+        ]
     },
-		"ghcr.io/butr/devcontainer/7z:1": {
+    "features": {
+        "ghcr.io/butr/devcontainer/upgrade:1": {
 
-		},
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "18.17.1",
-      "nodeGypDependencies": "true"
+        },
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest",
+            "ppa": "false"
+        },
+        "ghcr.io/butr/devcontainer/7z:1": {
+
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "18.17.1",
+            "nodeGypDependencies": "true"
+        },
+        "ghcr.io/devcontainers/features/python:1": {
+
+        },
+        "ghcr.io/devcontainers/features/powershell:1": {
+            "version": "7.4.2"
+        }
     },
-		"ghcr.io/devcontainers/features/powershell:1": {
-      "version": "latest"
-		}
-	},
-	"overrideFeatureInstallOrder": [
-		"ghcr.io/butr/devcontainer/upgrade",
-		"ghcr.io/devcontainers/features/git",
-		"ghcr.io/butr/devcontainer/7z",
-		"ghcr.io/devcontainers/features/node",
-		"ghcr.io/devcontainers/features/powershell"
-	],
+    "overrideFeatureInstallOrder": [
+        "ghcr.io/butr/devcontainer/upgrade",
+        "ghcr.io/devcontainers/features/git",
+        "ghcr.io/butr/devcontainer/7z",
+        "ghcr.io/devcontainers/features/node",
+        "ghcr.io/devcontainers/features/python",
+        "ghcr.io/devcontainers/features/powershell"
+    ],
   "mounts": [
     {
       "source":"${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins",
       "target":"/vortex-plugins",
       "type":"bind"
     }
-	],
-	"postAttachCommand": "yarn install",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"editorconfig.editorconfig",
-				"dbaeumer.vscode-eslint",
-				"github.vscode-github-actions",
-				"ms-vscode.powershell",
-				"ms-azuretools.vscode-docker"
-			],
-			"settings": {
-				"terminal.integrated.defaultProfile.linux": "pwsh", 
-				"terminal.integrated.profiles.linux": {
-					"path": {
-						"path": "/usr/local/bin/pwsh"
-					}
-				},
-				"powershell.powerShellAdditionalExePaths": {
-					"pwsh": "/usr/local/bin/pwsh"
-				}
-			}
-		}
-	}
+    ],
+    "postAttachCommand": "yarn install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "editorconfig.editorconfig",
+                "dbaeumer.vscode-eslint",
+                "github.vscode-github-actions",
+                "ms-vscode.powershell",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "pwsh", 
+                "terminal.integrated.profiles.linux": {
+                    "path": {
+                        "path": "/usr/local/bin/pwsh"
+                    }
+                },
+                "powershell.powerShellAdditionalExePaths": {
+                    "pwsh": "/usr/local/bin/pwsh"
+                }
+            }
+        }
+    }
 }
