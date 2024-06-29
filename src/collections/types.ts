@@ -1,32 +1,63 @@
-/*
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-
 import { types } from 'vortex-api';
+import { ICollection as ICollectionDataToExport } from 'collections/src/types/ICollection';
+import { IExtensionFeature } from 'collections/src/util/extension';
+import { IModAttributes, IStatePersistent, PersistenceLoadOrderStorage } from '../types';
+import { PersistentModOptionsEntry } from '../modoptions';
 
-import { ICollection } from 'collections/src/types/ICollection';
-import { IExtendedInterfaceProps } from "collections/src/types/IExtendedInterfaceProps";
-import { ILoadOrder } from "../types";
+export interface ICollectionData extends ICollectionDataToExport {}
 
-export interface ICollectionMB extends ICollection {
-  loadOrder: ILoadOrder;
+export type IncludedModOptions = {
+  includedModOptions?: PersistentModOptionsEntry[];
+};
+
+export type IModAttributesWithCollection<T = unknown> = IModAttributes & {
+  collection?: T;
+};
+
+export interface IModWithCollection<T = unknown> extends types.IMod {
+  attributes?: IModAttributesWithCollection<T>;
 }
 
-export interface IExtensionContextCollectionFeature {
-  registerCollectionFeature:
-  (
-    id: string,
+export interface IModWithIncludedModOptions extends IModWithCollection<IncludedModOptions> {}
 
-    generate: (gameId: string, includedMods: string[]) => Bluebird<any>,
+export interface IStatePersistentWithModsWithIncludedModOptions extends IStatePersistent {
+  mods: {
+    [gameId: string]: {
+      [modId: string]: IModWithCollection<IncludedModOptions>;
+    };
+  };
+}
 
-    parse: (gameId: string, collection: ICollection) => Bluebird<void>,
+export interface ICollectionFeature {
+  registerCollectionFeature: (
+    id: IExtensionFeature['id'],
 
-    clone: (gameId: string, collection: ICollection, from: types.IMod, to: types.IMod) => Bluebird<void>,
+    generate: IExtensionFeature['generate'],
+    parse: IExtensionFeature['parse'],
+    clone: IExtensionFeature['clone'],
 
-    title: (t: types.TFunction) => string,
-
-    condition?: (state: types.IState, gameId: string) => boolean,
-
-    editComponent?: React.ComponentType<IExtendedInterfaceProps>
+    title: IExtensionFeature['title'],
+    condition?: IExtensionFeature['condition'],
+    editComponent?: IExtensionFeature['editComponent']
   ) => void;
 }
-*/
+
+export interface IExtensionContextWithCollectionFeature extends types.IExtensionContext {
+  optional: ICollectionFeature;
+}
+
+export interface ICollectionGeneralData {
+  hasBLSE: boolean;
+  suggestedLoadOrder: PersistenceLoadOrderStorage;
+}
+export interface ICollectionDataWithGeneralData extends ICollectionData, ICollectionGeneralData {}
+
+export interface ICollectionLegacyData {
+  loadOrder: types.LoadOrder; // TODO: check what the data is
+}
+export interface ICollectionDataWithLegacyData extends ICollectionData, ICollectionLegacyData {}
+
+export interface ICollectionSettingsData {
+  includedModOptions: PersistentModOptionsEntry[];
+}
+export interface ICollectionDataWithSettingsData extends ICollectionData, ICollectionSettingsData {}

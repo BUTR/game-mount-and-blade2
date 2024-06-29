@@ -2,13 +2,11 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { findGame, getBannerlordMainExe, requiresLauncher, setup } from './utils';
-import { GetLauncherManager, GetLocalizationManager } from './types';
+import { findGame, getBannerlordMainExe, setup } from './vortex';
+import { VortexLauncherManager } from './launcher';
 
 export class BannerlordGame implements types.IGame {
-  private _api: types.IExtensionApi;
-  private _getLauncherManager: GetLauncherManager;
-  private _getLocalizationManager: GetLocalizationManager;
+  private api: types.IExtensionApi;
 
   public id: string = GAME_ID;
   public name = `Mount & Blade II: Bannerlord (BUTR)`;
@@ -31,14 +29,8 @@ export class BannerlordGame implements types.IGame {
     customOpenModsPath: MODULES,
   };
 
-  constructor(
-    api: types.IExtensionApi,
-    getLauncherManager: GetLauncherManager,
-    getLocalizationManager: GetLocalizationManager
-  ) {
-    this._api = api;
-    this._getLauncherManager = getLauncherManager;
-    this._getLocalizationManager = getLocalizationManager;
+  constructor(api: types.IExtensionApi) {
+    this.api = api;
   }
 
   public queryPath = toBluebird<string | types.IGameStoreEntry>(async (): Promise<string | types.IGameStoreEntry> => {
@@ -49,13 +41,13 @@ export class BannerlordGame implements types.IGame {
     return `.`;
   };
   public getGameVersion = (_gamePath: string, _exePath: string): PromiseLike<string> => {
-    return this._getLauncherManager().getGameVersionVortexAsync();
+    return VortexLauncherManager.getInstance(this.api).getGameVersionVortexAsync();
   };
   public executable = (discoveredPath?: string): string => {
-    return getBannerlordMainExe(discoveredPath, this._api);
+    return getBannerlordMainExe(discoveredPath, this.api);
   };
   public setup = toBluebird(async (discovery: types.IDiscoveryResult) => {
-    await setup(this._api, discovery, this._getLauncherManager, this._getLocalizationManager);
+    await setup(this.api, discovery);
   });
   //public requiresLauncher = toBluebird(async (_gamePath: string, store?: string) => {
   //  return await requiresLauncher(store);

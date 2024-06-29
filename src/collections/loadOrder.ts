@@ -1,61 +1,70 @@
-/*
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-
-import {
-  actions, selectors, util, types,
-} from 'vortex-api';
+import { selectors, types, util } from 'vortex-api';
+import { ICollectionDataWithGeneralData } from './types';
+import { CollectionParseError } from './errors';
 import { GAME_ID } from '../common';
-import { ILoadOrder, IMods } from '../types';
+import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from '../types';
+import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
 
-import { CollectionGenerateError, CollectionParseError, genCollectionLoadOrder } from './collectionUtil';
-import { ICollectionMB } from "./types";
+const isValidMod = (mod: types.IMod): boolean => {
+  return mod !== undefined && mod.type !== 'collection';
+};
 
-export const exportLoadOrder = toBluebird(async (state: types.IState, modIds: string[], mods: IMods) : Promise<ILoadOrder | undefined> => {
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
-  if (profileId === undefined) {
-    throw new CollectionGenerateError(`Invalid profile id`);
+const isModInCollection = (collectionMod: types.IMod, mod: IBannerlordMod): boolean => {
+  if (!collectionMod.rules) {
+    return false;
   }
 
-  const loadOrder = util.getSafe<ILoadOrder | undefined>(state, [`persistent`, `loadOrder`, profileId], undefined);
-  if (loadOrder === undefined) {
-    // This is theoretically "fine" - the user may have simply
-    //  downloaded the mods and immediately created the collection
-    //  without actually setting up a load order. Alternatively
-    //  the game extension itself might be handling the presort functionality
-    //  erroneously. Regardless, the collection creation shouldn't be blocked
-    //  by the inexistance of a loadOrder.
-    return undefined;
-  }
+  return collectionMod.rules.find((rule) => util.testModReference(mod, rule.reference)) !== undefined;
+};
 
-  const includedMods = modIds.reduce<IMods>((accum, iter) => {
-    if (mods[iter] !== undefined) {
-      accum[iter] = mods[iter];
-    }
-    return accum;
-  }, {});
+export const genCollectionGeneralLoadOrder = (
+  loadOrder: VortexLoadOrderStorage,
+  mods: IBannerlordMod[],
+  collectionMod?: types.IMod
+): VortexLoadOrderStorage => {
+  // We get the current load order the user has
+  // And the mods that are tied to the collection
+  // And we return the load order with the mods that are in the collection
+  const filteredLoadOrder = loadOrder
+    .filter((entry) => {
+      if (entry.modId === undefined) {
+        // We add the non existent LO entries as optionals
+        return entry.data ? entry.enabled : false;
+      }
 
-  const filteredLO = genCollectionLoadOrder(loadOrder, includedMods);
-  return filteredLO;
-});
+      const mod = mods.find((x) => x.attributes?.modId === parseInt(entry.modId ?? '0'));
+      if (!mod) {
+        return false;
+      }
 
-export const importLoadOrder = toBluebird(async (api: types.IExtensionApi, collection: ICollectionMB) : Promise<void> => {
+      if (collectionMod) {
+        return isValidMod(mod) && isModInCollection(collectionMod, mod);
+      }
+
+      return isValidMod(mod);
+    })
+    .reduce<VortexLoadOrderStorage>((accum, iter) => {
+      accum.push(iter);
+      return accum;
+    }, []);
+  return filteredLoadOrder;
+};
+
+export const parseCollectionGeneralLoadOrder = async (
+  api: types.IExtensionApi,
+  modules: Readonly<IModuleCache>,
+  collection: ICollectionDataWithGeneralData
+): Promise<void> => {
   const state = api.getState();
 
-  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
-    throw new CollectionParseError(collection?.info?.name ?? ``, `Invalid profile id`);
+    throw new CollectionParseError(collection.info.name ?? '', 'Invalid profile id');
   }
 
-  // The mods need to be deployed in order for the load order to be imported correctly.
-  return new Promise<void>((resolve, reject) => {
-    api.events.emit(`deploy-mods`, (err: any) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      api.store?.dispatch(actions.setLoadOrder(profileId, [collection.loadOrder]));
-      resolve();
-    });
-  });
-});
-*/
+  const suggestedLoadOrder = collection.suggestedLoadOrder;
+
+  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, modules, suggestedLoadOrder);
+
+  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
+};
