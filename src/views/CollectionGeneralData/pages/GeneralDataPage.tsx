@@ -27,9 +27,12 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
   const context = useContext(MainContext);
 
   useEffect(() => {
-    const data = genCollectionGeneralData(context.api, Object.keys(mods));
-    setHasBLSE(data.hasBLSE);
-    setPersistentLoadOrder(data.suggestedLoadOrder);
+    async function setData(): Promise<void> {
+      const data = await genCollectionGeneralData(context.api, Object.keys(mods));
+      setHasBLSE(data.hasBLSE);
+      setPersistentLoadOrder(data.suggestedLoadOrder);
+    }
+    setData().catch(() => {});
   }, [context.api, mods]);
 
   const { localize: t } = useLocalization();
