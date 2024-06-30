@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+* Fixed collection creation
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 * Added back collection support
 * Old collections will now set the Load Order on install
