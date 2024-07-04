@@ -10,6 +10,7 @@ import { actionsSave } from '../../../save';
 import { versionToString, VortexLauncherManager } from '../../../launcher';
 import { getSaveFromSettings } from '../../../settings';
 import { findBLSEMod, isModActive } from '../../../blse';
+import { hasPersistentBannerlordMods } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -213,7 +214,8 @@ const mapState = (state: types.IState): IFromState => {
 
   const saveName = profile !== undefined ? getSaveFromSettings(state, profile.id) ?? 'No Save' : 'No Save';
 
-  const blseMod = findBLSEMod(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const blseMod = findBLSEMod(mods);
   const hasBLSE = blseMod !== undefined && profile !== undefined && isModActive(profile, blseMod);
 
   return {

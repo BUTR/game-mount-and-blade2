@@ -4,7 +4,7 @@ import { IFileInfo } from '@nexusmods/nexus-api/lib';
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID } from '../common';
 import { hasPersistentBannerlordMods } from '../vortex';
 import { LocalizationManager } from '../localization';
-import { IBannerlordMod } from '../types';
+import { IBannerlordMod, IBannerlordModStorage } from '../types';
 
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;
@@ -13,10 +13,7 @@ const isModBLSE = (mod: IBannerlordMod): boolean => {
   return mod.type === `bannerlord-blse` || (mod.attributes?.modId === 1 && mod.attributes?.source === `nexus`);
 };
 
-export const findBLSEMod = (state: types.IState): IBannerlordMod | undefined => {
-  if (!hasPersistentBannerlordMods(state.persistent)) return undefined;
-
-  const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
+export const findBLSEMod = (mods: IBannerlordModStorage): IBannerlordMod | undefined => {
   const blseMods: IBannerlordMod[] = Object.values(mods).filter((mod: IBannerlordMod) => isModBLSE(mod));
 
   if (blseMods.length === 0) return undefined;

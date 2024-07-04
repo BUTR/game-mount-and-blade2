@@ -13,7 +13,7 @@ import {
   SettingsProps,
 } from './views';
 import { BannerlordGame } from './game';
-import { IAddedFiles } from './types';
+import { IAddedFiles, IBannerlordModStorage } from './types';
 import { reducer } from './react';
 import { actionsSettings } from './settings';
 import {
@@ -32,7 +32,13 @@ import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager } from
 import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
 import { VortexLauncherManager } from './launcher';
 import { gamemodeActivatedSave } from './save';
-import { addedFilesEvent, getInstallPathModule, isModTypeModule } from './vortex';
+import {
+  addedFilesEvent,
+  getInstallPathModule,
+  hasPersistentBannerlordMods,
+  hasPersistentLoadOrder,
+  isModTypeModule,
+} from './vortex';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings
@@ -64,11 +70,26 @@ const main = (context: types.IExtensionContext): boolean => {
   if (hasContextWithCollectionFeature(context)) {
     context.optional.registerCollectionFeature(
       /*id:*/ `${GAME_ID}_load_order`,
-      /*generate:*/ async (gameId: string, includedMods: string[], _mod: types.IMod) => {
+      /*generate:*/ async (gameId: string, includedModIds: string[], _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return {};
         }
-        return await genCollectionGeneralData(context.api, includedMods);
+
+        const state = context.api.getState();
+        const profile: types.IProfile | undefined = selectors.activeProfile(state);
+        const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
+        const mods = hasPersistentBannerlordMods(state.persistent)
+          ? state.persistent.mods.mountandblade2bannerlord
+          : {};
+
+        const includedMods = Object.values(mods)
+          .filter((mod) => includedModIds.includes(mod.id))
+          .reduce<IBannerlordModStorage>((map, obj) => {
+            map[obj.id] = obj;
+            return map;
+          }, {});
+
+        return await genCollectionGeneralData(profile, loadOrder, includedMods);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
         if (GAME_ID !== gameId) {

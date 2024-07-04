@@ -23,6 +23,6 @@ export const RadioView = (props: RadioViewProps): JSX.Element => {
       onChange={() => onChange(save)}
     />
   ) : (
-    <div />
+    <></>
   );
 };
