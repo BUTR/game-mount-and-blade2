@@ -1,6 +1,6 @@
 import { actions, types } from 'vortex-api';
 import { findBLSEMod } from './utils';
-import { hasSettingsInterfacePrimaryTool } from '../vortex';
+import { hasPersistentBannerlordMods, hasSettingsInterfacePrimaryTool } from '../vortex';
 import { GAME_ID } from '../common';
 
 export const didDeployBLSE = (api: types.IExtensionApi): Promise<void> => {
@@ -12,7 +12,8 @@ export const didDeployBLSE = (api: types.IExtensionApi): Promise<void> => {
 
   const primaryTool = state.settings.interface.primaryTool.mountandblade2bannerlord;
 
-  const blseMod = findBLSEMod(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const blseMod = findBLSEMod(mods);
   if (blseMod && primaryTool === undefined) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, 'blse-cli'));
   }
@@ -38,7 +39,8 @@ export const didPurgeBLSE = (api: types.IExtensionApi): Promise<void> => {
     return Promise.resolve();
   }
 
-  const blseMod = findBLSEMod(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const blseMod = findBLSEMod(mods);
   if (blseMod) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }

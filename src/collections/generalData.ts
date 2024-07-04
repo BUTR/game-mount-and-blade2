@@ -1,4 +1,5 @@
 import { selectors, types } from 'vortex-api';
+import { profile } from 'node:console';
 import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
 import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrder } from './loadOrder';
 import { CollectionParseError } from './errors';
@@ -7,25 +8,19 @@ import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../vortex';
 import { findBLSEMod, forceInstallBLSE, isModActive } from '../blse';
 import { vortexToPersistence } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
+import { IBannerlordMod, IBannerlordModStorage, VortexLoadOrderStorage } from '../types';
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
 export const genCollectionGeneralData = (
-  api: types.IExtensionApi,
-  includedModIds: string[]
+  profile: types.IProfile,
+  loadOrder: VortexLoadOrderStorage,
+  includedMods: IBannerlordModStorage
 ): Promise<ICollectionGeneralData> => {
-  const state = api.getState();
+  const collectionLoadOrder = genCollectionGeneralLoadOrder(loadOrder, Object.values(includedMods));
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
-
-  const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile.id] ?? [] : [];
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
-
-  const includedMods = Object.values(mods).filter((mod) => includedModIds.includes(mod.id));
-  const collectionLoadOrder = genCollectionGeneralLoadOrder(loadOrder, includedMods);
-
-  const blseMod = findBLSEMod(state);
+  const blseMod = findBLSEMod(includedMods);
   const hasBLSE = blseMod !== undefined && isModActive(profile, blseMod);
 
   return Promise.resolve({

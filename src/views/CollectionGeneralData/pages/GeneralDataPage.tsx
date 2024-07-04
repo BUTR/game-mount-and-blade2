@@ -9,8 +9,10 @@ import { getCompatibilityScores, IModuleCompatibilityInfoCache } from '../../../
 import { genCollectionGeneralData } from '../../../collections';
 import { useLocalization } from '../../../localization';
 import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../../../vortex';
+import { useLauncher } from '../../../launcher';
 
 interface IFromState {
+  profile: types.IProfile | undefined;
   loadOrder: VortexLoadOrderStorage;
   mods: IBannerlordModStorage;
 }
@@ -22,23 +24,24 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
   const [hasBLSE, setHasBLSE] = useState<boolean>(false);
   const [persistentLoadOrder, setPersistentLoadOrder] = useState<PersistenceLoadOrderStorage>([]);
 
-  const { loadOrder, mods } = useSelector(mapState);
+  const { profile, loadOrder, mods } = useSelector(mapState);
 
-  const context = useContext(MainContext);
+  const launcherManager = useLauncher();
 
   useEffect(() => {
     async function setData(): Promise<void> {
-      const data = await genCollectionGeneralData(context.api, Object.keys(mods));
+      if (!profile) return;
+      const data = await genCollectionGeneralData(profile, loadOrder, mods);
       setHasBLSE(data.hasBLSE);
       setPersistentLoadOrder(data.suggestedLoadOrder);
     }
     setData().catch(() => {});
-  }, [context.api, mods]);
+  }, [profile, loadOrder, mods]);
 
   const { localize: t } = useLocalization();
 
   const refreshCompatibilityScores = (): void => {
-    getCompatibilityScores(context.api)
+    getCompatibilityScores(launcherManager)
       .then((cache) => {
         setCompatibilityInfoCache(cache);
       })
@@ -90,6 +93,7 @@ const mapState = (state: types.IState): IFromState => {
   const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
   const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
   return {
+    profile,
     loadOrder,
     mods,
   };

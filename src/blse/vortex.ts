@@ -1,6 +1,7 @@
 import { actions, selectors, types } from 'vortex-api';
 import { deployBLSE, downloadBLSE, findBLSEDownload, findBLSEMod, isModActive } from './utils';
 import { LocalizationManager } from '../localization';
+import { hasPersistentBannerlordMods } from '../vortex';
 
 const sendNotification = (
   api: types.IExtensionApi,
@@ -31,7 +32,8 @@ export const recommendBLSE = (api: types.IExtensionApi): void => {
 
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
 
-  const blseMod = findBLSEMod(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const blseMod = findBLSEMod(mods);
   if (blseMod) {
     // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
@@ -84,7 +86,8 @@ export const forceInstallBLSE = async (api: types.IExtensionApi): Promise<void> 
 
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
 
-  const blseMod = findBLSEMod(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const blseMod = findBLSEMod(mods);
   if (blseMod) {
     // Found but not enabled
     const blseIsActive = isModActive(profile, blseMod);
