@@ -27,6 +27,7 @@ const setFBLoadOrder = (profileId: string, loadOrder: types.LoadOrder) => ({
     loadOrder,
   },
 });
+
 export const actionsLoadOrder = {
   setFBForceUpdate,
   setFBLoadOrderEntry,

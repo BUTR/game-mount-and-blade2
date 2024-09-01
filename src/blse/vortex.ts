@@ -1,9 +1,20 @@
-import { actions, selectors, types } from 'vortex-api';
-import { deployBLSE, downloadBLSE, findBLSEDownload, findBLSEMod, isModActive } from './utils';
+import { selectors, types } from 'vortex-api';
+import path from 'path';
 import { LocalizationManager } from '../localization';
-import { hasPersistentBannerlordMods } from '../vortex';
+import {
+  checkBLSEDeploy,
+  checkHarmonyDeploy,
+  DeployModResult,
+  DeployModStatus,
+  getBinaryPath,
+  hasPersistentBannerlordMods,
+  installBLSE,
+  installHarmony,
+} from '../vortex';
+import { BLSE_CLI_EXE } from '../common';
+import { getPathExistsAsync } from '../utils';
 
-const sendNotification = (
+const sendBLSENotification = (
   api: types.IExtensionApi,
   title: string,
   actionTitle: string,
@@ -25,84 +36,151 @@ const sendNotification = (
   });
 };
 
-export const recommendBLSE = (api: types.IExtensionApi): void => {
+const sendHarmonyNotification = (
+  api: types.IExtensionApi,
+  title: string,
+  actionTitle: string,
+  action: (dismiss: types.NotificationDismiss) => void
+): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
-  const state = api.getState();
+  api.sendNotification?.({
+    id: 'harmony-missing',
+    type: 'warning',
+    title: title,
+    message: t('Harmony is required for BLSE.'),
+    actions: [
+      {
+        title: actionTitle,
+        action: action,
+      },
+    ],
+  });
+};
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+const doBLSEDeploy = (
+  api: types.IExtensionApi,
+  profile: types.IProfile,
+  harmonyDeployResult: DeployModResult,
+  blseResult: DeployModResult
+): void => {
+  const { localize: t } = LocalizationManager.getInstance(api);
 
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
-  const blseMod = findBLSEMod(mods);
-  if (blseMod) {
-    // Found but not enabled
-    const blseIsActive = isModActive(profile, blseMod);
-    if (!blseIsActive) {
+  switch (blseResult.status) {
+    case DeployModStatus.OK:
+      return;
+    case DeployModStatus.NOT_DOWNLOADED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
-        deployBLSE(api)
+        installHarmony(api, profile, harmonyDeployResult)
           .catch(() => {})
-          .finally(() => dismiss());
+          .finally(() => {
+            installBLSE(api, profile, blseResult)
+              .catch(() => {})
+              .finally(() => dismiss());
+          });
       };
-      sendNotification(api, t('BLSE is not enabled'), t('Enable'), action);
+      sendBLSENotification(api, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
       return;
     }
-  } else {
-    const blseDownload = findBLSEDownload(api);
-    if (blseDownload !== undefined) {
-      // Downloaded but not installed
+    case DeployModStatus.NOT_INSTALLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        api.events.emit('start-install-download', blseDownload, {
-          allowAutoEnable: true,
-        });
-        deployBLSE(api)
+        if (blseResult.downloadId === undefined) {
+          return;
+        }
+        installHarmony(api, profile, harmonyDeployResult)
           .catch(() => {})
-          .finally(() => dismiss());
+          .finally(() => {
+            installBLSE(api, profile, blseResult)
+              .catch(() => {})
+              .finally(() => dismiss());
+          });
       };
-      sendNotification(api, t('BLSE is not installed'), t('Install'), action);
-    } else {
-      // Non existent
+      sendBLSENotification(api, t('BLSE is not installed'), t('Install'), action);
+      return;
+    }
+    case DeployModStatus.NOT_ENABLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        downloadBLSE(api)
+        installHarmony(api, profile, harmonyDeployResult)
           .catch(() => {})
-          .finally(() => dismiss());
+          .finally(() => {
+            if (blseResult.modId === undefined) {
+              return;
+            }
+            installBLSE(api, profile, blseResult)
+              .catch(() => {})
+              .finally(() => dismiss());
+          });
       };
-      sendNotification(api, t('BLSE is not installed via Vortex'), t('Get BLSE'), action);
+      sendBLSENotification(api, t('BLSE is not enabled'), t('Enable'), action);
+      return;
     }
   }
 };
 
-export const forceInstallBLSE = async (api: types.IExtensionApi): Promise<void> => {
+const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, result: DeployModResult): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
-  api.sendNotification?.({
-    id: 'blse-required',
-    type: 'info',
-    title: t('BLSE Required'),
-    message: t('BLSE is required by the collection. Ensuring it is installed...'),
-  });
+  switch (result.status) {
+    case DeployModStatus.OK:
+      return;
+    case DeployModStatus.NOT_DOWNLOADED: {
+      const action = (dismiss: types.NotificationDismiss): void => {
+        installHarmony(api, profile, result)
+          .catch(() => {})
+          .finally(() => dismiss());
+      };
+      sendHarmonyNotification(api, t('Harmony is not installed via Vortex'), t('Get Harmony'), action);
+      return;
+    }
+    case DeployModStatus.NOT_INSTALLED: {
+      const action = (dismiss: types.NotificationDismiss): void => {
+        if (result.downloadId === undefined) {
+          return;
+        }
+        api.events.emit('start-install-download', result.downloadId, {
+          allowAutoEnable: true,
+        });
+        installHarmony(api, profile, result)
+          .catch(() => {})
+          .finally(() => dismiss());
+      };
+      sendHarmonyNotification(api, t('Harmony is not installed'), t('Install'), action);
+      return;
+    }
+    case DeployModStatus.NOT_ENABLED: {
+      const action = (dismiss: types.NotificationDismiss): void => {
+        installHarmony(api, profile, result)
+          .catch(() => {})
+          .finally(() => dismiss());
+      };
+      sendHarmonyNotification(api, t('Harmony is not enabled'), t('Enable'), action);
+      return;
+    }
+  }
+};
 
+export const recommendBLSE = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   const state = api.getState();
-
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-
   const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
-  const blseMod = findBLSEMod(mods);
-  if (blseMod) {
-    // Found but not enabled
-    const blseIsActive = isModActive(profile, blseMod);
-    if (!blseIsActive) {
-      api.store?.dispatch(actions.setModEnabled(profile.id, blseMod.id, true));
-      await deployBLSE(api);
-    }
-  } else {
-    const blseDownload = findBLSEDownload(api);
-    if (blseDownload !== undefined) {
-      // Downloaded but not installed
-      await deployBLSE(api);
-    } else {
-      // Non existent
-      await downloadBLSE(api);
-    }
+
+  if (discovery.path === undefined) {
+    throw new Error(`discovery.path is undefined!`);
+  }
+
+  const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
+  const blseDeployResult = checkBLSEDeploy(api, profile, mods);
+
+  if (harmonyDeployResult.status !== DeployModStatus.OK && blseDeployResult.status === DeployModStatus.OK) {
+    doHarmonyDeploy(api, profile, harmonyDeployResult);
+  }
+
+  // skip if BLSE found
+  // question: if the user incorrectly deleted BLSE and the binary is left, what should we do?
+  // maybe just ask the user to always install BLSE via Vortex?
+  const binaryPath = path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE);
+  const binaryExists = await getPathExistsAsync(binaryPath);
+  if (!binaryExists || blseDeployResult.status !== DeployModStatus.OK) {
+    doBLSEDeploy(api, profile, harmonyDeployResult, blseDeployResult);
   }
 };

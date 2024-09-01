@@ -5,7 +5,6 @@ import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexex
 import { libraryToPersistence, vortexToLibrary } from './converters';
 import { actionsLoadOrder } from './actions';
 import { orderCurrentLoadOrderByExternalLoadOrder } from './utils';
-import { readLoadOrder } from './vortex';
 import { IFBLOItemRendererProps } from './types';
 import {
   IModAnalyzerRequestModule,
@@ -15,7 +14,7 @@ import {
 } from '../butr';
 import { GAME_ID } from '../common';
 import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../views';
-import { IVortexViewModelData, VortexLoadOrderStorage } from '../types';
+import { VortexLoadOrderStorage } from '../types';
 import { versionToString, VortexLauncherManager } from '../launcher';
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {

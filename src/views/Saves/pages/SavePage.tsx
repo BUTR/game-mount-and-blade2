@@ -9,8 +9,8 @@ import { LocalizationManager, useLocalization } from '../../../localization';
 import { actionsSave } from '../../../save';
 import { versionToString, VortexLauncherManager } from '../../../launcher';
 import { getSaveFromSettings } from '../../../settings';
-import { findBLSEMod, isModActive } from '../../../blse';
-import { hasPersistentBannerlordMods } from '../../../vortex';
+import { findBLSEMod } from '../../../blse';
+import { hasPersistentBannerlordMods, isModActive } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;

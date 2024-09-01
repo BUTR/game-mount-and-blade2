@@ -1,4 +1,4 @@
-import { types } from 'vortex-api';
+import { selectors, types } from 'vortex-api';
 import {
   IExtensionContextWithCollectionFeature,
   IModWithCollection,
@@ -8,6 +8,14 @@ import {
 } from './types';
 import { GAME_ID } from '../common';
 import { IStatePersistent } from '../types';
+import { LocalizationManager } from '../localization';
+import {
+  checkBLSEDeploy,
+  checkHarmonyDeploy,
+  hasPersistentBannerlordMods,
+  installBLSE,
+  installHarmony,
+} from '../vortex';
 
 export const hasContextWithCollectionFeature = (
   context: types.IExtensionContext
@@ -61,4 +69,25 @@ export const hasIncludedModOptions = (mod: types.IMod): mod is IModWithIncludedM
   }
 
   return true;
+};
+
+export const collectionInstallBLSE = async (api: types.IExtensionApi): Promise<void> => {
+  const { localize: t } = LocalizationManager.getInstance(api);
+
+  api.sendNotification?.({
+    id: 'blse-required',
+    type: 'info',
+    title: t('BLSE Required'),
+    message: t(`BLSE is required by the collection. Ensuring it is installed and it's dependencies...`),
+  });
+
+  const state = api.getState();
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+
+  const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
+  const blseDeployResult = checkBLSEDeploy(api, profile, mods);
+
+  await installHarmony(api, profile, harmonyDeployResult);
+  await installBLSE(api, profile, blseDeployResult);
 };

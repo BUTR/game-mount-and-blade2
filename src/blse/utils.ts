@@ -1,12 +1,11 @@
 import { gte } from 'semver';
 import { actions, selectors, types, util } from 'vortex-api';
-import { IFileInfo } from '@nexusmods/nexus-api/lib';
-import { BLSE_MOD_ID, BLSE_URL, GAME_ID } from '../common';
-import { hasPersistentBannerlordMods } from '../vortex';
+import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from '../common';
+import { downloadAndEnableLatestModVersion, hasPersistentBannerlordMods } from '../vortex';
 import { LocalizationManager } from '../localization';
 import { IBannerlordMod, IBannerlordModStorage } from '../types';
 
-export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
+const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
   return profile.modState[mod.id]?.enabled ?? false;
 };
 const isModBLSE = (mod: IBannerlordMod): boolean => {
@@ -91,33 +90,8 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boole
   await api.ext?.ensureLoggedIn?.();
 
   try {
-    const modFiles = (await api.ext.nexusGetModFiles?.(GAME_ID, BLSE_MOD_ID)) ?? [];
-
-    const fileTime = (input: IFileInfo): number => Number.parseInt(input.uploaded_time, 10);
-
-    const file = modFiles.filter((file) => file.category_id === 1).sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-
-    if (!file) {
-      throw new util.ProcessCanceled('No BLSE main file found');
-    }
-
-    const dlInfo = {
-      game: GAME_ID,
-      name: 'BLSE',
-    };
-
-    const nxmUrl = `nxm://${GAME_ID}/mods/${BLSE_MOD_ID}/files/${file.file_id}`;
-    const dlId = await util.toPromise<string>((cb) =>
-      api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false })
-    );
-    const modId = await util.toPromise<string>((cb) =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb)
-    );
-    const profile: types.IProfile | undefined = selectors.activeProfile(api.getState());
-    await actions.setModsEnabled(api, profile.id, [modId], true, {
-      allowAutoDeploy: false,
-      installed: true,
-    });
+    await downloadAndEnableLatestModVersion(api, BLSE_MOD_ID);
+    await downloadAndEnableLatestModVersion(api, HARMONY_MOD_ID);
 
     await deployBLSE(api);
   } catch (err) {
@@ -125,5 +99,32 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boole
     util.opn(BLSE_URL).catch(() => null);
   } finally {
     api.dismissNotification?.('blse-installing');
+  }
+};
+
+export const downloadHarmony = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
+  const { localize: t } = LocalizationManager.getInstance(api);
+
+  api.dismissNotification?.('harmony-missing');
+  api.sendNotification?.({
+    id: 'harmony-installing',
+    message: shouldUpdate ? t('Updating Harmony') : t('Installing Harmony'),
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+
+  await api.ext?.ensureLoggedIn?.();
+
+  try {
+    await downloadAndEnableLatestModVersion(api, BLSE_MOD_ID);
+    await downloadAndEnableLatestModVersion(api, HARMONY_MOD_ID);
+
+    await deployBLSE(api);
+  } catch (err) {
+    api.showErrorNotification?.(t('Failed to download/install Harmony'), err);
+    util.opn(BLSE_URL).catch(() => null);
+  } finally {
+    api.dismissNotification?.('harmony-installing');
   }
 };

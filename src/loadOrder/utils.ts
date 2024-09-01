@@ -1,10 +1,12 @@
 import { selectors, types } from 'vortex-api';
 import { Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { libraryToVortex, libraryVMToVortex, persistenceToLibrary } from './converters';
+import { libraryToVortex, libraryVMToVortex, persistenceToLibrary, vortexToPersistence } from './converters';
+import { actionsLoadOrder } from './actions';
 import { SUB_MODS_IDS } from '../common';
 import { IModuleCache, PersistenceLoadOrderStorage, RequiredProperties, VortexLoadOrderStorage } from '../types';
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
+import { hasPersistentLoadOrder } from '../vortex';
 
 type ModIdResult = {
   id: string;
@@ -137,4 +139,36 @@ export const orderCurrentLoadOrderByExternalLoadOrder = (
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
   return Promise.resolve(libraryToVortex(api, allModules, getExcludedLoadOrder(savedLoadOrder, result)));
+};
+
+export const toggleLoadOrder = (api: types.IExtensionApi, toggle: boolean): void => {
+  const state = api.getState();
+
+  if (!hasPersistentLoadOrder(state.persistent)) {
+    return;
+  }
+
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  if (profile === undefined) {
+    return;
+  }
+
+  const currentLoadOrder = state.persistent.loadOrder[profile.id];
+  if (currentLoadOrder === undefined) {
+    return;
+  }
+
+  const loadOrder = vortexToPersistence(currentLoadOrder).map((entry) => {
+    entry.isSelected = toggle;
+    return entry;
+  });
+
+  const launcherManager = VortexLauncherManager.getInstance(api);
+  const allModules = launcherManager.getAllModules();
+
+  orderCurrentLoadOrderByExternalLoadOrder(api, allModules, loadOrder)
+    .then((loadOrder) => {
+      api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
+    })
+    .catch((err) => {});
 };

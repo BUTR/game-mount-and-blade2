@@ -1,5 +1,6 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
+import { SUB_MODS_IDS } from './common';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
@@ -11,6 +12,7 @@ export interface IBannerlordModAttributes {
   modId: number;
   version: string;
   source: string;
+  [SUB_MODS_IDS]?: string[];
 }
 
 export interface IBannerlordMod extends types.IMod {
