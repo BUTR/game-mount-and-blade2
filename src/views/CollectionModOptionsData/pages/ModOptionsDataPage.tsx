@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { types } from 'vortex-api';
+import { tooltip, types } from 'vortex-api';
 import { GAME_ID } from '../../../common';
 import { GlobalSettings, Placeholder, SpecialSettings } from '../components';
 import { ICollectionFeatureProps } from '../../types';
@@ -49,12 +49,12 @@ export const ModOptionsDataPage = (props: ModOptionsDataPageProps): JSX.Element 
     return includedModOptions.some((x) => x.name === entry.name);
   };
 
-  useEffect(() => {
-    async function setSettings(): Promise<void> {
-      setSpecialSettings(getSpecialSettings());
-      setGlobalSettings(await getGlobalSettings());
-    }
+  const setSettings = async (): Promise<void> => {
+    setSpecialSettings(getSpecialSettings());
+    setGlobalSettings(await getGlobalSettings());
+  };
 
+  useEffect(() => {
     setSettings().catch(() => {});
   }, []);
 
@@ -62,6 +62,9 @@ export const ModOptionsDataPage = (props: ModOptionsDataPageProps): JSX.Element 
     <div style={{ overflow: 'auto' }}>
       <h4>{t('Mod Configuration Options')}</h4>
       <p>{t('This is a snapshot of the settings that can be included within the collection.')}</p>
+      <tooltip.Button tooltip={''} onClick={async () => await setSettings()}>
+        {t('Reload')}
+      </tooltip.Button>
       <SpecialSettings settings={specialSettings} isToggled={isToggled} toggleEntry={toggleEntry} />
       <GlobalSettings settings={globalSettings} isToggled={isToggled} toggleEntry={toggleEntry} />
     </div>

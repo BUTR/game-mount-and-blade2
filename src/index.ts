@@ -28,7 +28,7 @@ import {
   parseCollectionModOptionsData,
   willRemoveModCollections,
 } from './collections';
-import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager } from './loadOrder';
+import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrder } from './loadOrder';
 import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
 import { VortexLauncherManager } from './launcher';
 import { gamemodeActivatedSave } from './save';
@@ -190,6 +190,12 @@ const main = (context: types.IExtensionContext): boolean => {
     /*test:*/ toBluebird(isModTypeModule)
   );
 
+  const isMB2 = (): boolean => {
+    const state = context.api.getState();
+    const activeGame = selectors.activeGameId(state);
+    return activeGame === GAME_ID;
+  };
+
   context.registerAction(
     /*group:*/ `fb-load-order-icons`,
     /*position:*/ 200,
@@ -200,12 +206,36 @@ const main = (context: types.IExtensionContext): boolean => {
       const launcherManager = VortexLauncherManager.getInstance(context.api);
       launcherManager.autoSort();
     },
-    /*condition?:*/ (_instanceIds?: string[]): boolean => {
-      const state = context.api.getState();
-      const gameId: string | undefined = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    }
+    /*condition?:*/ isMB2
   );
+
+  context.registerAction(
+    /*group:*/ `fb-load-order-icons`,
+    /*position:*/ 210,
+    /*iconOrComponent:*/ `checkbox-checked`,
+    /*options:*/ {},
+    /*titleOrProps?:*/ `Enable All Mods`,
+    /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
+      toggleLoadOrder(context.api, true);
+    },
+    /*condition?:*/ isMB2
+  );
+
+  context.registerAction(
+    /*group:*/ `fb-load-order-icons`,
+    /*position:*/ 215,
+    /*iconOrComponent:*/ `checkbox-unchecked`,
+    /*options:*/ {},
+    /*titleOrProps?:*/ `Disable All Mods`,
+    /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
+      toggleLoadOrder(context.api, false);
+    },
+    /*condition?:*/ isMB2
+  );
+
+  // Import from Novus
+  // Import from LaunhcerEx
+  // Export to LaunhcerEx
 
   /* Disabled for now because the name is too long
   context.registerAction(
@@ -218,11 +248,7 @@ const main = (context: types.IExtensionContext): boolean => {
       const loadOrderManager = LoadOrderManager.getInstance(context.api);
       loadOrderManager.updateCompatibilityScores();
     },
-    (_instanceIds?: string[]): boolean => {
-      const state = context.api.getState();
-      const gameId: string | undefined = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    }
+    isMB2
   );
   */
 

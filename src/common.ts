@@ -26,6 +26,8 @@ export const BLSE_LAUNCHER_EXE = `Bannerlord.BLSE.Launcher.exe`;
 export const BLSE_LAUNCHEREX_EXE = `Bannerlord.BLSE.LauncherEx.exe`;
 export const BLSE_MOD_ID = 1;
 export const BLSE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${BLSE_MOD_ID}`;
+export const HARMONY_MOD_ID = 2006;
+export const HARMONY_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${HARMONY_MOD_ID}`;
 
 export const MODULES = `Modules`;
 

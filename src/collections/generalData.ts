@@ -1,14 +1,14 @@
 import { selectors, types } from 'vortex-api';
-import { profile } from 'node:console';
 import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
 import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrder } from './loadOrder';
 import { CollectionParseError } from './errors';
+import { collectionInstallBLSE } from './utils';
 import { GAME_ID } from '../common';
-import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../vortex';
-import { findBLSEMod, forceInstallBLSE, isModActive } from '../blse';
+import { isModActive } from '../vortex';
+import { findBLSEMod } from '../blse';
 import { vortexToPersistence } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
-import { IBannerlordMod, IBannerlordModStorage, VortexLoadOrderStorage } from '../types';
+import { IBannerlordModStorage, VortexLoadOrderStorage } from '../types';
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
@@ -54,7 +54,7 @@ export const parseCollectionGeneralData = async (
   await parseCollectionGeneralLoadOrder(api, modules, collection);
 
   if (hasBLSE) {
-    await forceInstallBLSE(api);
+    await collectionInstallBLSE(api);
   }
 };
 

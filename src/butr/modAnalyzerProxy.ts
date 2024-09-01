@@ -2,6 +2,7 @@ import { log } from 'vortex-api';
 import { request, RequestOptions } from 'https';
 import { BUTR_HOST } from './const';
 import { IModAnalyzerRequestQuery, IModAnalyzerResult } from './types';
+import { version } from '../../package.json';
 
 export class ModAnalyzerProxy {
   private options: RequestOptions;
@@ -14,6 +15,7 @@ export class ModAnalyzerProxy {
       headers: {
         Tenant: '1', // Bannerlord
         'Content-Type': 'application/json',
+        'User-Agent': `Vortex BUTR Extension v${version}`,
       },
     };
   }

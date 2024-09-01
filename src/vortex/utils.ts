@@ -1,18 +1,15 @@
 import { types, util } from 'vortex-api';
-import path from 'path';
 import {
   ISettingsInterfaceWithPrimaryTool,
   IStatePersistentWithBannerlordMods,
   IStatePersistentWithLoadOrder,
 } from './types';
 import { isStoreSteam, isStoreXbox } from './store';
-import { getBinaryPath } from './game';
 import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
 import { nameof } from '../nameof';
-import { getPathExistsAsync } from '../utils';
 import { recommendBLSE } from '../blse';
 import { VortexLauncherManager } from '../launcher';
-import { BLSE_CLI_EXE, EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
+import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
 import { IStatePersistent } from '../types';
 
 type HasSettings = {
@@ -53,13 +50,7 @@ const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDis
     throw new Error(`discovery.path is undefined!`);
   }
 
-  // skip if BLSE found
-  // question: if the user incorrectly deleted BLSE and the binary is left, what should we do?
-  // maybe just ask the user to always install BLSE via Vortex?
-  const binaryPath = path.join(discovery.path, getBinaryPath(discovery.store), BLSE_CLI_EXE);
-  if (!(await getPathExistsAsync(binaryPath))) {
-    recommendBLSE(api);
-  }
+  await recommendBLSE(api, discovery);
 
   if (isStoreSteam(discovery.store)) {
     await launchGameStore(api, discovery.store);
