@@ -22,10 +22,10 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
-"@butr/vortexextensionnative@1.0.128":
-  version "1.0.128"
-  resolved "https://registry.yarnpkg.com/@butr/vortexextensionnative/-/vortexextensionnative-1.0.128.tgz#35f9c556069a83f612af229c112ca8a5e923fd42"
-  integrity sha512-uzXRpGtlhHAwj4jDJWFuQXZfwOb6qa5sG6rUSdLWfbDTo4DKU2SotAEnkvEA7JAJRaY9CUb5PDFVc9+TUaHC0A==
+"@butr/vortexextensionnative@1.0.129":
+  version "1.0.129"
+  resolved "https://registry.yarnpkg.com/@butr/vortexextensionnative/-/vortexextensionnative-1.0.129.tgz#ca450f98e3f2ec1c4282e1342775471595d71860"
+  integrity sha512-5dYN/59/DXYDcY2Hrl1h2j2Lz4MMLQ0c8LY3iFzK/vKj0O8i6t5VK8jZNL9JIu3xHzS/8h3A0ekHKclSWeYfkg==
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
