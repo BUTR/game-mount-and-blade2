@@ -1,5 +1,5 @@
-import { gte } from 'semver';
 import { actions, selectors, types, util } from 'vortex-api';
+import { BannerlordModuleManager } from '@butr/vortexextensionnative';
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from '../common';
 import { downloadAndEnableLatestModVersion, hasPersistentBannerlordMods } from '../vortex';
 import { LocalizationManager } from '../localization';
@@ -23,7 +23,18 @@ export const findBLSEMod = (mods: IBannerlordModStorage): IBannerlordMod | undef
     if (!prev) {
       return iter;
     }
-    return gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0') ? iter : prev;
+    const compareResult = BannerlordModuleManager.compareVersions(
+      BannerlordModuleManager.parseApplicationVersion(iter.attributes?.version ?? ''),
+      BannerlordModuleManager.parseApplicationVersion(prev.attributes?.version ?? '')
+    );
+    switch (compareResult) {
+      case 1:
+        return iter;
+      case -1:
+        return prev;
+      default:
+        return iter;
+    }
   }, undefined);
 };
 

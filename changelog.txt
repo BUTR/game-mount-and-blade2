@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.4
+* Using Bannerlord version comparison instead of semver on installation
+---------------------------------------------------------------------------------------------------
 Version: 1.1.3
 * Added reload button for Mod Options Tab
 * Install Harmony when installing BLSE
