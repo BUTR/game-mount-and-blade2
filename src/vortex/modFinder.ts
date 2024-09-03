@@ -1,5 +1,5 @@
-import { gte } from 'semver';
-import { selectors, types, util } from 'vortex-api';
+import { selectors, types } from 'vortex-api';
+import { BannerlordModuleManager } from '@butr/vortexextensionnative';
 import { GAME_ID } from '../common';
 import { hasPersistentBannerlordMods } from '../vortex';
 import { IBannerlordMod, IBannerlordModStorage } from '../types';
@@ -22,7 +22,18 @@ export const findMod = (mods: IBannerlordModStorage, moduleId: string): IBannerl
     if (!prev) {
       return iter;
     }
-    return gte(iter.attributes?.version ?? '0.0.0', prev.attributes?.version ?? '0.0.0') ? iter : prev;
+    const compareResult = BannerlordModuleManager.compareVersions(
+      BannerlordModuleManager.parseApplicationVersion(iter.attributes?.version ?? ''),
+      BannerlordModuleManager.parseApplicationVersion(prev.attributes?.version ?? '')
+    );
+    switch (compareResult) {
+      case 1:
+        return iter;
+      case -1:
+        return prev;
+      default:
+        return iter;
+    }
   }, undefined);
 };
 
