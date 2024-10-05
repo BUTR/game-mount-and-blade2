@@ -69,7 +69,7 @@ const getDefaults = () => ({
   [nameof('saveName')]: {},
 });
 
-export const reducer: types.IReducerSpec = {
+export const reducerSettings: types.IReducerSpec = {
   reducers: getReducers(),
   defaults: getDefaults(),
 };

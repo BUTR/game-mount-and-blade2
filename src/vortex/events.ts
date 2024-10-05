@@ -1,9 +1,11 @@
 // eslint-disable-next-line no-restricted-imports
 import Bluebird from 'bluebird';
-import { fs, log, selectors, types, util } from 'vortex-api';
+import { actions, fs, log, selectors, types, util } from 'vortex-api';
 import path from 'path';
+import { hasPersistentBannerlordMods } from './utils';
 import { GAME_ID } from '../common';
 import { IAddedFiles } from '../types';
+import { vortexStoreToLibraryStore } from '../launcher';
 
 /**
  * Event function, be careful
@@ -53,4 +55,34 @@ export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFil
       }
     }
   });
+};
+
+export const installedMod = (api: types.IExtensionApi, archiveId: string, modId: string): void => {
+  const state = api.getState();
+
+  if (!hasPersistentBannerlordMods(state.persistent)) {
+    return;
+  }
+  const mod = state.persistent.mods.mountandblade2bannerlord[modId];
+  if (mod === undefined) {
+    return;
+  }
+
+  const supportedStores = mod.attributes?.availableStores ?? [];
+  if (supportedStores.length === 0) {
+    return;
+  }
+
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
+  if (discovery === undefined) {
+    return;
+  }
+
+  const store = vortexStoreToLibraryStore(discovery.store);
+  if (supportedStores.includes(store)) {
+    return;
+  }
+
+  // uninstall mod if store is not supported by the mod
+  api.store?.dispatch(actions.removeMod(GAME_ID, modId));
 };

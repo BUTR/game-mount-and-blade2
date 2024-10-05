@@ -1,6 +1,6 @@
 import { types } from 'vortex-api';
 import { BannerlordModuleManager, types as vetypes } from '@butr/vortexextensionnative';
-import { getModIds } from './utils';
+import { getModuleAttributes } from './utils';
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -17,15 +17,16 @@ export const persistenceToVortex = (
 ): VortexLoadOrderStorage => {
   const loadOrderConverted = loadOrder
     .map<VortexLoadOrderEntry>((x) => {
-      const modIds = getModIds(api, x.id);
+      const result = getModuleAttributes(api, x.id);
       return {
         id: x.id,
         name: x.name,
         enabled: x.isSelected,
-        modId: modIds[0]?.id ?? undefined!,
+        modId: result[0]?.id ?? undefined!,
         data: {
           moduleInfoExtended: modules[x.id]!,
           index: x.index,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
         },
       };
     })
@@ -98,17 +99,18 @@ export const libraryVMToVortex = (
   loadOrder: vetypes.ModuleViewModel[]
 ): VortexLoadOrderStorage => {
   const loadOrderConverted = Object.values(loadOrder).map<VortexLoadOrderEntry>((curr) => {
-    const modId = getModIds(api, curr.moduleInfoExtended.id);
+    const result = getModuleAttributes(api, curr.moduleInfoExtended.id);
     return {
       id: curr.moduleInfoExtended.id,
       enabled: curr.isSelected,
       name: curr.moduleInfoExtended.name,
-      modId: modId[0]?.id ?? undefined!,
+      modId: result[0]?.id ?? undefined!,
       data: {
         moduleInfoExtended: curr.moduleInfoExtended,
         isValid: curr.isValid,
         isDisabled: curr.isDisabled,
         index: curr.index,
+        hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
       },
     };
   }, []);
@@ -174,17 +176,18 @@ export const libraryToVortex = (
       }
 
       const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
-      const modId = getModIds(api, curr.id);
+      const result = getModuleAttributes(api, curr.id);
       return {
         id: curr.id,
         enabled: curr.isSelected,
         name: curr.name,
-        modId: modId[0]?.id ?? undefined!,
+        modId: result[0]?.id ?? undefined!,
         data: {
           moduleInfoExtended: module,
           isValid: !moduleValidation.length,
           isDisabled: false,
           index: curr.index,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
         },
       };
     }, [])

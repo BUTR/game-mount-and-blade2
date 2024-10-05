@@ -11,12 +11,13 @@ import { hasPersistentLoadOrder } from '../vortex';
 type ModIdResult = {
   id: string;
   source: string;
+  hasSteamBinariesOnXbox: boolean;
 };
 
 /**
  * I have no idea what to do if we have multiple mods that provide the same Module
  */
-export const getModIds = (api: types.IExtensionApi, moduleId: string): ModIdResult[] => {
+export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string): ModIdResult[] => {
   const state = api.getState();
   const gameId: string | undefined = selectors.activeGameId(state);
   const gameMods = state.persistent.mods[gameId] ?? {};
@@ -29,6 +30,7 @@ export const getModIds = (api: types.IExtensionApi, moduleId: string): ModIdResu
       arr.push({
         id: mod.attributes['modId'],
         source: mod.attributes['source'],
+        hasSteamBinariesOnXbox: mod.attributes['steamBinariesOnXbox'] ?? false,
       });
     }
 
@@ -94,7 +96,7 @@ const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOr
   const { localize: t } = LocalizationManager.getInstance(api);
 
   const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
-    loadOrder.map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
+    loadOrder.filter((x) => x.enabled).map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
   );
   if (autoSort && savedLoadOrderIssues.length > 0) {
     // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state

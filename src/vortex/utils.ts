@@ -3,6 +3,7 @@ import {
   ISettingsInterfaceWithPrimaryTool,
   IStatePersistentWithBannerlordMods,
   IStatePersistentWithLoadOrder,
+  IStateSessionWithBannerlord,
 } from './types';
 import { isStoreSteam, isStoreXbox } from './store';
 import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
@@ -10,7 +11,11 @@ import { nameof } from '../nameof';
 import { recommendBLSE } from '../blse';
 import { VortexLauncherManager } from '../launcher';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
-import { IStatePersistent } from '../types';
+import { IStatePersistent, IStateSession } from '../types';
+
+type HasSession = {
+  session: types.ISession;
+};
 
 type HasSettings = {
   settings: types.ISettings;
@@ -30,6 +35,11 @@ export const hasPersistentBannerlordMods = (
   statePersistent: IStatePersistent
 ): statePersistent is IStatePersistentWithBannerlordMods =>
   nameof<IStatePersistentWithBannerlordMods>('mods') in statePersistent && GAME_ID in statePersistent.mods;
+
+export const hasSession = (hasSession: object): hasSession is HasSession => nameof<HasSession>('session') in hasSession;
+
+export const hasSessionWithBannerlord = (stateSession: IStateSession): stateSession is IStateSessionWithBannerlord =>
+  nameof<IStateSessionWithBannerlord>(GAME_ID) in stateSession;
 
 export const hasSettings = (hasSettings: object): hasSettings is HasSettings =>
   nameof<HasSettings>('settings') in hasSettings;
