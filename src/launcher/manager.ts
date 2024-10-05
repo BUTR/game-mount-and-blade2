@@ -265,15 +265,15 @@ export class VortexLauncherManager {
         const yesForAll = t(`Install, I accept the risks. Don't ask again for the current session`);
         const dialogResult = await this.api.showDialog?.(
           'question',
-          t(`Compatible Issue With Game Pass PC Version of the Game!`),
+          t(`Compatibility Issue With Game Pass PC Version of the Game!`),
           {
             message: t(
               `The following mods:
 {{ modName }}
-  
+
 Do not provide binaries for Game Pass PC (Xbox)!
 Do you want to install binaries for Steam/GOG/Epic version of the game?
-  
+
 Warning! This can lead to issues!`,
               { replace: { modName: modName } }
             ),
