@@ -95,8 +95,8 @@ export const parseCollectionModOptionsData = async (
     {
       message: t(
         `This collection contains custom Mod Options (MCM)!
-        Do you want to override your Mod Options with the custom Mod Options?
-        A backup of your original Mod Options will be kept and will be restored on collection removal.`
+Do you want to override your Mod Options with the custom Mod Options?
+A backup of your original Mod Options will be kept and will be restored on collection removal.`
       ),
     },
     [{ label: no }, { label: yes }]

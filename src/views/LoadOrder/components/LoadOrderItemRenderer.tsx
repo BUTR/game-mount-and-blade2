@@ -7,6 +7,7 @@ import { ValidationError } from './ValidationError';
 import { ExternalBanner } from './ExternalBanner';
 import { ModuleDuplicates } from './ModuleDuplicates';
 import { ModuleProviderIcon } from './ModuleProviderIcon';
+import { SteamBinariesOnXbox } from './SteamBinariesOnXbox';
 import { IVortexViewModelData, VortexLoadOrderStorage } from '../../../types';
 import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
@@ -87,6 +88,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
         {name} ({version})
       </p>
       <ExternalBanner item={item.loEntry} />
+      <SteamBinariesOnXbox hasSteamBinariesOnXbox={item.loEntry.data?.hasSteamBinariesOnXbox ?? false} />
       <CompatibilityInfo data={item.loEntry.data} compatibilityInfo={compatibilityInfo} />
       <ModuleDuplicates availableProviders={availableProviders} data={item.loEntry.data} />
       <ModuleProviderIcon data={item.loEntry.data} />

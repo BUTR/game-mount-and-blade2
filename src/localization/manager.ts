@@ -30,7 +30,7 @@ export class LocalizationManager {
         this.initializedLocalization = true;
       }
 
-      return Utils.localizeString(template, values);
+      return Utils.localizeString(template, values as Record<string, string>);
     }
     return this.api.translate(template, {
       ns: I18N_NAMESPACE,

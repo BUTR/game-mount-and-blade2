@@ -14,7 +14,7 @@ import {
 } from './views';
 import { BannerlordGame } from './game';
 import { IAddedFiles, IBannerlordModStorage } from './types';
-import { reducer } from './react';
+import { reducerSession, reducerSettings } from './react';
 import { actionsSettings } from './settings';
 import {
   cloneCollectionGeneralData,
@@ -37,6 +37,7 @@ import {
   getInstallPathModule,
   hasPersistentBannerlordMods,
   hasPersistentLoadOrder,
+  installedMod,
   isModTypeModule,
 } from './vortex';
 import { version } from '../package.json';
@@ -46,7 +47,8 @@ import { version } from '../package.json';
 const main = (context: types.IExtensionContext): boolean => {
   log('info', `Extension Version: ${version}`);
 
-  context.registerReducer(/*path:*/ [`settings`, GAME_ID], /*spec:*/ reducer);
+  context.registerReducer(/*path:*/ [`settings`, GAME_ID], /*spec:*/ reducerSettings);
+  context.registerReducer(/*path:*/ [`session`, GAME_ID], /*spec:*/ reducerSession);
 
   context.registerSettings(
     /*title:*/ `Interface`,
@@ -177,10 +179,20 @@ const main = (context: types.IExtensionContext): boolean => {
       const launcherManager = VortexLauncherManager.getInstance(context.api);
       return launcherManager.testModule(files, gameId);
     }),
-    /*install:*/ toBluebird((files: string[], destinationPath: string) => {
-      const launcherManager = VortexLauncherManager.getInstance(context.api);
-      return launcherManager.installModule(files, destinationPath);
-    })
+    /*install:*/ toBluebird(
+      (
+        files: string[],
+        destinationPath: string,
+        _gameId: string,
+        _progressDelegate: types.ProgressDelegate,
+        _choices?: unknown,
+        _unattended?: boolean,
+        archivePath?: string
+      ) => {
+        const launcherManager = VortexLauncherManager.getInstance(context.api);
+        return launcherManager.installModule(files, destinationPath, archivePath);
+      }
+    )
   );
   context.registerModType(
     /*id:*/ 'bannerlord-module',
@@ -263,6 +275,14 @@ const main = (context: types.IExtensionContext): boolean => {
 
       await gamemodeActivatedLoadOrder(context.api);
       await gamemodeActivatedSave(context.api);
+    });
+
+    context.api.events.on('did-install-mod', (gameId: string, archiveId: string, modId: string): void => {
+      if (GAME_ID !== gameId) {
+        return;
+      }
+
+      installedMod(context.api, archiveId, modId);
     });
 
     context.api.onAsync(`added-files`, async (profileId: string, files: IAddedFiles[]) => {

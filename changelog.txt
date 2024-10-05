@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.5
+* Added an option to install Steam/GOG/Epic binaries for Game Pass PC
+* Fixed Load Order validation sometimes checking non enabled mods
+* Fixed Game Version detection
+---------------------------------------------------------------------------------------------------
 Version: 1.1.4
 * Using Bannerlord version comparison instead of semver on installation
 ---------------------------------------------------------------------------------------------------

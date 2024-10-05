@@ -31,7 +31,7 @@ export const willRemoveModCollections = async (api: types.IExtensionApi, modId: 
     {
       message: t(
         `The removed collection contained custom Mod Options (MCM)!
-        Do you want to restore your original Mod Options if they were overriden by the collection?`
+Do you want to restore your original Mod Options if they were overriden by the collection?`
       ),
     },
     [{ label: deleteOriginals }, { label: restoreOriginals }, { label: cancel }]
