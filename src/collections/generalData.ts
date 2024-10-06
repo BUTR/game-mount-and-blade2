@@ -1,8 +1,9 @@
 import { selectors, types } from 'vortex-api';
 import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
-import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrder } from './loadOrder';
+import { genCollectionGeneralLoadOrder } from './loadOrder';
 import { CollectionParseError } from './errors';
 import { collectionInstallBLSE } from './utils';
+import { actionsCollections } from './actions';
 import { GAME_ID } from '../common';
 import { isModActive } from '../vortex';
 import { findBLSEMod } from '../blse';
@@ -34,28 +35,30 @@ export const genCollectionGeneralData = (
  */
 export const parseCollectionGeneralData = async (
   api: types.IExtensionApi,
-  collection: ICollectionData
+  collection: ICollectionData,
+  mod: types.IMod
 ): Promise<void> => {
   if (!hasGeneralData(collection)) {
     return;
   }
 
   const state = api.getState();
+
   const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile: types.IProfile | undefined = selectors.profileById(state, profileId ?? '');
   if (profile?.gameId !== GAME_ID) {
     const collectionName = collection.info.name !== undefined ? collection.info.name : 'Bannerlord Collection';
     throw new CollectionParseError(collectionName, 'Last active profile is missing');
   }
-  const { hasBLSE } = collection;
 
-  const launcherManager = VortexLauncherManager.getInstance(api);
-  const modules = launcherManager.getAllModules();
-  await parseCollectionGeneralLoadOrder(api, modules, collection);
+  api.store?.dispatch(
+    actionsCollections.setCollectionGeneralData(mod.attributes?.['collectionSlug'], {
+      hasBLSE: collection.hasBLSE,
+      suggestedLoadOrder: collection.suggestedLoadOrder,
+    })
+  );
 
-  if (hasBLSE) {
-    await collectionInstallBLSE(api);
-  }
+  await Promise.resolve();
 };
 
 /**

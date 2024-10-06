@@ -2,11 +2,16 @@ import { types } from 'vortex-api';
 import { GAME_ID } from '../common';
 import {
   IBannerlordModStorage,
+  IBannerlordPersistent,
   IBannerlordSession,
   IStatePersistent,
   IStateSession,
   VortexLoadOrderStorage,
 } from '../types';
+
+export interface IStatePersistentWithBannerlord extends IStatePersistent {
+  [GAME_ID]: IBannerlordPersistent;
+}
 
 export interface IStateSessionWithBannerlord extends IStateSession {
   [GAME_ID]: IBannerlordSession;

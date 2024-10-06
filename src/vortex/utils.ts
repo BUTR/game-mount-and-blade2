@@ -1,6 +1,7 @@
 import { types, util } from 'vortex-api';
 import {
   ISettingsInterfaceWithPrimaryTool,
+  IStatePersistentWithBannerlord,
   IStatePersistentWithBannerlordMods,
   IStatePersistentWithLoadOrder,
   IStateSessionWithBannerlord,
@@ -13,18 +14,22 @@ import { VortexLauncherManager } from '../launcher';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
 import { IStatePersistent, IStateSession } from '../types';
 
-type HasSession = {
-  session: types.ISession;
-};
-
-type HasSettings = {
-  settings: types.ISettings;
-};
+type HasPersistent = Pick<types.IState, 'persistent'>;
+type HasSession = Pick<types.IState, 'session'>;
+type HasSettings = Pick<types.IState, 'settings'>;
 
 type RequiresLauncherResult = {
   launcher: string;
   addInfo?: unknown;
 };
+
+export const hasPersistent = (hasPersistent: object): hasPersistent is HasPersistent =>
+  nameof<HasPersistent>('persistent') in hasPersistent;
+
+export const hasPersistentBannerlord = (
+  statePersistent: IStatePersistent
+): statePersistent is IStatePersistentWithBannerlord =>
+  nameof<IStatePersistentWithBannerlord>(GAME_ID) in statePersistent;
 
 export const hasPersistentLoadOrder = (
   statePersistent: IStatePersistent

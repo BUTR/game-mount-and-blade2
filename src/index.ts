@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import Bluebird, { method as toBluebird } from 'bluebird';
-import { log, selectors, types } from 'vortex-api';
+import { log, selectors, types, util } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
 import path from 'path';
 import { GAME_ID } from './common';
@@ -14,19 +14,20 @@ import {
 } from './views';
 import { BannerlordGame } from './game';
 import { IAddedFiles, IBannerlordModStorage } from './types';
-import { reducerSession, reducerSettings } from './react';
+import { reducerSession, reducerSettings, reducersPersistence } from './react';
 import { actionsSettings } from './settings';
 import {
   cloneCollectionGeneralData,
   cloneCollectionModOptionsData,
+  didDeployCollection,
   genCollectionGeneralData,
   genCollectionModOptionsData,
   hasContextWithCollectionFeature,
   ICollectionData,
+  modDisabledCollections,
   parseCollectionGeneralData,
   parseCollectionLegacyData,
   parseCollectionModOptionsData,
-  willRemoveModCollections,
 } from './collections';
 import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrder } from './loadOrder';
 import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
@@ -40,6 +41,7 @@ import {
   installedMod,
   isModTypeModule,
 } from './vortex';
+import { nameof as nameof2 } from './nameof';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings
@@ -47,8 +49,10 @@ import { version } from '../package.json';
 const main = (context: types.IExtensionContext): boolean => {
   log('info', `Extension Version: ${version}`);
 
-  context.registerReducer(/*path:*/ [`settings`, GAME_ID], /*spec:*/ reducerSettings);
-  context.registerReducer(/*path:*/ [`session`, GAME_ID], /*spec:*/ reducerSession);
+  const nameof = nameof2<types.IState>;
+  context.registerReducer(/*path:*/ [nameof('persistent'), GAME_ID], /*spec:*/ reducersPersistence);
+  context.registerReducer(/*path:*/ [nameof('settings'), GAME_ID], /*spec:*/ reducerSettings);
+  context.registerReducer(/*path:*/ [nameof('session'), GAME_ID], /*spec:*/ reducerSession);
 
   context.registerSettings(
     /*title:*/ `Interface`,
@@ -93,13 +97,13 @@ const main = (context: types.IExtensionContext): boolean => {
 
         return await genCollectionGeneralData(profile, loadOrder, includedMods);
       },
-      /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
+      /*parse:*/ async (gameId: string, collection: ICollectionData, mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await parseCollectionLegacyData(context.api, collection);
-        await parseCollectionGeneralData(context.api, collection);
+        await parseCollectionLegacyData(context.api, collection, mod);
+        await parseCollectionGeneralData(context.api, collection, mod);
       },
       /*clone:*/
       async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
@@ -295,6 +299,42 @@ const main = (context: types.IExtensionContext): boolean => {
       await addedFilesEvent(context.api, files);
     });
 
+    // TODO: The idea is that we can get the list of enabled/disabled
+    // Collections and perform LO import or mod settings changes
+    // The current implementation doesn't understand if the new deployment added or removed mods
+    // So it will just reapply the LO and mod settings for deployed previously collections
+    let preDeploymentCollections: types.IMod[] | undefined = undefined;
+    context.api.onAsync('will-deploy', async (profileId: string, dep: types.IDeploymentManifest): Promise<void> => {
+      const state = context.api.getState();
+      const profile: types.IProfile | undefined = selectors.profileById(state, profileId);
+      if (profile?.gameId !== GAME_ID) {
+        return;
+      }
+      preDeploymentCollections = Object.values(state.persistent.mods[GAME_ID] || {}).filter(
+        (x) => x.type === 'collection'
+      );
+      await Promise.resolve();
+    });
+    context.api.onAsync(
+      'bake-settings',
+      async (gameId: string, sortedModList: types.IMod[], profile: types.IProfile): Promise<void> => {
+        if (profile.gameId !== GAME_ID) {
+          return;
+        }
+
+        const state = context.api.getState();
+        const oldCollections = preDeploymentCollections ?? [];
+        const collections = sortedModList.filter((x) => x.type === 'collection');
+        const newCollections = Object.values(state.persistent.mods[GAME_ID] || {}).filter(
+          (x) => x.type === 'collection'
+        );
+        const addedMods = collections.filter((mod) => !oldCollections?.some((oldMod) => oldMod.id === mod.id));
+        const removedMods = oldCollections.filter((mod) => !collections.some((newMod) => newMod.id === mod.id));
+        preDeploymentCollections = undefined;
+        await Promise.resolve();
+      }
+    );
+
     // TODO: listen to profile switch events and check for BLSE
     context.api.onAsync('did-deploy', async (profileId: string) => {
       const state = context.api.getState();
@@ -305,6 +345,7 @@ const main = (context: types.IExtensionContext): boolean => {
 
       await didDeployLoadOrder(context.api);
       await didDeployBLSE(context.api);
+      await didDeployCollection(context.api, profileId);
     });
 
     context.api.onAsync('did-purge', async (profileId: string) => {
@@ -317,12 +358,14 @@ const main = (context: types.IExtensionContext): boolean => {
       await didPurgeBLSE(context.api);
     });
 
-    context.api.onAsync('will-remove-mod', async (gameId: string, modId: string) => {
-      if (GAME_ID !== gameId) {
+    context.api.events.on('mod-disabled', async (profileId: string, modId: string) => {
+      const state = context.api.getState();
+      const profile: types.IProfile | undefined = selectors.profileById(state, profileId);
+      if (profile?.gameId !== GAME_ID) {
         return;
       }
 
-      await willRemoveModCollections(context.api, modId);
+      await modDisabledCollections(context.api, modId);
     });
   });
   // Register Callbacks

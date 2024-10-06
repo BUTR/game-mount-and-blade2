@@ -7,6 +7,7 @@ import {
   IncludedModOptions,
 } from './types';
 import { hasIncludedModOptions, hasModAttributeCollection } from './utils';
+import { actionsCollections } from './actions';
 import { nameof } from '../nameof';
 import { getGlobalSettings, getSpecialSettings, overrideModOptions } from '../modoptions';
 import { LocalizationManager } from '../localization';
@@ -80,33 +81,13 @@ export const parseCollectionModOptionsData = async (
 
   const includedModOptions = collection.includedModOptions;
 
-  if (includedModOptions === undefined || !includedModOptions.length) {
-    return;
-  }
-
-  const localizationManager = LocalizationManager.getInstance(api);
-  const { localize: t } = localizationManager;
-
-  const no = t('No');
-  const yes = t('Yes');
-  const result = await api.showDialog?.(
-    'question',
-    t('Override Mod Options'),
-    {
-      message: t(
-        `This collection contains custom Mod Options (MCM)!
-Do you want to override your Mod Options with the custom Mod Options?
-A backup of your original Mod Options will be kept and will be restored on collection removal.`
-      ),
-    },
-    [{ label: no }, { label: yes }]
+  api.store?.dispatch(
+    actionsCollections.setCollectionModOptions(mod.attributes?.['collectionSlug'], {
+      includedModOptions: includedModOptions,
+    })
   );
 
-  if (!result || result.action === no) {
-    return;
-  }
-
-  await overrideModOptions(mod, includedModOptions);
+  await Promise.resolve();
 };
 
 const hasModOptionsData = (collection: ICollectionData): collection is ICollectionDataWithSettingsData => {

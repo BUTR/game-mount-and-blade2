@@ -1,6 +1,7 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { AVAILABLE_STORES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from './common';
+import { ICollectionGeneralData, ICollectionSettingsData } from './collections';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
@@ -18,6 +19,7 @@ export interface IBannerlordModAttributes {
   [SUB_MODS_IDS]?: string[];
   [AVAILABLE_STORES]?: string[];
   [STEAM_BINARIES_ON_XBOX]?: boolean;
+  [key: string]: unknown;
 }
 
 export interface IBannerlordMod extends types.IMod {
@@ -26,6 +28,15 @@ export interface IBannerlordMod extends types.IMod {
 
 export interface IBannerlordModStorage {
   [modId: string]: IBannerlordMod;
+}
+
+export interface IBannerlordPersistent {
+  collectionGeneralData: {
+    [collectionSlug: string]: ICollectionGeneralData;
+  };
+  collectionModOptions: {
+    [collectionSlug: string]: ICollectionSettingsData;
+  };
 }
 
 export interface IBannerlordSession {

@@ -1,6 +1,7 @@
 import { selectors, types } from 'vortex-api';
 import { ICollectionData, ICollectionDataWithLegacyData } from './types';
 import { CollectionParseError } from './errors';
+import { actionsCollections } from './actions';
 import { GAME_ID, SUB_MODS_IDS } from '../common';
 import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
@@ -9,18 +10,20 @@ import { hasPersistentBannerlordMods } from '../vortex';
 
 export const parseCollectionLegacyData = async (
   api: types.IExtensionApi,
-  collection: ICollectionData
+  collection: ICollectionData,
+  mod: types.IMod
 ): Promise<void> => {
   if (!hasLegacyData(collection)) {
     return;
   }
 
-  await parseLegacyLoadOrder(api, collection);
+  await parseLegacyLoadOrder(api, collection, mod);
 };
 
 const parseLegacyLoadOrder = async (
   api: types.IExtensionApi,
-  collection: ICollectionDataWithLegacyData
+  collection: ICollectionDataWithLegacyData,
+  mod: types.IMod
 ): Promise<void> => {
   const state = api.getState();
 
@@ -58,9 +61,14 @@ const parseLegacyLoadOrder = async (
     return arr;
   }, []);
 
-  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, allModules, suggestedLoadOrder);
+  api.store?.dispatch(
+    actionsCollections.setCollectionGeneralData(mod.attributes?.['collectionSlug'], {
+      hasBLSE: false,
+      suggestedLoadOrder: suggestedLoadOrder,
+    })
+  );
 
-  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
+  await Promise.resolve();
 };
 
 const hasLegacyData = (collection: ICollectionData): collection is ICollectionDataWithLegacyData => {
