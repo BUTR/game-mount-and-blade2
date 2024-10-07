@@ -10,13 +10,13 @@
     "issueTracker": "https://github.com/BUTR/game-mount-and-blade2/issues"
   },
   "scripts": {
-    "clean": "powershell ./commands.ps1 clean",
-    "build-extended": "powershell ./commands.ps1 build-extended",
-    "build-update": "powershell ./commands.ps1 build-update",
-    "build-webpack": "powershell ./commands.ps1 build-webpack",
-    "build-7z": "powershell ./commands.ps1 build-7z",
-    "build": "powershell ./commands.ps1 build",
-    "build-dev": "powershell ./commands.ps1 build-dev",
+    "clean": "pwsh ./commands.ps1 clean",
+    "build-extended": "pwsh ./commands.ps1 build-extended",
+    "build-update": "pwsh ./commands.ps1 build-update",
+    "build-webpack": "pwsh ./commands.ps1 build-webpack",
+    "build-7z": "pwsh ./commands.ps1 build-7z",
+    "build": "pwsh ./commands.ps1 build",
+    "build-dev": "pwsh ./commands.ps1 build-dev",
     "lint": "eslint -c .eslintrc.build.json src",
     "lint-fix": "eslint -c .eslintrc.build.json --fix src && prettier --write",
     "pre-commit": "lint-staged"
