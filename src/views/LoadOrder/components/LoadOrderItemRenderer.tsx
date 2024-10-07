@@ -1,7 +1,7 @@
-import React, { BaseSyntheticEvent, useCallback } from 'react';
+import React, { BaseSyntheticEvent, useCallback, useContext } from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
 import { useSelector, useStore } from 'react-redux';
-import { Icon, selectors, types } from 'vortex-api';
+import { Icon, LoadOrderIndexInput, MainContext, selectors, types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { ValidationError } from './ValidationError';
 import { ExternalBanner } from './ExternalBanner';
@@ -41,6 +41,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
   const position =
     loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
 
+  const context = useContext(MainContext)
   let classes = ['load-order-entry'];
   if (className !== undefined) {
     classes = classes.concat(className.split(' '));
@@ -78,10 +79,43 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
   const Lock = (): JSX.Element | null =>
     isLocked(item.loEntry) ? <Icon className="locked-entry-logo" name="locked" /> : null;
 
+  const lockedEntriesCount = React.useMemo(() => {
+    return (loadOrder ?? []).filter((entry) => isLocked(entry)).length;
+  }, [loadOrder]);
+
+  const onApplyIndex = React.useCallback((idx: number) => {
+    if (!profile?.id) {
+      return;
+    }
+    const { item } = props;
+    const currentIdx = position;
+    if (currentIdx === idx) {
+      return;
+    }
+
+    const entry = {
+      ...item.loEntry,
+      index: idx,
+    };
+
+    const newLO = loadOrder.filter((entry) => entry.id !== item.loEntry.id);
+    newLO.splice(idx - 1, 0, entry);
+    store.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, newLO));
+  }, [profile, item]);
+
   return (
     <ListGroupItem key={key} className={classes.join(' ')} ref={props.item.setRef}>
       <Icon className="drag-handle-icon" name="drag-handle" />
-      <p className="load-order-index">{position}</p>
+      <LoadOrderIndexInput
+        className='load-order-index'
+        api={context.api}
+        currentPosition={position}
+        item={item.loEntry}
+        isLocked={isLocked}
+        loadOrder={loadOrder}
+        lockedEntriesCount={lockedEntriesCount}
+        onApplyIndex={onApplyIndex}
+      />
       <ValidationError invalidEntries={item.invalidEntries} item={item.loEntry} />
       <ModuleIcon data={item.loEntry.data} />
       <p className="load-order-name">

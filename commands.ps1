@@ -3,8 +3,8 @@ param([string]$type, [string]$Configuration = "Release")
 $ErrorActionPreferenceOld = $ErrorActionPreference;
 $ErrorActionPreference = "Stop";
 
-$DeployPath = $type -eq "build-dev" ? "vortex_devel/plugins" : "vortex/plugins"
-$type = $type -eq "build-dev" ? "build" : $type;
+$DeployPath = if ($type -eq "build-dev") {"vortex_devel/plugins"} else {"vortex/plugins"}
+$type = if ($type -eq "build-dev") {"build"} else {$type}
 
 try {
     # Clean
