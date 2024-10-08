@@ -406,7 +406,6 @@ Warning! This can lead to issues!`,
 
     const savedLoadOrder = persistenceToVortex(this.api, allModules, readLoadOrder(this.api));
 
-    let index = savedLoadOrder.length;
     for (const module of Object.values(allModules)) {
       if (!savedLoadOrder.find((x) => x.id === module.id)) {
         const mod = mods.find((x) => x.attributes?.subModsIds?.includes(module.id));
@@ -417,7 +416,6 @@ Warning! This can lead to issues!`,
           data: {
             moduleInfoExtended: module,
             hasSteamBinariesOnXbox: mod?.attributes?.steamBinariesOnXbox ?? false,
-            index: index++,
           },
         });
       }

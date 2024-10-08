@@ -18,7 +18,12 @@ export const LoadOrderEntry = (props: LoadOrderEntryProps): JSX.Element | null =
     return null;
   }
 
-  const loEntry = loadOrder.find((x) => x.id === entry.id);
+  const loIdx = loadOrder.findIndex((x) => x.id === entry.id);
+  if (loIdx === -1) {
+    return null;
+  }
+
+  const loEntry = loadOrder[loIdx];
   if (!loEntry || !loEntry.data) {
     return null;
   }
@@ -35,7 +40,7 @@ export const LoadOrderEntry = (props: LoadOrderEntryProps): JSX.Element | null =
 
   return (
     <ListGroupItem key={key} className={classes.join(' ')}>
-      <p className="load-order-index">{entry.index + 1}</p>
+      <p className="load-order-index">{loIdx + 1}</p>
       <ModuleIcon data={loEntry.data} />
       <p className="load-order-name">
         {name} ({version})

@@ -37,8 +37,6 @@ export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
   isSelected: boolean;
-  isDisabled: boolean;
-  index: number;
 }
 
 export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
@@ -46,7 +44,6 @@ export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
 export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
   hasSteamBinariesOnXbox: boolean;
-  index: number;
 }
 
 export interface IModuleCache {
