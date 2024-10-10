@@ -25,7 +25,6 @@
 
         },
         "ghcr.io/devcontainers/features/powershell:1": {
-            "version": "7.4.2"
         }
     },
     "overrideFeatureInstallOrder": [

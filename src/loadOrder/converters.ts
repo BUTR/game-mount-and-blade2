@@ -25,24 +25,22 @@ export const persistenceToVortex = (
         modId: result[0]?.id ?? undefined!,
         data: {
           moduleInfoExtended: modules[x.id]!,
-          index: x.index,
           hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
         },
       };
     })
-    .filter((x) => x.data)
-    .sort((x, y) => x.data!.index - y.data!.index);
+    .filter((x) => x.data);
   return loadOrderConverted;
 };
 
 export const persistenceToLibrary = (loadOrder: PersistenceLoadOrderStorage): vetypes.LoadOrder => {
-  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr) => {
+  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>((map, curr, idx) => {
     map[curr.id] = {
       id: curr.id,
       name: curr.name,
       isSelected: curr.isSelected,
-      isDisabled: curr.isDisabled,
-      index: curr.index,
+      isDisabled: false,
+      index: idx,
     };
     return map;
   }, {});
@@ -50,12 +48,10 @@ export const persistenceToLibrary = (loadOrder: PersistenceLoadOrderStorage): ve
 };
 
 export const vortexToPersistence = (loadOrder: VortexLoadOrderStorage): PersistenceLoadOrderStorage => {
-  const loadOrderConverted = Object.values(loadOrder).map<IPersistenceLoadOrderEntry>((x, index) => ({
+  const loadOrderConverted = Object.values(loadOrder).map<IPersistenceLoadOrderEntry>((x) => ({
     id: x.id,
     name: x.name,
     isSelected: x.enabled,
-    isDisabled: x.locked !== undefined && (x.locked === `true` || x.locked === `always`),
-    index: index,
   }));
   return loadOrderConverted;
 };
@@ -65,8 +61,6 @@ export const libraryToPersistence = (loadOrder: vetypes.LoadOrder): PersistenceL
     id: x.id,
     name: x.name,
     isSelected: x.isSelected,
-    isDisabled: x.isDisabled,
-    index: x.index,
   }));
   return loadOrderConverted;
 };
@@ -80,7 +74,7 @@ export const vortexToLibraryVM = (
     .filter((x) => x);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
-  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => {
+  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>((entry, idx) => {
     const module = allModules[entry.id];
     return entry.data && module
       ? {
@@ -88,7 +82,7 @@ export const vortexToLibraryVM = (
           isValid: entry.enabled && !BannerlordModuleManager.validateModule(modules, module, validationManager).length,
           isSelected: entry.enabled,
           isDisabled: entry.locked !== undefined && (entry.locked === `true` || entry.locked === `always`),
-          index: entry.data.index,
+          index: idx,
         }
       : [];
   });
@@ -107,9 +101,6 @@ export const libraryVMToVortex = (
       modId: result[0]?.id ?? undefined!,
       data: {
         moduleInfoExtended: curr.moduleInfoExtended,
-        isValid: curr.isValid,
-        isDisabled: curr.isDisabled,
-        index: curr.index,
         hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
       },
     };
@@ -163,11 +154,6 @@ export const libraryToVortex = (
   allModules: Readonly<IModuleCache>,
   loadOrder: vetypes.LoadOrder
 ): VortexLoadOrderStorage => {
-  const availableModules = Object.values(loadOrder)
-    .map<vetypes.ModuleInfoExtendedWithMetadata>((curr) => allModules[curr.id]!)
-    .filter((x) => x);
-  const validationManager = ValidationManager.fromLibrary(loadOrder);
-
   const loadOrderConverted = Object.values(loadOrder)
     .map<VortexLoadOrderEntry>((curr) => {
       const module = allModules[curr.id];
@@ -175,7 +161,6 @@ export const libraryToVortex = (
         return undefined!;
       }
 
-      const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
       const result = getModuleAttributes(api, curr.id);
       return {
         id: curr.id,
@@ -184,9 +169,6 @@ export const libraryToVortex = (
         modId: result[0]?.id ?? undefined!,
         data: {
           moduleInfoExtended: module,
-          isValid: !moduleValidation.length,
-          isDisabled: false,
-          index: curr.index,
           hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
         },
       };

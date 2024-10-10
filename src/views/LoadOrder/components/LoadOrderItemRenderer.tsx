@@ -1,14 +1,14 @@
-import React, { BaseSyntheticEvent, useCallback } from 'react';
+import React, { BaseSyntheticEvent, useCallback, useContext, useMemo } from 'react';
 import { Checkbox, ListGroupItem } from 'react-bootstrap';
 import { useSelector, useStore } from 'react-redux';
-import { Icon, selectors, types } from 'vortex-api';
+import { Icon, LoadOrderIndexInput, MainContext, selectors, types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
 import { ValidationError } from './ValidationError';
 import { ExternalBanner } from './ExternalBanner';
 import { ModuleDuplicates } from './ModuleDuplicates';
 import { ModuleProviderIcon } from './ModuleProviderIcon';
 import { SteamBinariesOnXbox } from './SteamBinariesOnXbox';
-import { IVortexViewModelData, VortexLoadOrderStorage } from '../../../types';
+import { VortexLoadOrderStorage } from '../../../types';
 import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
 import { IModuleCompatibilityInfo } from '../../../butr';
@@ -37,9 +37,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
   const version = item.loEntry.data?.moduleInfoExtended.version
     ? versionToString(item.loEntry.data.moduleInfoExtended.version)
     : 'ERROR';
-
-  const position =
-    loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
+  const position = loadOrder.findIndex((loEntry) => loEntry.id === item.loEntry.id) + 1;
 
   let classes = ['load-order-entry'];
   if (className !== undefined) {
@@ -50,19 +48,42 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
     classes = classes.concat('external');
   }
 
+  const context = useContext(MainContext);
   const store = useStore();
 
   const onStatusChange = useCallback(
     (evt: BaseSyntheticEvent<Event, HTMLInputElement & Checkbox, HTMLInputElement>) => {
-      const entry = {
+      if (!profile) {
+        return;
+      }
+
+      const loEntry = {
         ...item.loEntry,
         enabled: evt.target.checked,
       };
-      if (profile) {
-        store.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, entry));
-      }
+      store.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, loEntry));
     },
     [store, item, profile]
+  );
+
+  const lockedEntriesCount = useMemo(() => (loadOrder ?? []).filter((entry) => isLocked(entry)).length, [loadOrder]);
+
+  const onApplyIndex = useCallback(
+    (idx: number) => {
+      if (!profile) {
+        return;
+      }
+
+      const currentIdx = position;
+      if (currentIdx === idx) {
+        return;
+      }
+
+      const newLO = loadOrder.filter((entry) => entry.id !== item.loEntry.id);
+      newLO.splice(idx - 1, 0, item.loEntry);
+      store.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, newLO));
+    },
+    [store, item, profile, loadOrder, position]
   );
 
   const CheckBox = (): JSX.Element | null =>
@@ -81,7 +102,16 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
   return (
     <ListGroupItem key={key} className={classes.join(' ')} ref={props.item.setRef}>
       <Icon className="drag-handle-icon" name="drag-handle" />
-      <p className="load-order-index">{position}</p>
+      <LoadOrderIndexInput
+        className="load-order-index"
+        api={context.api}
+        currentPosition={position}
+        item={item.loEntry}
+        isLocked={isLocked}
+        loadOrder={loadOrder}
+        lockedEntriesCount={lockedEntriesCount}
+        onApplyIndex={onApplyIndex}
+      />
       <ValidationError invalidEntries={item.invalidEntries} item={item.loEntry} />
       <ModuleIcon data={item.loEntry.data} />
       <p className="load-order-name">

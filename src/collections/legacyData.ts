@@ -37,7 +37,7 @@ const parseLegacyLoadOrder = async (
   const allModules = launcherManager.getAllModules();
 
   const suggestedLoadOrderEntries = Object.entries(collection.loadOrder);
-  const suggestedLoadOrder = suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>((arr, [id, entry], idx) => {
+  const suggestedLoadOrder = suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>((arr, [id, entry]) => {
     if (!allModules[id] && !state.persistent.mods[GAME_ID]?.[id]) {
       return arr;
     }
@@ -50,8 +50,6 @@ const parseLegacyLoadOrder = async (
           id: modId,
           name: entry.name ?? id,
           isSelected: entry.enabled,
-          isDisabled: entry.locked !== undefined && (entry.locked === `true` || entry.locked === `always`),
-          index: idx,
         });
       }
     });
