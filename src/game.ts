@@ -10,6 +10,7 @@ export class BannerlordGame implements types.IGame {
 
   public id: string = GAME_ID;
   public name = `Mount & Blade II: Bannerlord (BUTR)`;
+  public shortName = `M&B II: Bannerlord`;
   public logo = `gameart.jpg`;
   public mergeMods = true;
   public queryArgs: { [storeId: string]: types.IStoreQuery[] } = {
