@@ -28,15 +28,15 @@ import {
   parseCollectionModOptionsData,
   willRemoveModCollections,
 } from './collections';
-import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrder } from './loadOrder';
+import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrderAsync } from './loadOrder';
 import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
 import { VortexLauncherManager } from './launcher';
-import { gamemodeActivatedSave } from './save';
+import { gamemodeActivatedSaveAsync } from './save';
 import {
   addedFilesEvent,
   getInstallPathModule,
-  hasPersistentBannerlordMods,
-  hasPersistentLoadOrder,
+  getPersistentBannerlordMods,
+  getPersistentLoadOrder,
   installedMod,
   isModTypeModule,
 } from './vortex';
@@ -79,10 +79,8 @@ const main = (context: types.IExtensionContext): boolean => {
 
         const state = context.api.getState();
         const profile: types.IProfile | undefined = selectors.activeProfile(state);
-        const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
-        const mods = hasPersistentBannerlordMods(state.persistent)
-          ? state.persistent.mods.mountandblade2bannerlord
-          : {};
+        const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
+        const mods = getPersistentBannerlordMods(state.persistent);
 
         const includedMods = Object.values(mods)
           .filter((mod) => includedModIds.includes(mod.id))
@@ -216,7 +214,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*titleOrProps?:*/ `Auto Sort`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
       const launcherManager = VortexLauncherManager.getInstance(context.api);
-      launcherManager.autoSort();
+      void launcherManager.autoSortAsync();
     },
     /*condition?:*/ isMB2
   );
@@ -228,7 +226,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*options:*/ {},
     /*titleOrProps?:*/ `Enable All Mods`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
-      toggleLoadOrder(context.api, true);
+      void toggleLoadOrderAsync(context.api, true);
     },
     /*condition?:*/ isMB2
   );
@@ -240,7 +238,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*options:*/ {},
     /*titleOrProps?:*/ `Disable All Mods`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
-      toggleLoadOrder(context.api, false);
+      void toggleLoadOrderAsync(context.api, false);
     },
     /*condition?:*/ isMB2
   );
@@ -274,7 +272,7 @@ const main = (context: types.IExtensionContext): boolean => {
       }
 
       await gamemodeActivatedLoadOrder(context.api);
-      await gamemodeActivatedSave(context.api);
+      await gamemodeActivatedSaveAsync(context.api);
     });
 
     context.api.events.on('did-install-mod', (gameId: string, archiveId: string, modId: string): void => {

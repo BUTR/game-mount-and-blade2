@@ -1,21 +1,12 @@
 import { actions, selectors, types, util } from 'vortex-api';
 import { BannerlordModuleManager, NativeLauncherManager, types as vetypes } from '@butr/vortexextensionnative';
-import { Dirent, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'path';
+import { Dirent } from 'node:fs';
+import { FileHandle, open, readdir, readFile, writeFile } from 'node:fs/promises';
 import { vortexStoreToLibraryStore } from './utils';
 import { actionsLauncher } from './actions';
 import { hasPersistentBannerlordMods, hasPersistentLoadOrder, hasSessionWithBannerlord } from '../vortex';
-import {
-  actionsLoadOrder,
-  libraryToLibraryVM,
-  libraryToPersistence,
-  libraryVMToVortex,
-  persistenceToVortex,
-  readLoadOrder,
-  vortexToLibrary,
-  vortexToLibraryVM,
-  writeLoadOrder,
-} from '../loadOrder';
+import { actionsLoadOrder, libraryToLibraryVM, libraryVMToVortex, vortexToLibraryVM } from '../loadOrder';
 import { getBetaSortingFromSettings } from '../settings';
 import { filterEntryWithInvalidId } from '../utils';
 import {
@@ -45,21 +36,19 @@ export class VortexLauncherManager {
 
   public constructor(api: types.IExtensionApi) {
     this.launcherManager = new NativeLauncherManager(
-      this.setGameParameters,
-      this.loadLoadOrder,
-      this.saveLoadOrder,
-      this.sendNotification,
-      this.sendDialog,
-      this.getInstallPath,
-      this.readFileContent,
-      this.writeFileContent,
-      this.readDirectoryFileList,
-      this.readDirectoryList,
-      this.getAllModuleViewModels,
-      this.getModuleViewModels,
-      this.setModuleViewModels,
-      this.getOptions,
-      this.getState
+      this.setGameParametersAsync,
+      this.sendNotificationAsync,
+      this.sendDialogAsync,
+      this.getInstallPathAsync,
+      this.readFileContentAsync,
+      this.writeFileContentAsync,
+      this.readDirectoryFileListAsync,
+      this.readDirectoryListAsync,
+      this.getAllModuleViewModelsAsync,
+      this.getModuleViewModelsAsync,
+      this.setModuleViewModelsAsync,
+      this.getOptionsAsync,
+      this.getStateAsync
     );
 
     this.api = api;
@@ -82,20 +71,12 @@ export class VortexLauncherManager {
     return loadOrder.filter((x) => x?.data && filterEntryWithInvalidId(x));
   };
 
-  public loadLoadOrderVortex = (): vetypes.LoadOrder => {
-    return this.launcherManager.loadLoadOrder();
-  };
-
-  public saveLoadOrderVortex = (loadOrder: vetypes.LoadOrder): void => {
-    this.launcherManager.saveLoadOrder(loadOrder);
-  };
-
   /**
    * Will trigger the LauncherManager to pull the @property {moduleViewModels}
    * And update the LO for the CLI.
    */
-  public refreshGameParameters = (): void => {
-    this.launcherManager.refreshGameParameters();
+  public refreshGameParametersAsync = async (): Promise<void> => {
+    await this.launcherManager.refreshGameParametersAsync();
   };
 
   /**
@@ -103,32 +84,32 @@ export class VortexLauncherManager {
    * Will refresh the ViewModels
    * Will refresh the Validation Cache
    */
-  public refreshModules = (): void => {
-    this.launcherManager.refreshModules();
-    this.refreshGameParameters();
+  public refreshModulesAsync = async (): Promise<void> => {
+    await this.launcherManager.refreshModulesAsync();
+    await this.refreshGameParametersAsync();
   };
 
-  public setModulesToLaunch = (loadOrder: vetypes.LoadOrder): void => {
-    this.launcherManager.setGameParameterLoadOrder(loadOrder);
-    this.refreshGameParameters();
+  public setModulesToLaunchAsync = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
+    await this.launcherManager.setGameParameterLoadOrderAsync(loadOrder);
+    await this.refreshGameParametersAsync();
   };
 
   /**
    * Will update the CLI args with the save name
    * @param saveName if null will exclude if from the CLI
    */
-  public setSaveFile = (saveName: string): void => {
-    this.launcherManager.setGameParameterSaveFile(saveName);
-    this.refreshGameParameters();
+  public setSaveFileAsync = async (saveName: string): Promise<void> => {
+    await this.launcherManager.setGameParameterSaveFileAsync(saveName);
+    await this.refreshGameParametersAsync();
   };
 
   /**
    * Will update the CLI args with continuing the latest save file
    * @param saveName if null will exclude if from the CLI
    */
-  public setContinueLastSaveFile = (value: boolean): void => {
-    this.launcherManager.setGameParameterContinueLastSaveFile(value);
-    this.refreshGameParameters();
+  public setContinueLastSaveFileAsync = async (value: boolean): Promise<void> => {
+    await this.launcherManager.setGameParameterContinueLastSaveFileAsync(value);
+    await this.refreshGameParametersAsync();
   };
 
   /**
@@ -136,8 +117,9 @@ export class VortexLauncherManager {
    * Use @method {refreshModulesVortex} to reload modules from the FS.
    * @return
    */
-  public getAllModules = (): Readonly<IModuleCache> => {
-    return this.launcherManager.getModules().reduce<IModuleCache>((map, current) => {
+  public getAllModulesAsync = async (): Promise<Readonly<IModuleCache>> => {
+    const modules = await this.launcherManager.getModulesAsync();
+    return modules.reduce<IModuleCache>((map, current) => {
       map[current.id] = current;
       return map;
     }, {});
@@ -147,8 +129,8 @@ export class VortexLauncherManager {
    * Gets all modules with duplicates - when installed in /Modules and Steam Workshop
    * @return
    */
-  public getAllModulesWithDuplicates = (): vetypes.ModuleInfoExtendedWithMetadata[] => {
-    return this.launcherManager.getAllModules();
+  public getAllModulesWithDuplicatesAsync = async (): Promise<vetypes.ModuleInfoExtendedWithMetadata[]> => {
+    return await this.launcherManager.getAllModulesAsync();
   };
 
   /**
@@ -156,22 +138,15 @@ export class VortexLauncherManager {
    * @param loadOrder
    * @returns
    */
-  public orderByLoadOrder = (loadOrder: vetypes.LoadOrder): vetypes.OrderByLoadOrderResult => {
-    return this.launcherManager.orderByLoadOrder(loadOrder);
+  public orderByLoadOrderAsync = async (loadOrder: vetypes.LoadOrder): Promise<vetypes.OrderByLoadOrderResult> => {
+    return await this.launcherManager.orderByLoadOrderAsync(loadOrder);
   };
 
   /**
    * A simple wrapper for Vortex that returns a promise
    */
-  public getGameVersionVortexAsync = (): Promise<string> => {
-    return Promise.resolve(this.launcherManager.getGameVersion());
-  };
-
-  /**
-   * A simple wrapper for Vortex that returns a promise
-   */
-  public getGameVersionVortex = (): string => {
-    return this.launcherManager.getGameVersion();
+  public getGameVersionVortexAsync = async (): Promise<string> => {
+    return await this.launcherManager.getGameVersionAsync();
   };
 
   /**
@@ -202,7 +177,7 @@ export class VortexLauncherManager {
   ): Promise<types.IInstallResult> => {
     const subModuleRelFilePath = files.find((x) => x.endsWith('SubModule.xml'))!;
     const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
-    const subModuleFile = readFileSync(subModuleFilePath, {
+    const subModuleFile = await readFile(subModuleFilePath, {
       encoding: 'utf-8',
     });
     const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
@@ -359,15 +334,15 @@ Warning! This can lead to issues!`,
   /**
    *
    */
-  public autoSort = (): void => {
-    this.launcherManager.sort();
+  public autoSortAsync = async (): Promise<void> => {
+    await this.launcherManager.sortAsync();
   };
 
   /**
    *
    */
-  public getSaveFiles = (): vetypes.SaveMetadata[] => {
-    return this.launcherManager.getSaveFiles();
+  public getSaveFilesAsync = async (): Promise<vetypes.SaveMetadata[]> => {
+    return await this.launcherManager.getSaveFilesAsync();
   };
 
   /**
@@ -380,7 +355,7 @@ Warning! This can lead to issues!`,
   /**
    * Callback
    */
-  private setGameParameters = (_executable: string, gameParameters: string[]): void => {
+  private setGameParametersAsync = (_executable: string, gameParameters: string[]): Promise<void> => {
     const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
 
     const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(this.api.getState());
@@ -390,53 +365,18 @@ Warning! This can lead to issues!`,
     );
     const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: [params] });
     util.batchDispatch(this.api.store?.dispatch, [...batchedActions, gameParamAction]);
-  };
-  /**
-   * Callback
-   * Returns the Load Order saved in Vortex's permantent storage
-   */
-  private loadLoadOrder = (): vetypes.LoadOrder => {
-    const state = this.api.getState();
-    if (!hasPersistentBannerlordMods(state.persistent)) {
-      return {};
-    }
-    const mods = Object.values(state.persistent.mods.mountandblade2bannerlord);
 
-    const allModules = this.getAllModules();
-
-    const savedLoadOrder = persistenceToVortex(this.api, allModules, readLoadOrder(this.api));
-
-    let index = savedLoadOrder.length;
-    for (const module of Object.values(allModules)) {
-      if (!savedLoadOrder.find((x) => x.id === module.id)) {
-        const mod = mods.find((x) => x.attributes?.subModsIds?.includes(module.id));
-        savedLoadOrder.push({
-          id: module.id,
-          enabled: false,
-          name: module.name,
-          data: {
-            moduleInfoExtended: module,
-            hasSteamBinariesOnXbox: mod?.attributes?.steamBinariesOnXbox ?? false,
-            index: index++,
-          },
-        });
-      }
-    }
-
-    const loadOrderConverted = vortexToLibrary(savedLoadOrder);
-    return loadOrderConverted;
-  };
-  /**
-   * Callback
-   * Saves the Load Order in Vortex's permantent storage
-   */
-  private saveLoadOrder = (loadOrder: vetypes.LoadOrder): void => {
-    writeLoadOrder(this.api, libraryToPersistence(loadOrder));
+    return Promise.resolve();
   };
   /**
    * Callback
    */
-  private sendNotification = (id: string, type: vetypes.NotificationType, message: string, delayMS: number): void => {
+  private sendNotificationAsync = (
+    id: string,
+    type: vetypes.NotificationType,
+    message: string,
+    delayMS: number
+  ): Promise<void> => {
     switch (type) {
       case 'hint':
         this.api.sendNotification?.({
@@ -471,11 +411,13 @@ Warning! This can lead to issues!`,
         });
         break;
     }
+
+    return Promise.resolve();
   };
   /**
    * Callback
    */
-  private sendDialog = async (
+  private sendDialogAsync = async (
     type: vetypes.DialogType,
     title: string,
     message: string,
@@ -528,71 +470,87 @@ Warning! This can lead to issues!`,
   /**
    * Callback
    */
-  private getInstallPath = (): string => {
+  private getInstallPathAsync = (): Promise<string> => {
     const state = this.api.getState();
     const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
-    return discovery?.path ?? '';
+    return Promise.resolve(discovery?.path ?? '');
   };
   /**
    * Callback
    */
-  private readFileContent = (filePath: string, offset: number, length: number): Uint8Array | null => {
+  private readFileContentAsync = async (
+    filePath: string,
+    offset: number,
+    length: number
+  ): Promise<Uint8Array | null> => {
     try {
-      if (offset === 0 && length === -1) {
-        return new Uint8Array(readFileSync(filePath));
-      } else if (offset >= 0 && length > 0) {
-        // TODO: read the chunk we actually need, but there's no readFile()
-        //const fd = fs.openSync(filePath, 'r');
-        //const buffer = Buffer.alloc(length);
-        //fs.readSync(fd, buffer, offset, length, 0);
-        return new Uint8Array(readFileSync(filePath)).slice(offset, offset + length);
-      } else {
-        return null;
+      if (length === -1) {
+        const buffer = new Uint8Array(await readFile(filePath));
+        if (offset === 0) {
+          return buffer;
+        }
+        return buffer.slice(offset);
       }
-    } catch {
-      return null;
+      if (length > 0) {
+        let fileHandle: FileHandle | null = null;
+        try {
+          fileHandle = await open(filePath, 'r');
+          const buffer = new Uint8Array(Buffer.alloc(length));
+          await fileHandle.read(buffer, 0, length, offset);
+          return buffer;
+        } finally {
+          await fileHandle?.close();
+        }
+      }
+    } catch (err) {
+      const { localize: t } = LocalizationManager.getInstance(this.api);
+      this.api.showErrorNotification?.(t('Error reading file content'), err);
+    }
+    return null;
+  };
+  /**
+   * Callback
+   */
+  private writeFileContentAsync = async (filePath: string, data: Uint8Array): Promise<void> => {
+    try {
+      await writeFile(filePath, data);
+    } catch (err) {
+      const { localize: t } = LocalizationManager.getInstance(this.api);
+      this.api.showErrorNotification?.(t('Error writing file content'), err);
     }
   };
   /**
    * Callback
    */
-  private writeFileContent = (filePath: string, data: Uint8Array): void => {
+  private readDirectoryFileListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
-      return writeFileSync(filePath, data);
-    } catch {
-      /* ignore error */
+      const dirs: Dirent[] = await readdir(directoryPath, { withFileTypes: true });
+      return dirs.filter((x: Dirent) => x.isFile()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+    } catch (err) {
+      const { localize: t } = LocalizationManager.getInstance(this.api);
+      this.api.showErrorNotification?.(t('Error reading directory file list'), err);
     }
+    return null;
   };
   /**
    * Callback
    */
-  private readDirectoryFileList = (directoryPath: string): string[] | null => {
+  private readDirectoryListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
-      return readdirSync(directoryPath, { withFileTypes: true })
-        .filter((x: Dirent) => x.isFile())
-        .map<string>((x: Dirent) => path.join(directoryPath, x.name));
-    } catch {
-      return null;
+      const dirs: Dirent[] = await readdir(directoryPath, { withFileTypes: true });
+      return dirs.filter((x: Dirent) => x.isDirectory()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+    } catch (err) {
+      const { localize: t } = LocalizationManager.getInstance(this.api);
+      this.api.showErrorNotification?.(t('Error reading directory list'), err);
     }
-  };
-  /**
-   * Callback
-   */
-  private readDirectoryList = (directoryPath: string): string[] | null => {
-    try {
-      return readdirSync(directoryPath, { withFileTypes: true })
-        .filter((x: Dirent) => x.isDirectory())
-        .map<string>((x: Dirent) => path.join(directoryPath, x.name));
-    } catch {
-      return null;
-    }
+    return null;
   };
   /**
    * Callback
    * Returns the ViewModels that are currenty displayed by Vortex
    */
-  private getModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
-    const allModules = this.getAllModules();
+  private getModuleViewModelsAsync = async (): Promise<vetypes.ModuleViewModel[] | null> => {
+    const allModules = await this.getAllModulesAsync();
     const loadOrder = this.getLoadOrderFromVortex();
     const viewModels = vortexToLibraryVM(loadOrder, allModules);
     const result = Object.values(viewModels);
@@ -602,9 +560,9 @@ Warning! This can lead to issues!`,
    * Callback
    * Returns all available ViewModels for possible displaying
    */
-  private getAllModuleViewModels = (): vetypes.ModuleViewModel[] | null => {
-    const allModules = this.getAllModules();
-    const existingModuleViewModels = this.getModuleViewModels() ?? [];
+  private getAllModuleViewModelsAsync = async (): Promise<vetypes.ModuleViewModel[] | null> => {
+    const allModules = await this.getAllModulesAsync();
+    const existingModuleViewModels = (await this.getModuleViewModelsAsync()) ?? [];
     const modulesToConvert = Object.values(allModules).filter(
       (x) => !existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id)
     );
@@ -616,28 +574,29 @@ Warning! This can lead to issues!`,
   /**
    * Callback
    */
-  private setModuleViewModels = (moduleViewModels: vetypes.ModuleViewModel[]): void => {
+  private setModuleViewModelsAsync = (moduleViewModels: vetypes.ModuleViewModel[]): Promise<void> => {
     const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
     this.api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
+    return Promise.resolve();
   };
   /**
    * Callback
    */
-  private getOptions = (): vetypes.LauncherOptions => {
+  private getOptionsAsync = (): Promise<vetypes.LauncherOptions> => {
     const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     const betaSorting = getBetaSortingFromSettings(this.api, profile.id) ?? false;
 
-    return {
+    return Promise.resolve({
       betaSorting: betaSorting,
-    };
+    });
   };
   /**
    * Callback
    */
-  private getState = (): vetypes.LauncherState => {
-    return {
+  private getStateAsync = (): Promise<vetypes.LauncherState> => {
+    return Promise.resolve({
       isSingleplayer: true, // We don't support multiplayer yet
-    };
+    });
   };
 }

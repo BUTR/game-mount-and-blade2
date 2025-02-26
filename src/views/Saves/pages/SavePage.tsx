@@ -4,13 +4,13 @@ import { IconBar, ITableRowAction, MainPage, selectors, ToolbarIcon, types } fro
 import { useSelector, useStore } from 'react-redux';
 import { Content, RadioView, StatusView } from '../components';
 import { ISaveGame } from '../types';
-import { getSaves } from '../utils';
+import { getSavesAsync } from '../utils';
 import { LocalizationManager, useLocalization } from '../../../localization';
 import { actionsSave } from '../../../save';
 import { versionToString, VortexLauncherManager } from '../../../launcher';
 import { getSaveFromSettings } from '../../../settings';
 import { findBLSEMod } from '../../../blse';
-import { hasPersistentBannerlordMods, isModActive } from '../../../vortex';
+import { getPersistentBannerlordMods, isModActive } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -41,8 +41,8 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
         icon: `refresh`,
         text: t(`Refresh`),
         className: `load-order-refresh-list`,
-        onClick: (): void => {
-          reloadSaves();
+        onClick: async (): Promise<void> => {
+          await reloadSavesAsync();
         },
       }),
     },
@@ -58,49 +58,45 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
     setSelectedRowSave(save);
   };
 
-  const setSave = useCallback(
-    (api: types.IExtensionApi, saveId: string | null): void => {
+  const setSaveAsync = useCallback(
+    async (api: types.IExtensionApi, saveId: string | null): Promise<void> => {
       if (profile) {
         store.dispatch(actionsSave.setCurrentSave(profile.id, saveId));
       }
 
       const launcherManager = VortexLauncherManager.getInstance(api);
-      launcherManager.setSaveFile(saveId ?? '');
+      await launcherManager.setSaveFileAsync(saveId ?? '');
     },
     [profile, store]
   );
 
-  const saveSelected = useCallback(
-    (save: ISaveGame) => {
-      if (save.index !== 0) {
-        setSave(context.api, save.name);
-      } else {
-        setSave(context.api, null);
-      }
-
+  const saveSelectedAsync = useCallback(
+    async (save: ISaveGame): Promise<void> => {
+      await setSaveAsync(context.api, save.index !== 0 ? save.name : null);
       setSelectedSave(save);
     },
-    [context.api, setSave]
+    [context.api, setSaveAsync]
   );
 
-  const reloadSaves = useCallback(() => {
-    const saveList = getSaves(context.api);
-    setSortedSaveGames(Object.entries(saveList).sort(([, saveA], [, saveB]) => saveA.index - saveB.index));
+  const reloadSavesAsync = useCallback(async (): Promise<void> => {
+    try {
+      const saveList = await getSavesAsync(context.api);
+      setSortedSaveGames(Object.entries(saveList).sort(([, saveA], [, saveB]) => saveA.index - saveB.index));
 
-    const foundSave = Object.values(saveList).find((value) => value.name === saveName);
-    if (foundSave) {
-      setSelectedSave(foundSave);
-      setSelectedRowSave(foundSave);
-    } else {
-      setSelectedSave(null);
-      setSelectedRowSave(null);
-      setSave(context.api, null);
+      const foundSave = Object.values(saveList).find((value) => value.name === saveName);
+      setSelectedSave(foundSave ?? null);
+      setSelectedRowSave(foundSave ?? null);
+      if (!foundSave) {
+        await setSaveAsync(context.api, null);
+      }
+    } catch (err) {
+      context.api.showErrorNotification?.(t('Failed to reload saves'), err);
     }
-  }, [context.api, saveName, setSave]);
+  }, [context.api, t, saveName, setSaveAsync]);
 
   useEffect(() => {
-    reloadSaves();
-  }, [reloadSaves]);
+    void reloadSavesAsync();
+  }, [reloadSavesAsync]);
 
   return (
     <MainPage>
@@ -117,7 +113,7 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
           selectedSave: selectedSave,
           saveActions: saveActions,
           sortedSaveGameList: sortedSaveGameList,
-          tableAttributes: getTableAttributes(context.api, hasBLSE, selectedSave, saveSelected),
+          tableAttributes: getTableAttributes(context.api, hasBLSE, selectedSave, saveSelectedAsync),
           selectedRowSave: selectedRowSave,
           saveRowSelected: saveRowSelected,
         })}
@@ -130,7 +126,7 @@ const getTableAttributes = (
   api: types.IExtensionApi,
   hasBLSE: boolean,
   selectedSave: ISaveGame | null,
-  saveSelected: (save: ISaveGame) => void
+  saveSelectedAsync: (save: ISaveGame) => Promise<void>
 ): types.ITableAttribute<[string, ISaveGame]>[] => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
@@ -142,7 +138,13 @@ const getTableAttributes = (
         if (data.length && typeof data[0] === 'string' && !Array.isArray(data[1])) {
           const save = data[1];
           return (
-            <RadioView api={api} hasBLSE={hasBLSE} save={save} selectedSave={selectedSave} onChange={saveSelected} />
+            <RadioView
+              api={api}
+              hasBLSE={hasBLSE}
+              save={save}
+              selectedSave={selectedSave}
+              onChange={saveSelectedAsync}
+            />
           );
         }
         return <></>;
@@ -214,7 +216,7 @@ const mapState = (state: types.IState): IFromState => {
 
   const saveName = profile !== undefined ? getSaveFromSettings(state, profile.id) ?? 'No Save' : 'No Save';
 
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const mods = getPersistentBannerlordMods(state.persistent);
   const blseMod = findBLSEMod(mods);
   const hasBLSE = blseMod !== undefined && profile !== undefined && isModActive(profile, blseMod);
 

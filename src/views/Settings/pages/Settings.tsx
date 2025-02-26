@@ -27,7 +27,7 @@ export const Settings = (props: SettingsProps): JSX.Element => {
   const { profile, autoSortOnDeploy, fixCommonIssues, betaSorting } = useSelector(mapState);
 
   const setSortCallback = useCallback(
-    (value) => {
+    (value: boolean): void => {
       if (profile) {
         onSetSortOnDeploy(profile.id, value);
       }
@@ -35,7 +35,7 @@ export const Settings = (props: SettingsProps): JSX.Element => {
     [profile, onSetSortOnDeploy]
   );
   const fixCommonIssuesCallback = useCallback(
-    (value) => {
+    (value: boolean): void => {
       if (profile) {
         onSetFixCommonIssues(profile.id, value);
       }
@@ -43,7 +43,7 @@ export const Settings = (props: SettingsProps): JSX.Element => {
     [profile, onSetFixCommonIssues]
   );
   const betaSortingCallback = useCallback(
-    (value) => {
+    (value: boolean): void => {
       if (profile) {
         onSetBetaSorting(profile.id, value);
       }

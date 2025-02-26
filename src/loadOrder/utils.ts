@@ -110,7 +110,7 @@ const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOr
   }
 };
 
-export const orderCurrentLoadOrderByExternalLoadOrder = (
+export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
   allModules: Readonly<IModuleCache>,
   persistenceLoadOrder: PersistenceLoadOrderStorage
@@ -126,9 +126,9 @@ export const orderCurrentLoadOrderByExternalLoadOrder = (
   // Apply the Load Order to the list of modules
   // Useful when there are new modules or old modules are missing
   // The output wil wil contain the auto sorted list of modules
-  const result = launcherManager.orderByLoadOrder(savedLoadOrder);
+  const result = await launcherManager.orderByLoadOrderAsync(savedLoadOrder);
   if (!checkResult(api, autoSort, result)) {
-    return Promise.resolve(savedLoadOrderVortex);
+    return savedLoadOrderVortex;
   }
 
   // Not even sure this will trigger
@@ -136,14 +136,14 @@ export const orderCurrentLoadOrderByExternalLoadOrder = (
 
   // Use the sorted to closest valid state Load Order
   if (autoSort) {
-    return Promise.resolve(libraryVMToVortex(api, result.orderedModuleViewModels));
+    return libraryVMToVortex(api, result.orderedModuleViewModels);
   }
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-  return Promise.resolve(libraryToVortex(api, allModules, getExcludedLoadOrder(savedLoadOrder, result)));
+  return libraryToVortex(api, allModules, getExcludedLoadOrder(savedLoadOrder, result));
 };
 
-export const toggleLoadOrder = (api: types.IExtensionApi, toggle: boolean): void => {
+export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boolean): Promise<void> => {
   const state = api.getState();
 
   if (!hasPersistentLoadOrder(state.persistent)) {
@@ -166,11 +166,7 @@ export const toggleLoadOrder = (api: types.IExtensionApi, toggle: boolean): void
   });
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const allModules = launcherManager.getAllModules();
-
-  orderCurrentLoadOrderByExternalLoadOrder(api, allModules, loadOrder)
-    .then((loadOrder) => {
-      api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
-    })
-    .catch((err) => {});
+  const allModules = await launcherManager.getAllModulesAsync();
+  const orderedLoadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(api, allModules, loadOrder);
+  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder));
 };

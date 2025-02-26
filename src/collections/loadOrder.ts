@@ -3,7 +3,7 @@ import { ICollectionDataWithGeneralData } from './types';
 import { CollectionParseError } from './errors';
 import { GAME_ID } from '../common';
 import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from '../types';
-import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
+import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrderAsync } from '../loadOrder';
 
 const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== 'collection';
@@ -64,7 +64,7 @@ export const parseCollectionGeneralLoadOrder = async (
 
   const suggestedLoadOrder = collection.suggestedLoadOrder;
 
-  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, modules, suggestedLoadOrder);
+  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(api, modules, suggestedLoadOrder);
 
   api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
 };

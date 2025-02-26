@@ -63,7 +63,7 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "1.0.134",
+    "@butr/vortexextensionnative": "file://workspaces/game-mount-and-blade2/butr-vortexextensionnative-2.0.4.tgz",
     "ticks-to-date": "^1.0.6"
   },
   "resolutions": {

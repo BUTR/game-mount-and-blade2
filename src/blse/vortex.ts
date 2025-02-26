@@ -7,7 +7,7 @@ import {
   DeployModResult,
   DeployModStatus,
   getBinaryPath,
-  hasPersistentBannerlordMods,
+  getPersistentBannerlordMods,
   installBLSE,
   installHarmony,
 } from '../vortex';
@@ -162,7 +162,7 @@ const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, resu
 export const recommendBLSE = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   const state = api.getState();
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const mods = getPersistentBannerlordMods(state.persistent);
 
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);

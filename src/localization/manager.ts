@@ -1,6 +1,6 @@
-import { fs, types, util } from 'vortex-api';
+import { types, util } from 'vortex-api';
 import { Utils } from '@butr/vortexextensionnative';
-import { Dirent } from 'fs';
+import { Dirent, readdirSync, readFileSync } from 'fs';
 import { TranslateValues } from './types';
 import { i18nToBannerlord } from './utils';
 import { I18N_NAMESPACE } from '../common';
@@ -39,9 +39,9 @@ export class LocalizationManager {
   };
 
   private initializeLocalization = (): void => {
-    fs.readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
+    readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
       if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith('.xml')) {
-        const content: string = fs.readFileSync(`${__dirname}/${d.name}`, {
+        const content: string = readFileSync(`${__dirname}/${d.name}`, {
           encoding: 'utf8',
         });
         Utils.loadLocalization(content);

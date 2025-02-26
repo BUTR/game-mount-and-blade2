@@ -10,7 +10,7 @@ try {
     # Clean
     if ($type -eq "build" -or $type -eq "build-extended" -or $type -eq "build-update" -or $type -eq "clear") {
         Write-Host "Clean";
-        Remove-Item *.tgz, *.7z, dist -Recurse -Force -ErrorAction Ignore;
+        Remove-Item *.7z, dist -Recurse -Force -ErrorAction Ignore;
     }
     # Update @butr/vortexextensionnative from File
     if ($type -eq "build-extended") {

@@ -8,8 +8,7 @@ import { ICollectionFeatureProps } from '../../types';
 import { getCompatibilityScores, IModuleCompatibilityInfoCache } from '../../../butr';
 import { genCollectionGeneralData } from '../../../collections';
 import { useLocalization } from '../../../localization';
-import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../../../vortex';
-import { useLauncher } from '../../../launcher';
+import { getPersistentBannerlordMods, getPersistentLoadOrder } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -26,7 +25,7 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
 
   const { profile, loadOrder, mods } = useSelector(mapState);
 
-  const launcherManager = useLauncher();
+  const context = useContext(MainContext);
 
   useEffect(() => {
     async function setData(): Promise<void> {
@@ -35,13 +34,13 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
       setHasBLSE(data.hasBLSE);
       setPersistentLoadOrder(data.suggestedLoadOrder);
     }
-    setData().catch(() => {});
+    void setData();
   }, [profile, loadOrder, mods]);
 
   const { localize: t } = useLocalization();
 
   const refreshCompatibilityScores = (): void => {
-    getCompatibilityScores(launcherManager)
+    getCompatibilityScores(context.api)
       .then((cache) => {
         setCompatibilityInfoCache(cache);
       })
@@ -90,8 +89,8 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
 
 const mapState = (state: types.IState): IFromState => {
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
+  const mods = getPersistentBannerlordMods(state.persistent);
   return {
     profile,
     loadOrder,

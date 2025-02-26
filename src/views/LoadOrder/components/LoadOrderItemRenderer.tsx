@@ -14,7 +14,7 @@ import { isExternal, isLocked } from '../utils';
 import { IModuleCompatibilityInfo } from '../../../butr';
 import { versionToString } from '../../../launcher';
 import { actionsLoadOrder, IFBLOItemRendererProps } from '../../../loadOrder';
-import { hasPersistentLoadOrder } from '../../../vortex';
+import { getPersistentLoadOrder } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -38,8 +38,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
     ? versionToString(item.loEntry.data.moduleInfoExtended.version)
     : 'ERROR';
 
-  const position =
-    loadOrder.findIndex((entry: types.IFBLOLoadOrderEntry<IVortexViewModelData>) => entry.id === item.loEntry.id) + 1;
+  const position = loadOrder.findIndex((entry) => entry.id === item.loEntry.id) + 1;
 
   let classes = ['load-order-entry'];
   if (className !== undefined) {
@@ -101,7 +100,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
 
 const mapState = (state: types.IState): IFromState => {
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
+  const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
   return {
     profile,
     loadOrder,

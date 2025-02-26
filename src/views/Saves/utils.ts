@@ -55,7 +55,7 @@ const createSaveGame = (
   const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
   for (const module of moduleNames) {
     const key = module;
-    const moduleValue = current['Module_' + module];
+    const moduleValue = current[`Module_${module}`];
     if (moduleValue === undefined) {
       continue;
     }
@@ -75,7 +75,7 @@ const createSaveGame = (
   return saveGame;
 };
 
-export const getSaves = (api: types.IExtensionApi): ISaveList => {
+export const getSavesAsync = async (api: types.IExtensionApi): Promise<ISaveList> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   const launcherManager = VortexLauncherManager.getInstance(api);
@@ -88,19 +88,24 @@ export const getSaves = (api: types.IExtensionApi): ISaveList => {
     },
   };
 
-  const allModules = launcherManager.getAllModules();
-  const saveMetadatas = launcherManager.getSaveFiles();
+  try {
+    const allModules = await launcherManager.getAllModulesAsync();
+    const saveMetadatas = await launcherManager.getSaveFilesAsync();
 
-  saveMetadatas.reduce<ISaveList>((prev, current, currentIndex) => {
-    const save = createSaveGame(api, allModules, current, currentIndex);
-    if (!save) {
+    saveMetadatas.reduce<ISaveList>((prev, current, currentIndex) => {
+      const save = createSaveGame(api, allModules, current, currentIndex);
+      if (!save) {
+        return prev;
+      }
+
+      prev[current.Name] = save;
+
       return prev;
-    }
-
-    prev[current.Name] = save;
-
-    return prev;
-  }, saveList);
+    }, saveList);
+  } catch (err) {
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t('Failed to import added file to mod!'), err);
+  }
 
   return saveList;
 };
@@ -114,21 +119,18 @@ export const getModulesByName = (modules: Readonly<IModuleCache>): ModulesByName
 
 export const getNameDuplicates = (allModules: Readonly<IModuleCache>): string[] | undefined => {
   const allModulesByName = getModulesByName(allModules);
-
   const moduleNames = Object.keys(allModulesByName);
-  const uniqueModuleNames = new Set(moduleNames);
+  const nameCount = new Map<string, number>();
 
-  const duplicates = moduleNames.filter((currentValue) => {
-    if (uniqueModuleNames.has(currentValue)) {
-      uniqueModuleNames.delete(currentValue);
-    }
+  moduleNames.forEach((name) => {
+    nameCount.set(name, (nameCount.get(name) ?? 0) + 1);
   });
 
-  if (duplicates.length) {
-    return duplicates;
-  }
+  const duplicates = Array.from(nameCount.entries())
+    .filter(([_, count]) => count > 1)
+    .map(([name]) => name);
 
-  return undefined;
+  return duplicates.length ? duplicates : undefined;
 };
 
 export const getMissingModuleNames = (saveGame: Readonly<ISaveGame>, allModules: Readonly<IModuleCache>): string[] => {
@@ -191,11 +193,11 @@ export const getLoadOrderIssues = (saveGame: ISaveGame, allModules: Readonly<IMo
   return Utils.isLoadOrderCorrect(modules);
 };
 
-export const getModules = (
+export const getModulesAsync = async (
   saveGame: ISaveGame,
   manager: VortexLauncherManager
-): Array<vetypes.ModuleInfoExtendedWithMetadata> => {
-  const allModules = manager.getAllModules();
+): Promise<Array<vetypes.ModuleInfoExtendedWithMetadata>> => {
+  const allModules = await manager.getAllModulesAsync();
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules)
     .map<vetypes.ModuleInfoExtendedWithMetadata | undefined>((current) => allModulesByName[current])

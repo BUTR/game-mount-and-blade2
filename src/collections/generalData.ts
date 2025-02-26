@@ -50,7 +50,7 @@ export const parseCollectionGeneralData = async (
   const { hasBLSE } = collection;
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const modules = launcherManager.getAllModules();
+  const modules = await launcherManager.getAllModulesAsync();
   await parseCollectionGeneralLoadOrder(api, modules, collection);
 
   if (hasBLSE) {

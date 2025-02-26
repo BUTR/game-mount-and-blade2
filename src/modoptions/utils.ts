@@ -1,6 +1,7 @@
 import { fs, types, util } from 'vortex-api';
 import turbowalk from 'turbowalk';
 import path from 'path';
+import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { ModOptionsEntry, ModOptionsEntryType, ModOptionsStorage, PersistentModOptionsEntry } from './types';
 
 export const getSettingsPath = (): string => {
@@ -10,21 +11,9 @@ export const getSettingsPath = (): string => {
 export const readSettingsContentAsync = async (entry: ModOptionsEntry): Promise<string> => {
   switch (entry.type) {
     case 'global':
-      return await fs.readFileAsync(path.join(getSettingsPath(), 'Global', entry.path), 'base64');
+      return await readFile(path.join(getSettingsPath(), 'Global', entry.path), 'base64');
     case 'special':
-      return await fs.readFileAsync(path.join(getSettingsPath(), entry.path), 'base64');
-    default:
-      return '';
-  }
-};
-
-// TODO: Replace with async?
-export const readSettingsContent = (entry: ModOptionsEntry): string => {
-  switch (entry.type) {
-    case 'global':
-      return fs.readFileSync(path.join(getSettingsPath(), 'Global', entry.path), 'base64');
-    case 'special':
-      return fs.readFileSync(path.join(getSettingsPath(), entry.path), 'base64');
+      return await readFile(path.join(getSettingsPath(), entry.path), 'base64');
     default:
       return '';
   }
@@ -40,22 +29,22 @@ export const overrideModOptions = async (mod: types.IMod, modOptions: Persistent
           const filePath = path.join(getSettingsPath(), 'Global', modOption.path);
           await fs.ensureDirAsync(path.dirname(filePath));
           try {
-            await fs.renameAsync(filePath, `${filePath}.${id}`);
+            await rename(filePath, `${filePath}.${id}`);
           } catch (err) {
             /* empty */
           }
-          await fs.writeFileAsync(filePath, modOption.contentBase64, 'base64');
+          await writeFile(filePath, modOption.contentBase64, 'base64');
         }
         break;
       case 'special':
         {
           const filePath = path.join(getSettingsPath(), modOption.path);
           try {
-            await fs.renameAsync(filePath, `${filePath}.${id}`);
+            await rename(filePath, `${filePath}.${id}`);
           } catch (err) {
             /* empty */
           }
-          await fs.writeFileAsync(filePath, modOption.contentBase64, 'base64');
+          await writeFile(filePath, modOption.contentBase64, 'base64');
         }
         break;
     }
@@ -96,12 +85,12 @@ export const restoreOriginalModOptions = async (mod: types.IMod): Promise<void> 
   for (const file of filesToRemove) {
     const { fullPath, originalPath } = file;
     try {
-      await fs.removeAsync(originalPath);
+      await rm(originalPath);
     } catch {
       /* empty */
     }
     try {
-      await fs.renameAsync(fullPath, originalPath);
+      await rename(fullPath, originalPath);
     } catch {
       /* empty */
     }
@@ -125,7 +114,7 @@ export const removeOriginalModOptions = async (mod: types.IMod): Promise<void> =
   );
   for (const file of filesToRemove) {
     try {
-      await fs.removeAsync(file);
+      await rm(file);
     } catch {
       /* empty */
     }

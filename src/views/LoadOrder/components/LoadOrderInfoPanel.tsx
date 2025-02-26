@@ -20,6 +20,7 @@ export const LoadOrderInfoPanel = (props: LoadOrderInfoPanelProps): JSX.Element 
       NL: '\n',
     }
   );
+  // TODO: Check refreshAsync
   return (
     <>
       <p>

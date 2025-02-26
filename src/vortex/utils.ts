@@ -11,7 +11,8 @@ import { nameof } from '../nameof';
 import { recommendBLSE } from '../blse';
 import { VortexLauncherManager } from '../launcher';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
-import { IStatePersistent, IStateSession } from '../types';
+import { IBannerlordModStorage, IStatePersistent, IStateSession, VortexLoadOrderStorage } from '../types';
+import { LocalizationManager } from '../localization';
 
 type HasSession = {
   session: types.ISession;
@@ -24,6 +25,23 @@ type HasSettings = {
 type RequiresLauncherResult = {
   launcher: string;
   addInfo?: unknown;
+};
+
+export const getPersistentLoadOrder = (
+  statePersistent: IStatePersistent,
+  profileId: string | undefined
+): VortexLoadOrderStorage => {
+  if (!hasPersistentLoadOrder(statePersistent) || profileId === undefined) {
+    return [];
+  }
+  return statePersistent.loadOrder[profileId] ?? [];
+};
+
+export const getPersistentBannerlordMods = (statePersistent: IStatePersistent): IBannerlordModStorage => {
+  if (!hasPersistentBannerlordMods(statePersistent)) {
+    return {};
+  }
+  return statePersistent.mods[GAME_ID];
 };
 
 export const hasPersistentLoadOrder = (
@@ -50,8 +68,9 @@ export const hasSettingsInterfacePrimaryTool = (
   nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool') in settings;
 
 const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
-  await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch(() => {
-    /* ignore error */
+  await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch((err) => {
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t('Failed to launch the game store'), err);
   });
 };
 

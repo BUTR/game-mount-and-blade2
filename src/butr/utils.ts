@@ -1,12 +1,12 @@
+import { types } from 'vortex-api';
 import { IModAnalyzerRequestModule, IModAnalyzerRequestQuery, IModuleCompatibilityInfoCache } from './types';
 import { ModAnalyzerProxy } from './modAnalyzerProxy';
 import { versionToString, VortexLauncherManager } from '../launcher';
 
-export const getCompatibilityScores = async (
-  launcherManager: VortexLauncherManager
-): Promise<IModuleCompatibilityInfoCache> => {
-  const allModules = launcherManager.getAllModules();
-  const gameVersion = launcherManager.getGameVersionVortex();
+export const getCompatibilityScores = async (api: types.IExtensionApi): Promise<IModuleCompatibilityInfoCache> => {
+  const launcherManager = VortexLauncherManager.getInstance(api);
+  const allModules = await launcherManager.getAllModulesAsync();
+  const gameVersion = await launcherManager.getGameVersionVortexAsync();
 
   const proxy = new ModAnalyzerProxy();
   const query: IModAnalyzerRequestQuery = {
@@ -16,7 +16,7 @@ export const getCompatibilityScores = async (
       moduleVersion: versionToString(x.version),
     })),
   };
-  const result = await proxy.analyze(query);
+  const result = await proxy.analyze(api, query);
   return result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
     map[curr.moduleId] = {
       score: curr.compatibility,

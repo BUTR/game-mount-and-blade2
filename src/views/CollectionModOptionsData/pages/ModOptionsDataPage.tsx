@@ -11,7 +11,7 @@ import {
   ModOptionsEntry,
   ModOptionsStorage,
   PersistentModOptionsEntry,
-  readSettingsContent,
+  readSettingsContentAsync,
 } from '../../../modoptions';
 import { hasStatePersistentCollectionModWithIncludedModOptions, IncludedModOptions } from '../../../collections';
 import { nameof } from '../../../nameof';
@@ -36,9 +36,9 @@ export const ModOptionsDataPage = (props: ModOptionsDataPageProps): JSX.Element 
   });
 
   const toggleEntry = useCallback(
-    (newValue: boolean, entry: ModOptionsEntry) => {
+    async (newValue: boolean, entry: ModOptionsEntry) => {
       const newEntries: PersistentModOptionsEntry[] = newValue
-        ? [...includedModOptions, { ...entry, contentBase64: readSettingsContent(entry) }]
+        ? [...includedModOptions, { ...entry, contentBase64: await readSettingsContentAsync(entry) }]
         : includedModOptions.filter((x) => x.name !== entry.name);
       onSetCollectionAttribute([nameof<IncludedModOptions>('includedModOptions')], newEntries);
     },

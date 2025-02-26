@@ -12,7 +12,7 @@ import { LocalizationManager } from '../localization';
 import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
-  hasPersistentBannerlordMods,
+  getPersistentBannerlordMods,
   installBLSE,
   installHarmony,
 } from '../vortex';
@@ -83,7 +83,7 @@ export const collectionInstallBLSE = async (api: types.IExtensionApi): Promise<v
 
   const state = api.getState();
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const mods = getPersistentBannerlordMods(state.persistent);
 
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
   const blseDeployResult = checkBLSEDeploy(api, profile, mods);
