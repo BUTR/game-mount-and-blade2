@@ -26,7 +26,8 @@ export const persistenceToVortex = (
         data: {
           moduleInfoExtended: modules[x.id]!,
           index: x.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
         },
       };
     })
@@ -110,7 +111,8 @@ export const libraryVMToVortex = (
         isValid: curr.isValid,
         isDisabled: curr.isDisabled,
         index: curr.index,
-        hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+        hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+        hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
       },
     };
   }, []);
@@ -187,7 +189,8 @@ export const libraryToVortex = (
           isValid: !moduleValidation.length,
           isDisabled: false,
           index: curr.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
         },
       };
     }, [])

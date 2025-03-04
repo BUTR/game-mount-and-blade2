@@ -8,13 +8,14 @@ import { ExternalBanner } from './ExternalBanner';
 import { ModuleDuplicates } from './ModuleDuplicates';
 import { ModuleProviderIcon } from './ModuleProviderIcon';
 import { SteamBinariesOnXbox } from './SteamBinariesOnXbox';
-import { IVortexViewModelData, VortexLoadOrderStorage } from '../../../types';
+import { VortexLoadOrderStorage } from '../../../types';
 import { CompatibilityInfo, ModuleIcon } from '../../Shared';
 import { isExternal, isLocked } from '../utils';
 import { IModuleCompatibilityInfo } from '../../../butr';
 import { versionToString } from '../../../launcher';
 import { actionsLoadOrder, IFBLOItemRendererProps } from '../../../loadOrder';
 import { getPersistentLoadOrder } from '../../../vortex';
+import { ObfuscaedBinaries } from '.';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -91,6 +92,7 @@ export const LoadOrderItemRenderer = (props: LoadOrderItemRendererProps): JSX.El
       <CompatibilityInfo data={item.loEntry.data} compatibilityInfo={compatibilityInfo} />
       <ModuleDuplicates availableProviders={availableProviders} data={item.loEntry.data} />
       <ModuleProviderIcon data={item.loEntry.data} />
+      <ObfuscaedBinaries hasObfuscatedBinaries={item.loEntry.data?.hasObfuscatedBinaries ?? false} />
       <CheckBox />
       <Lock />
     </ListGroupItem>

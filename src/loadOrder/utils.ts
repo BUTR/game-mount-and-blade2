@@ -2,7 +2,7 @@ import { selectors, types } from 'vortex-api';
 import { Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { libraryToVortex, libraryVMToVortex, persistenceToLibrary, vortexToPersistence } from './converters';
 import { actionsLoadOrder } from './actions';
-import { SUB_MODS_IDS } from '../common';
+import { OBFUSCATED_BINARIES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from '../common';
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -13,11 +13,13 @@ import {
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
 import { hasPersistentLoadOrder } from '../vortex';
+import { getSortOnDeployFromSettings } from '../settings';
 
 type ModIdResult = {
   id: string;
   source: string;
   hasSteamBinariesOnXbox: boolean;
+  hasObfuscatedBinaries: boolean;
 };
 
 /**
@@ -36,7 +38,8 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
       arr.push({
         id: mod.attributes['modId'],
         source: mod.attributes['source'],
-        hasSteamBinariesOnXbox: mod.attributes['steamBinariesOnXbox'] ?? false,
+        hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
+        hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
       });
     }
 
@@ -47,16 +50,15 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
 };
 
 const getExcludedLoadOrder = (
-  loadOrder: vetypes.LoadOrder,
+  loadOrder: VortexLoadOrderStorage,
   result: vetypes.OrderByLoadOrderResult
-): vetypes.LoadOrder => {
-  const excludedLoadOrder = Object.entries(loadOrder).reduce<vetypes.LoadOrder>((arr, curr) => {
-    const [id, entry] = curr;
-    if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === entry.id)) {
-      arr[id] = entry;
+): VortexLoadOrderStorage => {
+  const excludedLoadOrder = loadOrder.reduce<VortexLoadOrderStorage>((arr, curr) => {
+    if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === curr.id)) {
+      arr.push(curr);
     }
     return arr;
-  }, {});
+  }, []);
   return excludedLoadOrder;
 };
 
@@ -119,20 +121,28 @@ const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOr
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
   allModules: Readonly<IModuleCache>,
-  persistenceLoadOrder: PersistenceLoadOrderStorage
+  savedLoadOrder: PersistenceLoadOrderStorage
 ): Promise<VortexLoadOrderStorage> => {
-  const autoSort = true; // TODO: get from settings
+  const state = api.getState();
+
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  if (profile === undefined) {
+    return [];
+  }
+
+  const autoSort = getSortOnDeployFromSettings(state, profile.id) ?? true;
+
   const launcherManager = VortexLauncherManager.getInstance(api);
 
-  const savedLoadOrder = persistenceToLibrary(persistenceLoadOrder);
-  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrder);
+  const savedLoadOrderLibrary = persistenceToLibrary(savedLoadOrder);
+  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrderLibrary);
 
   checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
 
   // Apply the Load Order to the list of modules
   // Useful when there are new modules or old modules are missing
   // The output wil wil contain the auto sorted list of modules
-  const result = await launcherManager.orderByLoadOrderAsync(savedLoadOrder);
+  const result = await launcherManager.orderByLoadOrderAsync(savedLoadOrderLibrary);
   if (!checkResult(api, autoSort, result)) {
     return savedLoadOrderVortex;
   }
@@ -146,7 +156,7 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   }
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-  return libraryToVortex(api, allModules, getExcludedLoadOrder(savedLoadOrder, result));
+  return getExcludedLoadOrder(savedLoadOrderVortex, result);
 };
 
 export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boolean): Promise<void> => {

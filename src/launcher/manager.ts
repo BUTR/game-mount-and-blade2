@@ -1,4 +1,4 @@
-import { actions, log, selectors, types, util } from 'vortex-api';
+import { actions, selectors, types, util } from 'vortex-api';
 import {
   allocWithoutOwnership,
   BannerlordModuleManager,
@@ -18,6 +18,7 @@ import {
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,
   GAME_ID,
+  OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
 } from '../common';
@@ -184,15 +185,34 @@ export class VortexLauncherManager {
     const subModuleFile = await readFile(subModuleFilePath, {
       encoding: 'utf-8',
     });
+
     const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
       subModuleFile,
       vetypes.ModuleProviderType.Default,
-      subModuleRelFilePath
-    )!;
-    moduleInfo.path = subModuleRelFilePath; // TODO: fix the library
+      subModuleFilePath
+    );
 
-    const result = this.launcherManager.installModule(files, [moduleInfo]);
-    const subModsIds = Array<string>();
+    if (moduleInfo === undefined) {
+      const { localize: t } = LocalizationManager.getInstance(this.api);
+      this.api.showErrorNotification?.('Error', t('Failed to parse SubModule.xml'));
+      return {
+        instructions: [],
+      };
+    }
+
+    const filesWithFullPath = files.map<string>((x) => path.join(destinationPath, x));
+    const resultRaw = this.launcherManager.installModule(filesWithFullPath, [moduleInfo]);
+    const result: vetypes.InstallResult = {
+      instructions: resultRaw.instructions.map<vetypes.InstallInstruction>((x) => {
+        if (x.source !== undefined) {
+          x.source = x.source.replace(destinationPath, '');
+        }
+        return x;
+      }),
+    };
+
+    const state = this.api.getState();
+
     const availableStores = result.instructions.reduce<string[]>((map, current) => {
       if (current.store !== undefined) {
         return map.includes(current.store) ? map : [...map, current.store];
@@ -200,7 +220,7 @@ export class VortexLauncherManager {
       return map;
     }, []);
 
-    const state = this.api.getState();
+    const hasObfuscatedBinaries = await this.launcherManager.isObfuscatedAsync(moduleInfo);
 
     let useSteamBinaries = false;
 
@@ -273,6 +293,7 @@ Warning! This can lead to issues!`,
       }
     }
 
+    const subModsIds = Array<string>();
     const transformedResult: types.IInstallResult = {
       instructions: result.instructions.reduce<types.IInstruction[]>((map, current) => {
         switch (current.type) {
@@ -323,8 +344,21 @@ Warning! This can lead to issues!`,
       key: STEAM_BINARIES_ON_XBOX,
       value: useSteamBinaries,
     });
+    transformedResult.instructions.push({
+      type: 'attribute',
+      key: OBFUSCATED_BINARIES,
+      value: hasObfuscatedBinaries,
+    });
 
-    return Promise.resolve(transformedResult);
+    return transformedResult;
+  };
+
+  /**
+   *
+   * @returns
+   */
+  public isObfuscatedAsync = async (module: vetypes.ModuleInfoExtendedWithMetadata): Promise<boolean> => {
+    return await this.launcherManager.isObfuscatedAsync(module);
   };
 
   /**
@@ -529,7 +563,8 @@ Warning! This can lead to issues!`,
   private readDirectoryFileListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
       const dirs = await readdir(directoryPath, { withFileTypes: true });
-      return dirs.filter((x) => x.isFile()).map<string>((x) => path.join(directoryPath, x.name));
+      const res = dirs.filter((x) => x.isFile()).map<string>((x) => path.join(directoryPath, x.name));
+      return res;
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory file list'), err);
@@ -542,7 +577,8 @@ Warning! This can lead to issues!`,
   private readDirectoryListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
       const dirs = await readdir(directoryPath, { withFileTypes: true });
-      return dirs.filter((x) => x.isDirectory()).map<string>((x) => path.join(directoryPath, x.name));
+      const res = dirs.filter((x) => x.isDirectory()).map<string>((x) => path.join(directoryPath, x.name));
+      return res;
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory list'), err);

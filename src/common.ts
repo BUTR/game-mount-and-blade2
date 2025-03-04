@@ -14,6 +14,7 @@ export const SUBMODULE_FILE = `SubModule.xml`;
 export const SUB_MODS_IDS = `subModsIds`;
 export const AVAILABLE_STORES = `availableStores`;
 export const STEAM_BINARIES_ON_XBOX = `steamBinariesOnXbox`;
+export const OBFUSCATED_BINARIES = `obfuscatedBinaries`;
 
 export const BINARY_FOLDER_STANDARD = `Win64_Shipping_Client`;
 export const BINARY_FOLDER_STANDARD_MODDING_KIT = `Win64_Shipping_wEditor`;
