@@ -19,7 +19,10 @@ export const readSettingsContentAsync = async (entry: ModOptionsEntry): Promise<
   }
 };
 
-export const overrideModOptions = async (mod: types.IMod, modOptions: PersistentModOptionsEntry[]): Promise<void> => {
+export const overrideModOptionsAsync = async (
+  mod: types.IMod,
+  modOptions: PersistentModOptionsEntry[]
+): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   for (const modOption of modOptions) {
@@ -51,7 +54,7 @@ export const overrideModOptions = async (mod: types.IMod, modOptions: Persistent
   }
 };
 
-export const hasBackupModOptions = async (mod: types.IMod): Promise<boolean> => {
+export const hasBackupModOptionsAsync = async (mod: types.IMod): Promise<boolean> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   let hasBackup = false;
@@ -66,7 +69,7 @@ export const hasBackupModOptions = async (mod: types.IMod): Promise<boolean> => 
   return hasBackup;
 };
 
-export const restoreOriginalModOptions = async (mod: types.IMod): Promise<void> => {
+export const restoreOriginalModOptionsAsync = async (mod: types.IMod): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: { fullPath: string; originalPath: string }[] = [];
@@ -97,7 +100,7 @@ export const restoreOriginalModOptions = async (mod: types.IMod): Promise<void> 
   }
 };
 
-export const removeOriginalModOptions = async (mod: types.IMod): Promise<void> => {
+export const removeOriginalModOptionsAsync = async (mod: types.IMod): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: string[] = [];
@@ -132,7 +135,7 @@ export const getSpecialSettings = (): ModOptionsStorage => {
   return specialSettingsDictionary;
 };
 
-export const getGlobalSettings = async (): Promise<ModOptionsStorage> => {
+export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
   const globalSettingsDictionary: ModOptionsStorage = {};
   const gsPath = path.join(getSettingsPath(), 'Global');
   await turbowalk(

@@ -17,23 +17,35 @@ import { IAddedFiles, IBannerlordModStorage } from './types';
 import { reducerSession, reducerSettings } from './react';
 import { actionsSettings } from './settings';
 import {
-  cloneCollectionGeneralData,
-  cloneCollectionModOptionsData,
-  genCollectionGeneralData,
-  genCollectionModOptionsData,
+  cloneCollectionGeneralDataAsync,
+  cloneCollectionModOptionsDataAsync,
+  genCollectionGeneralDataAsync,
+  genCollectionModOptionsDataAsync,
   hasContextWithCollectionFeature,
   ICollectionData,
-  parseCollectionGeneralData,
-  parseCollectionLegacyData,
-  parseCollectionModOptionsData,
-  willRemoveModCollections,
+  parseCollectionGeneralDataAsync,
+  parseCollectionLegacyDataAsync,
+  parseCollectionModOptionsDataAsync,
+  willRemoveModCollectionsAsync,
 } from './collections';
-import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrderAsync } from './loadOrder';
-import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
+import {
+  didDeployLoadOrderAsync,
+  gamemodeActivatedLoadOrderAsync,
+  LoadOrderManager,
+  toggleLoadOrderAsync,
+} from './loadOrder';
+import {
+  didDeployBLSEAsync,
+  didPurgeBLSEAsync,
+  getInstallPathBLSE,
+  installBLSEAsync,
+  isModTypeBLSE,
+  testBLSEAsync,
+} from './blse';
 import { VortexLauncherManager } from './launcher';
 import { gamemodeActivatedSaveAsync } from './save';
 import {
-  addedFilesEvent,
+  addedFilesEventAsync,
   getInstallPathModule,
   getPersistentBannerlordMods,
   getPersistentLoadOrder,
@@ -89,22 +101,22 @@ const main = (context: types.IExtensionContext): boolean => {
             return map;
           }, {});
 
-        return await genCollectionGeneralData(profile, loadOrder, includedMods);
+        return await genCollectionGeneralDataAsync(profile, loadOrder, includedMods);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await parseCollectionLegacyData(context.api, collection);
-        await parseCollectionGeneralData(context.api, collection);
+        await parseCollectionLegacyDataAsync(context.api, collection);
+        await parseCollectionGeneralDataAsync(context.api, collection);
       },
       /*clone:*/
       async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
-        await cloneCollectionGeneralData(context.api, gameId, collection, from, to);
+        await cloneCollectionGeneralDataAsync(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
         return t(`Requirements & Load Order`);
@@ -121,21 +133,21 @@ const main = (context: types.IExtensionContext): boolean => {
         if (GAME_ID !== gameId) {
           return {};
         }
-        return await genCollectionModOptionsData(context.api, mod);
+        return await genCollectionModOptionsDataAsync(context.api, mod);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await parseCollectionModOptionsData(context.api, collection, mod);
+        await parseCollectionModOptionsDataAsync(context.api, collection, mod);
       },
       /*clone:*/ async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await cloneCollectionModOptionsData(context.api, gameId, collection, from, to);
+        await cloneCollectionModOptionsDataAsync(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
         return t(`Mod Options`);
@@ -159,8 +171,8 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerInstaller(
     /*id:*/ 'bannerlord-blse-installer',
     /*priority:*/ 30,
-    /*testSupported:*/ toBluebird(testBLSE),
-    /*install:*/ toBluebird((files: string[]) => installBLSE(context.api, files))
+    /*testSupported:*/ toBluebird(testBLSEAsync),
+    /*install:*/ toBluebird((files: string[]) => installBLSEAsync(context.api, files))
   );
   context.registerModType(
     /*id:*/ 'bannerlord-blse',
@@ -188,7 +200,7 @@ const main = (context: types.IExtensionContext): boolean => {
         archivePath?: string
       ) => {
         const launcherManager = VortexLauncherManager.getInstance(context.api);
-        return launcherManager.installModule(files, destinationPath, archivePath);
+        return launcherManager.installModuleAsync(files, destinationPath, archivePath);
       }
     )
   );
@@ -271,7 +283,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await gamemodeActivatedLoadOrder(context.api);
+      await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
     });
 
@@ -290,7 +302,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await addedFilesEvent(context.api, files);
+      await addedFilesEventAsync(context.api, files);
     });
 
     // TODO: listen to profile switch events and check for BLSE
@@ -301,8 +313,8 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await didDeployLoadOrder(context.api);
-      await didDeployBLSE(context.api);
+      await didDeployLoadOrderAsync(context.api);
+      await didDeployBLSEAsync(context.api);
     });
 
     context.api.onAsync('did-purge', async (profileId: string) => {
@@ -312,7 +324,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await didPurgeBLSE(context.api);
+      await didPurgeBLSEAsync(context.api);
     });
 
     context.api.onAsync('will-remove-mod', async (gameId: string, modId: string) => {
@@ -320,7 +332,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await willRemoveModCollections(context.api, modId);
+      await willRemoveModCollectionsAsync(context.api, modId);
     });
   });
   // Register Callbacks

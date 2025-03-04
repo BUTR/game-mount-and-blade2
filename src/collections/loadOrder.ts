@@ -50,7 +50,7 @@ export const genCollectionGeneralLoadOrder = (
   return filteredLoadOrder;
 };
 
-export const parseCollectionGeneralLoadOrder = async (
+export const parseCollectionGeneralLoadOrderAsync = async (
   api: types.IExtensionApi,
   modules: Readonly<IModuleCache>,
   collection: ICollectionDataWithGeneralData

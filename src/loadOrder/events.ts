@@ -5,7 +5,7 @@ import { LocalizationManager } from '../localization';
 /**
  * Event function, be careful
  */
-export const didDeployLoadOrder = async (api: types.IExtensionApi): Promise<void> => {
+export const didDeployLoadOrderAsync = async (api: types.IExtensionApi): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   try {
@@ -19,7 +19,7 @@ export const didDeployLoadOrder = async (api: types.IExtensionApi): Promise<void
 /**
  * Event function, be careful
  */
-export const gamemodeActivatedLoadOrder = async (api: types.IExtensionApi): Promise<void> => {
+export const gamemodeActivatedLoadOrderAsync = async (api: types.IExtensionApi): Promise<void> => {
   try {
     const loadOrderManager = LoadOrderManager.getInstance(api);
     await loadOrderManager.deserializeLoadOrder();

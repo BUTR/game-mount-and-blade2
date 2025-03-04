@@ -2,7 +2,7 @@
 import Bluebird, { Promise, method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { findGame, getBannerlordMainExe, setup } from './vortex';
+import { findGameAsync, getBannerlordMainExe, setupAsync } from './vortex';
 import { VortexLauncherManager } from './launcher';
 
 export class BannerlordGame implements types.IGame {
@@ -34,7 +34,7 @@ export class BannerlordGame implements types.IGame {
   }
 
   public queryPath = toBluebird<string | types.IGameStoreEntry>(async (): Promise<string | types.IGameStoreEntry> => {
-    const game = await findGame();
+    const game = await findGameAsync();
     return game.gamePath;
   });
   public queryModPath = (_gamePath: string): string => {
@@ -47,7 +47,7 @@ export class BannerlordGame implements types.IGame {
     return getBannerlordMainExe(discoveredPath, this.api);
   };
   public setup = toBluebird(async (discovery: types.IDiscoveryResult) => {
-    await setup(this.api, discovery);
+    await setupAsync(this.api, discovery);
   });
   //public requiresLauncher = toBluebird(async (_gamePath: string, store?: string) => {
   //  return await requiresLauncher(store);

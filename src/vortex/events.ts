@@ -12,7 +12,7 @@ import { LocalizationManager } from '../localization';
 /**
  * Event function, be careful
  */
-export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFiles[]): Promise<void> => {
+export const addedFilesEventAsync = async (api: types.IExtensionApi, files: IAddedFiles[]): Promise<void> => {
   const state = api.getState();
 
   const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, GAME_ID);
@@ -29,7 +29,7 @@ export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFil
     return;
   }
 
-  const handleFile = async (entry: { filePath: string; candidates: string[] }): Promise<void> => {
+  const handleFileAsync = async (entry: { filePath: string; candidates: string[] }): Promise<void> => {
     // only act if we definitively know which mod owns the file
     if (entry.candidates.length !== 1) {
       return;
@@ -63,7 +63,7 @@ export const addedFilesEvent = async (api: types.IExtensionApi, files: IAddedFil
     }
   };
 
-  await Bluebird.map(files, handleFile);
+  await Bluebird.map<IAddedFiles, void>(files, handleFileAsync);
 };
 
 export const installedMod = (api: types.IExtensionApi, archiveId: string, modId: string): void => {

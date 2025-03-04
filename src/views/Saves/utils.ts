@@ -128,7 +128,7 @@ export const getNameDuplicates = (allModules: Readonly<IModuleCache>): string[] 
 
   const duplicates = Array.from(nameCount.entries())
     .filter(([_, count]) => count > 1)
-    .map(([name]) => name);
+    .map<string>(([name]) => name);
 
   return duplicates.length ? duplicates : undefined;
 };

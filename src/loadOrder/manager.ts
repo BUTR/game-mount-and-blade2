@@ -49,13 +49,13 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     this.api = api;
     this.usageInstructions = (): JSX.Element =>
       LoadOrderInfoPanel({
-        refresh: this.updateCompatibilityScores,
+        refreshAsync: this.updateCompatibilityScoresAsync,
       });
 
     this.customItemRenderer = ({ className = '', item }): JSX.Element => {
       const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
-        .map((x) => x.moduleProviderType);
+        .map<vetypes.ModuleProviderType>((x) => x.moduleProviderType);
       const compatibilityScore = this.compatibilityScores[item.loEntry.id];
 
       return LoadOrderItemRenderer({
@@ -67,28 +67,27 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     };
   }
 
-  public updateCompatibilityScores = (): void => {
+  public updateCompatibilityScoresAsync = async (): Promise<void> => {
     const proxy = new ModAnalyzerProxy();
     const launcherManager = VortexLauncherManager.getInstance(this.api);
-    void launcherManager.getGameVersionVortexAsync().then(async (gameVersion) => {
-      const query: IModAnalyzerRequestQuery = {
-        gameVersion: gameVersion,
-        modules: this.allModules.map<IModAnalyzerRequestModule>((x) => ({
-          moduleId: x.id,
-          moduleVersion: versionToString(x.version),
-        })),
+    const gameVersion = await launcherManager.getGameVersionVortexAsync();
+    const query: IModAnalyzerRequestQuery = {
+      gameVersion: gameVersion,
+      modules: this.allModules.map<IModAnalyzerRequestModule>((x) => ({
+        moduleId: x.id,
+        moduleVersion: versionToString(x.version),
+      })),
+    };
+    const result = await proxy.analyzeAsync(this.api, query);
+    this.compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+      map[curr.moduleId] = {
+        score: curr.compatibility,
+        recommendedScore: curr.recommendedCompatibility,
+        recommendedVersion: curr.recommendedModuleVersion,
       };
-      const result = await proxy.analyze(this.api, query);
-      this.compatibilityScores = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-        map[curr.moduleId] = {
-          score: curr.compatibility,
-          recommendedScore: curr.recommendedCompatibility,
-          recommendedVersion: curr.recommendedModuleVersion,
-        };
-        return map;
-      }, {});
-      this.forceRefresh();
-    });
+      return map;
+    }, {});
+    this.forceRefresh();
   };
 
   private forceRefresh = (): void => {

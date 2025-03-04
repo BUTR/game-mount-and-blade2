@@ -21,7 +21,7 @@ export class ModAnalyzerProxy {
     };
   }
 
-  public async analyze(api: types.IExtensionApi, query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
+  public async analyzeAsync(api: types.IExtensionApi, query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
     return new Promise((resolve, reject) => {
       const req = request(this.options, (res) => {
         let body = Buffer.from([]);

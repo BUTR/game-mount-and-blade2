@@ -7,7 +7,7 @@ import { VortexLauncherManager } from '../launcher';
 import { PersistenceLoadOrderStorage } from '../types';
 import { hasPersistentBannerlordMods } from '../vortex';
 
-export const parseCollectionLegacyData = async (
+export const parseCollectionLegacyDataAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionData
 ): Promise<void> => {
@@ -15,10 +15,10 @@ export const parseCollectionLegacyData = async (
     return;
   }
 
-  await parseLegacyLoadOrder(api, collection);
+  await parseLegacyLoadOrderAsync(api, collection);
 };
 
-const parseLegacyLoadOrder = async (
+const parseLegacyLoadOrderAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionDataWithLegacyData
 ): Promise<void> => {

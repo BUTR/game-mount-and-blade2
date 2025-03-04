@@ -5,8 +5,8 @@ import { MainContext, selectors, tooltip, types } from 'vortex-api';
 import { LoadOrderEditInfo, LoadOrderEntry, Placeholder, Requirements } from '../components';
 import { IBannerlordModStorage, PersistenceLoadOrderStorage, VortexLoadOrderStorage } from '../../../types';
 import { ICollectionFeatureProps } from '../../types';
-import { getCompatibilityScores, IModuleCompatibilityInfoCache } from '../../../butr';
-import { genCollectionGeneralData } from '../../../collections';
+import { getCompatibilityScoresAsync, IModuleCompatibilityInfoCache } from '../../../butr';
+import { genCollectionGeneralDataAsync } from '../../../collections';
 import { useLocalization } from '../../../localization';
 import { getPersistentBannerlordMods, getPersistentLoadOrder } from '../../../vortex';
 
@@ -28,19 +28,19 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
   const context = useContext(MainContext);
 
   useEffect(() => {
-    async function setData(): Promise<void> {
+    const setDataAsync = async (): Promise<void> => {
       if (!profile) return;
-      const data = await genCollectionGeneralData(profile, loadOrder, mods);
+      const data = await genCollectionGeneralDataAsync(profile, loadOrder, mods);
       setHasBLSE(data.hasBLSE);
       setPersistentLoadOrder(data.suggestedLoadOrder);
-    }
-    void setData();
+    };
+    void setDataAsync();
   }, [profile, loadOrder, mods]);
 
   const { localize: t } = useLocalization();
 
   const refreshCompatibilityScores = (): void => {
-    getCompatibilityScores(context.api)
+    getCompatibilityScoresAsync(context.api)
       .then((cache) => {
         setCompatibilityInfoCache(cache);
       })
@@ -72,7 +72,7 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
       </p>
       <LoadOrderEditInfo />
       <ListGroup id="collections-load-order-list">
-        {Object.values(persistentLoadOrder).map((entry) => (
+        {Object.values(persistentLoadOrder).map<React.JSX.Element>((entry) => (
           <LoadOrderEntry
             key={entry.id}
             entry={entry}

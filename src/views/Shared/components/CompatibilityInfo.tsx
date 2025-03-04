@@ -20,7 +20,7 @@ export const CompatibilityInfo = (props: CompatibilityInfoProps): JSX.Element =>
   const [gameVersion, setGameVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGameVersion = async (): Promise<void> => {
+    const fetchGameVersionAsync = async (): Promise<void> => {
       try {
         const version = await launcherManager.getGameVersionVortexAsync();
         setGameVersion(version);
@@ -30,7 +30,7 @@ export const CompatibilityInfo = (props: CompatibilityInfoProps): JSX.Element =>
       }
     };
 
-    void fetchGameVersion();
+    void fetchGameVersionAsync();
   }, [context.api, t, launcherManager]);
 
   if (!compatibilityInfo || !data || gameVersion === null) {

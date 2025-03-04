@@ -3,7 +3,7 @@ import { findBLSEMod } from './utils';
 import { getPersistentBannerlordMods, hasSettingsInterfacePrimaryTool } from '../vortex';
 import { GAME_ID } from '../common';
 
-export const didDeployBLSE = (api: types.IExtensionApi): Promise<void> => {
+export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState();
 
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
@@ -27,7 +27,7 @@ export const didDeployBLSE = (api: types.IExtensionApi): Promise<void> => {
 /**
  * Event function, be careful
  */
-export const didPurgeBLSE = (api: types.IExtensionApi): Promise<void> => {
+export const didPurgeBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState();
 
   if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {

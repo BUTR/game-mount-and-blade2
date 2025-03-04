@@ -19,7 +19,7 @@ export const SpecialSettings = (props: SpecialSettingsProps): JSX.Element => {
     <div>
       <h5>{t('Special Options')}</h5>
       <ListGroup id="collections-load-order-list">
-        {Object.values(settings).map((entry) => (
+        {Object.values(settings).map<React.JSX.Element>((entry) => (
           <ModOptionsEntryView key={entry.name} entry={entry} isToggled={isToggled} toggleEntry={toggleEntry} />
         ))}
       </ListGroup>

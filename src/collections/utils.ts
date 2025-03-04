@@ -13,8 +13,8 @@ import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
   getPersistentBannerlordMods,
-  installBLSE,
-  installHarmony,
+  installBLSEAsync,
+  installHarmonyAsync,
 } from '../vortex';
 
 export const hasContextWithCollectionFeature = (
@@ -71,7 +71,7 @@ export const hasIncludedModOptions = (mod: types.IMod): mod is IModWithIncludedM
   return true;
 };
 
-export const collectionInstallBLSE = async (api: types.IExtensionApi): Promise<void> => {
+export const collectionInstallBLSEAsync = async (api: types.IExtensionApi): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.sendNotification?.({
@@ -88,6 +88,6 @@ export const collectionInstallBLSE = async (api: types.IExtensionApi): Promise<v
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
   const blseDeployResult = checkBLSEDeploy(api, profile, mods);
 
-  await installHarmony(api, profile, harmonyDeployResult);
-  await installBLSE(api, profile, blseDeployResult);
+  await installHarmonyAsync(api, profile, harmonyDeployResult);
+  await installBLSEAsync(api, profile, blseDeployResult);
 };

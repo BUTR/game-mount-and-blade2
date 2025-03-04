@@ -87,7 +87,7 @@ export const checkHarmonyDeploy = (
   };
 };
 
-export const deployMod = async (api: types.IExtensionApi): Promise<void> => {
+export const deployModAsync = async (api: types.IExtensionApi): Promise<void> => {
   await util.toPromise((cb) => api.events.emit('deploy-mods', cb));
   await util.toPromise((cb) => api.events.emit('start-quick-discovery', () => cb(null)));
 };

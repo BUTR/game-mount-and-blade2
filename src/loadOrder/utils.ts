@@ -3,7 +3,13 @@ import { Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { libraryToVortex, libraryVMToVortex, persistenceToLibrary, vortexToPersistence } from './converters';
 import { actionsLoadOrder } from './actions';
 import { SUB_MODS_IDS } from '../common';
-import { IModuleCache, PersistenceLoadOrderStorage, RequiredProperties, VortexLoadOrderStorage } from '../types';
+import {
+  IModuleCache,
+  IPersistenceLoadOrderEntry,
+  PersistenceLoadOrderStorage,
+  RequiredProperties,
+  VortexLoadOrderStorage,
+} from '../types';
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
 import { hasPersistentLoadOrder } from '../vortex';
@@ -160,7 +166,7 @@ export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boo
     return;
   }
 
-  const loadOrder = vortexToPersistence(currentLoadOrder).map((entry) => {
+  const loadOrder = vortexToPersistence(currentLoadOrder).map<IPersistenceLoadOrderEntry>((entry) => {
     entry.isSelected = toggle;
     return entry;
   });

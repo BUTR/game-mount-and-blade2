@@ -1,8 +1,12 @@
-import { actions, selectors, types, util } from 'vortex-api';
-import { BannerlordModuleManager, NativeLauncherManager, types as vetypes } from '@butr/vortexextensionnative';
+import { actions, log, selectors, types, util } from 'vortex-api';
+import {
+  allocWithoutOwnership,
+  BannerlordModuleManager,
+  NativeLauncherManager,
+  types as vetypes,
+} from '@butr/vortexextensionnative';
 import path from 'path';
-import { Dirent } from 'node:fs';
-import { FileHandle, open, readdir, readFile, writeFile } from 'node:fs/promises';
+import { FileHandle, open, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { vortexStoreToLibraryStore } from './utils';
 import { actionsLauncher } from './actions';
 import { hasPersistentBannerlordMods, hasPersistentLoadOrder, hasSessionWithBannerlord } from '../vortex';
@@ -170,7 +174,7 @@ export class VortexLauncherManager {
   /**
    * Calls LauncherManager's installModule and converts the result to Vortex data
    */
-  public installModule = async (
+  public installModuleAsync = async (
     files: string[],
     destinationPath: string,
     archivePath?: string
@@ -230,8 +234,8 @@ export class VortexLauncherManager {
           modName = result.instructions
             .filter((x) => x.moduleInfo !== undefined)
             .filter((value, index, self) => self.indexOf(value) === index)
-            .map((x) => x.moduleInfo!)
-            .map((x) => `* ${x.name} (${x.id})`)
+            .map<vetypes.ModuleInfoExtended>((x) => x.moduleInfo!)
+            .map<string>((x) => `* ${x.name} (${x.id})`)
             .join('\n ');
         }
 
@@ -358,7 +362,8 @@ Warning! This can lead to issues!`,
   private setGameParametersAsync = (_executable: string, gameParameters: string[]): Promise<void> => {
     const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
 
-    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(this.api.getState());
+    const state = this.api.getState();
+    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
     const cliTools = Object.values(discovery?.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
     const batchedActions = cliTools.map((tool) =>
       actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
@@ -484,23 +489,18 @@ Warning! This can lead to issues!`,
     length: number
   ): Promise<Uint8Array | null> => {
     try {
-      if (length === -1) {
-        const buffer = new Uint8Array(await readFile(filePath));
-        if (offset === 0) {
-          return buffer;
+      let fileHandle: FileHandle | null = null;
+      try {
+        fileHandle = await open(filePath, 'r');
+        if (length === -1) {
+          const stats = await fileHandle.stat();
+          length = stats.size;
         }
-        return buffer.slice(offset);
-      }
-      if (length > 0) {
-        let fileHandle: FileHandle | null = null;
-        try {
-          fileHandle = await open(filePath, 'r');
-          const buffer = new Uint8Array(Buffer.alloc(length));
-          await fileHandle.read(buffer, 0, length, offset);
-          return buffer;
-        } finally {
-          await fileHandle?.close();
-        }
+        const buffer = allocWithoutOwnership(length) ?? new Uint8Array(length);
+        await fileHandle.read(buffer, 0, length, offset);
+        return buffer;
+      } finally {
+        await fileHandle?.close();
       }
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
@@ -513,7 +513,11 @@ Warning! This can lead to issues!`,
    */
   private writeFileContentAsync = async (filePath: string, data: Uint8Array): Promise<void> => {
     try {
-      await writeFile(filePath, data);
+      if (data === null) {
+        await rm(filePath);
+      } else {
+        await writeFile(filePath, data);
+      }
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error writing file content'), err);
@@ -524,8 +528,8 @@ Warning! This can lead to issues!`,
    */
   private readDirectoryFileListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
-      const dirs: Dirent[] = await readdir(directoryPath, { withFileTypes: true });
-      return dirs.filter((x: Dirent) => x.isFile()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+      const dirs = await readdir(directoryPath, { withFileTypes: true });
+      return dirs.filter((x) => x.isFile()).map<string>((x) => path.join(directoryPath, x.name));
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory file list'), err);
@@ -537,8 +541,8 @@ Warning! This can lead to issues!`,
    */
   private readDirectoryListAsync = async (directoryPath: string): Promise<string[] | null> => {
     try {
-      const dirs: Dirent[] = await readdir(directoryPath, { withFileTypes: true });
-      return dirs.filter((x: Dirent) => x.isDirectory()).map<string>((x: Dirent) => path.join(directoryPath, x.name));
+      const dirs = await readdir(directoryPath, { withFileTypes: true });
+      return dirs.filter((x) => x.isDirectory()).map<string>((x) => path.join(directoryPath, x.name));
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory list'), err);
@@ -586,7 +590,6 @@ Warning! This can lead to issues!`,
   private getOptionsAsync = (): Promise<vetypes.LauncherOptions> => {
     const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
     const betaSorting = getBetaSortingFromSettings(this.api, profile.id) ?? false;
-
     return Promise.resolve({
       betaSorting: betaSorting,
     });

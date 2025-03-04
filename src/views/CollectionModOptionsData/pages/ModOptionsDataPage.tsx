@@ -6,7 +6,7 @@ import { GlobalSettings, Placeholder, SpecialSettings } from '../components';
 import { ICollectionFeatureProps } from '../../types';
 import { useLocalization } from '../../../localization';
 import {
-  getGlobalSettings,
+  getGlobalSettingsAsync,
   getSpecialSettings,
   ModOptionsEntry,
   ModOptionsStorage,
@@ -35,7 +35,7 @@ export const ModOptionsDataPage = (props: ModOptionsDataPageProps): JSX.Element 
     return collectionMod?.attributes?.collection?.includedModOptions ?? [];
   });
 
-  const toggleEntry = useCallback(
+  const toggleEntryAsync = useCallback(
     async (newValue: boolean, entry: ModOptionsEntry) => {
       const newEntries: PersistentModOptionsEntry[] = newValue
         ? [...includedModOptions, { ...entry, contentBase64: await readSettingsContentAsync(entry) }]
@@ -49,24 +49,24 @@ export const ModOptionsDataPage = (props: ModOptionsDataPageProps): JSX.Element 
     return includedModOptions.some((x) => x.name === entry.name);
   };
 
-  const setSettings = async (): Promise<void> => {
+  const setSettingsAsync = async (): Promise<void> => {
     setSpecialSettings(getSpecialSettings());
-    setGlobalSettings(await getGlobalSettings());
+    setGlobalSettings(await getGlobalSettingsAsync());
   };
 
   useEffect(() => {
-    setSettings().catch(() => {});
+    void setSettingsAsync();
   }, []);
 
   return Object.values(globalSettings).length ? (
     <div style={{ overflow: 'auto' }}>
       <h4>{t('Mod Configuration Options')}</h4>
       <p>{t('This is a snapshot of the settings that can be included within the collection.')}</p>
-      <tooltip.Button tooltip={''} onClick={async () => await setSettings()}>
+      <tooltip.Button tooltip={''} onClick={async () => await setSettingsAsync()}>
         {t('Reload')}
       </tooltip.Button>
-      <SpecialSettings settings={specialSettings} isToggled={isToggled} toggleEntry={toggleEntry} />
-      <GlobalSettings settings={globalSettings} isToggled={isToggled} toggleEntry={toggleEntry} />
+      <SpecialSettings settings={specialSettings} isToggled={isToggled} toggleEntry={toggleEntryAsync} />
+      <GlobalSettings settings={globalSettings} isToggled={isToggled} toggleEntry={toggleEntryAsync} />
     </div>
   ) : (
     <Placeholder />
