@@ -133,6 +133,3 @@ dist
 *.7z
 *.rar
 *.zip
-
-!typings/*.tgz
-!butr-vortexextensionnative-2.0.4.tgz
