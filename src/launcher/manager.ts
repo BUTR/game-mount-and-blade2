@@ -537,6 +537,10 @@ Warning! This can lead to issues!`,
         await fileHandle?.close();
       }
     } catch (err) {
+      // ENOENT means that a file or folder is not found, it's an expected error
+      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+        return null;
+      }
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading file content'), err);
     }
@@ -553,6 +557,10 @@ Warning! This can lead to issues!`,
         await writeFile(filePath, data);
       }
     } catch (err) {
+      // ENOENT means that a file or folder is not found, it's an expected error
+      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+        return;
+      }
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error writing file content'), err);
     }
@@ -566,6 +574,10 @@ Warning! This can lead to issues!`,
       const res = dirs.filter((x) => x.isFile()).map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
+      // ENOENT means that a file or folder is not found, it's an expected error
+      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+        return null;
+      }
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory file list'), err);
     }
@@ -580,6 +592,10 @@ Warning! This can lead to issues!`,
       const res = dirs.filter((x) => x.isDirectory()).map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
+      // ENOENT means that a file or folder is not found, it's an expected error
+      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+        return null;
+      }
       const { localize: t } = LocalizationManager.getInstance(this.api);
       this.api.showErrorNotification?.(t('Error reading directory list'), err);
     }
