@@ -36,7 +36,7 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
     const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
     if (subModsIds.has(moduleId)) {
       arr.push({
-        id: mod.attributes['modId'],
+        id: mod.id,
         source: mod.attributes['source'],
         hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
         hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
