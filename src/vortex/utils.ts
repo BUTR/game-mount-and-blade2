@@ -106,7 +106,7 @@ export const setupAsync = async (api: types.IExtensionApi, discovery: types.IDis
   await prepareForModdingAsync(api, discovery);
 };
 
-export const requiresLauncher = (store?: string): RequiresLauncherResult => {
+export const requiresLauncher = (store?: string): RequiresLauncherResult | null => {
   if (isStoreXbox(store)) {
     return {
       launcher: `xbox`,
@@ -121,7 +121,7 @@ export const requiresLauncher = (store?: string): RequiresLauncherResult => {
     };
   }
   // The API doesn't expect undefined, but it's allowed
-  return undefined!;
+  return null;
 };
 
 export const findGameAsync = async (): Promise<types.IGameStoreEntry> => {
