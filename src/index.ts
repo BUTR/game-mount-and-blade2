@@ -2,6 +2,7 @@
 import Bluebird, { method as toBluebird } from 'bluebird';
 import { log, selectors, types } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
+import * as semver from 'semver';
 import path from 'path';
 import { GAME_ID } from './common';
 import {
@@ -52,6 +53,7 @@ import {
   installedMod,
   isModTypeModule,
 } from './vortex';
+import { LocalizationManager } from './localization';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings
@@ -274,6 +276,26 @@ const main = (context: types.IExtensionContext): boolean => {
   );
   */
 
+  const checkVortexVersion = async (): Promise<void> => {
+    const state = context.api.getState();
+
+    const vortexVersion = semver.coerce(state.app.appVersion)!.version;
+    if (!semver.satisfies(vortexVersion, '<=1.13.3') && !semver.satisfies(vortexVersion, '>=1.14.0')) {
+      const { localize: t } = LocalizationManager.getInstance(context.api);
+
+      await context.api.showDialog?.(
+        'info',
+        t(`Unsupported Vortex Version!`),
+        {
+          text: t(
+            `You are using an unsupported Vortex version! Either upgrade to 1.14.0 or higher or downgrade to 1.13.3 or lower!`
+          ),
+        },
+        [{ label: t('Close') }]
+      );
+    }
+  };
+
   // Register Callbacks
   context.once(() => {
     context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
@@ -282,6 +304,8 @@ const main = (context: types.IExtensionContext): boolean => {
       if (GAME_ID !== gameId) {
         return;
       }
+
+      await checkVortexVersion();
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
