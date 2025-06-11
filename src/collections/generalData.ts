@@ -1,8 +1,8 @@
 import { selectors, types } from 'vortex-api';
 import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
-import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrder } from './loadOrder';
+import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrderAsync } from './loadOrder';
 import { CollectionParseError } from './errors';
-import { collectionInstallBLSE } from './utils';
+import { collectionInstallBLSEAsync } from './utils';
 import { GAME_ID } from '../common';
 import { isModActive } from '../vortex';
 import { findBLSEMod } from '../blse';
@@ -13,7 +13,7 @@ import { IBannerlordModStorage, VortexLoadOrderStorage } from '../types';
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const genCollectionGeneralData = (
+export const genCollectionGeneralDataAsync = (
   profile: types.IProfile,
   loadOrder: VortexLoadOrderStorage,
   includedMods: IBannerlordModStorage
@@ -32,7 +32,7 @@ export const genCollectionGeneralData = (
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const parseCollectionGeneralData = async (
+export const parseCollectionGeneralDataAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionData
 ): Promise<void> => {
@@ -50,18 +50,18 @@ export const parseCollectionGeneralData = async (
   const { hasBLSE } = collection;
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const modules = launcherManager.getAllModules();
-  await parseCollectionGeneralLoadOrder(api, modules, collection);
+  const modules = await launcherManager.getAllModulesAsync();
+  await parseCollectionGeneralLoadOrderAsync(api, modules, collection);
 
   if (hasBLSE) {
-    await collectionInstallBLSE(api);
+    await collectionInstallBLSEAsync(api);
   }
 };
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const cloneCollectionGeneralData = (
+export const cloneCollectionGeneralDataAsync = (
   api: types.IExtensionApi,
   gameId: string,
   collection: ICollectionData,

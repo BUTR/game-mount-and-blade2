@@ -1,7 +1,7 @@
 import { actions, selectors, types, util } from 'vortex-api';
 import { BannerlordModuleManager } from '@butr/vortexextensionnative';
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from '../common';
-import { downloadAndEnableLatestModVersion, hasPersistentBannerlordMods } from '../vortex';
+import { downloadAndEnableLatestModVersionAsync, hasPersistentBannerlordMods } from '../vortex';
 import { LocalizationManager } from '../localization';
 import { IBannerlordMod, IBannerlordModStorage } from '../types';
 
@@ -75,7 +75,7 @@ export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
   return blseMods.filter((x) => isModActive(profile, x)).length >= 1;
 };
 
-export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
+export const deployBLSEAsync = async (api: types.IExtensionApi): Promise<void> => {
   await util.toPromise((cb) => api.events.emit('deploy-mods', cb));
   await util.toPromise((cb) => api.events.emit('start-quick-discovery', () => cb(null)));
 
@@ -86,7 +86,7 @@ export const deployBLSE = async (api: types.IExtensionApi): Promise<void> => {
   }
 };
 
-export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
+export const downloadBLSEAsync = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.dismissNotification?.('blse-missing');
@@ -101,10 +101,10 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boole
   await api.ext?.ensureLoggedIn?.();
 
   try {
-    await downloadAndEnableLatestModVersion(api, BLSE_MOD_ID);
-    await downloadAndEnableLatestModVersion(api, HARMONY_MOD_ID);
+    await downloadAndEnableLatestModVersionAsync(api, BLSE_MOD_ID);
+    await downloadAndEnableLatestModVersionAsync(api, HARMONY_MOD_ID);
 
-    await deployBLSE(api);
+    await deployBLSEAsync(api);
   } catch (err) {
     api.showErrorNotification?.(t('Failed to download/install BLSE'), err);
     util.opn(BLSE_URL).catch(() => null);
@@ -113,7 +113,7 @@ export const downloadBLSE = async (api: types.IExtensionApi, shouldUpdate: boole
   }
 };
 
-export const downloadHarmony = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
+export const downloadHarmonyAsync = async (api: types.IExtensionApi, shouldUpdate: boolean = false): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.dismissNotification?.('harmony-missing');
@@ -128,10 +128,10 @@ export const downloadHarmony = async (api: types.IExtensionApi, shouldUpdate: bo
   await api.ext?.ensureLoggedIn?.();
 
   try {
-    await downloadAndEnableLatestModVersion(api, BLSE_MOD_ID);
-    await downloadAndEnableLatestModVersion(api, HARMONY_MOD_ID);
+    await downloadAndEnableLatestModVersionAsync(api, BLSE_MOD_ID);
+    await downloadAndEnableLatestModVersionAsync(api, HARMONY_MOD_ID);
 
-    await deployBLSE(api);
+    await deployBLSEAsync(api);
   } catch (err) {
     api.showErrorNotification?.(t('Failed to download/install Harmony'), err);
     util.opn(BLSE_URL).catch(() => null);

@@ -8,10 +8,11 @@ import {
 import { isStoreSteam, isStoreXbox } from './store';
 import { addBLSETools, addModdingKitTool, addOfficialCLITool, addOfficialLauncherTool } from './tools';
 import { nameof } from '../nameof';
-import { recommendBLSE } from '../blse';
+import { recommendBLSEAsync } from '../blse';
 import { VortexLauncherManager } from '../launcher';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from '../common';
-import { IStatePersistent, IStateSession } from '../types';
+import { IBannerlordModStorage, IStatePersistent, IStateSession, VortexLoadOrderStorage } from '../types';
+import { LocalizationManager } from '../localization';
 
 type HasSession = {
   session: types.ISession;
@@ -24,6 +25,23 @@ type HasSettings = {
 type RequiresLauncherResult = {
   launcher: string;
   addInfo?: unknown;
+};
+
+export const getPersistentLoadOrder = (
+  statePersistent: IStatePersistent,
+  profileId: string | undefined
+): VortexLoadOrderStorage => {
+  if (!hasPersistentLoadOrder(statePersistent) || profileId === undefined) {
+    return [];
+  }
+  return statePersistent.loadOrder[profileId] ?? [];
+};
+
+export const getPersistentBannerlordMods = (statePersistent: IStatePersistent): IBannerlordModStorage => {
+  if (!hasPersistentBannerlordMods(statePersistent)) {
+    return {};
+  }
+  return statePersistent.mods[GAME_ID];
 };
 
 export const hasPersistentLoadOrder = (
@@ -49,21 +67,22 @@ export const hasSettingsInterfacePrimaryTool = (
 ): settings is ISettingsInterfaceWithPrimaryTool =>
   nameof<ISettingsInterfaceWithPrimaryTool>('primaryTool') in settings;
 
-const launchGameStore = async (api: types.IExtensionApi, store: string): Promise<void> => {
-  await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch(() => {
-    /* ignore error */
+const launchGameStoreAsync = async (api: types.IExtensionApi, store: string): Promise<void> => {
+  await util.GameStoreHelper.launchGameStore(api, store, undefined, true).catch((err) => {
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t('Failed to launch the game store'), err);
   });
 };
 
-const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
+const prepareForModdingAsync = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
-  await recommendBLSE(api, discovery);
+  await recommendBLSEAsync(api, discovery);
 
   if (isStoreSteam(discovery.store)) {
-    await launchGameStore(api, discovery.store);
+    await launchGameStoreAsync(api, discovery.store);
   }
 
   if (discovery.store !== undefined) {
@@ -73,7 +92,7 @@ const prepareForModding = async (api: types.IExtensionApi, discovery: types.IDis
   }
 };
 
-export const setup = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
+export const setupAsync = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
@@ -84,10 +103,10 @@ export const setup = async (api: types.IExtensionApi, discovery: types.IDiscover
   addModdingKitTool(api, discovery);
   addBLSETools(api, discovery);
 
-  await prepareForModding(api, discovery);
+  await prepareForModdingAsync(api, discovery);
 };
 
-export const requiresLauncher = (store?: string): RequiresLauncherResult => {
+export const requiresLauncher = (store?: string): RequiresLauncherResult | null => {
   if (isStoreXbox(store)) {
     return {
       launcher: `xbox`,
@@ -102,9 +121,9 @@ export const requiresLauncher = (store?: string): RequiresLauncherResult => {
     };
   }
   // The API doesn't expect undefined, but it's allowed
-  return undefined!;
+  return null;
 };
 
-export const findGame = async (): Promise<types.IGameStoreEntry> => {
+export const findGameAsync = async (): Promise<types.IGameStoreEntry> => {
   return await util.GameStoreHelper.findByAppId([EPICAPP_ID, STEAMAPP_ID.toString(), ...GOG_IDS, XBOX_ID]);
 };

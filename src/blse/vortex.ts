@@ -7,9 +7,9 @@ import {
   DeployModResult,
   DeployModStatus,
   getBinaryPath,
-  hasPersistentBannerlordMods,
-  installBLSE,
-  installHarmony,
+  getPersistentBannerlordMods,
+  installBLSEAsync,
+  installHarmonyAsync,
 } from '../vortex';
 import { BLSE_CLI_EXE } from '../common';
 import { getPathExistsAsync } from '../utils';
@@ -71,10 +71,10 @@ const doBLSEDeploy = (
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        installHarmony(api, profile, harmonyDeployResult)
+        installHarmonyAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(() => {
-            installBLSE(api, profile, blseResult)
+            installBLSEAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -87,10 +87,10 @@ const doBLSEDeploy = (
         if (blseResult.downloadId === undefined) {
           return;
         }
-        installHarmony(api, profile, harmonyDeployResult)
+        installHarmonyAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(() => {
-            installBLSE(api, profile, blseResult)
+            installBLSEAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -100,13 +100,13 @@ const doBLSEDeploy = (
     }
     case DeployModStatus.NOT_ENABLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        installHarmony(api, profile, harmonyDeployResult)
+        installHarmonyAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(() => {
             if (blseResult.modId === undefined) {
               return;
             }
-            installBLSE(api, profile, blseResult)
+            installBLSEAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -125,7 +125,7 @@ const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, resu
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        installHarmony(api, profile, result)
+        installHarmonyAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -140,7 +140,7 @@ const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, resu
         api.events.emit('start-install-download', result.downloadId, {
           allowAutoEnable: true,
         });
-        installHarmony(api, profile, result)
+        installHarmonyAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -149,7 +149,7 @@ const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, resu
     }
     case DeployModStatus.NOT_ENABLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        installHarmony(api, profile, result)
+        installHarmonyAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -159,10 +159,13 @@ const doHarmonyDeploy = (api: types.IExtensionApi, profile: types.IProfile, resu
   }
 };
 
-export const recommendBLSE = async (api: types.IExtensionApi, discovery: types.IDiscoveryResult): Promise<void> => {
+export const recommendBLSEAsync = async (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult
+): Promise<void> => {
   const state = api.getState();
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const mods = getPersistentBannerlordMods(state.persistent);
 
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);

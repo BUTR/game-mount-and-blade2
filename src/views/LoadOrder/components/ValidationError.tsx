@@ -12,7 +12,7 @@ export const ValidationError = (props: ValidationErrorProps): JSX.Element | null
   const invalidEntryList = invalidEntries
     ? invalidEntries
         .filter((inv) => inv.id.toLowerCase() === item.id.toLowerCase())
-        .map((x) => x.reason)
+        .map<string>((x) => x.reason)
         .join('\n')
     : undefined;
   return invalidEntryList !== undefined && invalidEntryList.length ? (

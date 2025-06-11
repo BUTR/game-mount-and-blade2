@@ -1,8 +1,7 @@
-import { fs } from 'vortex-api';
+import { stat } from 'node:fs/promises';
 
 export const getPathExistsAsync = async (path: string): Promise<boolean> => {
-  return await fs
-    .statAsync(path)
+  return await stat(path)
     .then(() => true)
     .catch(() => false);
 };

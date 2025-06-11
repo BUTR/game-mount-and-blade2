@@ -2,12 +2,12 @@ import { selectors, types } from 'vortex-api';
 import { ICollectionData, ICollectionDataWithLegacyData } from './types';
 import { CollectionParseError } from './errors';
 import { GAME_ID, SUB_MODS_IDS } from '../common';
-import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrder } from '../loadOrder';
+import { actionsLoadOrder, orderCurrentLoadOrderByExternalLoadOrderAsync } from '../loadOrder';
 import { VortexLauncherManager } from '../launcher';
 import { PersistenceLoadOrderStorage } from '../types';
 import { hasPersistentBannerlordMods } from '../vortex';
 
-export const parseCollectionLegacyData = async (
+export const parseCollectionLegacyDataAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionData
 ): Promise<void> => {
@@ -15,10 +15,10 @@ export const parseCollectionLegacyData = async (
     return;
   }
 
-  await parseLegacyLoadOrder(api, collection);
+  await parseLegacyLoadOrderAsync(api, collection);
 };
 
-const parseLegacyLoadOrder = async (
+const parseLegacyLoadOrderAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionDataWithLegacyData
 ): Promise<void> => {
@@ -34,7 +34,7 @@ const parseLegacyLoadOrder = async (
   }
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const allModules = launcherManager.getAllModules();
+  const allModules = await launcherManager.getAllModulesAsync();
 
   const suggestedLoadOrderEntries = Object.entries(collection.loadOrder);
   const suggestedLoadOrder = suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>((arr, [id, entry], idx) => {
@@ -58,7 +58,7 @@ const parseLegacyLoadOrder = async (
     return arr;
   }, []);
 
-  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrder(api, allModules, suggestedLoadOrder);
+  const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(api, allModules, suggestedLoadOrder);
 
   api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
 };

@@ -5,11 +5,10 @@ import { MainContext, selectors, tooltip, types } from 'vortex-api';
 import { LoadOrderEditInfo, LoadOrderEntry, Placeholder, Requirements } from '../components';
 import { IBannerlordModStorage, PersistenceLoadOrderStorage, VortexLoadOrderStorage } from '../../../types';
 import { ICollectionFeatureProps } from '../../types';
-import { getCompatibilityScores, IModuleCompatibilityInfoCache } from '../../../butr';
-import { genCollectionGeneralData } from '../../../collections';
+import { getCompatibilityScoresAsync, IModuleCompatibilityInfoCache } from '../../../butr';
+import { genCollectionGeneralDataAsync } from '../../../collections';
 import { useLocalization } from '../../../localization';
-import { hasPersistentBannerlordMods, hasPersistentLoadOrder } from '../../../vortex';
-import { useLauncher } from '../../../launcher';
+import { getPersistentBannerlordMods, getPersistentLoadOrder } from '../../../vortex';
 
 interface IFromState {
   profile: types.IProfile | undefined;
@@ -26,22 +25,22 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
 
   const { profile, loadOrder, mods } = useSelector(mapState);
 
-  const launcherManager = useLauncher();
+  const context = useContext(MainContext);
 
   useEffect(() => {
-    async function setData(): Promise<void> {
+    const setDataAsync = async (): Promise<void> => {
       if (!profile) return;
-      const data = await genCollectionGeneralData(profile, loadOrder, mods);
+      const data = await genCollectionGeneralDataAsync(profile, loadOrder, mods);
       setHasBLSE(data.hasBLSE);
       setPersistentLoadOrder(data.suggestedLoadOrder);
-    }
-    setData().catch(() => {});
+    };
+    void setDataAsync();
   }, [profile, loadOrder, mods]);
 
   const { localize: t } = useLocalization();
 
   const refreshCompatibilityScores = (): void => {
-    getCompatibilityScores(launcherManager)
+    getCompatibilityScoresAsync(context.api)
       .then((cache) => {
         setCompatibilityInfoCache(cache);
       })
@@ -73,7 +72,7 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
       </p>
       <LoadOrderEditInfo />
       <ListGroup id="collections-load-order-list">
-        {Object.values(persistentLoadOrder).map((entry) => (
+        {Object.values(persistentLoadOrder).map<React.JSX.Element>((entry) => (
           <LoadOrderEntry
             key={entry.id}
             entry={entry}
@@ -90,8 +89,8 @@ export const BannerlordGeneralDataPage = (props: BannerlordGeneralDataPageProps)
 
 const mapState = (state: types.IState): IFromState => {
   const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
-  const mods = hasPersistentBannerlordMods(state.persistent) ? state.persistent.mods.mountandblade2bannerlord : {};
+  const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
+  const mods = getPersistentBannerlordMods(state.persistent);
   return {
     profile,
     loadOrder,

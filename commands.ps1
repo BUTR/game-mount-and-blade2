@@ -3,14 +3,14 @@ param([string]$type, [string]$Configuration = "Release")
 $ErrorActionPreferenceOld = $ErrorActionPreference;
 $ErrorActionPreference = "Stop";
 
-$DeployPath = $type -eq "build-dev" ? "vortex_devel/plugins" : "vortex/plugins"
-$type = $type -eq "build-dev" ? "build" : $type;
+$DeployPath = if ($type -eq "build-dev") {"vortex_devel/plugins"} else {"vortex/plugins"}
+$type = if ($type -eq "build-dev") {"build"} else {$type}
 
 try {
     # Clean
     if ($type -eq "build" -or $type -eq "build-extended" -or $type -eq "build-update" -or $type -eq "clear") {
         Write-Host "Clean";
-        Remove-Item *.tgz, *.7z, dist -Recurse -Force -ErrorAction Ignore;
+        Remove-Item *.7z, dist -Recurse -Force -ErrorAction Ignore;
     }
     # Update @butr/vortexextensionnative from File
     if ($type -eq "build-extended") {

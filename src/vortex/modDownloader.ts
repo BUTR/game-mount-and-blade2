@@ -2,7 +2,10 @@ import { actions, selectors, types, util } from 'vortex-api';
 import { IFileInfo } from '@nexusmods/nexus-api/lib';
 import { GAME_ID } from '../common';
 
-export const downloadAndEnableLatestModVersion = async (api: types.IExtensionApi, modId: number): Promise<void> => {
+export const downloadAndEnableLatestModVersionAsync = async (
+  api: types.IExtensionApi,
+  modId: number
+): Promise<void> => {
   const modFiles = (await api.ext.nexusGetModFiles?.(GAME_ID, modId)) ?? [];
 
   const fileTime = (input: IFileInfo): number => Number.parseInt(input.uploaded_time, 10);

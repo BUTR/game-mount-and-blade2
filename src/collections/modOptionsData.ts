@@ -8,13 +8,13 @@ import {
 } from './types';
 import { hasIncludedModOptions, hasModAttributeCollection } from './utils';
 import { nameof } from '../nameof';
-import { getGlobalSettings, getSpecialSettings, overrideModOptions } from '../modoptions';
+import { getGlobalSettingsAsync, getSpecialSettings, overrideModOptionsAsync } from '../modoptions';
 import { LocalizationManager } from '../localization';
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const genCollectionModOptionsData = (
+export const genCollectionModOptionsDataAsync = (
   api: types.IExtensionApi,
   collectionMod: types.IMod
 ): Promise<ICollectionSettingsData> => {
@@ -34,7 +34,7 @@ export const genCollectionModOptionsData = (
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const cloneCollectionModOptionsData = async (
+export const cloneCollectionModOptionsDataAsync = async (
   api: types.IExtensionApi,
   gameId: string,
   collection: ICollectionData,
@@ -51,7 +51,7 @@ export const cloneCollectionModOptionsData = async (
 
   const includedModOptions = collection.includedModOptions;
 
-  const availableModOptions = Object.values({ ...getSpecialSettings(), ...(await getGlobalSettings()) });
+  const availableModOptions = Object.values({ ...getSpecialSettings(), ...(await getGlobalSettingsAsync()) });
   const availableIncludedModOptions = includedModOptions.filter((modOption) => {
     return availableModOptions.some((iter) => iter.name === modOption.name);
   });
@@ -69,7 +69,7 @@ export const cloneCollectionModOptionsData = async (
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
-export const parseCollectionModOptionsData = async (
+export const parseCollectionModOptionsDataAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionData,
   mod: types.IMod
@@ -106,7 +106,7 @@ A backup of your original Mod Options will be kept and will be restored on colle
     return;
   }
 
-  await overrideModOptions(mod, includedModOptions);
+  await overrideModOptionsAsync(mod, includedModOptions);
 };
 
 const hasModOptionsData = (collection: ICollectionData): collection is ICollectionDataWithSettingsData => {

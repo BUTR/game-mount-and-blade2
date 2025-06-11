@@ -1,5 +1,6 @@
-import { fs, selectors, types } from 'vortex-api';
+import { selectors, types } from 'vortex-api';
 import path from 'path';
+import { statSync } from 'node:fs';
 import { isStoreStandard, isStoreXbox } from './store';
 import {
   BANNERLORD_EXE,
@@ -38,7 +39,7 @@ export const getBannerlordMainExe = (discoveryPath: string | undefined, api: typ
   if (discovery.store === undefined && discoveryPath !== undefined) {
     // Brute force the detection by manually checking the paths.
     try {
-      fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
     } catch (err) {
       return standard();
@@ -72,7 +73,7 @@ export const getBannerlordToolExe = (
   if (discovery.store === undefined && discoveryPath !== undefined) {
     // Brute force the detection by manually checking the paths.
     try {
-      fs.statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
     } catch (err) {
       return standard();

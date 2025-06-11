@@ -19,7 +19,7 @@ export const GlobalSettings = (props: GlobalSettingsProps): JSX.Element => {
     <div>
       <h5>{t('Global Options')}</h5>
       <ListGroup id="collections-load-order-list">
-        {Object.values(settings).map((entry) => (
+        {Object.values(settings).map<React.JSX.Element>((entry) => (
           <ModOptionsEntryView key={entry.name} entry={entry} isToggled={isToggled} toggleEntry={toggleEntry} />
         ))}
       </ListGroup>

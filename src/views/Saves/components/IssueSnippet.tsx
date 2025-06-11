@@ -13,7 +13,7 @@ export const IssueSnippet = (props: IssueSnippetProps): JSX.Element => {
       <>
         <p>{issueHeading}</p>
         <ul>
-          {issue.map((object, i) => (
+          {issue.map<React.JSX.Element>((object, i) => (
             <li key={i}>{object}</li>
           ))}
         </ul>
