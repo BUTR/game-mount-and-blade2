@@ -1,15 +1,15 @@
 import { types } from 'vortex-api';
-import { reloadSave } from './utils';
+import { reloadSaveAsync } from './utils';
+import { LocalizationManager } from '../localization';
 
 /**
  * Event function, be careful
  */
-export const gamemodeActivatedSave = (api: types.IExtensionApi): Promise<void> => {
+export const gamemodeActivatedSaveAsync = async (api: types.IExtensionApi): Promise<void> => {
   try {
-    reloadSave(api);
+    await reloadSaveAsync(api);
   } catch (err) {
-    api.showErrorNotification?.('Failed to reload the currect save file', err);
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t(''), err);
   }
-
-  return Promise.resolve();
 };

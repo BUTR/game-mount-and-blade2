@@ -3,11 +3,11 @@ import { tooltip, util } from 'vortex-api';
 import { useLocalization } from '../../../localization';
 
 export type LoadOrderInfoPanelProps = {
-  refresh: () => void;
+  refreshAsync: () => Promise<void>;
 };
 
 export const LoadOrderInfoPanel = (props: LoadOrderInfoPanelProps): JSX.Element => {
-  const { refresh } = props;
+  const { refreshAsync } = props;
 
   const { localize: t } = useLocalization();
 
@@ -20,10 +20,11 @@ export const LoadOrderInfoPanel = (props: LoadOrderInfoPanelProps): JSX.Element 
       NL: '\n',
     }
   );
+  // TODO: Check refreshAsync
   return (
     <>
       <p>
-        <tooltip.Button tooltip={hint} onClick={refresh}>
+        <tooltip.Button tooltip={hint} onClick={refreshAsync}>
           {t('Update Compatibility Score')}
         </tooltip.Button>
       </p>
@@ -64,7 +65,7 @@ export const LoadOrderInfoPanel = (props: LoadOrderInfoPanelProps): JSX.Element 
           <ul>
             <li>
               {t(
-                `The load order reflected here will only be loaded if you run the game through Vortex's default starter for Bannerlord. ` +
+                `The load order reflected here will only be loaded if you run the game through Vortex's default starter for Bannerlord or BLSE. ` +
                   `If you have a different tool set as the primary starter, please unassign it in the tools dashlet on the dashboard. `
               )}
             </li>

@@ -1,8 +1,11 @@
-import { fs, selectors, types } from 'vortex-api';
+import { selectors, types } from 'vortex-api';
+import { Translation } from 'react-i18next';
 import path from 'path';
+import { readFile, writeFile } from 'node:fs/promises';
 import { GAME_ID, LOAD_ORDER_SUFFIX } from '../common';
 import { PersistenceLoadOrderStorage } from '../types';
 import { filterEntryWithInvalidId } from '../utils';
+import { LocalizationManager } from '../localization';
 
 const getLoadOrderFileName = (profileId: string): string => {
   return `${profileId}${LOAD_ORDER_SUFFIX}`;
@@ -17,16 +20,18 @@ const getLoadOrderFilePath = (api: types.IExtensionApi, loadOrderFileName: strin
  * @param api
  * @returns
  */
-export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderStorage => {
+export const readLoadOrderAsync = async (api: types.IExtensionApi): Promise<PersistenceLoadOrderStorage> => {
   try {
     const profile: types.IProfile | undefined = selectors.activeProfile(api.getState());
     const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
-    const fileContents = fs.readFileSync(loFilePath, 'utf8');
+    const fileContents = await readFile(loFilePath, 'utf8');
 
     const loadOrder: PersistenceLoadOrderStorage = JSON.parse(fileContents);
     return loadOrder.filter((x) => x !== undefined && filterEntryWithInvalidId(x));
-  } catch {
+  } catch (err) {
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t('Failed to read load order'), err);
     return [];
   }
 };
@@ -36,14 +41,17 @@ export const readLoadOrder = (api: types.IExtensionApi): PersistenceLoadOrderSto
  * @param api
  * @returns
  */
-export const writeLoadOrder = (api: types.IExtensionApi, loadOrder: PersistenceLoadOrderStorage): void => {
+export const writeLoadOrderAsync = async (
+  api: types.IExtensionApi,
+  loadOrder: PersistenceLoadOrderStorage
+): Promise<void> => {
   try {
     const profile: types.IProfile | undefined = selectors.activeProfile(api.getState());
     const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
-    //await fs.ensureDirWritableS(path.dirname(loFilePath));
-    fs.writeFileSync(loFilePath, JSON.stringify(Object.values(loadOrder), null, 2), { encoding: 'utf8' });
-  } catch {
-    /* empty */
+    await writeFile(loFilePath, JSON.stringify(Object.values(loadOrder), null, 2), { encoding: 'utf8' });
+  } catch (err) {
+    const { localize: t } = LocalizationManager.getInstance(api);
+    api.showErrorNotification?.(t('Failed to save load order'), err);
   }
 };

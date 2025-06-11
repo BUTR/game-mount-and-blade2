@@ -1,8 +1,8 @@
 import { actions, types } from 'vortex-api';
-import { deployBLSE, downloadBLSE, downloadHarmony } from '../blse';
-import { deployMod, DeployModResult, DeployModStatus } from '../vortex';
+import { deployBLSEAsync, downloadBLSEAsync, downloadHarmonyAsync } from '../blse';
+import { deployModAsync, DeployModResult, DeployModStatus } from '../vortex';
 
-export const installHarmony = async (
+export const installHarmonyAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult
@@ -11,11 +11,11 @@ export const installHarmony = async (
     case DeployModStatus.OK:
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
-      await downloadHarmony(api);
+      await downloadHarmonyAsync(api);
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
-      await deployMod(api);
+      await deployModAsync(api);
       return;
     }
     case DeployModStatus.NOT_ENABLED: {
@@ -23,13 +23,13 @@ export const installHarmony = async (
         return;
       }
       api.store?.dispatch(actions.setModEnabled(profile.id, result.modId, true));
-      await deployMod(api);
+      await deployModAsync(api);
       return;
     }
   }
 };
 
-export const installBLSE = async (
+export const installBLSEAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult
@@ -38,11 +38,11 @@ export const installBLSE = async (
     case DeployModStatus.OK:
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
-      await downloadBLSE(api);
+      await downloadBLSEAsync(api);
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
-      await deployBLSE(api);
+      await deployBLSEAsync(api);
       return;
     }
     case DeployModStatus.NOT_ENABLED: {
@@ -50,7 +50,7 @@ export const installBLSE = async (
         return;
       }
       api.store?.dispatch(actions.setModEnabled(profile.id, result.modId, true));
-      await deployBLSE(api);
+      await deployBLSEAsync(api);
       return;
     }
   }

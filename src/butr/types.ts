@@ -23,6 +23,10 @@ export interface IModuleCompatibilityInfoCache {
   [moduleId: string]: IModuleCompatibilityInfo;
 }
 
+export interface IModuleObfuscationCacheInfoCache {
+  [moduleId: string]: boolean;
+}
+
 export interface IModuleCompatibilityInfo {
   score: number;
   recommendedScore: number | null;

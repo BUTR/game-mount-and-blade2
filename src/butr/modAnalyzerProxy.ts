@@ -1,8 +1,9 @@
-import { log } from 'vortex-api';
+import { types } from 'vortex-api';
 import { request, RequestOptions } from 'https';
 import { BUTR_HOST } from './const';
 import { IModAnalyzerRequestQuery, IModAnalyzerResult } from './types';
 import { version } from '../../package.json';
+import { LocalizationManager } from '../localization';
 
 export class ModAnalyzerProxy {
   private options: RequestOptions;
@@ -20,7 +21,7 @@ export class ModAnalyzerProxy {
     };
   }
 
-  public async analyze(query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
+  public async analyzeAsync(api: types.IExtensionApi, query: IModAnalyzerRequestQuery): Promise<IModAnalyzerResult> {
     return new Promise((resolve, reject) => {
       const req = request(this.options, (res) => {
         let body = Buffer.from([]);
@@ -35,7 +36,8 @@ export class ModAnalyzerProxy {
               const parsed = JSON.parse(textual);
               resolve(parsed);
             } catch (err) {
-              log('error', 'failed to parse butr mod analyzer response', textual);
+              const { localize: t } = LocalizationManager.getInstance(api);
+              api.showErrorNotification?.(t('Failed to get compatibility scores!'), err);
               reject(err);
             }
           });

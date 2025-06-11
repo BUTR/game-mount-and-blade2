@@ -2,6 +2,7 @@
 import Bluebird, { method as toBluebird } from 'bluebird';
 import { log, selectors, types } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
+import * as semver from 'semver';
 import path from 'path';
 import { GAME_ID } from './common';
 import {
@@ -17,29 +18,42 @@ import { IAddedFiles, IBannerlordModStorage } from './types';
 import { reducerSession, reducerSettings } from './react';
 import { actionsSettings } from './settings';
 import {
-  cloneCollectionGeneralData,
-  cloneCollectionModOptionsData,
-  genCollectionGeneralData,
-  genCollectionModOptionsData,
+  cloneCollectionGeneralDataAsync,
+  cloneCollectionModOptionsDataAsync,
+  genCollectionGeneralDataAsync,
+  genCollectionModOptionsDataAsync,
   hasContextWithCollectionFeature,
   ICollectionData,
-  parseCollectionGeneralData,
-  parseCollectionLegacyData,
-  parseCollectionModOptionsData,
-  willRemoveModCollections,
+  parseCollectionGeneralDataAsync,
+  parseCollectionLegacyDataAsync,
+  parseCollectionModOptionsDataAsync,
+  willRemoveModCollectionsAsync,
 } from './collections';
-import { didDeployLoadOrder, gamemodeActivatedLoadOrder, LoadOrderManager, toggleLoadOrder } from './loadOrder';
-import { didDeployBLSE, didPurgeBLSE, getInstallPathBLSE, installBLSE, isModTypeBLSE, testBLSE } from './blse';
-import { VortexLauncherManager } from './launcher';
-import { gamemodeActivatedSave } from './save';
 import {
-  addedFilesEvent,
+  didDeployLoadOrderAsync,
+  gamemodeActivatedLoadOrderAsync,
+  LoadOrderManager,
+  toggleLoadOrderAsync,
+} from './loadOrder';
+import {
+  didDeployBLSEAsync,
+  didPurgeBLSEAsync,
+  getInstallPathBLSE,
+  installBLSEAsync,
+  isModTypeBLSE,
+  testBLSEAsync,
+} from './blse';
+import { VortexLauncherManager } from './launcher';
+import { gamemodeActivatedSaveAsync } from './save';
+import {
+  addedFilesEventAsync,
   getInstallPathModule,
-  hasPersistentBannerlordMods,
-  hasPersistentLoadOrder,
+  getPersistentBannerlordMods,
+  getPersistentLoadOrder,
   installedMod,
   isModTypeModule,
 } from './vortex';
+import { LocalizationManager } from './localization';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings
@@ -79,10 +93,8 @@ const main = (context: types.IExtensionContext): boolean => {
 
         const state = context.api.getState();
         const profile: types.IProfile | undefined = selectors.activeProfile(state);
-        const loadOrder = hasPersistentLoadOrder(state.persistent) ? state.persistent.loadOrder[profile?.id] ?? [] : [];
-        const mods = hasPersistentBannerlordMods(state.persistent)
-          ? state.persistent.mods.mountandblade2bannerlord
-          : {};
+        const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
+        const mods = getPersistentBannerlordMods(state.persistent);
 
         const includedMods = Object.values(mods)
           .filter((mod) => includedModIds.includes(mod.id))
@@ -91,22 +103,22 @@ const main = (context: types.IExtensionContext): boolean => {
             return map;
           }, {});
 
-        return await genCollectionGeneralData(profile, loadOrder, includedMods);
+        return await genCollectionGeneralDataAsync(profile, loadOrder, includedMods);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, _mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await parseCollectionLegacyData(context.api, collection);
-        await parseCollectionGeneralData(context.api, collection);
+        await parseCollectionLegacyDataAsync(context.api, collection);
+        await parseCollectionGeneralDataAsync(context.api, collection);
       },
       /*clone:*/
       async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
-        await cloneCollectionGeneralData(context.api, gameId, collection, from, to);
+        await cloneCollectionGeneralDataAsync(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
         return t(`Requirements & Load Order`);
@@ -123,21 +135,21 @@ const main = (context: types.IExtensionContext): boolean => {
         if (GAME_ID !== gameId) {
           return {};
         }
-        return await genCollectionModOptionsData(context.api, mod);
+        return await genCollectionModOptionsDataAsync(context.api, mod);
       },
       /*parse:*/ async (gameId: string, collection: ICollectionData, mod: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await parseCollectionModOptionsData(context.api, collection, mod);
+        await parseCollectionModOptionsDataAsync(context.api, collection, mod);
       },
       /*clone:*/ async (gameId: string, collection: ICollectionData, from: types.IMod, to: types.IMod) => {
         if (GAME_ID !== gameId) {
           return;
         }
 
-        await cloneCollectionModOptionsData(context.api, gameId, collection, from, to);
+        await cloneCollectionModOptionsDataAsync(context.api, gameId, collection, from, to);
       },
       /*title:*/ (t: TFunction) => {
         return t(`Mod Options`);
@@ -161,8 +173,8 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerInstaller(
     /*id:*/ 'bannerlord-blse-installer',
     /*priority:*/ 30,
-    /*testSupported:*/ toBluebird(testBLSE),
-    /*install:*/ toBluebird((files: string[]) => installBLSE(context.api, files))
+    /*testSupported:*/ toBluebird(testBLSEAsync),
+    /*install:*/ toBluebird((files: string[]) => installBLSEAsync(context.api, files))
   );
   context.registerModType(
     /*id:*/ 'bannerlord-blse',
@@ -190,7 +202,7 @@ const main = (context: types.IExtensionContext): boolean => {
         archivePath?: string
       ) => {
         const launcherManager = VortexLauncherManager.getInstance(context.api);
-        return launcherManager.installModule(files, destinationPath, archivePath);
+        return launcherManager.installModuleAsync(files, destinationPath, archivePath);
       }
     )
   );
@@ -216,7 +228,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*titleOrProps?:*/ `Auto Sort`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
       const launcherManager = VortexLauncherManager.getInstance(context.api);
-      launcherManager.autoSort();
+      void launcherManager.autoSortAsync();
     },
     /*condition?:*/ isMB2
   );
@@ -228,7 +240,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*options:*/ {},
     /*titleOrProps?:*/ `Enable All Mods`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
-      toggleLoadOrder(context.api, true);
+      void toggleLoadOrderAsync(context.api, true);
     },
     /*condition?:*/ isMB2
   );
@@ -240,7 +252,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*options:*/ {},
     /*titleOrProps?:*/ `Disable All Mods`,
     /*actionOrCondition?:*/ (_instanceIds?: string[]): boolean | void => {
-      toggleLoadOrder(context.api, false);
+      void toggleLoadOrderAsync(context.api, false);
     },
     /*condition?:*/ isMB2
   );
@@ -264,6 +276,26 @@ const main = (context: types.IExtensionContext): boolean => {
   );
   */
 
+  const checkVortexVersion = async (): Promise<void> => {
+    const state = context.api.getState();
+
+    const vortexVersion = semver.coerce(state.app.appVersion)!.version;
+    if (!semver.satisfies(vortexVersion, '<=1.13.3') && !semver.satisfies(vortexVersion, '>=1.14.0')) {
+      const { localize: t } = LocalizationManager.getInstance(context.api);
+
+      await context.api.showDialog?.(
+        'info',
+        t(`Unsupported Vortex Version!`),
+        {
+          text: t(
+            `You are using an unsupported Vortex version! Either upgrade to 1.14.0 or higher or downgrade to 1.13.3 or lower!`
+          ),
+        },
+        [{ label: t('Close') }]
+      );
+    }
+  };
+
   // Register Callbacks
   context.once(() => {
     context.api.setStylesheet('savegame', path.join(__dirname, 'savegame.scss'));
@@ -273,8 +305,10 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await gamemodeActivatedLoadOrder(context.api);
-      await gamemodeActivatedSave(context.api);
+      await checkVortexVersion();
+
+      await gamemodeActivatedLoadOrderAsync(context.api);
+      await gamemodeActivatedSaveAsync(context.api);
     });
 
     context.api.events.on('did-install-mod', (gameId: string, archiveId: string, modId: string): void => {
@@ -292,7 +326,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await addedFilesEvent(context.api, files);
+      await addedFilesEventAsync(context.api, files);
     });
 
     // TODO: listen to profile switch events and check for BLSE
@@ -303,8 +337,8 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await didDeployLoadOrder(context.api);
-      await didDeployBLSE(context.api);
+      await didDeployLoadOrderAsync(context.api);
+      await didDeployBLSEAsync(context.api);
     });
 
     context.api.onAsync('did-purge', async (profileId: string) => {
@@ -314,7 +348,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await didPurgeBLSE(context.api);
+      await didPurgeBLSEAsync(context.api);
     });
 
     context.api.onAsync('will-remove-mod', async (gameId: string, modId: string) => {
@@ -322,7 +356,7 @@ const main = (context: types.IExtensionContext): boolean => {
         return;
       }
 
-      await willRemoveModCollections(context.api, modId);
+      await willRemoveModCollectionsAsync(context.api, modId);
     });
   });
   // Register Callbacks

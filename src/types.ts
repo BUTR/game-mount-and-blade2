@@ -1,6 +1,6 @@
 import { types } from 'vortex-api';
 import { types as vetypes } from '@butr/vortexextensionnative';
-import { AVAILABLE_STORES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from './common';
+import { AVAILABLE_STORES, OBFUSCATED_BINARIES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from './common';
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
 
@@ -18,6 +18,7 @@ export interface IBannerlordModAttributes {
   [SUB_MODS_IDS]?: string[];
   [AVAILABLE_STORES]?: string[];
   [STEAM_BINARIES_ON_XBOX]?: boolean;
+  [OBFUSCATED_BINARIES]?: boolean;
 }
 
 export interface IBannerlordMod extends types.IMod {
@@ -45,7 +46,8 @@ export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
 export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
 export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
-  hasSteamBinariesOnXbox: boolean;
+  hasSteamBinariesOnXbox: boolean | null;
+  hasObfuscatedBinaries: boolean | null;
   index: number;
 }
 

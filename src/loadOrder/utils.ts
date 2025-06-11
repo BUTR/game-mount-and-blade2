@@ -2,16 +2,24 @@ import { selectors, types } from 'vortex-api';
 import { Utils, types as vetypes } from '@butr/vortexextensionnative';
 import { libraryToVortex, libraryVMToVortex, persistenceToLibrary, vortexToPersistence } from './converters';
 import { actionsLoadOrder } from './actions';
-import { SUB_MODS_IDS } from '../common';
-import { IModuleCache, PersistenceLoadOrderStorage, RequiredProperties, VortexLoadOrderStorage } from '../types';
+import { OBFUSCATED_BINARIES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from '../common';
+import {
+  IModuleCache,
+  IPersistenceLoadOrderEntry,
+  PersistenceLoadOrderStorage,
+  RequiredProperties,
+  VortexLoadOrderStorage,
+} from '../types';
 import { VortexLauncherManager } from '../launcher';
 import { LocalizationManager } from '../localization';
 import { hasPersistentLoadOrder } from '../vortex';
+import { getSortOnDeployFromSettings } from '../settings';
 
 type ModIdResult = {
   id: string;
   source: string;
   hasSteamBinariesOnXbox: boolean;
+  hasObfuscatedBinaries: boolean;
 };
 
 /**
@@ -28,9 +36,10 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
     const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
     if (subModsIds.has(moduleId)) {
       arr.push({
-        id: mod.attributes['modId'],
+        id: mod.id,
         source: mod.attributes['source'],
-        hasSteamBinariesOnXbox: mod.attributes['steamBinariesOnXbox'] ?? false,
+        hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
+        hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
       });
     }
 
@@ -41,16 +50,15 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
 };
 
 const getExcludedLoadOrder = (
-  loadOrder: vetypes.LoadOrder,
+  loadOrder: VortexLoadOrderStorage,
   result: vetypes.OrderByLoadOrderResult
-): vetypes.LoadOrder => {
-  const excludedLoadOrder = Object.entries(loadOrder).reduce<vetypes.LoadOrder>((arr, curr) => {
-    const [id, entry] = curr;
-    if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === entry.id)) {
-      arr[id] = entry;
+): VortexLoadOrderStorage => {
+  const excludedLoadOrder = loadOrder.reduce<VortexLoadOrderStorage>((arr, curr) => {
+    if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === curr.id)) {
+      arr.push(curr);
     }
     return arr;
-  }, {});
+  }, []);
   return excludedLoadOrder;
 };
 
@@ -110,25 +118,33 @@ const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOr
   }
 };
 
-export const orderCurrentLoadOrderByExternalLoadOrder = (
+export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
   allModules: Readonly<IModuleCache>,
-  persistenceLoadOrder: PersistenceLoadOrderStorage
+  savedLoadOrder: PersistenceLoadOrderStorage
 ): Promise<VortexLoadOrderStorage> => {
-  const autoSort = true; // TODO: get from settings
+  const state = api.getState();
+
+  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  if (profile === undefined) {
+    return [];
+  }
+
+  const autoSort = getSortOnDeployFromSettings(state, profile.id) ?? true;
+
   const launcherManager = VortexLauncherManager.getInstance(api);
 
-  const savedLoadOrder = persistenceToLibrary(persistenceLoadOrder);
-  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrder);
+  const savedLoadOrderLibrary = persistenceToLibrary(savedLoadOrder);
+  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrderLibrary);
 
   checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
 
   // Apply the Load Order to the list of modules
   // Useful when there are new modules or old modules are missing
   // The output wil wil contain the auto sorted list of modules
-  const result = launcherManager.orderByLoadOrder(savedLoadOrder);
+  const result = await launcherManager.orderByLoadOrderAsync(savedLoadOrderLibrary);
   if (!checkResult(api, autoSort, result)) {
-    return Promise.resolve(savedLoadOrderVortex);
+    return savedLoadOrderVortex;
   }
 
   // Not even sure this will trigger
@@ -136,14 +152,14 @@ export const orderCurrentLoadOrderByExternalLoadOrder = (
 
   // Use the sorted to closest valid state Load Order
   if (autoSort) {
-    return Promise.resolve(libraryVMToVortex(api, result.orderedModuleViewModels));
+    return libraryVMToVortex(api, result.orderedModuleViewModels);
   }
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-  return Promise.resolve(libraryToVortex(api, allModules, getExcludedLoadOrder(savedLoadOrder, result)));
+  return getExcludedLoadOrder(savedLoadOrderVortex, result);
 };
 
-export const toggleLoadOrder = (api: types.IExtensionApi, toggle: boolean): void => {
+export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boolean): Promise<void> => {
   const state = api.getState();
 
   if (!hasPersistentLoadOrder(state.persistent)) {
@@ -160,17 +176,13 @@ export const toggleLoadOrder = (api: types.IExtensionApi, toggle: boolean): void
     return;
   }
 
-  const loadOrder = vortexToPersistence(currentLoadOrder).map((entry) => {
+  const loadOrder = vortexToPersistence(currentLoadOrder).map<IPersistenceLoadOrderEntry>((entry) => {
     entry.isSelected = toggle;
     return entry;
   });
 
   const launcherManager = VortexLauncherManager.getInstance(api);
-  const allModules = launcherManager.getAllModules();
-
-  orderCurrentLoadOrderByExternalLoadOrder(api, allModules, loadOrder)
-    .then((loadOrder) => {
-      api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
-    })
-    .catch((err) => {});
+  const allModules = await launcherManager.getAllModulesAsync();
+  const orderedLoadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(api, allModules, loadOrder);
+  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder));
 };

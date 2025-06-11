@@ -1,12 +1,12 @@
 import { types } from 'vortex-api';
 import { GAME_ID } from '../common';
-import { hasBackupModOptions, removeOriginalModOptions, restoreOriginalModOptions } from '../modoptions';
+import { hasBackupModOptionsAsync, removeOriginalModOptionsAsync, restoreOriginalModOptionsAsync } from '../modoptions';
 import { LocalizationManager } from '../localization';
 
 /**
  * Event function, be careful
  */
-export const willRemoveModCollections = async (api: types.IExtensionApi, modId: string): Promise<void> => {
+export const willRemoveModCollectionsAsync = async (api: types.IExtensionApi, modId: string): Promise<void> => {
   const mod = api.getState().persistent.mods[GAME_ID]?.[modId];
   if (!mod) {
     return;
@@ -15,7 +15,7 @@ export const willRemoveModCollections = async (api: types.IExtensionApi, modId: 
     return;
   }
 
-  if (!(await hasBackupModOptions(mod))) {
+  if (!(await hasBackupModOptionsAsync(mod))) {
     return;
   }
 
@@ -42,10 +42,10 @@ Do you want to restore your original Mod Options if they were overriden by the c
   }
 
   if (result.action === deleteOriginals) {
-    await removeOriginalModOptions(mod);
+    await removeOriginalModOptionsAsync(mod);
   }
 
   if (result.action === restoreOriginals) {
-    await restoreOriginalModOptions(mod);
+    await restoreOriginalModOptionsAsync(mod);
   }
 };

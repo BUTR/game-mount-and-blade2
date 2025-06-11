@@ -22,11 +22,12 @@ export const persistenceToVortex = (
         id: x.id,
         name: x.name,
         enabled: x.isSelected,
-        modId: result[0]?.id ?? undefined!,
+        modId: result[0]?.id ?? undefined,
         data: {
           moduleInfoExtended: modules[x.id]!,
           index: x.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
         },
       };
     })
@@ -104,13 +105,14 @@ export const libraryVMToVortex = (
       id: curr.moduleInfoExtended.id,
       enabled: curr.isSelected,
       name: curr.moduleInfoExtended.name,
-      modId: result[0]?.id ?? undefined!,
+      modId: result[0]?.id ?? undefined,
       data: {
         moduleInfoExtended: curr.moduleInfoExtended,
         isValid: curr.isValid,
         isDisabled: curr.isDisabled,
         index: curr.index,
-        hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+        hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+        hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
       },
     };
   }, []);
@@ -169,10 +171,10 @@ export const libraryToVortex = (
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
   const loadOrderConverted = Object.values(loadOrder)
-    .map<VortexLoadOrderEntry>((curr) => {
+    .map<VortexLoadOrderEntry | undefined>((curr) => {
       const module = allModules[curr.id];
       if (!module) {
-        return undefined!;
+        return undefined;
       }
 
       const moduleValidation = BannerlordModuleManager.validateModule(availableModules, module, validationManager);
@@ -181,16 +183,17 @@ export const libraryToVortex = (
         id: curr.id,
         enabled: curr.isSelected,
         name: curr.name,
-        modId: result[0]?.id ?? undefined!,
+        modId: result[0]?.id ?? undefined,
         data: {
           moduleInfoExtended: module,
           isValid: !moduleValidation.length,
           isDisabled: false,
           index: curr.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? false,
+          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
         },
       };
     }, [])
-    .filter((x) => x);
+    .filter<VortexLoadOrderEntry>((x) => !!x);
   return loadOrderConverted;
 };

@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+* Fixed a bug when the extension was not working with no mods
+* Sort Bannerlord mods automatically option now works
+* Added obfuscation detection
+---------------------------------------------------------------------------------------------------
 Version: 1.1.5
 * Added an option to install Steam/GOG/Epic binaries for Game Pass PC
 * Fixed Load Order validation sometimes checking non enabled mods
