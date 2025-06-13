@@ -188,6 +188,10 @@ const main = (context: types.IExtensionContext): boolean => {
     /*id:*/ `bannerlord-module-installer`,
     /*priority:*/ 25,
     /*testSupported:*/ toBluebird((files: string[], gameId: string) => {
+      if (GAME_ID !== gameId) {
+        return;
+      }
+
       const launcherManager = VortexLauncherManager.getInstance(context.api);
       return launcherManager.testModule(files, gameId);
     }),
@@ -195,12 +199,16 @@ const main = (context: types.IExtensionContext): boolean => {
       (
         files: string[],
         destinationPath: string,
-        _gameId: string,
+        gameId: string,
         _progressDelegate: types.ProgressDelegate,
         _choices?: unknown,
         _unattended?: boolean,
         archivePath?: string
       ) => {
+        if (GAME_ID !== gameId) {
+          return;
+        }
+
         const launcherManager = VortexLauncherManager.getInstance(context.api);
         return launcherManager.installModuleAsync(files, destinationPath, archivePath);
       }
