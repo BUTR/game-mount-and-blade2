@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.1
+* Fixed installation bug for other games
+* Fixed Other: TypeError: Cannot read properties of undefined (reading 'gameId')
+---------------------------------------------------------------------------------------------------
 Version: 1.2.0
 * Fixed a bug when the extension was not working with no mods
 * Sort Bannerlord mods automatically option now works

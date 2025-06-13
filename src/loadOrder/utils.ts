@@ -28,7 +28,7 @@ type ModIdResult = {
 export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string): ModIdResult[] => {
   const state = api.getState();
   const gameId: string | undefined = selectors.activeGameId(state);
-  const gameMods = state.persistent.mods[gameId] ?? {};
+  const gameMods = gameId ? state.persistent.mods[gameId] ?? {} : {};
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
     if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
       return arr;
