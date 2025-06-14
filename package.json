@@ -63,7 +63,7 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "2.0.159",
+    "@butr/vortexextensionnative": "2.0.161",
     "ticks-to-date": "^1.0.6"
   },
   "resolutions": {
