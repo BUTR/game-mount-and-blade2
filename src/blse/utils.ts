@@ -6,7 +6,8 @@ import { LocalizationManager } from '../localization';
 import { IBannerlordMod, IBannerlordModStorage } from '../types';
 
 const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
-  return profile.modState[mod.id]?.enabled ?? false;
+  // Warning: modState is not guaranteed to be present in the profile
+  return profile.modState?.[mod.id]?.enabled ?? false;
 };
 const isModBLSE = (mod: IBannerlordMod): boolean => {
   return mod.type === `bannerlord-blse` || (mod.attributes?.modId === 1 && mod.attributes?.source === `nexus`);

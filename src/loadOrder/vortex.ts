@@ -30,6 +30,10 @@ export const readLoadOrderAsync = async (api: types.IExtensionApi): Promise<Pers
     const loadOrder: PersistenceLoadOrderStorage = JSON.parse(fileContents);
     return loadOrder.filter((x) => x !== undefined && filterEntryWithInvalidId(x));
   } catch (err) {
+    // ENOENT means that a file or folder is not found, it's an expected error
+    if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      return [];
+    }
     const { localize: t } = LocalizationManager.getInstance(api);
     api.showErrorNotification?.(t('Failed to read load order'), err);
     return [];

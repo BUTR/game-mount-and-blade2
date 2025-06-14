@@ -1,47 +1,12 @@
 {
     "name": "NodeJS & Powershell & 7z",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "cacheFrom": [
-            "ghcr.io/butr/game-mount-and-blade2-devcontainer:latest"
-        ]
-    },
-    "features": {
-        "ghcr.io/butr/devcontainer/upgrade:1": {
-
-        },
-        "ghcr.io/devcontainers/features/git:1": {
-            "version": "latest",
-            "ppa": "false"
-        },
-        "ghcr.io/butr/devcontainer/7z:1": {
-
-        },
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "18.17.1",
-            "nodeGypDependencies": "true"
-        },
-        "ghcr.io/devcontainers/features/python:1": {
-
-        },
-        "ghcr.io/devcontainers/features/powershell:1": {
-            "version": "7.4.2"
+    "image": "ghcr.io/butr/game-mount-and-blade2-devcontainer:latest",
+    "mounts": [
+        {
+        "source":"${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins",
+        "target":"/vortex-plugins",
+        "type":"bind"
         }
-    },
-    "overrideFeatureInstallOrder": [
-        "ghcr.io/butr/devcontainer/upgrade",
-        "ghcr.io/devcontainers/features/git",
-        "ghcr.io/butr/devcontainer/7z",
-        "ghcr.io/devcontainers/features/node",
-        "ghcr.io/devcontainers/features/python",
-        "ghcr.io/devcontainers/features/powershell"
-    ],
-  "mounts": [
-    {
-      "source":"${localEnv:HOME}${localEnv:USERPROFILE}/AppData/Roaming/Vortex/plugins",
-      "target":"/vortex-plugins",
-      "type":"bind"
-    }
     ],
     "postAttachCommand": "yarn install",
     "customizations": {

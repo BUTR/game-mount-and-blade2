@@ -189,7 +189,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority:*/ 25,
     /*testSupported:*/ toBluebird((files: string[], gameId: string) => {
       if (GAME_ID !== gameId) {
-        return;
+        return undefined!;
       }
 
       const launcherManager = VortexLauncherManager.getInstance(context.api);
@@ -206,7 +206,7 @@ const main = (context: types.IExtensionContext): boolean => {
         archivePath?: string
       ) => {
         if (GAME_ID !== gameId) {
-          return;
+          return undefined!;
         }
 
         const launcherManager = VortexLauncherManager.getInstance(context.api);

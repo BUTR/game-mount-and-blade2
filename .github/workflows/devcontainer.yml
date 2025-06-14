@@ -6,7 +6,7 @@ on:
     branches:
       - dev
     paths:
-      - '.devcontainer/**/*'
+      - '.github/.devcontainer/**/*'
       - '.github/workflows/devcontainer.yml'
 
 jobs:
@@ -28,6 +28,7 @@ jobs:
         name: Pre-build dev container image
         uses: devcontainers/ci@v0.3
         with:
+          subFolder: .github
           imageName: ghcr.io/butr/game-mount-and-blade2-devcontainer
           cacheFrom: ghcr.io/butr/game-mount-and-blade2-devcontainer
           push: always
