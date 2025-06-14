@@ -5,7 +5,8 @@ import { hasPersistentBannerlordMods } from '../vortex';
 import { IBannerlordMod, IBannerlordModStorage } from '../types';
 
 export const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
-  return profile.modState[mod.id]?.enabled ?? false;
+  // Warning: modState is not guaranteed to be present in the profile
+  return profile.modState?.[mod.id]?.enabled ?? false;
 };
 const isMod = (mod: IBannerlordMod, moduleId: string): boolean => {
   return mod.attributes?.subModsIds?.includes(moduleId) ?? false;
