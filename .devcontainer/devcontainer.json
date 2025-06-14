@@ -2,6 +2,9 @@
     "name": "NodeJS & Powershell & 7z",
     "build": {
         "dockerfile": "Dockerfile",
+        "options": [
+            "--platform=linux/amd64"
+        ],
         "cacheFrom": [
             "ghcr.io/butr/game-mount-and-blade2-devcontainer:latest"
         ]
@@ -25,7 +28,7 @@
 
         },
         "ghcr.io/devcontainers/features/powershell:1": {
-            "version": "7.4.2"
+            
         }
     },
     "overrideFeatureInstallOrder": [
