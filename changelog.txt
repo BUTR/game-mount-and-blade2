@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.2
 * Fixed a startup error related to ModState
-* Fixed error message for `Failed to read load order`
+* Fixed error message for 'Failed to read load order'
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.1
 * Fixed installation bug for other games
