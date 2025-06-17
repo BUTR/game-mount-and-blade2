@@ -99,6 +99,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public serializeLoadOrder = async (newLO: VortexLoadOrderStorage, prevLO: VortexLoadOrderStorage): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(newLO);
     await writeLoadOrderAsync(this.api, libraryToPersistence(loadOrderConverted));
+    await this.setParametersAsync(loadOrderConverted);
   };
 
   private setParametersAsync = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
