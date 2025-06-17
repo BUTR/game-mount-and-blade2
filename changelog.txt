@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.3
+* Fixed an issue with LO not being applied on change (select/deselect, etc)
+---------------------------------------------------------------------------------------------------
 Version: 1.2.2
 * Fixed a startup error related to ModState
 * Fixed error message for 'Failed to read load order'
