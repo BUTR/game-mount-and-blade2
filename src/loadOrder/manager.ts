@@ -103,12 +103,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   };
 
   private setParametersAsync = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
-    if (!this.isInitialized) {
-      this.isInitialized = true;
-      // We automatically set the modules to launch on save, but not on first load
-      const launcherManager = VortexLauncherManager.getInstance(this.api);
-      await launcherManager.setModulesToLaunchAsync(loadOrder);
-    }
+    const launcherManager = VortexLauncherManager.getInstance(this.api);
+    await launcherManager.setModulesToLaunchAsync(loadOrder);
   };
 
   private populateMissingAttributes = async (loadOrder: VortexLoadOrderStorage): Promise<void> => {
