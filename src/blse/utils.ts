@@ -103,7 +103,6 @@ export const downloadBLSEAsync = async (api: types.IExtensionApi, shouldUpdate: 
 
   try {
     await downloadAndEnableLatestModVersionAsync(api, BLSE_MOD_ID);
-    await downloadAndEnableLatestModVersionAsync(api, HARMONY_MOD_ID);
 
     await deployBLSEAsync(api);
   } catch (err) {
@@ -129,10 +128,7 @@ export const downloadHarmonyAsync = async (api: types.IExtensionApi, shouldUpdat
   await api.ext?.ensureLoggedIn?.();
 
   try {
-    await downloadAndEnableLatestModVersionAsync(api, BLSE_MOD_ID);
     await downloadAndEnableLatestModVersionAsync(api, HARMONY_MOD_ID);
-
-    await deployBLSEAsync(api);
   } catch (err) {
     api.showErrorNotification?.(t('Failed to download/install Harmony'), err);
     util.opn(BLSE_URL).catch(() => null);
