@@ -54,6 +54,7 @@ import {
   isModTypeModule,
 } from './vortex';
 import { LocalizationManager } from './localization';
+import { isModTranslationArchive, isModTypeTranslation, modTranslationInstaller } from './vortex/modTranslation';
 import { version } from '../package.json';
 
 // TODO: Better dialogs with settings
@@ -219,8 +220,59 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority:*/ 25,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
     /*getPath:*/ (game) => getInstallPathModule(context.api, game),
-    /*test:*/ toBluebird(isModTypeModule)
+    /*test:*/ toBluebird((instructions) => isModTypeModule(instructions))
   );
+
+  context.registerInstaller(
+    /*id:*/ `bannerlord-translation-installer`,
+    /*priority:*/ 30,
+    /*testSupported:*/ toBluebird(isModTranslationArchive),
+    /*install:*/ toBluebird(
+      (
+        files: string[],
+        destinationPath: string,
+        gameId: string,
+        _progressDelegate: types.ProgressDelegate,
+        _choices?: unknown,
+        _unattended?: boolean,
+        archivePath?: string
+      ) =>
+        modTranslationInstaller(
+          context.api,
+          files,
+          destinationPath,
+          gameId,
+          _progressDelegate,
+          _choices,
+          _unattended,
+          archivePath
+        )
+    )
+  );
+
+  context.registerModType(
+    /*id:*/ 'bannerlord-translation',
+    /*priority:*/ 30,
+    /*isSupported:*/ (gameId) => gameId === GAME_ID,
+    /*getPath:*/ (game) => getInstallPathModule(context.api, game),
+    /*test:*/ toBluebird((instructions) => isModTypeTranslation(instructions))
+  );
+
+  // Show detected translation languages in the Mods side panel (Details)
+  context.registerTableAttribute('mods', {
+    id: 'translationLanguagesText',
+    name: 'Translation Languages',
+    description: 'Detected languages included in this translation mod',
+    placement: 'detail',
+    position: 76,
+    help: 'Comma-separated list of language codes found under ModuleData/Languages',
+    isSortable: false,
+    isGroupable: false,
+    condition: () => selectors.activeGameId(context.api.getState()) === GAME_ID,
+    calc: (mod: types.IMod) =>
+      mod?.type === 'bannerlord-translation' ? mod?.attributes?.['translationLanguagesText'] : undefined,
+    edit: {},
+  });
 
   const isMB2 = (): boolean => {
     const state = context.api.getState();
