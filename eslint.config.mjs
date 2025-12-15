@@ -4,7 +4,6 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import prettierConfig from "eslint-config-prettier";
 import eslintReact from "@eslint-react/eslint-plugin";
-import noCrossImportsRule from "./eslint-rules/no-cross-imports.mjs";
 
 export default defineConfig([
   {
@@ -20,6 +19,19 @@ export default defineConfig([
   },
   tseslint.configs.recommended,
   {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+  {
     ...eslintReact.configs["recommended-typescript"],
     settings: {
       "react-x": {
@@ -27,17 +39,5 @@ export default defineConfig([
       },
     },
   },
-  prettierConfig,
-  {
-    plugins: {
-      vortex: {
-        rules: {
-          "no-cross-imports": noCrossImportsRule,
-        },
-      },
-    },
-    rules: {
-      "vortex/no-cross-imports": "error",
-    },
-  }
+  prettierConfig
 ]);

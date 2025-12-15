@@ -22,9 +22,10 @@ export type SettingsProps = {
 };
 
 export const Settings = (props: SettingsProps): JSX.Element => {
-  const { onSetSortOnDeploy, onSetFixCommonIssues, onSetBetaSorting } = props;
+  const { onSetSortOnDeploy, /*onSetFixCommonIssues,*/ onSetBetaSorting } =
+    props;
 
-  const { profile, autoSortOnDeploy, fixCommonIssues, betaSorting } =
+  const { profile, autoSortOnDeploy, /*fixCommonIssues,*/ betaSorting } =
     useSelector(mapState);
 
   const setSortCallback = useCallback(
@@ -35,6 +36,7 @@ export const Settings = (props: SettingsProps): JSX.Element => {
     },
     [profile, onSetSortOnDeploy],
   );
+  /*
   const fixCommonIssuesCallback = useCallback(
     (value: boolean): void => {
       if (profile) {
@@ -43,6 +45,7 @@ export const Settings = (props: SettingsProps): JSX.Element => {
     },
     [profile, onSetFixCommonIssues],
   );
+  */
   const betaSortingCallback = useCallback(
     (value: boolean): void => {
       if (profile) {
@@ -91,11 +94,11 @@ export const Settings = (props: SettingsProps): JSX.Element => {
 };
 
 const mapState = (state: types.IState): IFromState => {
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const sortOnDeploy = getSortOnDeployFromSettings(state, profile.id) ?? true;
+  const profile = selectors.activeProfile(state);
+  const sortOnDeploy = getSortOnDeployFromSettings(state, profile!.id) ?? true;
   const fixCommonIssues =
-    getFixCommonIssuesFromSettings(state, profile.id) ?? true;
-  const betaSorting = getBetaSortingFromSettings(state, profile.id) ?? false;
+    getFixCommonIssuesFromSettings(state, profile!.id) ?? true;
+  const betaSorting = getBetaSortingFromSettings(state, profile!.id) ?? false;
   return {
     profile: profile,
     autoSortOnDeploy: sortOnDeploy,

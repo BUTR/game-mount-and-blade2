@@ -8,9 +8,12 @@ import {
 import { LocalizationManager } from "../localization";
 import { IBannerlordMod, IBannerlordModStorage } from "../types";
 
-const isModActive = (profile: types.IProfile, mod: IBannerlordMod): boolean => {
+const isModActive = (
+  profile: types.IProfile | undefined,
+  mod: IBannerlordMod,
+): boolean => {
   // Warning: modState is not guaranteed to be present in the profile
-  return profile.modState?.[mod.id]?.enabled ?? false;
+  return profile?.modState?.[mod.id]?.enabled ?? false;
 };
 const isModBLSE = (mod: IBannerlordMod): boolean => {
   return (
@@ -67,9 +70,7 @@ export const findBLSEDownload = (
 
   const blseFiles = Object.entries(downloadedFiles)
     .filter(([, download]) => download.game.includes(GAME_ID))
-    .filter(
-      ([, download]) => download.modInfo?.["nexus"]?.modInfo?.mod_id === 1,
-    )
+    .filter(([, download]) => download.modInfo?.["nexus"]?.ids?.modId === 1)
     .sort(
       ([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime,
     );
@@ -78,7 +79,7 @@ export const findBLSEDownload = (
     return undefined;
   }
 
-  const [downloadId, download] = blseFiles[0]!;
+  const [downloadId, _download] = blseFiles[0]!;
 
   return downloadId;
 };
@@ -97,7 +98,7 @@ export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
     return false;
   }
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
   return blseMods.filter((x) => isModActive(profile, x)).length >= 1;
 };
 

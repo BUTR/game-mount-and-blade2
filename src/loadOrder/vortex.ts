@@ -1,5 +1,4 @@
 import { selectors, types } from "vortex-api";
-import { Translation } from "react-i18next";
 import path from "path";
 import { readFile, writeFile } from "node:fs/promises";
 import { GAME_ID, LOAD_ORDER_SUFFIX } from "../common";
@@ -30,9 +29,10 @@ export const readLoadOrderAsync = async (
   api: types.IExtensionApi,
 ): Promise<PersistenceLoadOrderStorage> => {
   try {
-    const profile: types.IProfile | undefined = selectors.activeProfile(
-      api.getState(),
-    );
+    const profile = selectors.activeProfile(api.getState());
+    if (!profile) {
+      throw new Error(`Active profile is undefined`);
+    }
     const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = await readFile(loFilePath, "utf8");
@@ -62,9 +62,10 @@ export const writeLoadOrderAsync = async (
   loadOrder: PersistenceLoadOrderStorage,
 ): Promise<void> => {
   try {
-    const profile: types.IProfile | undefined = selectors.activeProfile(
-      api.getState(),
-    );
+    const profile = selectors.activeProfile(api.getState());
+    if (!profile) {
+      throw new Error(`Active profile is undefined`);
+    }
     const loFileName = getLoadOrderFileName(profile.id);
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     await writeFile(

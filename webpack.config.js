@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const webpack = require('vortex-api/bin/webpack').default;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const CopyPlugin = require('copy-webpack-plugin');
 
 const config = webpack('game-mount-and-blade2', __dirname, 5);

@@ -11,13 +11,13 @@ export type TooltipImageProps = ITooltipProps & {
 };
 
 export const TooltipImage = (props: TooltipImageProps): JSX.Element => {
-  const { tooltip, placement, ...relayProps } = props;
+  const { tooltip, placement, className, ...relayProps } = props;
 
-  const classes = ["fake-link"].concat((props.className ?? "").split(" "));
+  const classes = ["fake-link"].concat((className ?? "").split(" "));
 
-  if (typeof props.tooltip === "string") {
+  if (typeof tooltip === "string") {
     return (
-      <a className={classes.join(" ")} title={props.tooltip}>
+      <a className={classes.join(" ")} title={tooltip}>
         <img {...relayProps} />
       </a>
     );
@@ -27,7 +27,7 @@ export const TooltipImage = (props: TooltipImageProps): JSX.Element => {
     return (
       <OverlayTrigger
         overlay={tooltip}
-        placement={props.placement ?? "bottom"}
+        placement={placement ?? "bottom"}
         delayShow={300}
         delayHide={150}
       >

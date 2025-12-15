@@ -26,7 +26,7 @@ import { getSortOnDeployFromSettings } from "../settings";
 
 type ModIdResult = {
   id: string;
-  source: string;
+  source: string | undefined;
   hasSteamBinariesOnXbox: boolean;
   hasObfuscatedBinaries: boolean;
 };
@@ -166,7 +166,7 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
 ): Promise<VortexLoadOrderStorage> => {
   const state = api.getState();
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
   if (profile === undefined) {
     return [];
   }
@@ -216,13 +216,13 @@ export const toggleLoadOrderAsync = async (
     return;
   }
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  if (profile === undefined) {
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
     return;
   }
 
   const currentLoadOrder = state.persistent.loadOrder[profile.id];
-  if (currentLoadOrder === undefined) {
+  if (!currentLoadOrder) {
     return;
   }
 

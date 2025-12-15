@@ -135,7 +135,7 @@ export const LoadOrderItemRenderer = (
 };
 
 const mapState = (state: types.IState): IFromState => {
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
   const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
   return {
     profile,

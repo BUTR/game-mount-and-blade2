@@ -52,7 +52,7 @@ export const overrideModOptionsAsync = async (
           await fs.ensureDirAsync(path.dirname(filePath));
           try {
             await rename(filePath, `${filePath}.${id}`);
-          } catch (err) {
+          } catch {
             /* empty */
           }
           await writeFile(filePath, modOption.contentBase64, "base64");
@@ -63,7 +63,7 @@ export const overrideModOptionsAsync = async (
           const filePath = path.join(getSettingsPath(), modOption.path);
           try {
             await rename(filePath, `${filePath}.${id}`);
-          } catch (err) {
+          } catch {
             /* empty */
           }
           await writeFile(filePath, modOption.contentBase64, "base64");

@@ -100,15 +100,16 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   };
 
   private forceRefresh = (): void => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(
-      this.api.getState(),
-    );
+    const profile = selectors.activeProfile(this.api.getState());
+    if (!profile) {
+      return;
+    }
     this.api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
   public serializeLoadOrder = async (
     newLO: VortexLoadOrderStorage,
-    prevLO: VortexLoadOrderStorage,
+    _prevLO: VortexLoadOrderStorage,
   ): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(newLO);
     await writeLoadOrderAsync(

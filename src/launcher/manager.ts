@@ -60,8 +60,12 @@ export class VortexLauncherManager {
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this.api.getState();
-    const profile: types.IProfile | undefined = selectors.activeProfile(state);
     if (!hasPersistentLoadOrder(state.persistent)) {
+      return [];
+    }
+
+    const profile = selectors.activeProfile(state);
+    if (!profile) {
       return [];
     }
 
@@ -526,10 +530,13 @@ export class VortexLauncherManager {
   private setModuleViewModelsAsync = (
     moduleViewModels: vetypes.ModuleViewModel[],
   ): Promise<void> => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(
-      this.api.getState(),
-    );
+    const profile = selectors.activeProfile(this.api.getState());
+    if (!profile) {
+      return Promise.resolve();
+    }
+
     const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
+
     this.api.store?.dispatch(
       actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder),
     );
@@ -539,11 +546,16 @@ export class VortexLauncherManager {
    * Callback
    */
   private getOptionsAsync = (): Promise<vetypes.LauncherOptions> => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(
-      this.api.getState(),
-    );
+    const profile = selectors.activeProfile(this.api.getState());
+    if (!profile) {
+      return Promise.resolve({
+        betaSorting: false,
+      });
+    }
+
     const betaSorting =
       getBetaSortingFromSettings(this.api, profile.id) ?? false;
+
     return Promise.resolve({
       betaSorting: betaSorting,
     });

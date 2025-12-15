@@ -5,11 +5,11 @@ import { hasPersistentBannerlordMods } from "../vortex";
 import { IBannerlordMod, IBannerlordModStorage } from "../types";
 
 export const isModActive = (
-  profile: types.IProfile,
+  profile: types.IProfile | undefined,
   mod: IBannerlordMod,
 ): boolean => {
   // Warning: modState is not guaranteed to be present in the profile
-  return profile.modState?.[mod.id]?.enabled ?? false;
+  return profile?.modState?.[mod.id]?.enabled ?? false;
 };
 const isMod = (mod: IBannerlordMod, moduleId: string): boolean => {
   return mod.attributes?.subModsIds?.includes(moduleId) ?? false;
@@ -65,9 +65,7 @@ export const findModDownload = (
 
   const modFiles = Object.entries(downloadedFiles)
     .filter(([, download]) => download.game.includes(GAME_ID))
-    .filter(
-      ([, download]) => download.modInfo?.["nexus"]?.modInfo?.mod_id === modId,
-    )
+    .filter(([, download]) => download.modInfo?.["nexus"]?.ids?.modId === modId)
     .sort(
       ([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime,
     );
@@ -76,7 +74,7 @@ export const findModDownload = (
     return undefined;
   }
 
-  const [downloadId, download] = modFiles[0]!;
+  const [downloadId, _download] = modFiles[0]!;
 
   return downloadId;
 };
@@ -98,6 +96,6 @@ export const isActiveMod = (
     return false;
   }
 
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
   return foundMods.filter((x) => isModActive(profile, x)).length >= 1;
 };

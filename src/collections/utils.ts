@@ -90,7 +90,18 @@ export const collectionInstallBLSEAsync = async (
   });
 
   const state = api.getState();
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
+
+  if (!profile) {
+    api.sendNotification?.({
+      id: "blse-required-no-profile",
+      type: "error",
+      title: t("BLSE Required"),
+      message: t(`No active profile found. Cannot install BLSE.`),
+    });
+    return;
+  }
+
   const mods = getPersistentBannerlordMods(state.persistent);
 
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);

@@ -45,9 +45,10 @@ export const downloadAndEnableLatestModVersionAsync = async (
       cb,
     ),
   );
-  const profile: types.IProfile | undefined = selectors.activeProfile(
-    api.getState(),
-  );
+  const profile = selectors.activeProfile(api.getState());
+  if (!profile) {
+    throw new Error(`Active profile is undefined`);
+  }
   await actions.setModsEnabled(api, profile.id, [modIdToDownload], true, {
     allowAutoDeploy: false,
     installed: true,

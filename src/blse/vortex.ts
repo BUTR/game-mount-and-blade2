@@ -192,14 +192,18 @@ export const recommendBLSEAsync = async (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
 ): Promise<void> => {
-  const state = api.getState();
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
-  const mods = getPersistentBannerlordMods(state.persistent);
-
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
+  const state = api.getState();
+
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
+    return;
+  }
+
+  const mods = getPersistentBannerlordMods(state.persistent);
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
   const blseDeployResult = checkBLSEDeploy(api, profile, mods);
 

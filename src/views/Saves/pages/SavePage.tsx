@@ -61,7 +61,7 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
   );
   const [selectedSave, setSelectedSave] = useState<ISaveGame | null>(null);
 
-  const [sortedSaveGameList, setSortedSaveGames] = useState<
+  const [sortedSaveGameList, setSortedSaveGameList] = useState<
     [string, ISaveGame][]
   >([]);
 
@@ -92,7 +92,7 @@ export const SavePage = (props: SavePageProps): JSX.Element => {
   const reloadSavesAsync = useCallback(async (): Promise<void> => {
     try {
       const saveList = await getSavesAsync(context.api);
-      setSortedSaveGames(
+      setSortedSaveGameList(
         Object.entries(saveList).sort(
           ([, saveA], [, saveB]) => saveA.index - saveB.index,
         ),
@@ -243,7 +243,7 @@ const getTableAttributes = (
 };
 
 const mapState = (state: types.IState): IFromState => {
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
 
   const saveName =
     profile !== undefined

@@ -1,7 +1,11 @@
 // @ts-check
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const child_process = require('child_process');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const sevenZipBin = require('7zip-bin');
 
 const ROOT_DIR = __dirname;

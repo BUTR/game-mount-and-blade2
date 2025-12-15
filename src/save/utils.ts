@@ -7,7 +7,10 @@ export const reloadSaveAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
   const state = api.getState();
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
+    throw new Error(`Active profile is undefined`);
+  }
   let save = getSaveFromSettings(state, profile.id);
 
   if (save === "No Save") {

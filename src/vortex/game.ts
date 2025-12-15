@@ -50,7 +50,7 @@ export const getBannerlordMainExe = (
     try {
       statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
-    } catch (err) {
+    } catch {
       return standard();
     }
   }
@@ -85,7 +85,7 @@ export const getBannerlordToolExe = (
     try {
       statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
-    } catch (err) {
+    } catch {
       return standard();
     }
   }

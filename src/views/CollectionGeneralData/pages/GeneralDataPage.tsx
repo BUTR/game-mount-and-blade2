@@ -34,7 +34,7 @@ interface IFromState {
 export type BannerlordGeneralDataPageProps = ICollectionFeatureProps;
 
 export const BannerlordGeneralDataPage = (
-  props: BannerlordGeneralDataPageProps,
+  _props: BannerlordGeneralDataPageProps,
 ): JSX.Element => {
   const [compatibilityInfoCache, setCompatibilityInfoCache] =
     useState<IModuleCompatibilityInfoCache>({});
@@ -115,7 +115,7 @@ export const BannerlordGeneralDataPage = (
 };
 
 const mapState = (state: types.IState): IFromState => {
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
   const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
   const mods = getPersistentBannerlordMods(state.persistent);
   return {

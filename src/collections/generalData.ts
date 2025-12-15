@@ -21,7 +21,7 @@ import { IBannerlordModStorage, VortexLoadOrderStorage } from "../types";
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
 export const genCollectionGeneralDataAsync = (
-  profile: types.IProfile,
+  profile: types.IProfile | undefined,
   loadOrder: VortexLoadOrderStorage,
   includedMods: IBannerlordModStorage,
 ): Promise<ICollectionGeneralData> => {
@@ -55,10 +55,7 @@ export const parseCollectionGeneralDataAsync = async (
     state,
     GAME_ID,
   );
-  const profile: types.IProfile | undefined = selectors.profileById(
-    state,
-    profileId ?? "",
-  );
+  const profile = selectors.profileById(state, profileId ?? "");
   if (profile?.gameId !== GAME_ID) {
     const collectionName =
       collection.info.name !== undefined
@@ -84,11 +81,11 @@ export const parseCollectionGeneralDataAsync = async (
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
 export const cloneCollectionGeneralDataAsync = (
-  api: types.IExtensionApi,
-  gameId: string,
+  _api: types.IExtensionApi,
+  _gameId: string,
   collection: ICollectionData,
-  from: types.IMod,
-  to: types.IMod,
+  _from: types.IMod,
+  _to: types.IMod,
 ): Promise<void> => {
   if (!hasGeneralData(collection)) {
     return Promise.resolve();
