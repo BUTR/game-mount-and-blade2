@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-restricted-imports
-import Bluebird, { method as toBluebird } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 import { log, selectors, types } from 'vortex-api';
 import { TFunction } from 'vortex-api/lib/util/i18n';
 import * as semver from 'semver';
@@ -196,7 +195,7 @@ const main = (context: types.IExtensionContext): boolean => {
       return launcherManager.testModule(files, gameId);
     }),
     /*install:*/ toBluebird(
-      (
+      async (
         files: string[],
         destinationPath: string,
         gameId: string,
@@ -210,7 +209,7 @@ const main = (context: types.IExtensionContext): boolean => {
         }
 
         const launcherManager = VortexLauncherManager.getInstance(context.api);
-        return launcherManager.installModuleAsync(files, destinationPath, archivePath);
+        return await launcherManager.installModuleAsync(files, destinationPath, archivePath);
       }
     )
   );
@@ -266,8 +265,8 @@ const main = (context: types.IExtensionContext): boolean => {
   );
 
   // Import from Novus
-  // Import from LaunhcerEx
-  // Export to LaunhcerEx
+  // Import from LauncherEx
+  // Export to LauncherEx
 
   /* Disabled for now because the name is too long
   context.registerAction(

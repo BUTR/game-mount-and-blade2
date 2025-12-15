@@ -1,0 +1,193 @@
+// @ts-check
+const fs = require('fs');
+const path = require('path');
+const child_process = require('child_process');
+const sevenZipBin = require('7zip-bin');
+
+const ROOT_DIR = __dirname;
+const DIST_DIR = path.join(ROOT_DIR, 'dist');
+const SEVEN_ZIP = sevenZipBin.path7za;
+
+/**
+ * @param {string} command
+ * @param {string} [cwd]
+ */
+const exec = (command, cwd = ROOT_DIR) => {
+  console.log(`> ${command}`);
+  child_process.execSync(command, { cwd, stdio: 'inherit', shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh' });
+};
+
+/**
+ * @param {string} filePath
+ */
+const removeIfExists = (filePath) => {
+  if (fs.existsSync(filePath)) {
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      fs.rmSync(filePath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(filePath);
+    }
+  }
+};
+
+/**
+ * @param {string} src
+ * @param {string} dest
+ */
+const copyRecursive = (src, dest) => {
+  if (!fs.existsSync(src)) {
+    return;
+  }
+  const stat = fs.statSync(src);
+  if (stat.isDirectory()) {
+    fs.mkdirSync(dest, { recursive: true });
+    for (const file of fs.readdirSync(src)) {
+      copyRecursive(path.join(src, file), path.join(dest, file));
+    }
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+};
+
+const clean = () => {
+  console.log('Clean');
+
+  // Remove .7z files
+  for (const file of fs.readdirSync(ROOT_DIR)) {
+    if (file.endsWith('.7z')) {
+      removeIfExists(path.join(ROOT_DIR, file));
+    }
+  }
+
+  // Remove dist folder
+  removeIfExists(DIST_DIR);
+};
+
+/**
+ * @param {string} configuration
+ */
+const updateFromFile = (configuration) => {
+  console.log('Updating @butr/vortexextensionnative from File');
+
+  const extensionBasePath = path.resolve(ROOT_DIR, '../Bannerlord.LauncherManager');
+  const extensionPath = path.join(extensionBasePath, 'src/Bannerlord.LauncherManager.Native.TypeScript');
+
+  exec('npm remove @butr/vortexextensionnative');
+
+  const currentDir = process.cwd();
+  try {
+    process.chdir(extensionPath);
+    exec('npm run clean');
+    exec(`npm run build -- ${configuration}`);
+    exec('npm pack');
+  } finally {
+    process.chdir(currentDir);
+  }
+
+  const tgzFile = 'butr-vortexextensionnative-1.0.0.tgz';
+  fs.copyFileSync(path.join(extensionPath, tgzFile), path.join(ROOT_DIR, tgzFile));
+  exec(`npm i ./${tgzFile}`);
+};
+
+const updateFromNpm = () => {
+  console.log('Updating @butr/vortexextensionnative from NPM');
+
+  exec('npx tsc -p tsconfig.json');
+  exec('npx tsc -p tsconfig.module.json');
+};
+
+const webpack = () => {
+  console.log('Webpack');
+
+  exec('npx webpack --config webpack.config.js --color');
+  exec('npx extractInfo');
+};
+
+const pack7z = () => {
+  console.log('Pack 7z');
+
+  exec(`"${SEVEN_ZIP}" a -t7z "game-mount-and-blade2.7z" "./dist/*.*"`);
+};
+
+/**
+ * @param {boolean} isDev
+ */
+const copyToVortex = (isDev) => {
+  const deployPath = isDev ? 'vortex_devel/plugins' : 'vortex/plugins';
+
+  // Handle junction/symlink creation (Windows-specific)
+  const junctionPath = '/vortex-plugins';
+
+  try {
+    if (!fs.existsSync(junctionPath)) {
+      const appDataPath = process.env.APPDATA;
+      if (appDataPath) {
+        const targetPath = path.join(appDataPath, deployPath);
+
+        if (process.platform === 'win32') {
+          // Create junction on Windows
+          exec(`mklink /J "${junctionPath}" "${targetPath}"`, ROOT_DIR);
+          console.log(`Created folder junction at ${junctionPath} pointing to ${targetPath}`);
+        } else {
+          // Create symlink on Unix
+          fs.symlinkSync(targetPath, junctionPath, 'dir');
+          console.log(`Created symlink at ${junctionPath} pointing to ${targetPath}`);
+        }
+      }
+    }
+
+    console.log('Copy dist to Vortex plugins mount');
+    const destPath = path.join(junctionPath, 'bannerlord');
+    removeIfExists(destPath);
+    copyRecursive(DIST_DIR, destPath);
+  } catch {
+    // Silently ignore errors (matching PowerShell behavior)
+  }
+};
+
+/**
+ * @param {{ type: string; configuration: string }} options
+ */
+const build = (options) => {
+  const { type, configuration } = options;
+  const isDev = type === 'build-dev';
+  const effectiveType = isDev ? 'build' : type;
+
+  // Clean
+  if (['build', 'build-extended', 'build-update', 'clean'].includes(effectiveType)) {
+    clean();
+  }
+
+  // Update from file
+  if (effectiveType === 'build-extended') {
+    updateFromFile(configuration);
+  }
+
+  // Update from NPM
+  if (effectiveType === 'build-update') {
+    updateFromNpm();
+  }
+
+  // Webpack
+  if (['build', 'build-extended', 'build-update', 'build-webpack'].includes(effectiveType)) {
+    webpack();
+  }
+
+  // 7z
+  if (['build', 'build-extended', 'build-update', 'build-7z'].includes(effectiveType)) {
+    pack7z();
+  }
+
+  // Copy to Vortex
+  if (['build', 'build-extended', 'build-update', 'build-webpack', 'build-7z'].includes(effectiveType)) {
+    copyToVortex(isDev);
+  }
+};
+
+// Parse arguments
+const args = process.argv.slice(2);
+const type = args[0] || 'build';
+const configuration = args[1] || 'Release';
+
+build({ type, configuration });

@@ -78,11 +78,5 @@ export const cloneCollectionGeneralDataAsync = (
 
 const hasGeneralData = (collection: ICollectionData): collection is ICollectionDataWithGeneralData => {
   const collectionData = collection as ICollectionDataWithGeneralData;
-  if (!collectionData.hasBLSE) {
-    return false;
-  }
-  if (collectionData.suggestedLoadOrder === undefined) {
-    return false;
-  }
-  return true;
+  return collectionData.hasBLSE !== undefined && collectionData.suggestedLoadOrder !== undefined;
 };

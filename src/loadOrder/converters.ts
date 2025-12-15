@@ -22,7 +22,7 @@ export const persistenceToVortex = (
         id: x.id,
         name: x.name,
         enabled: x.isSelected,
-        modId: result[0]?.id ?? undefined,
+        ...(result[0]?.id !== undefined && { modId: result[0].id }),
         data: {
           moduleInfoExtended: modules[x.id]!,
           index: x.index,
@@ -105,7 +105,7 @@ export const libraryVMToVortex = (
       id: curr.moduleInfoExtended.id,
       enabled: curr.isSelected,
       name: curr.moduleInfoExtended.name,
-      modId: result[0]?.id ?? undefined,
+      ...(result[0]?.id !== undefined && { modId: result[0].id }),
       data: {
         moduleInfoExtended: curr.moduleInfoExtended,
         isValid: curr.isValid,
@@ -115,7 +115,7 @@ export const libraryVMToVortex = (
         hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
       },
     };
-  }, []);
+  }, Array<VortexLoadOrderEntry>());
   return loadOrderConverted;
 };
 export const libraryVMToLibrary = (loadOrder: vetypes.ModuleViewModel[]): vetypes.LoadOrder => {
@@ -183,7 +183,7 @@ export const libraryToVortex = (
         id: curr.id,
         enabled: curr.isSelected,
         name: curr.name,
-        modId: result[0]?.id ?? undefined,
+        ...(result[0]?.id !== undefined && { modId: result[0].id }),
         data: {
           moduleInfoExtended: module,
           isValid: !moduleValidation.length,

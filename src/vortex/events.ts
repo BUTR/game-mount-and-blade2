@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
 import Bluebird from 'bluebird';
 import { actions, fs, selectors, types, util } from 'vortex-api';
 import path from 'path';

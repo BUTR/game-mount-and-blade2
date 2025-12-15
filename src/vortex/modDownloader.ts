@@ -10,7 +10,8 @@ export const downloadAndEnableLatestModVersionAsync = async (
 
   const fileTime = (input: IFileInfo): number => Number.parseInt(input.uploaded_time, 10);
 
-  const file = modFiles.filter((file) => file.category_id === 1).sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+  const files = modFiles.filter((file) => file?.category_id === 1).sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs));
+  const file = files.length > 0 ? files[files.length - 1] : undefined;
 
   if (!file) {
     throw new util.ProcessCanceled(`No mod ${modId} main file found`);

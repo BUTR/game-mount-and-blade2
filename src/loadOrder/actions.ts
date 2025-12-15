@@ -1,17 +1,24 @@
-// This is a risk, since we won't notice if the API changes
-// TODO: Ask IDCs to provider a proper type system
+// Ideally should be taken from vortex-api
 import { types } from 'vortex-api';
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const setFBForceUpdate = (profileId: string) => ({
+interface ISetFBForceUpdateAction {
+  type: 'SET_FB_FORCE_UPDATE';
+  payload: { profileId: string };
+}
+
+const setFBForceUpdate = (profileId: string): ISetFBForceUpdateAction => ({
   type: 'SET_FB_FORCE_UPDATE',
   payload: {
     profileId,
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrderEntry) => ({
+interface ISetFBLoadOrderEntryAction {
+  type: 'SET_FB_LOAD_ORDER_ENTRY';
+  payload: { profileId: string; loEntry: types.ILoadOrderEntry };
+}
+
+const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrderEntry): ISetFBLoadOrderEntryAction => ({
   type: 'SET_FB_LOAD_ORDER_ENTRY',
   payload: {
     profileId,
@@ -19,8 +26,12 @@ const setFBLoadOrderEntry = (profileId: string, loEntry: types.ILoadOrderEntry) 
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const setFBLoadOrder = (profileId: string, loadOrder: types.LoadOrder) => ({
+interface ISetFBLoadOrderAction {
+  type: 'SET_FB_LOAD_ORDER';
+  payload: { profileId: string; loadOrder: types.LoadOrder };
+}
+
+const setFBLoadOrder = (profileId: string, loadOrder: types.LoadOrder): ISetFBLoadOrderAction => ({
   type: 'SET_FB_LOAD_ORDER',
   payload: {
     profileId,

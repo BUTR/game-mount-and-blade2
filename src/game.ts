@@ -1,5 +1,4 @@
-// eslint-disable-next-line no-restricted-imports
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
+import { method as toBluebird } from 'bluebird';
 import { types } from 'vortex-api';
 import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
 import { findGameAsync, getBannerlordMainExe, setupAsync } from './vortex';
