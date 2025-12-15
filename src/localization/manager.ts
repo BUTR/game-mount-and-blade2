@@ -1,9 +1,9 @@
-import { types, util } from 'vortex-api';
-import { Utils } from '@butr/vortexextensionnative';
-import { Dirent, readdirSync, readFileSync } from 'fs';
-import { TranslateValues } from './types';
-import { i18nToBannerlord } from './utils';
-import { I18N_NAMESPACE } from '../common';
+import { types, util } from "vortex-api";
+import { Utils } from "@butr/vortexextensionnative";
+import { Dirent, readdirSync, readFileSync } from "fs";
+import { TranslateValues } from "./types";
+import { i18nToBannerlord } from "./utils";
+import { I18N_NAMESPACE } from "../common";
 
 export class LocalizationManager {
   private static instance: LocalizationManager | undefined;
@@ -23,8 +23,11 @@ export class LocalizationManager {
     this.api = api;
   }
 
-  public localize = (template: string, values: TranslateValues = {}): string => {
-    if (template.startsWith('{=')) {
+  public localize = (
+    template: string,
+    values: TranslateValues = {},
+  ): string => {
+    if (template.startsWith("{=")) {
       if (!this.initializedLocalization) {
         this.initializeLocalization();
         this.initializedLocalization = true;
@@ -40,9 +43,13 @@ export class LocalizationManager {
 
   private initializeLocalization = (): void => {
     readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
-      if (d.isFile() && d.name.startsWith('localization_') && d.name.endsWith('.xml')) {
+      if (
+        d.isFile() &&
+        d.name.startsWith("localization_") &&
+        d.name.endsWith(".xml")
+      ) {
         const content: string = readFileSync(`${__dirname}/${d.name}`, {
-          encoding: 'utf8',
+          encoding: "utf8",
         });
         Utils.loadLocalization(content);
       }

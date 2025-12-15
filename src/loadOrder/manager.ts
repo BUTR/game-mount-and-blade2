@@ -1,23 +1,30 @@
-import { ComponentType } from 'react';
-import { selectors, types } from 'vortex-api';
-import { IInvalidResult, IValidationResult } from 'vortex-api/lib/extensions/file_based_loadorder/types/types';
-import { BannerlordModuleManager, Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { libraryToPersistence, vortexToLibrary } from './converters';
-import { actionsLoadOrder } from './actions';
-import { orderCurrentLoadOrderByExternalLoadOrderAsync } from './utils';
-import { IFBLOItemRendererProps } from './types';
-import { readLoadOrderAsync, writeLoadOrderAsync } from './vortex';
+import { ComponentType } from "react";
+import { selectors, types } from "vortex-api";
+import {
+  IInvalidResult,
+  IValidationResult,
+} from "vortex-api/lib/extensions/file_based_loadorder/types/types";
+import {
+  BannerlordModuleManager,
+  Utils,
+  types as vetypes,
+} from "@butr/vortexextensionnative";
+import { libraryToPersistence, vortexToLibrary } from "./converters";
+import { actionsLoadOrder } from "./actions";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "./utils";
+import { IFBLOItemRendererProps } from "./types";
+import { readLoadOrderAsync, writeLoadOrderAsync } from "./vortex";
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
   IModuleCompatibilityInfoCache,
   IModuleObfuscationCacheInfoCache,
   ModAnalyzerProxy,
-} from '../butr';
-import { GAME_ID } from '../common';
-import { LoadOrderInfoPanel, LoadOrderItemRenderer } from '../views';
-import { VortexLoadOrderStorage } from '../types';
-import { versionToString, VortexLauncherManager } from '../launcher';
+} from "../butr";
+import { GAME_ID } from "../common";
+import { LoadOrderInfoPanel, LoadOrderItemRenderer } from "../views";
+import { VortexLoadOrderStorage } from "../types";
+import { versionToString, VortexLauncherManager } from "../launcher";
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager | undefined;
@@ -53,7 +60,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
         refreshAsync: this.updateCompatibilityScoresAsync,
       });
 
-    this.customItemRenderer = ({ className = '', item }): JSX.Element => {
+    this.customItemRenderer = ({ className = "", item }): JSX.Element => {
       const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
         .map<vetypes.ModuleProviderType>((x) => x.moduleProviderType);
@@ -80,34 +87,47 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       })),
     };
     const result = await proxy.analyzeAsync(this.api, query);
-    this.compatibilityScoresCache = result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-      map[curr.moduleId] = {
-        score: curr.compatibility,
-        recommendedScore: curr.recommendedCompatibility,
-        recommendedVersion: curr.recommendedModuleVersion,
-      };
-      return map;
-    }, {});
+    this.compatibilityScoresCache =
+      result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+        map[curr.moduleId] = {
+          score: curr.compatibility,
+          recommendedScore: curr.recommendedCompatibility,
+          recommendedVersion: curr.recommendedModuleVersion,
+        };
+        return map;
+      }, {});
     this.forceRefresh();
   };
 
   private forceRefresh = (): void => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
+    const profile: types.IProfile | undefined = selectors.activeProfile(
+      this.api.getState(),
+    );
     this.api.store?.dispatch(actionsLoadOrder.setFBForceUpdate(profile.id));
   };
 
-  public serializeLoadOrder = async (newLO: VortexLoadOrderStorage, prevLO: VortexLoadOrderStorage): Promise<void> => {
+  public serializeLoadOrder = async (
+    newLO: VortexLoadOrderStorage,
+    prevLO: VortexLoadOrderStorage,
+  ): Promise<void> => {
     const loadOrderConverted = vortexToLibrary(newLO);
-    await writeLoadOrderAsync(this.api, libraryToPersistence(loadOrderConverted));
+    await writeLoadOrderAsync(
+      this.api,
+      libraryToPersistence(loadOrderConverted),
+    );
     await this.setParametersAsync(loadOrderConverted);
   };
 
-  private setParametersAsync = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
+  private setParametersAsync = async (
+    loadOrder: vetypes.LoadOrder,
+  ): Promise<void> => {
     const launcherManager = VortexLauncherManager.getInstance(this.api);
     await launcherManager.setModulesToLaunchAsync(loadOrder);
   };
 
-  private populateMissingAttributes = async (loadOrder: VortexLoadOrderStorage): Promise<void> => {
+  private populateMissingAttributes = async (
+    loadOrder: VortexLoadOrderStorage,
+  ): Promise<void> => {
     const launcherManager = VortexLauncherManager.getInstance(this.api);
     for (const entry of loadOrder) {
       if (entry.data === undefined) {
@@ -118,7 +138,10 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       // For now a restart will do
       if (entry.data.hasObfuscatedBinaries === null) {
         if (this.obfuscationCache[entry.id] === undefined) {
-          this.obfuscationCache[entry.id] = await launcherManager.isObfuscatedAsync(entry.data.moduleInfoExtended);
+          this.obfuscationCache[entry.id] =
+            await launcherManager.isObfuscatedAsync(
+              entry.data.moduleInfoExtended,
+            );
         }
         entry.data.hasObfuscatedBinaries = this.obfuscationCache[entry.id]!;
       }
@@ -138,21 +161,33 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     const allModules = await launcherManager.getAllModulesAsync();
     const savedLoadOrder = await readLoadOrderAsync(this.api);
 
-    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(this.api, allModules, savedLoadOrder);
+    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(
+      this.api,
+      allModules,
+      savedLoadOrder,
+    );
     await this.populateMissingAttributes(loadOrder);
     await this.setParametersAsync(vortexToLibrary(loadOrder));
     return loadOrder;
   };
 
-  public validate = (prevLO: VortexLoadOrderStorage, newLO: VortexLoadOrderStorage): Promise<IValidationResult> => {
-    const modules = (newLO ?? []).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) => {
+  public validate = (
+    prevLO: VortexLoadOrderStorage,
+    newLO: VortexLoadOrderStorage,
+  ): Promise<IValidationResult> => {
+    const modules = (
+      newLO ?? []
+    ).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) => {
       return entry.data && entry.enabled ? entry.data.moduleInfoExtended : [];
     });
     //const validationManager = ValidationManager.fromVortex(newLO);
 
     const invalidResults: IInvalidResult[] = [];
     for (const enabledModule of modules) {
-      const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(modules, enabledModule);
+      const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(
+        modules,
+        enabledModule,
+      );
       for (const issue of loadOrderIssues) {
         const localizedIssue = Utils.renderModuleIssue(issue);
         invalidResults.push({
@@ -164,6 +199,8 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
     // While the contract doesn't explicitly allow undefined to be returned,
     // it's expecting an undefined when there are no issues.
-    return Promise.resolve(invalidResults.length === 0 ? undefined! : { invalid: invalidResults });
+    return Promise.resolve(
+      invalidResults.length === 0 ? undefined! : { invalid: invalidResults },
+    );
   };
 }

@@ -97,6 +97,13 @@ const updateFromNpm = () => {
   exec('npx tsc -p tsconfig.module.json');
 };
 
+const lint = () => {
+  console.log('Lint');
+
+  exec('yarn format:check');
+  exec('yarn lint');
+};
+
 const webpack = () => {
   console.log('Webpack');
 
@@ -116,31 +123,16 @@ const pack7z = () => {
 const copyToVortex = (isDev) => {
   const deployPath = isDev ? 'vortex_devel/plugins' : 'vortex/plugins';
 
-  // Handle junction/symlink creation (Windows-specific)
-  const junctionPath = '/vortex-plugins';
-
   try {
-    if (!fs.existsSync(junctionPath)) {
-      const appDataPath = process.env.APPDATA;
-      if (appDataPath) {
-        const targetPath = path.join(appDataPath, deployPath);
+    const appDataPath = process.env.APPDATA;
+    if (appDataPath) {
+      const targetPath = path.join(appDataPath, deployPath);
 
-        if (process.platform === 'win32') {
-          // Create junction on Windows
-          exec(`mklink /J "${junctionPath}" "${targetPath}"`, ROOT_DIR);
-          console.log(`Created folder junction at ${junctionPath} pointing to ${targetPath}`);
-        } else {
-          // Create symlink on Unix
-          fs.symlinkSync(targetPath, junctionPath, 'dir');
-          console.log(`Created symlink at ${junctionPath} pointing to ${targetPath}`);
-        }
-      }
+      console.log(`Copy dist to Vortex plugins: ${targetPath}`);
+      const destPath = path.join(targetPath, 'bannerlord');
+      removeIfExists(destPath);
+      copyRecursive(DIST_DIR, destPath);
     }
-
-    console.log('Copy dist to Vortex plugins mount');
-    const destPath = path.join(junctionPath, 'bannerlord');
-    removeIfExists(destPath);
-    copyRecursive(DIST_DIR, destPath);
   } catch {
     // Silently ignore errors (matching PowerShell behavior)
   }
@@ -167,6 +159,11 @@ const build = (options) => {
   // Update from NPM
   if (effectiveType === 'build-update') {
     updateFromNpm();
+  }
+
+  // Lint
+  if (['build', 'build-extended', 'build-update', 'build-webpack'].includes(effectiveType)) {
+    lint();
   }
 
   // Webpack

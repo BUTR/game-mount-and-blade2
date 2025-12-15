@@ -1,19 +1,28 @@
-import { selectors, types } from 'vortex-api';
-import { Utils, types as vetypes } from '@butr/vortexextensionnative';
-import { libraryToVortex, libraryVMToVortex, persistenceToLibrary, vortexToPersistence } from './converters';
-import { actionsLoadOrder } from './actions';
-import { OBFUSCATED_BINARIES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from '../common';
+import { selectors, types } from "vortex-api";
+import { Utils, types as vetypes } from "@butr/vortexextensionnative";
+import {
+  libraryToVortex,
+  libraryVMToVortex,
+  persistenceToLibrary,
+  vortexToPersistence,
+} from "./converters";
+import { actionsLoadOrder } from "./actions";
+import {
+  OBFUSCATED_BINARIES,
+  STEAM_BINARIES_ON_XBOX,
+  SUB_MODS_IDS,
+} from "../common";
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
   PersistenceLoadOrderStorage,
   RequiredProperties,
   VortexLoadOrderStorage,
-} from '../types';
-import { VortexLauncherManager } from '../launcher';
-import { LocalizationManager } from '../localization';
-import { hasPersistentLoadOrder } from '../vortex';
-import { getSortOnDeployFromSettings } from '../settings';
+} from "../types";
+import { VortexLauncherManager } from "../launcher";
+import { LocalizationManager } from "../localization";
+import { hasPersistentLoadOrder } from "../vortex";
+import { getSortOnDeployFromSettings } from "../settings";
 
 type ModIdResult = {
   id: string;
@@ -25,7 +34,10 @@ type ModIdResult = {
 /**
  * I have no idea what to do if we have multiple mods that provide the same Module
  */
-export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string): ModIdResult[] => {
+export const getModuleAttributes = (
+  api: types.IExtensionApi,
+  moduleId: string,
+): ModIdResult[] => {
   const state = api.getState();
   const gameId: string | undefined = selectors.activeGameId(state);
   const gameMods = gameId ? state.persistent.mods[gameId] ?? {} : {};
@@ -37,7 +49,7 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
     if (subModsIds.has(moduleId)) {
       arr.push({
         id: mod.id,
-        source: mod.attributes['source'],
+        source: mod.attributes["source"],
         hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
         hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
       });
@@ -51,31 +63,41 @@ export const getModuleAttributes = (api: types.IExtensionApi, moduleId: string):
 
 const getExcludedLoadOrder = (
   loadOrder: VortexLoadOrderStorage,
-  result: vetypes.OrderByLoadOrderResult
+  result: vetypes.OrderByLoadOrderResult,
 ): VortexLoadOrderStorage => {
-  const excludedLoadOrder = loadOrder.reduce<VortexLoadOrderStorage>((arr, curr) => {
-    if (result.orderedModuleViewModels?.find((x) => x.moduleInfoExtended.id === curr.id)) {
-      arr.push(curr);
-    }
-    return arr;
-  }, []);
+  const excludedLoadOrder = loadOrder.reduce<VortexLoadOrderStorage>(
+    (arr, curr) => {
+      if (
+        result.orderedModuleViewModels?.find(
+          (x) => x.moduleInfoExtended.id === curr.id,
+        )
+      ) {
+        arr.push(curr);
+      }
+      return arr;
+    },
+    [],
+  );
   return excludedLoadOrder;
 };
 
 const checkOrderByLoadOrderResult = (
   api: types.IExtensionApi,
   autoSort: boolean,
-  result: vetypes.OrderByLoadOrderResult
+  result: vetypes.OrderByLoadOrderResult,
 ): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   if (autoSort && result.issues) {
     api.sendNotification?.({
-      type: 'warning',
-      message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
-        NL: '\n',
-        REASONS: result.issues.join(`\n`),
-      }),
+      type: "warning",
+      message: t(
+        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
+        {
+          NL: "\n",
+          REASONS: result.issues.join(`\n`),
+        },
+      ),
     });
   }
 };
@@ -83,15 +105,23 @@ const checkOrderByLoadOrderResult = (
 const checkResult = (
   api: types.IExtensionApi,
   autoSort: boolean,
-  result: vetypes.OrderByLoadOrderResult
-): result is RequiredProperties<vetypes.OrderByLoadOrderResult, 'orderedModuleViewModels'> => {
+  result: vetypes.OrderByLoadOrderResult,
+): result is RequiredProperties<
+  vetypes.OrderByLoadOrderResult,
+  "orderedModuleViewModels"
+> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
-  if (result === undefined || !result.orderedModuleViewModels || result.result === undefined || !result.result) {
+  if (
+    result === undefined ||
+    !result.orderedModuleViewModels ||
+    result.result === undefined ||
+    !result.result
+  ) {
     if (autoSort) {
       // The user is not expecting a sort operation, so don't give the notification
       api.sendNotification?.({
-        type: 'error',
+        type: "error",
         message: t(`{=sLf3eIpH}Failed to order the module list!`),
       });
     }
@@ -100,20 +130,31 @@ const checkResult = (
   return true;
 };
 
-const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOrder: VortexLoadOrderStorage): void => {
+const checkSavedLoadOrder = (
+  api: types.IExtensionApi,
+  autoSort: boolean,
+  loadOrder: VortexLoadOrderStorage,
+): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
-    loadOrder.filter((x) => x.enabled).map<vetypes.ModuleInfoExtendedWithMetadata>((x) => x.data!.moduleInfoExtended)
+    loadOrder
+      .filter((x) => x.enabled)
+      .map<vetypes.ModuleInfoExtendedWithMetadata>(
+        (x) => x.data!.moduleInfoExtended,
+      ),
   );
   if (autoSort && savedLoadOrderIssues.length > 0) {
     // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
     api.sendNotification?.({
-      type: 'warning',
-      message: t(`{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`, {
-        NL: '\n',
-        REASONS: savedLoadOrderIssues.join(`\n`),
-      }),
+      type: "warning",
+      message: t(
+        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
+        {
+          NL: "\n",
+          REASONS: savedLoadOrderIssues.join(`\n`),
+        },
+      ),
     });
   }
 };
@@ -121,7 +162,7 @@ const checkSavedLoadOrder = (api: types.IExtensionApi, autoSort: boolean, loadOr
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
   allModules: Readonly<IModuleCache>,
-  savedLoadOrder: PersistenceLoadOrderStorage
+  savedLoadOrder: PersistenceLoadOrderStorage,
 ): Promise<VortexLoadOrderStorage> => {
   const state = api.getState();
 
@@ -135,14 +176,20 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   const launcherManager = VortexLauncherManager.getInstance(api);
 
   const savedLoadOrderLibrary = persistenceToLibrary(savedLoadOrder);
-  const savedLoadOrderVortex = libraryToVortex(api, allModules, savedLoadOrderLibrary);
+  const savedLoadOrderVortex = libraryToVortex(
+    api,
+    allModules,
+    savedLoadOrderLibrary,
+  );
 
   checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
 
   // Apply the Load Order to the list of modules
   // Useful when there are new modules or old modules are missing
   // The output wil wil contain the auto sorted list of modules
-  const result = await launcherManager.orderByLoadOrderAsync(savedLoadOrderLibrary);
+  const result = await launcherManager.orderByLoadOrderAsync(
+    savedLoadOrderLibrary,
+  );
   if (!checkResult(api, autoSort, result)) {
     return savedLoadOrderVortex;
   }
@@ -159,7 +206,10 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   return getExcludedLoadOrder(savedLoadOrderVortex, result);
 };
 
-export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boolean): Promise<void> => {
+export const toggleLoadOrderAsync = async (
+  api: types.IExtensionApi,
+  toggle: boolean,
+): Promise<void> => {
   const state = api.getState();
 
   if (!hasPersistentLoadOrder(state.persistent)) {
@@ -176,13 +226,21 @@ export const toggleLoadOrderAsync = async (api: types.IExtensionApi, toggle: boo
     return;
   }
 
-  const loadOrder = vortexToPersistence(currentLoadOrder).map<IPersistenceLoadOrderEntry>((entry) => {
+  const loadOrder = vortexToPersistence(
+    currentLoadOrder,
+  ).map<IPersistenceLoadOrderEntry>((entry) => {
     entry.isSelected = toggle;
     return entry;
   });
 
   const launcherManager = VortexLauncherManager.getInstance(api);
   const allModules = await launcherManager.getAllModulesAsync();
-  const orderedLoadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(api, allModules, loadOrder);
-  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder));
+  const orderedLoadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(
+    api,
+    allModules,
+    loadOrder,
+  );
+  api.store?.dispatch(
+    actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder),
+  );
 };

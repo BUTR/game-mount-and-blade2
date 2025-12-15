@@ -1,10 +1,10 @@
-import { actions, types } from 'vortex-api';
-import { Utils } from '@butr/vortexextensionnative';
-import { ComplexActionCreator1 } from 'redux-act';
-import { createReducer, updateAuto } from './redux';
-import { actionsSave } from '../save';
-import { actionsSettings, IBannerlordSettings } from '../settings';
-import { i18nToBannerlord } from '../localization';
+import { actions, types } from "vortex-api";
+import { Utils } from "@butr/vortexextensionnative";
+import { ComplexActionCreator1 } from "redux-act";
+import { createReducer, updateAuto } from "./redux";
+import { actionsSave } from "../save";
+import { actionsSettings, IBannerlordSettings } from "../settings";
+import { i18nToBannerlord } from "../localization";
 
 const defaults: IBannerlordSettings = {
   sortOnDeploy: {},
@@ -14,16 +14,18 @@ const defaults: IBannerlordSettings = {
 };
 
 // Vortex API's IReducerSpec.reducers uses `any` for payload type, so we must match it
-const reducers: types.IReducerSpec<IBannerlordSettings>['reducers'] = {};
+const reducers: types.IReducerSpec<IBannerlordSettings>["reducers"] = {};
 
 createReducer(
   actionsSettings.setSortOnDeploy,
   (state, payload) => {
     const { profileId, sort } = payload;
 
-    return updateAuto(state, { sortOnDeploy: { $auto: { [profileId]: { $set: sort } } } });
+    return updateAuto(state, {
+      sortOnDeploy: { $auto: { [profileId]: { $set: sort } } },
+    });
   },
-  reducers
+  reducers,
 );
 
 createReducer(
@@ -31,9 +33,11 @@ createReducer(
   (state, payload) => {
     const { profileId, fixCommonIssues } = payload;
 
-    return updateAuto(state, { fixCommonIssues: { $auto: { [profileId]: { $set: fixCommonIssues } } } });
+    return updateAuto(state, {
+      fixCommonIssues: { $auto: { [profileId]: { $set: fixCommonIssues } } },
+    });
   },
-  reducers
+  reducers,
 );
 
 createReducer(
@@ -41,9 +45,11 @@ createReducer(
   (state, payload) => {
     const { profileId, betaSorting } = payload;
 
-    return updateAuto(state, { betaSorting: { $auto: { [profileId]: { $set: betaSorting } } } });
+    return updateAuto(state, {
+      betaSorting: { $auto: { [profileId]: { $set: betaSorting } } },
+    });
   },
-  reducers
+  reducers,
 );
 
 createReducer(
@@ -51,9 +57,11 @@ createReducer(
   (state, payload) => {
     const { profileId, saveId } = payload;
 
-    return updateAuto(state, { saveName: { $auto: { [profileId]: { $set: saveId } } } });
+    return updateAuto(state, {
+      saveName: { $auto: { [profileId]: { $set: saveId } } },
+    });
   },
-  reducers
+  reducers,
 );
 
 createReducer(
@@ -63,16 +71,20 @@ createReducer(
 
     return updateAuto(state, { [id]: { $set: order } });
   },
-  reducers
+  reducers,
 );
 
 createReducer(
-  actions.setLanguage as ComplexActionCreator1<string, string, Record<string, never>>,
+  actions.setLanguage as ComplexActionCreator1<
+    string,
+    string,
+    Record<string, never>
+  >,
   (state, payload: string) => {
     Utils.setLanguage(i18nToBannerlord(payload));
     return state;
   },
-  reducers
+  reducers,
 );
 
 const reducer: types.IReducerSpec<IBannerlordSettings> = {

@@ -18,7 +18,9 @@
     "build": "node build.js build",
     "build-dev": "node build.js build-dev",
     "lint": "eslint -c .eslintrc.build.json src",
-    "lint-fix": "eslint -c .eslintrc.build.json --fix src && prettier --write",
+    "lint:fix": "eslint -c .eslintrc.build.json --fix src",
+    "format": "prettier src --write",
+    "format:check": "prettier src --check",
     "pre-commit": "lint-staged"
   },
   "devDependencies": {

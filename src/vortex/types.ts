@@ -1,12 +1,12 @@
-import { types } from 'vortex-api';
-import { GAME_ID } from '../common';
+import { types } from "vortex-api";
+import { GAME_ID } from "../common";
 import {
   IBannerlordModStorage,
   IBannerlordSession,
   IStatePersistent,
   IStateSession,
   VortexLoadOrderStorage,
-} from '../types';
+} from "../types";
 
 export interface IStateSessionWithBannerlord extends IStateSession {
   [GAME_ID]: IBannerlordSession;
@@ -26,7 +26,8 @@ export interface IStatePersistentWithBannerlordMods extends IStatePersistent {
   mods: IModTableWithBannerlord;
 }
 
-export interface ISettingsInterfaceWithPrimaryTool extends types.ISettingsInterface {
+export interface ISettingsInterfaceWithPrimaryTool
+  extends types.ISettingsInterface {
   primaryTool: {
     [GAME_ID]?: string;
   };

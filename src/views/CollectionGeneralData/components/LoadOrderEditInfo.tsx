@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { FlexLayout, Icon, MainContext } from 'vortex-api';
-import { openLoadOrderPage } from '../utils';
-import { useLocalization } from '../../../localization';
+import React, { useContext } from "react";
+import { FlexLayout, Icon, MainContext } from "vortex-api";
+import { openLoadOrderPage } from "../utils";
+import { useLocalization } from "../../../localization";
 
 export const LoadOrderEditInfo = (): JSX.Element => {
   const { localize: t } = useLocalization();
@@ -14,13 +14,17 @@ export const LoadOrderEditInfo = (): JSX.Element => {
         <Icon name="dialog-info" />
       </FlexLayout.Fixed>
       <FlexLayout.Fixed className="collection-edit-loadorder-edit-info">
-        {t('You can make changes to this data from the ')}
-        <a className="fake-link" onClick={() => openLoadOrderPage(context.api)} title={t('Go to Load Order Page')}>
-          {t('Load Order page.')}
+        {t("You can make changes to this data from the ")}
+        <a
+          className="fake-link"
+          onClick={() => openLoadOrderPage(context.api)}
+          title={t("Go to Load Order Page")}
+        >
+          {t("Load Order page.")}
         </a>
         {t(
-          ' If you believe a load order entry is missing, please ensure the ' +
-            'relevant mod is enabled and has been added to the collection.'
+          " If you believe a load order entry is missing, please ensure the " +
+            "relevant mod is enabled and has been added to the collection.",
         )}
       </FlexLayout.Fixed>
     </FlexLayout>

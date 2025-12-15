@@ -1,8 +1,8 @@
-import { types, util } from 'vortex-api';
-import { findMod, findModDownload, isModActive } from './modFinder';
-import { IBannerlordModStorage } from '../types';
-import { findBLSEDownload, findBLSEMod } from '../blse';
-import { HARMONY_MOD_ID } from '../common';
+import { types, util } from "vortex-api";
+import { findMod, findModDownload, isModActive } from "./modFinder";
+import { IBannerlordModStorage } from "../types";
+import { findBLSEDownload, findBLSEMod } from "../blse";
+import { HARMONY_MOD_ID } from "../common";
 
 export enum DeployModStatus {
   OK,
@@ -20,7 +20,7 @@ export type DeployModResult = {
 export const checkBLSEDeploy = (
   api: types.IExtensionApi,
   profile: types.IProfile,
-  mods: IBannerlordModStorage
+  mods: IBannerlordModStorage,
 ): DeployModResult => {
   const blseMod = findBLSEMod(mods);
   if (blseMod) {
@@ -55,9 +55,9 @@ export const checkBLSEDeploy = (
 export const checkHarmonyDeploy = (
   api: types.IExtensionApi,
   profile: types.IProfile,
-  mods: IBannerlordModStorage
+  mods: IBannerlordModStorage,
 ): DeployModResult => {
-  const harmonyMod = findMod(mods, 'Bannerlord.Harmony');
+  const harmonyMod = findMod(mods, "Bannerlord.Harmony");
   if (harmonyMod) {
     // Found but not enabled
     const harmonyIsActive = isModActive(profile, harmonyMod);
@@ -87,7 +87,11 @@ export const checkHarmonyDeploy = (
   };
 };
 
-export const deployModAsync = async (api: types.IExtensionApi): Promise<void> => {
-  await util.toPromise((cb) => api.events.emit('deploy-mods', cb));
-  await util.toPromise((cb) => api.events.emit('start-quick-discovery', () => cb(null)));
+export const deployModAsync = async (
+  api: types.IExtensionApi,
+): Promise<void> => {
+  await util.toPromise((cb) => api.events.emit("deploy-mods", cb));
+  await util.toPromise((cb) =>
+    api.events.emit("start-quick-discovery", () => cb(null)),
+  );
 };

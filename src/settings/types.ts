@@ -1,5 +1,5 @@
-import { types } from 'vortex-api';
-import { GAME_ID } from '../common';
+import { types } from "vortex-api";
+import { GAME_ID } from "../common";
 
 export interface IBannerlordSettings {
   saveName: {

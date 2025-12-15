@@ -2,8 +2,8 @@
   "compilerOptions": {
     "incremental": true,
     "target": "esnext",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "jsx": "react",
     "allowJs": true,
     "checkJs": true,
@@ -54,9 +54,7 @@
 
     /* Experimental Options */
     "experimentalDecorators": false /* Enables experimental support for ES7 decorators. */,
-    "emitDecoratorMetadata": false /* Enables experimental support for emitting type metadata for decorators. */,
-
-    "ignoreDeprecations": "6.0"
+    "emitDecoratorMetadata": false /* Enables experimental support for emitting type metadata for decorators. */
   },
   "exclude": ["test", "node_modules"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
