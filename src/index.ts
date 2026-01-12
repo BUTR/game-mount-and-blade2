@@ -54,7 +54,7 @@ import {
 } from "./vortex";
 import { LocalizationManager } from "./localization";
 import { version } from "../package.json";
-import { VortexLauncherManagerLogger } from "./launcher/VortexLauncherManagerLogger";
+import { VortexLauncherManagerLogger } from "./launcher/logger";
 
 // TODO: Better dialogs with settings
 let logger: VortexLauncherManagerLogger | null = null;
