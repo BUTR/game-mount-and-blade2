@@ -79,17 +79,11 @@ const updateFromFile = (configuration) => {
 
   exec('npm remove @butr/vortexextensionnative');
 
-  const currentDir = process.cwd();
-  try {
-    process.chdir(extensionPath);
-    exec('npm run clean');
-    exec(`npm run build -- ${configuration}`);
-    exec('npm pack');
-  } finally {
-    process.chdir(currentDir);
-  }
+  exec('npm run clean', extensionPath);
+  exec(`npm run build -- ${configuration}`, extensionPath);
+  exec('npm pack', extensionPath);
 
-  const tgzFile = 'butr-vortexextensionnative-1.0.0.tgz';
+  const tgzFile = 'butr-vortexextensionnative-2.0.0.tgz';
   fs.copyFileSync(path.join(extensionPath, tgzFile), path.join(ROOT_DIR, tgzFile));
   exec(`npm i ./${tgzFile}`);
 };

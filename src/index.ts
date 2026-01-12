@@ -54,8 +54,10 @@ import {
 } from "./vortex";
 import { LocalizationManager } from "./localization";
 import { version } from "../package.json";
+import { VortexLauncherManagerLogger } from "./launcher/VortexLauncherManagerLogger";
 
 // TODO: Better dialogs with settings
+let logger: VortexLauncherManagerLogger | null = null;
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
@@ -454,6 +456,13 @@ const main = (context: types.IExtensionContext): boolean => {
         await willRemoveModCollectionsAsync(context.api, modId);
       },
     );
+  });
+
+  context.once(() => {
+    if (logger === null) {
+      logger = new VortexLauncherManagerLogger();
+      logger.useVortexFunctions();
+    }
   });
   // Register Callbacks
 

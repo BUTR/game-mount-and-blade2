@@ -36,6 +36,8 @@ export class VortexLauncherManager {
   private api: types.IExtensionApi;
 
   public constructor(api: types.IExtensionApi) {
+    this.api = api;
+
     this.launcherManager = new NativeLauncherManager(
       this.setGameParametersAsync,
       this.sendNotificationAsync,
@@ -51,8 +53,6 @@ export class VortexLauncherManager {
       this.getOptionsAsync,
       this.getStateAsync,
     );
-
-    this.api = api;
   }
 
   /**
