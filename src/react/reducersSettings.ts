@@ -4,7 +4,7 @@ import { ComplexActionCreator1 } from "redux-act";
 import { createReducer, updateAuto } from "./redux";
 import { actionsSave } from "../save";
 import { actionsSettings, IBannerlordSettings } from "../settings";
-import { i18nToBannerlord } from "../localization";
+import { languageMap } from "../localization";
 
 const defaults: IBannerlordSettings = {
   sortOnDeploy: {},
@@ -81,7 +81,7 @@ createReducer(
     Record<string, never>
   >,
   (state, payload: string) => {
-    Utils.setLanguage(i18nToBannerlord(payload));
+    Utils.setLanguage(languageMap.getNameFromCode(payload));
     return state;
   },
   reducers,

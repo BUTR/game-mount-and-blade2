@@ -22,6 +22,10 @@ import {
   SUB_MODS_IDS,
 } from "../common";
 import { LocalizationManager } from "../localization";
+import {
+  getAvailableTranslationLanguages,
+  pushTranslationLanguageAttributes,
+} from "../vortex/modTranslation";
 
 export const installModuleAsync = async (
   files: string[],
@@ -224,6 +228,12 @@ Warning! This can lead to issues!`,
     key: OBFUSCATED_BINARIES,
     value: hasObfuscatedBinaries,
   });
+
+  const languages = await getAvailableTranslationLanguages(
+    transformedResult.instructions,
+    destinationPath,
+  );
+  pushTranslationLanguageAttributes(transformedResult.instructions, languages);
 
   return transformedResult;
 };

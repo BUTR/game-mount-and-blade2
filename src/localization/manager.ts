@@ -2,7 +2,7 @@ import { types, util } from "vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
 import { Dirent, readdirSync, readFileSync } from "fs";
 import { TranslateValues } from "./types";
-import { i18nToBannerlord } from "./utils";
+import { languageMap } from "./utils";
 import { I18N_NAMESPACE } from "../common";
 
 export class LocalizationManager {
@@ -54,6 +54,6 @@ export class LocalizationManager {
         Utils.loadLocalization(content);
       }
     });
-    Utils.setLanguage(i18nToBannerlord(util.getCurrentLanguage()));
+    Utils.setLanguage(languageMap.getNameFromCode(util.getCurrentLanguage()));
   };
 }

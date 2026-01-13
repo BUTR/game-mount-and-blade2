@@ -11,6 +11,7 @@ import {
   SavePageOptions,
   Settings,
   SettingsProps,
+  DetailsRenderer,
 } from "./views";
 import { BannerlordGame } from "./game";
 import { IAddedFiles, IBannerlordModStorage } from "./types";
@@ -60,6 +61,7 @@ import {
 } from "./vortex/modTranslation";
 import { version } from "../package.json";
 import { VortexLauncherManagerLogger } from "./launcher/logger";
+import React from "react";
 
 // TODO: Better dialogs with settings
 let logger: VortexLauncherManagerLogger | null = null;
@@ -340,18 +342,18 @@ const main = (context: types.IExtensionContext): boolean => {
   // Show detected translation languages in the Mods side panel (Details)
   context.registerTableAttribute("mods", {
     id: "translationLanguagesText",
-    name: "Translation Languages",
+    name: "Translations Available",
     description: "Detected languages included in this translation mod",
     placement: "detail",
     position: 76,
-    help: "Comma-separated list of language codes found under ModuleData/Languages",
+    help: "List of languages found under ModuleData/Languages",
     isSortable: false,
     isGroupable: false,
     condition: () => selectors.activeGameId(context.api.getState()) === GAME_ID,
-    calc: (mod: types.IMod) =>
-      mod?.type === "bannerlord-translation"
-        ? mod?.attributes?.["translationLanguagesText"]
-        : undefined,
+    calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
+    customRenderer: (mod: types.IMod, detailCell: boolean) => {
+      return React.createElement(DetailsRenderer, { mod: mod, detailCell }, []);
+    },
     edit: {},
   });
 
