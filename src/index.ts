@@ -301,7 +301,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority:*/ 25,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
     /*getPath:*/ (game) => getInstallPathModule(context.api, game),
-    /*test:*/ toBluebird((instructions) => isModTypeModule(instructions)),
+    /*test:*/ toBluebird(isModTypeModule),
   );
 
   context.registerInstaller(
@@ -309,7 +309,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority:*/ 30,
     /*testSupported:*/ toBluebird(isModTranslationArchive),
     /*install:*/ toBluebird(
-      (
+      async (
         files: string[],
         destinationPath: string,
         gameId: string,
@@ -317,8 +317,12 @@ const main = (context: types.IExtensionContext): boolean => {
         _choices?: unknown,
         _unattended?: boolean,
         archivePath?: string,
-      ) =>
-        modTranslationInstaller(
+      ) => {
+        if (GAME_ID !== gameId) {
+          return undefined!;
+        }
+
+        return await modTranslationInstaller(
           context.api,
           files,
           destinationPath,
@@ -327,7 +331,8 @@ const main = (context: types.IExtensionContext): boolean => {
           _choices,
           _unattended,
           archivePath,
-        ),
+        );
+      },
     ),
   );
 
@@ -336,7 +341,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority:*/ 30,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
     /*getPath:*/ (game) => getInstallPathModule(context.api, game),
-    /*test:*/ toBluebird((instructions) => isModTypeTranslation(instructions)),
+    /*test:*/ toBluebird(isModTypeTranslation),
   );
 
   // Show detected translation languages in the Mods side panel (Details)

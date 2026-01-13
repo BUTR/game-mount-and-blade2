@@ -34,32 +34,59 @@ export const installModuleAsync = async (
   api: types.IExtensionApi,
   launcherManager: NativeLauncherManager,
 ): Promise<types.IInstallResult> => {
-  const subModuleRelFilePath = files.find((x) => x.endsWith("SubModule.xml"))!;
-  const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
-  const subModuleFile = await readFile(subModuleFilePath, {
-    encoding: "utf-8",
-  });
-
-  const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
-    subModuleFile,
-    vetypes.ModuleProviderType.Default,
-    subModuleFilePath,
+  // Find all SubModule.xml files to support multiple mods per archive
+  const subModuleRelFilePaths = files.filter((x) =>
+    x.endsWith("SubModule.xml"),
   );
 
-  if (moduleInfo === undefined) {
+  if (subModuleRelFilePaths.length === 0) {
     const { localize: t } = LocalizationManager.getInstance(api);
-    api.showErrorNotification?.("Error", t("Failed to parse SubModule.xml"));
+    api.showErrorNotification?.(
+      "Error",
+      t("No SubModule.xml found in archive"),
+    );
     return {
       instructions: [],
     };
   }
 
+  // Parse all SubModule.xml files
+  const moduleInfos: vetypes.ModuleInfoExtendedWithMetadata[] = [];
+  for (const subModuleRelFilePath of subModuleRelFilePaths) {
+    const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
+    const subModuleFile = await readFile(subModuleFilePath, {
+      encoding: "utf-8",
+    });
+
+    const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
+      subModuleFile,
+      vetypes.ModuleProviderType.Default,
+      subModuleFilePath,
+    );
+
+    if (moduleInfo === undefined) {
+      const { localize: t } = LocalizationManager.getInstance(api);
+      api.showErrorNotification?.(
+        "Error",
+        t("Failed to parse SubModule.xml at {{path}}", {
+          replace: { path: subModuleRelFilePath },
+        }),
+      );
+      return {
+        instructions: [],
+      };
+    }
+
+    moduleInfos.push(moduleInfo);
+  }
+
   const filesWithFullPath = files.map<string>((x) =>
     path.join(destinationPath, x),
   );
-  const resultRaw = launcherManager.installModule(filesWithFullPath, [
-    moduleInfo,
-  ]);
+  const resultRaw = launcherManager.installModule(
+    filesWithFullPath,
+    moduleInfos,
+  );
   const result: vetypes.InstallResult = {
     instructions: resultRaw.instructions.map<vetypes.InstallInstruction>(
       (x) => {
@@ -83,8 +110,15 @@ export const installModuleAsync = async (
     [],
   );
 
-  const hasObfuscatedBinaries =
-    await launcherManager.isObfuscatedAsync(moduleInfo);
+  // Check if any of the modules have obfuscated binaries
+  const obfuscatedChecks = await Promise.all(
+    moduleInfos.map((moduleInfo) =>
+      launcherManager.isObfuscatedAsync(moduleInfo),
+    ),
+  );
+  const hasObfuscatedBinaries = obfuscatedChecks.some(
+    (isObfuscated) => isObfuscated,
+  );
 
   let useSteamBinaries = false;
 
