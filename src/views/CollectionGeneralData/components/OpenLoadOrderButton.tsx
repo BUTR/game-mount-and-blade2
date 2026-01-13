@@ -1,8 +1,8 @@
-import React, { useContext } from 'react';
-import { Button } from 'react-bootstrap';
-import { MainContext } from 'vortex-api';
-import { openLoadOrderPage } from '../utils';
-import { useLocalization } from '../../../localization';
+import React, { useContext } from "react";
+import { Button } from "react-bootstrap";
+import { MainContext } from "vortex-api";
+import { openLoadOrderPage } from "../utils";
+import { useLocalization } from "../../../localization";
 
 export const OpenLoadOrderButton = (): JSX.Element => {
   const { localize: t } = useLocalization();
@@ -16,7 +16,7 @@ export const OpenLoadOrderButton = (): JSX.Element => {
       onClick={() => openLoadOrderPage(context.api)}
       bsStyle="ghost"
     >
-      {t('Open Load Order Page')}
+      {t("Open Load Order Page")}
     </Button>
   );
 };

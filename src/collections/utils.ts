@@ -1,31 +1,31 @@
-import { selectors, types } from 'vortex-api';
+import { selectors, types } from "vortex-api";
 import {
   IExtensionContextWithCollectionFeature,
   IModWithCollection,
   IModWithIncludedModOptions,
   IncludedModOptions,
   IStatePersistentWithModsWithIncludedModOptions,
-} from './types';
-import { GAME_ID } from '../common';
-import { IStatePersistent } from '../types';
-import { LocalizationManager } from '../localization';
+} from "./types";
+import { GAME_ID } from "../common";
+import { IStatePersistent } from "../types";
+import { LocalizationManager } from "../localization";
 import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
   getPersistentBannerlordMods,
   installBLSEAsync,
   installHarmonyAsync,
-} from '../vortex';
+} from "../vortex";
 
 export const hasContextWithCollectionFeature = (
-  context: types.IExtensionContext
+  context: types.IExtensionContext,
 ): context is IExtensionContextWithCollectionFeature => {
   return context.optional.registerCollectionFeature;
 };
 
 export const hasStatePersistentCollectionModWithIncludedModOptions = (
   statePersistent: IStatePersistent,
-  collectionId: string
+  collectionId: string,
 ): statePersistent is IStatePersistentWithModsWithIncludedModOptions => {
   if (!statePersistent.mods[GAME_ID]) {
     return false;
@@ -38,7 +38,9 @@ export const hasStatePersistentCollectionModWithIncludedModOptions = (
   return hasIncludedModOptions(statePersistent.mods[GAME_ID][collectionId]!);
 };
 
-export const hasModAttributeCollection = <T = unknown>(mod: types.IMod): mod is IModWithCollection<T> => {
+export const hasModAttributeCollection = <T = unknown>(
+  mod: types.IMod,
+): mod is IModWithCollection<T> => {
   const modWithIncludedModOptions = mod as IModWithCollection<T>;
   if (!modWithIncludedModOptions.attributes) {
     return false;
@@ -51,7 +53,9 @@ export const hasModAttributeCollection = <T = unknown>(mod: types.IMod): mod is 
   return true;
 };
 
-export const hasIncludedModOptions = (mod: types.IMod): mod is IModWithIncludedModOptions => {
+export const hasIncludedModOptions = (
+  mod: types.IMod,
+): mod is IModWithIncludedModOptions => {
   if (!hasModAttributeCollection<IncludedModOptions>(mod)) {
     return false;
   }
@@ -71,18 +75,33 @@ export const hasIncludedModOptions = (mod: types.IMod): mod is IModWithIncludedM
   return true;
 };
 
-export const collectionInstallBLSEAsync = async (api: types.IExtensionApi): Promise<void> => {
+export const collectionInstallBLSEAsync = async (
+  api: types.IExtensionApi,
+): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
   api.sendNotification?.({
-    id: 'blse-required',
-    type: 'info',
-    title: t('BLSE Required'),
-    message: t(`BLSE is required by the collection. Ensuring it is installed and it's dependencies...`),
+    id: "blse-required",
+    type: "info",
+    title: t("BLSE Required"),
+    message: t(
+      `BLSE is required by the collection. Ensuring it is installed and it's dependencies...`,
+    ),
   });
 
   const state = api.getState();
-  const profile: types.IProfile | undefined = selectors.activeProfile(state);
+  const profile = selectors.activeProfile(state);
+
+  if (!profile) {
+    api.sendNotification?.({
+      id: "blse-required-no-profile",
+      type: "error",
+      title: t("BLSE Required"),
+      message: t(`No active profile found. Cannot install BLSE.`),
+    });
+    return;
+  }
+
   const mods = getPersistentBannerlordMods(state.persistent);
 
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);

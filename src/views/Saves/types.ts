@@ -1,4 +1,4 @@
-import { types as vetypes } from '@butr/vortexextensionnative';
+import { types as vetypes } from "@butr/vortexextensionnative";
 
 export interface ISaveGame {
   index: number;

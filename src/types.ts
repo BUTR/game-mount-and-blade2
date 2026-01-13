@@ -1,14 +1,20 @@
-import { types } from 'vortex-api';
-import { types as vetypes } from '@butr/vortexextensionnative';
-import { AVAILABLE_STORES, OBFUSCATED_BINARIES, STEAM_BINARIES_ON_XBOX, SUB_MODS_IDS } from './common';
+import { types } from "vortex-api";
+import { types as vetypes } from "@butr/vortexextensionnative";
+import {
+  AVAILABLE_STORES,
+  OBFUSCATED_BINARIES,
+  STEAM_BINARIES_ON_XBOX,
+  SUB_MODS_IDS,
+} from "./common";
 
-export type RequiredProperties<T, P extends keyof T> = Omit<T, P> & Required<Pick<T, P>>;
+export type RequiredProperties<T, P extends keyof T> = Omit<T, P> &
+  Required<Pick<T, P>>;
 
-export type IStateSession = types.IState['session'];
+export type IStateSession = types.IState["session"];
 
-export type IStatePersistent = types.IState['persistent'];
+export type IStatePersistent = types.IState["persistent"];
 
-export type IModAttributes = types.IMod['attributes'];
+export type IModAttributes = types.IMod["attributes"];
 
 export interface IBannerlordModAttributes {
   modId: number;

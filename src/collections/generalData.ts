@@ -1,24 +1,34 @@
-import { selectors, types } from 'vortex-api';
-import { ICollectionData, ICollectionDataWithGeneralData, ICollectionGeneralData } from './types';
-import { genCollectionGeneralLoadOrder, parseCollectionGeneralLoadOrderAsync } from './loadOrder';
-import { CollectionParseError } from './errors';
-import { collectionInstallBLSEAsync } from './utils';
-import { GAME_ID } from '../common';
-import { isModActive } from '../vortex';
-import { findBLSEMod } from '../blse';
-import { vortexToPersistence } from '../loadOrder';
-import { VortexLauncherManager } from '../launcher';
-import { IBannerlordModStorage, VortexLoadOrderStorage } from '../types';
+import { selectors, types } from "vortex-api";
+import {
+  ICollectionData,
+  ICollectionDataWithGeneralData,
+  ICollectionGeneralData,
+} from "./types";
+import {
+  genCollectionGeneralLoadOrder,
+  parseCollectionGeneralLoadOrderAsync,
+} from "./loadOrder";
+import { CollectionParseError } from "./errors";
+import { collectionInstallBLSEAsync } from "./utils";
+import { GAME_ID } from "../common";
+import { isModActive } from "../vortex";
+import { findBLSEMod } from "../blse";
+import { vortexToPersistence } from "../loadOrder";
+import { VortexLauncherManager } from "../launcher";
+import { IBannerlordModStorage, VortexLoadOrderStorage } from "../types";
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
 export const genCollectionGeneralDataAsync = (
-  profile: types.IProfile,
+  profile: types.IProfile | undefined,
   loadOrder: VortexLoadOrderStorage,
-  includedMods: IBannerlordModStorage
+  includedMods: IBannerlordModStorage,
 ): Promise<ICollectionGeneralData> => {
-  const collectionLoadOrder = genCollectionGeneralLoadOrder(loadOrder, Object.values(includedMods));
+  const collectionLoadOrder = genCollectionGeneralLoadOrder(
+    loadOrder,
+    Object.values(includedMods),
+  );
 
   const blseMod = findBLSEMod(includedMods);
   const hasBLSE = blseMod !== undefined && isModActive(profile, blseMod);
@@ -34,18 +44,27 @@ export const genCollectionGeneralDataAsync = (
  */
 export const parseCollectionGeneralDataAsync = async (
   api: types.IExtensionApi,
-  collection: ICollectionData
+  collection: ICollectionData,
 ): Promise<void> => {
   if (!hasGeneralData(collection)) {
     return;
   }
 
   const state = api.getState();
-  const profileId: string | undefined = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const profile: types.IProfile | undefined = selectors.profileById(state, profileId ?? '');
+  const profileId: string | undefined = selectors.lastActiveProfileForGame(
+    state,
+    GAME_ID,
+  );
+  const profile = selectors.profileById(state, profileId ?? "");
   if (profile?.gameId !== GAME_ID) {
-    const collectionName = collection.info.name !== undefined ? collection.info.name : 'Bannerlord Collection';
-    throw new CollectionParseError(collectionName, 'Last active profile is missing');
+    const collectionName =
+      collection.info.name !== undefined
+        ? collection.info.name
+        : "Bannerlord Collection";
+    throw new CollectionParseError(
+      collectionName,
+      "Last active profile is missing",
+    );
   }
   const { hasBLSE } = collection;
 
@@ -62,11 +81,11 @@ export const parseCollectionGeneralDataAsync = async (
  * Assumes that the correct Game ID is active and that the profile is set up correctly.
  */
 export const cloneCollectionGeneralDataAsync = (
-  api: types.IExtensionApi,
-  gameId: string,
+  _api: types.IExtensionApi,
+  _gameId: string,
   collection: ICollectionData,
-  from: types.IMod,
-  to: types.IMod
+  _from: types.IMod,
+  _to: types.IMod,
 ): Promise<void> => {
   if (!hasGeneralData(collection)) {
     return Promise.resolve();
@@ -76,13 +95,12 @@ export const cloneCollectionGeneralDataAsync = (
   return Promise.resolve();
 };
 
-const hasGeneralData = (collection: ICollectionData): collection is ICollectionDataWithGeneralData => {
+const hasGeneralData = (
+  collection: ICollectionData,
+): collection is ICollectionDataWithGeneralData => {
   const collectionData = collection as ICollectionDataWithGeneralData;
-  if (!collectionData.hasBLSE) {
-    return false;
-  }
-  if (collectionData.suggestedLoadOrder === undefined) {
-    return false;
-  }
-  return true;
+  return (
+    collectionData.hasBLSE !== undefined &&
+    collectionData.suggestedLoadOrder !== undefined
+  );
 };

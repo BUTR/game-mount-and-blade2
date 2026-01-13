@@ -1,6 +1,9 @@
-import { types } from 'vortex-api';
-import { IVortexViewModelData } from '../types';
+import { types } from "vortex-api";
+import { IVortexViewModelData } from "../types";
 
-export type IFBLOItemRendererProps = Omit<types.IFBLOItemRendererProps, 'loEntry'> & {
+export type IFBLOItemRendererProps = Omit<
+  types.IFBLOItemRendererProps,
+  "loEntry"
+> & {
   loEntry: types.IFBLOLoadOrderEntry<IVortexViewModelData>;
 };

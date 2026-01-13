@@ -1,89 +1,116 @@
-import { fs, types, util } from 'vortex-api';
-import turbowalk from 'turbowalk';
-import path from 'path';
-import { readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { ModOptionsEntry, ModOptionsEntryType, ModOptionsStorage, PersistentModOptionsEntry } from './types';
+import { fs, types, util } from "vortex-api";
+import turbowalk from "turbowalk";
+import path from "path";
+import { readFile, rename, rm, writeFile } from "node:fs/promises";
+import {
+  ModOptionsEntry,
+  ModOptionsEntryType,
+  ModOptionsStorage,
+  PersistentModOptionsEntry,
+} from "./types";
 
 export const getSettingsPath = (): string => {
-  return path.join(util.getVortexPath('documents'), 'Mount and Blade II Bannerlord', 'Configs', 'ModSettings');
+  return path.join(
+    util.getVortexPath("documents"),
+    "Mount and Blade II Bannerlord",
+    "Configs",
+    "ModSettings",
+  );
 };
 
-export const readSettingsContentAsync = async (entry: ModOptionsEntry): Promise<string> => {
+export const readSettingsContentAsync = async (
+  entry: ModOptionsEntry,
+): Promise<string> => {
   switch (entry.type) {
-    case 'global':
-      return await readFile(path.join(getSettingsPath(), 'Global', entry.path), 'base64');
-    case 'special':
-      return await readFile(path.join(getSettingsPath(), entry.path), 'base64');
+    case "global":
+      return await readFile(
+        path.join(getSettingsPath(), "Global", entry.path),
+        "base64",
+      );
+    case "special":
+      return await readFile(path.join(getSettingsPath(), entry.path), "base64");
     default:
-      return '';
+      return "";
   }
 };
 
 export const overrideModOptionsAsync = async (
   mod: types.IMod,
-  modOptions: PersistentModOptionsEntry[]
+  modOptions: PersistentModOptionsEntry[],
 ): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   for (const modOption of modOptions) {
     switch (modOption.type) {
-      case 'global':
+      case "global":
         {
-          const filePath = path.join(getSettingsPath(), 'Global', modOption.path);
+          const filePath = path.join(
+            getSettingsPath(),
+            "Global",
+            modOption.path,
+          );
           await fs.ensureDirAsync(path.dirname(filePath));
           try {
             await rename(filePath, `${filePath}.${id}`);
-          } catch (err) {
+          } catch {
             /* empty */
           }
-          await writeFile(filePath, modOption.contentBase64, 'base64');
+          await writeFile(filePath, modOption.contentBase64, "base64");
         }
         break;
-      case 'special':
+      case "special":
         {
           const filePath = path.join(getSettingsPath(), modOption.path);
           try {
             await rename(filePath, `${filePath}.${id}`);
-          } catch (err) {
+          } catch {
             /* empty */
           }
-          await writeFile(filePath, modOption.contentBase64, 'base64');
+          await writeFile(filePath, modOption.contentBase64, "base64");
         }
         break;
     }
   }
 };
 
-export const hasBackupModOptionsAsync = async (mod: types.IMod): Promise<boolean> => {
+export const hasBackupModOptionsAsync = async (
+  mod: types.IMod,
+): Promise<boolean> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   let hasBackup = false;
   await turbowalk(
     getSettingsPath(),
     (entries) => {
-      const backupFiles = entries.filter((entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`));
+      const backupFiles = entries.filter(
+        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
+      );
       hasBackup = backupFiles.length > 0;
     },
-    { recurse: true }
+    { recurse: true },
   );
   return hasBackup;
 };
 
-export const restoreOriginalModOptionsAsync = async (mod: types.IMod): Promise<void> => {
+export const restoreOriginalModOptionsAsync = async (
+  mod: types.IMod,
+): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: { fullPath: string; originalPath: string }[] = [];
   await turbowalk(
     getSettingsPath(),
     (entries) => {
-      const backupFiles = entries.filter((entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`));
+      const backupFiles = entries.filter(
+        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
+      );
       for (const file of backupFiles) {
         const fullPath = file.filePath;
         const originalPath = fullPath.slice(0, fullPath.length - id.length - 1);
         filesToRemove.push({ fullPath, originalPath });
       }
     },
-    { recurse: true }
+    { recurse: true },
   );
   for (const file of filesToRemove) {
     const { fullPath, originalPath } = file;
@@ -100,20 +127,24 @@ export const restoreOriginalModOptionsAsync = async (mod: types.IMod): Promise<v
   }
 };
 
-export const removeOriginalModOptionsAsync = async (mod: types.IMod): Promise<void> => {
+export const removeOriginalModOptionsAsync = async (
+  mod: types.IMod,
+): Promise<void> => {
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: string[] = [];
   await turbowalk(
     getSettingsPath(),
     (entries) => {
-      const backupFiles = entries.filter((entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`));
+      const backupFiles = entries.filter(
+        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
+      );
       for (const file of backupFiles) {
         const fullPath = file.filePath;
         filesToRemove.push(fullPath);
       }
     },
-    { recurse: true }
+    { recurse: true },
   );
   for (const file of filesToRemove) {
     try {
@@ -126,9 +157,9 @@ export const removeOriginalModOptionsAsync = async (mod: types.IMod): Promise<vo
 
 export const getSpecialSettings = (): ModOptionsStorage => {
   const specialSettingsDictionary: ModOptionsStorage = {
-    ['ButterLib']: {
-      name: 'ButterLib/Options.json',
-      path: 'ButterLib/Options.json',
+    ["ButterLib"]: {
+      name: "ButterLib/Options.json",
+      path: "ButterLib/Options.json",
       type: ModOptionsEntryType.Special,
     },
   };
@@ -137,7 +168,7 @@ export const getSpecialSettings = (): ModOptionsStorage => {
 
 export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
   const globalSettingsDictionary: ModOptionsStorage = {};
-  const gsPath = path.join(getSettingsPath(), 'Global');
+  const gsPath = path.join(getSettingsPath(), "Global");
   await turbowalk(
     gsPath,
     (entries) => {
@@ -155,7 +186,7 @@ export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
         };
       }
     },
-    { recurse: true }
+    { recurse: true },
   );
   return globalSettingsDictionary;
 };

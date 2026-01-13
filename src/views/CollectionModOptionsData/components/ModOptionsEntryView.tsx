@@ -1,6 +1,6 @@
-import React, { BaseSyntheticEvent } from 'react';
-import { Checkbox, ListGroupItem } from 'react-bootstrap';
-import { ModOptionsEntry } from '../../../modoptions';
+import React, { BaseSyntheticEvent } from "react";
+import { Checkbox, ListGroupItem } from "react-bootstrap";
+import { ModOptionsEntry } from "../../../modoptions";
 
 export type ModOptionsEntryViewProps = {
   entry: ModOptionsEntry | undefined;
@@ -8,7 +8,9 @@ export type ModOptionsEntryViewProps = {
   toggleEntry: (newValue: boolean, entry: ModOptionsEntry) => void;
 };
 
-export const ModOptionsEntryView = (props: ModOptionsEntryViewProps): JSX.Element | null => {
+export const ModOptionsEntryView = (
+  props: ModOptionsEntryViewProps,
+): JSX.Element | null => {
   const { entry, isToggled, toggleEntry } = props;
 
   if (!entry) {
@@ -17,17 +19,23 @@ export const ModOptionsEntryView = (props: ModOptionsEntryViewProps): JSX.Elemen
 
   const key = entry.name;
   const name = entry.name;
-  const classes = ['load-order-entry', 'collection-tab'];
+  const classes = ["load-order-entry", "collection-tab"];
 
   const checked = isToggled(entry);
 
   return (
-    <ListGroupItem key={key} className={classes.join(' ')}>
+    <ListGroupItem key={key} className={classes.join(" ")}>
       <p className="load-order-name">{name}</p>
       <Checkbox
         className="entry-checkbox"
         checked={checked}
-        onChange={(evt: BaseSyntheticEvent<Event, HTMLInputElement & Checkbox, HTMLInputElement>) => {
+        onChange={(
+          evt: BaseSyntheticEvent<
+            Event,
+            HTMLInputElement & Checkbox,
+            HTMLInputElement
+          >,
+        ) => {
           toggleEntry(evt.target.checked, entry);
         }}
       />

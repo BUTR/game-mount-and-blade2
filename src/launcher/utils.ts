@@ -1,17 +1,19 @@
-import { types as vetypes } from '@butr/vortexextensionnative';
-import { VortexStoreIds } from '../types';
+import { types as vetypes } from "@butr/vortexextensionnative";
+import { VortexStoreIds } from "../types";
 
-export const vortexStoreToLibraryStore = (storeId: string): vetypes.GameStore => {
+export const vortexStoreToLibraryStore = (
+  storeId: string,
+): vetypes.GameStore => {
   switch (storeId) {
     case VortexStoreIds.Steam:
-      return 'Steam';
+      return "Steam";
     case VortexStoreIds.GOG:
-      return 'GOG';
+      return "GOG";
     case VortexStoreIds.Epic:
-      return 'Epic';
+      return "Epic";
     case VortexStoreIds.Xbox:
-      return 'Xbox';
+      return "Xbox";
     default:
-      return 'Unknown';
+      return "Unknown";
   }
 };

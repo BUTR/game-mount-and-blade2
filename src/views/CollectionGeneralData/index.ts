@@ -1,1 +1,1 @@
-export * from './pages/GeneralDataPage';
+export * from "./pages/GeneralDataPage";

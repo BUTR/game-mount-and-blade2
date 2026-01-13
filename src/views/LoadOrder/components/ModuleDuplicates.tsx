@@ -1,8 +1,8 @@
-import React from 'react';
-import { tooltip } from 'vortex-api';
-import { types as vetypes } from '@butr/vortexextensionnative';
-import { IVortexViewModelData } from '../../../types';
-import { useLocalization } from '../../../localization';
+import React from "react";
+import { tooltip } from "vortex-api";
+import { types as vetypes } from "@butr/vortexextensionnative";
+import { IVortexViewModelData } from "../../../types";
+import { useLocalization } from "../../../localization";
 
 export type ModuleDuplicatesProps = {
   availableProviders: vetypes.ModuleProviderType[];
@@ -30,7 +30,7 @@ export const ModuleDuplicates = (props: ModuleDuplicatesProps): JSX.Element => {
         style={{ width: `1.5em`, height: `1.5em` }}
         tooltip={t(
           `{=kfMQEOFS}The Module is installed in the game's /Modules folder and on Steam Workshop!{NL}` +
-            `The /Modules version will be used!`
+            `The /Modules version will be used!`,
         )}
       />
     );

@@ -1,9 +1,17 @@
-import React from 'react';
-import { ListGroupItem } from 'react-bootstrap';
-import { IPersistenceLoadOrderEntry, VortexLoadOrderStorage } from '../../../types';
-import { CompatibilityInfo, isOptional, ModuleIcon, OptionalBanner } from '../../Shared';
-import { IModuleCompatibilityInfoCache } from '../../../butr';
-import { versionToString } from '../../../launcher';
+import React from "react";
+import { ListGroupItem } from "react-bootstrap";
+import {
+  IPersistenceLoadOrderEntry,
+  VortexLoadOrderStorage,
+} from "../../../types";
+import {
+  CompatibilityInfo,
+  isOptional,
+  ModuleIcon,
+  OptionalBanner,
+} from "../../Shared";
+import { IModuleCompatibilityInfoCache } from "../../../butr";
+import { versionToString } from "../../../launcher";
 
 export type LoadOrderEntryProps = {
   entry: IPersistenceLoadOrderEntry | undefined;
@@ -11,7 +19,9 @@ export type LoadOrderEntryProps = {
   compatibilityInfoCache: IModuleCompatibilityInfoCache;
 };
 
-export const LoadOrderEntry = (props: LoadOrderEntryProps): JSX.Element | null => {
+export const LoadOrderEntry = (
+  props: LoadOrderEntryProps,
+): JSX.Element | null => {
   const { entry, loadOrder, compatibilityInfoCache } = props;
 
   if (!entry) {
@@ -28,20 +38,23 @@ export const LoadOrderEntry = (props: LoadOrderEntryProps): JSX.Element | null =
   const key = loEntry.id;
   const name = entry.name ? `${entry.name}` : `${entry.id}`;
   const version = versionToString(loEntry.data.moduleInfoExtended.version);
-  let classes = ['load-order-entry', 'collection-tab'];
+  let classes = ["load-order-entry", "collection-tab"];
   if (isOptional(loEntry)) {
-    classes = classes.concat('external');
+    classes = classes.concat("external");
   }
 
   return (
-    <ListGroupItem key={key} className={classes.join(' ')}>
+    <ListGroupItem key={key} className={classes.join(" ")}>
       <p className="load-order-index">{entry.index + 1}</p>
       <ModuleIcon data={loEntry.data} />
       <p className="load-order-name">
         {name} ({version})
       </p>
       <OptionalBanner item={loEntry} />
-      <CompatibilityInfo data={loEntry.data} compatibilityInfo={compatibilityInfo} />
+      <CompatibilityInfo
+        data={loEntry.data}
+        compatibilityInfo={compatibilityInfo}
+      />
       <div style={{ width: `1.5em`, height: `1.5em` }} />
     </ListGroupItem>
   );

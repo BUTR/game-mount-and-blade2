@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.3.0
+* Improved stability and updated dependencies
+* Properly handle Translation files and the conflicts by yurecz
+---------------------------------------------------------------------------------------------------
 Version: 1.2.4
 * Fixed Harmony/BLSE double installation
 * Fixed LO not applying again

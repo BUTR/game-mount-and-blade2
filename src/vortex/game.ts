@@ -1,7 +1,7 @@
-import { selectors, types } from 'vortex-api';
-import path from 'path';
-import { statSync } from 'node:fs';
-import { isStoreStandard, isStoreXbox } from './store';
+import { selectors, types } from "vortex-api";
+import path from "path";
+import { statSync } from "node:fs";
+import { isStoreStandard, isStoreXbox } from "./store";
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_XBOX,
@@ -9,21 +9,30 @@ import {
   BINARY_FOLDER_STANDARD_MODDING_KIT,
   BINARY_FOLDER_XBOX,
   GAME_ID,
-} from '../common';
+} from "../common";
 
 export const getBinaryPath = (store: string | undefined): string => {
-  return path.join(`bin`, isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD);
+  return path.join(
+    `bin`,
+    isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD,
+  );
 };
 
 export const getBinaryModdingPath = (_store: string | undefined): string => {
   return path.join(`bin`, BINARY_FOLDER_STANDARD_MODDING_KIT);
 };
 
-export const getBannerlordMainExe = (discoveryPath: string | undefined, api: types.IExtensionApi): string => {
-  const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
-  const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
+export const getBannerlordMainExe = (
+  discoveryPath: string | undefined,
+  api: types.IExtensionApi,
+): string => {
+  const standard = (): string =>
+    path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
+  const xbox = (): string =>
+    path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
 
-  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(api.getState(), GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined =
+    selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -41,7 +50,7 @@ export const getBannerlordMainExe = (discoveryPath: string | undefined, api: typ
     try {
       statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
-    } catch (err) {
+    } catch {
       return standard();
     }
   }
@@ -52,12 +61,13 @@ export const getBannerlordMainExe = (discoveryPath: string | undefined, api: typ
 export const getBannerlordToolExe = (
   discoveryPath: string | undefined,
   api: types.IExtensionApi,
-  exe: string
+  exe: string,
 ): string => {
   const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
   const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
 
-  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(api.getState(), GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined =
+    selectors.discoveryByGame(api.getState(), GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -75,7 +85,7 @@ export const getBannerlordToolExe = (
     try {
       statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
       return xbox();
-    } catch (err) {
+    } catch {
       return standard();
     }
   }

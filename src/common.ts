@@ -1,4 +1,4 @@
-import path from 'path';
+import path from "path";
 
 export const LOAD_ORDER_SUFFIX = `_loadorder.json`;
 

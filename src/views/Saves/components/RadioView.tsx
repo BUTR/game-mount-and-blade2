@@ -1,7 +1,7 @@
-import React from 'react';
-import { types } from 'vortex-api';
-import { Radio } from 'react-bootstrap';
-import { ISaveGame } from '../types';
+import React from "react";
+import { types } from "vortex-api";
+import { Radio } from "react-bootstrap";
+import { ISaveGame } from "../types";
 
 export type RadioViewProps = {
   api: types.IExtensionApi;
