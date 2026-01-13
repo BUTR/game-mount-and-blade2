@@ -61,6 +61,7 @@ export const overrideModOptionsAsync = async (
       case "special":
         {
           const filePath = path.join(getSettingsPath(), modOption.path);
+          await fs.ensureDirAsync(path.dirname(filePath));
           try {
             await rename(filePath, `${filePath}.${id}`);
           } catch {
@@ -79,8 +80,10 @@ export const hasBackupModOptionsAsync = async (
   const id = `bak.vortex.${mod.archiveId}}`;
 
   let hasBackup = false;
+  const settingsPath = getSettingsPath();
+  await fs.ensureDirAsync(settingsPath);
   await turbowalk(
-    getSettingsPath(),
+    settingsPath,
     (entries) => {
       const backupFiles = entries.filter(
         (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
@@ -98,8 +101,10 @@ export const restoreOriginalModOptionsAsync = async (
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: { fullPath: string; originalPath: string }[] = [];
+  const settingsPath = getSettingsPath();
+  await fs.ensureDirAsync(settingsPath);
   await turbowalk(
-    getSettingsPath(),
+    settingsPath,
     (entries) => {
       const backupFiles = entries.filter(
         (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
@@ -133,8 +138,10 @@ export const removeOriginalModOptionsAsync = async (
   const id = `bak.vortex.${mod.archiveId}}`;
 
   const filesToRemove: string[] = [];
+  const settingsPath = getSettingsPath();
+  await fs.ensureDirAsync(settingsPath);
   await turbowalk(
-    getSettingsPath(),
+    settingsPath,
     (entries) => {
       const backupFiles = entries.filter(
         (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
@@ -169,6 +176,7 @@ export const getSpecialSettings = (): ModOptionsStorage => {
 export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
   const globalSettingsDictionary: ModOptionsStorage = {};
   const gsPath = path.join(getSettingsPath(), "Global");
+  await fs.ensureDirAsync(gsPath);
   await turbowalk(
     gsPath,
     (entries) => {

@@ -131,16 +131,12 @@ export const modTranslationInstaller = async (
   api: types.IExtensionApi,
   files: string[],
   _destinationPath: string,
-  gameId: string,
+  _gameId: string,
   _progressDelegate: types.ProgressDelegate,
   _choices?: unknown,
   _unattended?: boolean,
   archivePath?: string,
-): Promise<types.IInstallResult | undefined> => {
-  if (gameId !== GAME_ID) {
-    return undefined;
-  }
-
+): Promise<types.IInstallResult> => {
   // 1) Build copy instructions
   //    - Only take translation payload (ModuleData/Languages/**)
   //    - Preserve relative structure
