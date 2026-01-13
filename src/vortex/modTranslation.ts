@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { log, types } from "vortex-api";
 import path from "path";
 import { readFile } from "node:fs/promises";
 import { isModTypeModule } from "./modType";
@@ -6,8 +6,10 @@ import { GAME_ID, SUBMODULE_FILE } from "../common";
 import { VortexLauncherManager } from "../launcher/manager";
 import { languageMap, LocalizationManager } from "../localization";
 
+// Constants
 const languageFileRegex =
   /ModuleData[\\/]+Languages[\\/]+([^\\/]+)[\\/]+language_data\.xml$/i;
+const MIN_TOKEN_MATCHES_FOR_MODULE_INFERENCE = 3;
 
 // Utility: files that belong to the translation payload
 // Must include a language key subfolder: ModuleData/Languages/<lang>/...
@@ -61,7 +63,7 @@ const inferModuleIdFromDownload = async (
     const downloads = state.persistent.downloads.files ?? {};
     const archiveName = path.basename(archivePath);
 
-    const entries: types.IDownload[] = Object.values(downloads ?? {});
+    const entries: types.IDownload[] = Object.values(downloads);
     const entry = entries.find((d) => {
       try {
         const gameMatches = Array.isArray(d?.game)
@@ -76,14 +78,15 @@ const inferModuleIdFromDownload = async (
           (typeof fileName === "string" &&
             fileName.toLowerCase() === archiveName.toLowerCase());
         return gameMatches && pathMatches;
-      } catch {
+      } catch (err) {
+        log("error", "Error matching download entry:", err);
         return false;
       }
     });
 
     const nexusInfo = entry?.modInfo?.["nexus"]?.["modInfo"];
     const nexusModName: string | undefined = nexusInfo?.name;
-    if (nexusModName === null || nexusModName === undefined) return undefined;
+    if (!nexusModName) return undefined;
 
     const launcher = VortexLauncherManager.getInstance(api);
     const modules = await launcher.getAllModulesAsync();
@@ -114,11 +117,12 @@ const inferModuleIdFromDownload = async (
       }
     }
 
-    // Require at least 3 token matches to avoid weak guesses
-    if (bestScore >= 3) return bestId;
+    // Require at least minimum token matches to avoid weak guesses
+    if (bestScore >= MIN_TOKEN_MATCHES_FOR_MODULE_INFERENCE) return bestId;
 
     return undefined;
-  } catch {
+  } catch (err) {
+    log("error", "Error inferring module ID from download:", err);
     return undefined;
   }
 };
@@ -132,9 +136,9 @@ export const modTranslationInstaller = async (
   _choices?: unknown,
   _unattended?: boolean,
   archivePath?: string,
-) => {
+): Promise<types.IInstallResult | undefined> => {
   if (gameId !== GAME_ID) {
-    return undefined!;
+    return undefined;
   }
 
   // 1) Build copy instructions
@@ -250,9 +254,20 @@ const extractLanguageName = (xmlContent: string): string | undefined => {
       /<LanguageData[^>]*\sname=["']([^"']+)["']/i,
     );
     return nameMatch?.[1];
-  } catch {
+  } catch (err) {
+    log("error", "Error extracting language name from XML:", err);
     return undefined;
   }
+};
+
+/**
+ * Helper to get language code or fallback to uppercase code from match.
+ * @param languageCode - The language code from the path match
+ * @returns The uppercase language code
+ */
+const getFallbackLanguageCode = (languageCode: string): string => {
+  const code = languageCode.toString().trim();
+  return code.length > 0 ? code.toUpperCase() : "";
 };
 
 /**
@@ -284,16 +299,17 @@ export const getAvailableTranslationLanguages = async (
           languageNames.add(languageName);
         } else {
           // Fallback to language code if name not found
-          const code = match[1].toString().trim();
-          if (code.length > 0) {
-            languageNames.add(code.toUpperCase());
+          const fallbackCode = getFallbackLanguageCode(match[1]);
+          if (fallbackCode) {
+            languageNames.add(fallbackCode);
           }
         }
-      } catch {
+      } catch (err) {
         // Fallback to language code if file read fails
-        const code = match[1].toString().trim();
-        if (code.length > 0) {
-          languageNames.add(code.toUpperCase());
+        log("error", "Error reading language_data.xml file:", err);
+        const fallbackCode = getFallbackLanguageCode(match[1]);
+        if (fallbackCode) {
+          languageNames.add(fallbackCode);
         }
       }
     }
@@ -335,9 +351,6 @@ export const pushTranslationLanguageAttributes = (
 export const isModTypeTranslation = (
   instructions: types.IInstruction[],
 ): boolean => {
-  const languageFileRegex =
-    /ModuleData[\\/]+Languages[\\/]+[^\\/]+[\\/]+language_data\.xml$/i;
-
   const hasLanguageFile = instructions.some(
     (instr) =>
       instr.type === "copy" && languageFileRegex.test(instr.destination ?? ""),
