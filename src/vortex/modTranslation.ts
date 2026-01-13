@@ -63,7 +63,7 @@ const inferModuleIdFromDownload = async (
     const downloads = state.persistent.downloads.files ?? {};
     const archiveName = path.basename(archivePath);
 
-    const entries: types.IDownload[] = Object.values(downloads);
+    const entries = Object.values(downloads);
     const entry = entries.find((d) => {
       try {
         const gameMatches = Array.isArray(d?.game)
