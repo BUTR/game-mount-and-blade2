@@ -1,32 +1,31 @@
-import { types, util } from 'vortex-api';
-import { createReducer, ReducerHandler, ReducerHandlerState } from './redux';
-import { nameof as nameof2 } from '../nameof';
-import { actionsLauncher, SetUseSteamBinariesOnXboxPayload } from '../launcher';
-import { IBannerlordSession } from '../types';
+import { types } from "vortex-api";
+import { createReducer, updateAuto } from "./redux";
+import { actionsLauncher } from "../launcher";
+import { IBannerlordSession } from "../types";
 
-const nameof = nameof2<IBannerlordSession>;
-
-const setUseSteamBinariesOnXbox = (
-  state: ReducerHandlerState,
-  payload: SetUseSteamBinariesOnXboxPayload
-): ReducerHandlerState => {
-  return util.setSafe(state, [nameof('useSteamBinariesOnXbox')], payload.useSteamBinariesOnXbox);
+const defaults: IBannerlordSession = {
+  useSteamBinariesOnXbox: false,
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const getReducers = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const reducers: { [key: string]: ReducerHandler<any> } = {};
-  createReducer(actionsLauncher.setUseSteamBinariesOnXbox, setUseSteamBinariesOnXbox, reducers);
-  return reducers;
+// Vortex API's IReducerSpec.reducers uses `any` for payload type, so we must match it
+const reducers: types.IReducerSpec<IBannerlordSession>["reducers"] = {};
+
+createReducer(
+  actionsLauncher.setUseSteamBinariesOnXbox,
+  (state, payload) => {
+    const { useSteamBinariesOnXbox } = payload;
+
+    return updateAuto(state, {
+      useSteamBinariesOnXbox: { $set: useSteamBinariesOnXbox },
+    });
+  },
+  reducers,
+);
+
+const reducer: types.IReducerSpec<IBannerlordSession> = {
+  reducers,
+  defaults,
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const getDefaults = () => ({
-  [nameof('useSteamBinariesOnXbox')]: false,
-});
-
-export const reducerSession: types.IReducerSpec = {
-  reducers: getReducers(),
-  defaults: getDefaults(),
-};
+// Needed because the API expects the generic IReducerSpec
+export const reducerSession = reducer as unknown as types.IReducerSpec;

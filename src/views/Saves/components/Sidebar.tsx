@@ -1,7 +1,7 @@
-import React from 'react';
-import { IssueSnippet } from './IssueSnippet';
-import { ISaveGame } from '../types';
-import { useLocalization } from '../../../localization';
+import React from "react";
+import { IssueSnippet } from "./IssueSnippet";
+import { ISaveGame } from "../types";
+import { useLocalization } from "../../../localization";
 
 export type SidebarProps = {
   save: ISaveGame | null;
@@ -22,31 +22,34 @@ export const Sidebar = (props: SidebarProps): JSX.Element => {
     <>
       {<h3>{save.name}</h3>}
       {IssueSnippet({
-        issueHeading: t('{=HvvA78sZ}Load Order Issues:{NL}{LOADORDERISSUES}', {
-          NL: '',
-          LOADORDERISSUES: '',
+        issueHeading: t("{=HvvA78sZ}Load Order Issues:{NL}{LOADORDERISSUES}", {
+          NL: "",
+          LOADORDERISSUES: "",
         }),
         issue: save.loadOrderIssues,
       })}
       {IssueSnippet({
-        issueHeading: t('{=GtDRbC3m}Missing Modules:{NL}{MODULES}', {
-          NL: '',
-          MODULES: '',
+        issueHeading: t("{=GtDRbC3m}Missing Modules:{NL}{MODULES}", {
+          NL: "",
+          MODULES: "",
         }),
         issue: save.missingModules,
       })}
       {IssueSnippet({
-        issueHeading: t('{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}', {
-          NL: '',
-          MODULENAMES: '',
+        issueHeading: t("{=vCwH9226}Duplicate Module Names:{NL}{MODULENAMES}", {
+          NL: "",
+          MODULENAMES: "",
         }),
         issue: save.duplicateModules,
       })}
       {IssueSnippet({
-        issueHeading: t('{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}', {
-          NL: '',
-          MODULEVERSIONS: '',
-        }),
+        issueHeading: t(
+          "{=BuMom4Jt}Mismatched Module Versions:{NL}{MODULEVERSIONS}",
+          {
+            NL: "",
+            MODULEVERSIONS: "",
+          },
+        ),
         issue: save.mismatchedModuleVersions,
       })}
     </>

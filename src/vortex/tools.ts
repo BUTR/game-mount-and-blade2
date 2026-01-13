@@ -1,8 +1,8 @@
 // TODO: Translate tool titles?
-import { actions, types } from 'vortex-api';
-import path from 'path';
-import { getBinaryModdingPath, getBinaryPath } from './game';
-import { isStoreSteam } from './store';
+import { actions, types } from "vortex-api";
+import path from "path";
+import { getBinaryModdingPath, getBinaryPath } from "./game";
+import { isStoreSteam } from "./store";
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_LAUNCHER,
@@ -10,28 +10,34 @@ import {
   BLSE_LAUNCHER_EXE,
   BLSE_LAUNCHEREX_EXE,
   GAME_ID,
-} from '../common';
+} from "../common";
 
 // TODO: Reuse tool creation code
 
-const addDiscoveredTool = (api: types.IExtensionApi, tool: types.IDiscoveredTool): void => {
+const addDiscoveredTool = (
+  api: types.IExtensionApi,
+  tool: types.IDiscoveredTool,
+): void => {
   api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, tool.id, tool, false));
 };
 
-export const addBLSETools = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
+export const addBLSETools = (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult,
+): void => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
 
   const tools = [
-    { id: 'blse-cli', name: `Bannerlord Software Extender`, exe: BLSE_CLI_EXE },
+    { id: "blse-cli", name: `Bannerlord Software Extender`, exe: BLSE_CLI_EXE },
     {
-      id: 'blse-launcher',
+      id: "blse-launcher",
       name: `Bannerlord Software Extender Official Launcher`,
       exe: BLSE_LAUNCHER_EXE,
     },
     {
-      id: 'blse-launcherex',
+      id: "blse-launcherex",
       name: `Bannerlord Software Extender LauncherEx`,
       exe: BLSE_LAUNCHEREX_EXE,
     },
@@ -47,13 +53,16 @@ export const addBLSETools = (api: types.IExtensionApi, discovery: types.IDiscove
       hidden: false,
       custom: true,
       defaultPrimary: id === `blse-cli`,
-      executable: () => '',
+      executable: () => "",
     };
     addDiscoveredTool(api, tool);
   }
 };
 
-export const addOfficialCLITool = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
+export const addOfficialCLITool = (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult,
+): void => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
@@ -69,12 +78,15 @@ export const addOfficialCLITool = (api: types.IExtensionApi, discovery: types.ID
     requiredFiles: [BANNERLORD_EXE],
     hidden: false,
     custom: false,
-    executable: () => '',
+    executable: () => "",
   };
   addDiscoveredTool(api, tool);
 };
 
-export const addOfficialLauncherTool = (api: types.IExtensionApi, discovery: types.IDiscoveryResult): void => {
+export const addOfficialLauncherTool = (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult,
+): void => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
@@ -84,10 +96,14 @@ export const addOfficialLauncherTool = (api: types.IExtensionApi, discovery: typ
     name: `Official Bannerlord Launcher`,
     logo: `tw_launcher.png`,
     requiredFiles: [BANNERLORD_EXE_LAUNCHER],
-    path: path.join(discovery.path, getBinaryPath(discovery.store), BANNERLORD_EXE_LAUNCHER),
+    path: path.join(
+      discovery.path,
+      getBinaryPath(discovery.store),
+      BANNERLORD_EXE_LAUNCHER,
+    ),
     hidden: false,
     custom: false,
-    executable: () => '',
+    executable: () => "",
   };
   addDiscoveredTool(api, tool);
 };
@@ -95,7 +111,7 @@ export const addOfficialLauncherTool = (api: types.IExtensionApi, discovery: typ
 export const addModdingKitTool = (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
-  hidden: boolean = false
+  hidden: boolean = false,
 ): void => {
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
@@ -109,12 +125,16 @@ export const addModdingKitTool = (
     id: `bannerlord-sdk`,
     name: `Modding Kit`,
     logo: `tw_launcher.png`,
-    path: path.join(discovery.path, getBinaryModdingPath(discovery.store), BANNERLORD_EXE_LAUNCHER),
+    path: path.join(
+      discovery.path,
+      getBinaryModdingPath(discovery.store),
+      BANNERLORD_EXE_LAUNCHER,
+    ),
     requiredFiles: [BANNERLORD_EXE_LAUNCHER],
     exclusive: true,
     hidden: hidden,
     custom: false,
-    executable: () => '',
+    executable: () => "",
   };
   addDiscoveredTool(api, tool);
 };

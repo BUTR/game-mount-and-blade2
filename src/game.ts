@@ -1,9 +1,15 @@
-// eslint-disable-next-line no-restricted-imports
-import Bluebird, { Promise, method as toBluebird } from 'bluebird';
-import { types } from 'vortex-api';
-import { EPICAPP_ID, GAME_ID, GOG_IDS, MODULES, STEAMAPP_ID, XBOX_ID } from './common';
-import { findGameAsync, getBannerlordMainExe, setupAsync } from './vortex';
-import { VortexLauncherManager } from './launcher';
+import { method as toBluebird } from "bluebird";
+import { types } from "vortex-api";
+import {
+  EPICAPP_ID,
+  GAME_ID,
+  GOG_IDS,
+  MODULES,
+  STEAMAPP_ID,
+  XBOX_ID,
+} from "./common";
+import { findGameAsync, getBannerlordMainExe, setupAsync } from "./vortex";
+import { VortexLauncherManager } from "./launcher";
 
 export class BannerlordGame implements types.IGame {
   private api: types.IExtensionApi;
@@ -19,7 +25,7 @@ export class BannerlordGame implements types.IGame {
     gog: GOG_IDS.map((x) => ({ id: x })),
     epic: [{ id: EPICAPP_ID }],
   };
-  public requiredFiles: string[] = ['bin', 'Modules'];
+  public requiredFiles: string[] = ["bin", "Modules"];
   public parameters: string[] = [];
   public requiresCleanup = true;
   public details: { [key: string]: unknown } = {
@@ -34,15 +40,22 @@ export class BannerlordGame implements types.IGame {
     this.api = api;
   }
 
-  public queryPath = toBluebird<string | types.IGameStoreEntry>(async (): Promise<string | types.IGameStoreEntry> => {
-    const game = await findGameAsync();
-    return game.gamePath;
-  });
+  public queryPath = toBluebird<string | types.IGameStoreEntry>(
+    async (): Promise<string | types.IGameStoreEntry> => {
+      const game = await findGameAsync();
+      return game.gamePath;
+    },
+  );
   public queryModPath = (_gamePath: string): string => {
     return `.`;
   };
-  public getGameVersion = (_gamePath: string, _exePath: string): PromiseLike<string> => {
-    return VortexLauncherManager.getInstance(this.api).getGameVersionVortexAsync();
+  public getGameVersion = (
+    _gamePath: string,
+    _exePath: string,
+  ): PromiseLike<string> => {
+    return VortexLauncherManager.getInstance(
+      this.api,
+    ).getGameVersionVortexAsync();
   };
   public executable = (discoveredPath?: string): string => {
     return getBannerlordMainExe(discoveredPath, this.api);

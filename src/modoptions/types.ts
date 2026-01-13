@@ -1,6 +1,6 @@
 export enum ModOptionsEntryType {
-  Global = 'global',
-  Special = 'special',
+  Global = "global",
+  Special = "special",
 }
 
 export type ModOptionsEntry = {

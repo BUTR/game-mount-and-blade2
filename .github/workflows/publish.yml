@@ -5,12 +5,12 @@ on:
     types: [vortex_extension_update]
   push:
     branches:
-      - '**'
+      - "**"
     paths-ignore:
-      - 'docs/**'
-      - '.github/workflows/docs.yml'
+      - "docs/**"
+      - ".github/workflows/docs.yml"
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   get-package-version:
@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: "6.0.x"
 
       - name: Install and Run ChangelogParser
         id: changelog
@@ -60,22 +60,22 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Use Node.js 18
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18.17.1
-        cache: "yarn"
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19
+          cache: "yarn"
 
-    - run: yarn --frozen-lockfile --immutable --network-timeout 600000 install
+      - run: yarn --frozen-lockfile --immutable --network-timeout 600000 install
 
-    - run: yarn run build
-    
-    - uses: actions/upload-artifact@v4
-      with:
-        name: game-mount-and-blade2
-        path: dist
+      - run: yarn run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-mount-and-blade2
+          path: dist
 
   ###########################
   #         GITHUB          #

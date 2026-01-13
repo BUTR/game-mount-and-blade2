@@ -1,21 +1,24 @@
-// eslint-disable-next-line no-restricted-imports
-import Bluebird from 'bluebird';
-import { actions, fs, selectors, types, util } from 'vortex-api';
-import path from 'path';
-import { copyFile, rm } from 'node:fs/promises';
-import { hasPersistentBannerlordMods } from './utils';
-import { GAME_ID } from '../common';
-import { IAddedFiles } from '../types';
-import { vortexStoreToLibraryStore } from '../launcher';
-import { LocalizationManager } from '../localization';
+import Bluebird from "bluebird";
+import { actions, fs, selectors, types, util } from "vortex-api";
+import path from "path";
+import { copyFile, rm } from "node:fs/promises";
+import { hasPersistentBannerlordMods } from "./utils";
+import { GAME_ID } from "../common";
+import { IAddedFiles } from "../types";
+import { vortexStoreToLibraryStore } from "../launcher";
+import { LocalizationManager } from "../localization";
 
 /**
  * Event function, be careful
  */
-export const addedFilesEventAsync = async (api: types.IExtensionApi, files: IAddedFiles[]): Promise<void> => {
+export const addedFilesEventAsync = async (
+  api: types.IExtensionApi,
+  files: IAddedFiles[],
+): Promise<void> => {
   const state = api.getState();
 
-  const discovery: types.IDiscoveryResult | undefined = selectors.discoveryByGame(state, GAME_ID);
+  const discovery: types.IDiscoveryResult | undefined =
+    selectors.discoveryByGame(state, GAME_ID);
   if (discovery?.path === undefined) {
     // Can't do anything without a discovery path.
     return;
@@ -23,13 +26,19 @@ export const addedFilesEventAsync = async (api: types.IExtensionApi, files: IAdd
 
   const game = util.getGame(GAME_ID);
   const modPaths = game.getModPaths?.(discovery.path) ?? {};
-  const installPath: string | undefined = selectors.installPathForGame(state, game.id);
+  const installPath: string | undefined = selectors.installPathForGame(
+    state,
+    game.id,
+  );
   if (installPath === undefined) {
     // Can't do anything without a install path.
     return;
   }
 
-  const handleFileAsync = async (entry: { filePath: string; candidates: string[] }): Promise<void> => {
+  const handleFileAsync = async (entry: {
+    filePath: string;
+    candidates: string[];
+  }): Promise<void> => {
     // only act if we definitively know which mod owns the file
     if (entry.candidates.length !== 1) {
       return;
@@ -59,14 +68,21 @@ export const addedFilesEventAsync = async (api: types.IExtensionApi, files: IAdd
       await rm(entry.filePath);
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(api);
-      api.showErrorNotification?.(t('Failed to import added file to mod!'), err);
+      api.showErrorNotification?.(
+        t("Failed to import added file to mod!"),
+        err,
+      );
     }
   };
 
   await Bluebird.map<IAddedFiles, void>(files, handleFileAsync);
 };
 
-export const installedMod = (api: types.IExtensionApi, archiveId: string, modId: string): void => {
+export const installedMod = (
+  api: types.IExtensionApi,
+  archiveId: string,
+  modId: string,
+): void => {
   const state = api.getState();
 
   if (!hasPersistentBannerlordMods(state.persistent)) {

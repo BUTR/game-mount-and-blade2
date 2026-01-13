@@ -1,9 +1,15 @@
-import { types } from 'vortex-api';
-import { IModAnalyzerRequestModule, IModAnalyzerRequestQuery, IModuleCompatibilityInfoCache } from './types';
-import { ModAnalyzerProxy } from './modAnalyzerProxy';
-import { versionToString, VortexLauncherManager } from '../launcher';
+import { types } from "vortex-api";
+import {
+  IModAnalyzerRequestModule,
+  IModAnalyzerRequestQuery,
+  IModuleCompatibilityInfoCache,
+} from "./types";
+import { ModAnalyzerProxy } from "./modAnalyzerProxy";
+import { versionToString, VortexLauncherManager } from "../launcher";
 
-export const getCompatibilityScoresAsync = async (api: types.IExtensionApi): Promise<IModuleCompatibilityInfoCache> => {
+export const getCompatibilityScoresAsync = async (
+  api: types.IExtensionApi,
+): Promise<IModuleCompatibilityInfoCache> => {
   const launcherManager = VortexLauncherManager.getInstance(api);
   const allModules = await launcherManager.getAllModulesAsync();
   const gameVersion = await launcherManager.getGameVersionVortexAsync();

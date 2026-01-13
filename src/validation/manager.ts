@@ -1,8 +1,10 @@
-import { types as vetypes } from '@butr/vortexextensionnative';
-import { VortexLoadOrderStorage } from '../types';
+import { types as vetypes } from "@butr/vortexextensionnative";
+import { VortexLoadOrderStorage } from "../types";
 
 export class ValidationManager implements vetypes.IValidationManager {
-  static fromVortex = (loadOrder: VortexLoadOrderStorage): ValidationManager => {
+  static fromVortex = (
+    loadOrder: VortexLoadOrderStorage,
+  ): ValidationManager => {
     return new ValidationManager((moduleId: string): boolean => {
       const module = loadOrder.find((x) => x.id === moduleId);
       return module !== undefined && module.enabled;

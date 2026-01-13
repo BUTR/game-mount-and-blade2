@@ -1,9 +1,9 @@
-import React from 'react';
-import { Panel } from 'react-bootstrap';
-import { FlexLayout, ITableRowAction, Table, types } from 'vortex-api';
-import { Sidebar } from './Sidebar';
-import { ISaveGame } from '../types';
-import { useLocalization } from '../../../localization';
+import React from "react";
+import { Panel } from "react-bootstrap";
+import { FlexLayout, ITableRowAction, Table, types } from "vortex-api";
+import { Sidebar } from "./Sidebar";
+import { ISaveGame } from "../types";
+import { useLocalization } from "../../../localization";
 
 export type ContentProps = {
   selectedSave: ISaveGame | null;
@@ -15,7 +15,14 @@ export type ContentProps = {
 };
 
 export const Content = (props: ContentProps): JSX.Element => {
-  const { selectedSave, saveActions, sortedSaveGameList, tableAttributes, selectedRowSave, saveRowSelected } = props;
+  const {
+    selectedSave,
+    saveActions,
+    sortedSaveGameList,
+    tableAttributes,
+    selectedRowSave,
+    saveRowSelected,
+  } = props;
 
   const { localize: t } = useLocalization();
 
@@ -28,7 +35,7 @@ export const Content = (props: ContentProps): JSX.Element => {
               {t(
                 `Instructions: Select a row to see more information and use the radio buttons to select the save to ` +
                   `launch the game. If you don't want to launch with a save, choose the 'No Save' option at` +
-                  `the top.`
+                  `the top.`,
               )}
             </p>
             <p>
@@ -47,7 +54,9 @@ export const Content = (props: ContentProps): JSX.Element => {
                 multiSelect={false}
                 hasActions={false}
                 showDetails={false}
-                onChangeSelection={(ids: string[]) => saveRowSelected(sortedSaveGameList[parseInt(ids[0]!)]![1])}
+                onChangeSelection={(ids: string[]) =>
+                  saveRowSelected(sortedSaveGameList[parseInt(ids[0]!)]![1])
+                }
               />
             </FlexLayout.Flex>
 

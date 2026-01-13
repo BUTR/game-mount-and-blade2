@@ -1,29 +1,25 @@
-import { actions, selectors, types, util } from 'vortex-api';
+import { actions, log, selectors, types, util } from "vortex-api";
 import {
   allocWithoutOwnership,
-  BannerlordModuleManager,
   NativeLauncherManager,
   types as vetypes,
-} from '@butr/vortexextensionnative';
-import path from 'path';
-import { FileHandle, open, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { vortexStoreToLibraryStore } from './utils';
-import { actionsLauncher } from './actions';
-import { hasPersistentBannerlordMods, hasPersistentLoadOrder, hasSessionWithBannerlord } from '../vortex';
-import { actionsLoadOrder, libraryToLibraryVM, libraryVMToVortex, vortexToLibraryVM } from '../loadOrder';
-import { getBetaSortingFromSettings } from '../settings';
-import { filterEntryWithInvalidId } from '../utils';
+} from "@butr/vortexextensionnative";
+import path from "path";
+import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
+import { vortexStoreToLibraryStore } from "./utils";
+import { installModuleAsync } from "./installer";
+import { hasPersistentLoadOrder } from "../vortex";
 import {
-  AVAILABLE_STORES,
-  BINARY_FOLDER_STANDARD,
-  BINARY_FOLDER_XBOX,
-  GAME_ID,
-  OBFUSCATED_BINARIES,
-  STEAM_BINARIES_ON_XBOX,
-  SUB_MODS_IDS,
-} from '../common';
-import { IModuleCache, VortexLoadOrderStorage } from '../types';
-import { LocalizationManager } from '../localization';
+  actionsLoadOrder,
+  libraryToLibraryVM,
+  libraryVMToVortex,
+  vortexToLibraryVM,
+} from "../loadOrder";
+import { getBetaSortingFromSettings } from "../settings";
+import { filterEntryWithInvalidId } from "../utils";
+import { GAME_ID } from "../common";
+import { IModuleCache, VortexLoadOrderStorage } from "../types";
+import { LocalizationManager } from "../localization";
 
 export class VortexLauncherManager {
   private static _instance: VortexLauncherManager | undefined;
@@ -40,6 +36,8 @@ export class VortexLauncherManager {
   private api: types.IExtensionApi;
 
   public constructor(api: types.IExtensionApi) {
+    this.api = api;
+
     this.launcherManager = new NativeLauncherManager(
       this.setGameParametersAsync,
       this.sendNotificationAsync,
@@ -53,10 +51,8 @@ export class VortexLauncherManager {
       this.getModuleViewModelsAsync,
       this.setModuleViewModelsAsync,
       this.getOptionsAsync,
-      this.getStateAsync
+      this.getStateAsync,
     );
-
-    this.api = api;
   }
 
   /**
@@ -64,8 +60,12 @@ export class VortexLauncherManager {
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
     const state = this.api.getState();
-    const profile: types.IProfile | undefined = selectors.activeProfile(state);
     if (!hasPersistentLoadOrder(state.persistent)) {
+      return [];
+    }
+
+    const profile = selectors.activeProfile(state);
+    if (!profile) {
       return [];
     }
 
@@ -94,7 +94,9 @@ export class VortexLauncherManager {
     await this.refreshGameParametersAsync();
   };
 
-  public setModulesToLaunchAsync = async (loadOrder: vetypes.LoadOrder): Promise<void> => {
+  public setModulesToLaunchAsync = async (
+    loadOrder: vetypes.LoadOrder,
+  ): Promise<void> => {
     await this.launcherManager.setGameParameterLoadOrderAsync(loadOrder);
     await this.refreshGameParametersAsync();
   };
@@ -112,7 +114,9 @@ export class VortexLauncherManager {
    * Will update the CLI args with continuing the latest save file
    * @param saveName if null will exclude if from the CLI
    */
-  public setContinueLastSaveFileAsync = async (value: boolean): Promise<void> => {
+  public setContinueLastSaveFileAsync = async (
+    value: boolean,
+  ): Promise<void> => {
     await this.launcherManager.setGameParameterContinueLastSaveFileAsync(value);
     await this.refreshGameParametersAsync();
   };
@@ -134,7 +138,9 @@ export class VortexLauncherManager {
    * Gets all modules with duplicates - when installed in /Modules and Steam Workshop
    * @return
    */
-  public getAllModulesWithDuplicatesAsync = async (): Promise<vetypes.ModuleInfoExtendedWithMetadata[]> => {
+  public getAllModulesWithDuplicatesAsync = async (): Promise<
+    vetypes.ModuleInfoExtendedWithMetadata[]
+  > => {
     return await this.launcherManager.getAllModulesAsync();
   };
 
@@ -143,7 +149,9 @@ export class VortexLauncherManager {
    * @param loadOrder
    * @returns
    */
-  public orderByLoadOrderAsync = async (loadOrder: vetypes.LoadOrder): Promise<vetypes.OrderByLoadOrderResult> => {
+  public orderByLoadOrderAsync = async (
+    loadOrder: vetypes.LoadOrder,
+  ): Promise<vetypes.OrderByLoadOrderResult> => {
     return await this.launcherManager.orderByLoadOrderAsync(loadOrder);
   };
 
@@ -157,7 +165,10 @@ export class VortexLauncherManager {
   /**
    * Calls LauncherManager's testModule and converts the result to Vortex data
    */
-  public testModule = (files: string[], gameId: string): Promise<types.ISupportedResult> => {
+  public testModule = (
+    files: string[],
+    gameId: string,
+  ): Promise<types.ISupportedResult> => {
     if (gameId !== GAME_ID) {
       return Promise.resolve({
         supported: false,
@@ -178,186 +189,24 @@ export class VortexLauncherManager {
   public installModuleAsync = async (
     files: string[],
     destinationPath: string,
-    archivePath?: string
+    archivePath: string | undefined,
   ): Promise<types.IInstallResult> => {
-    const subModuleRelFilePath = files.find((x) => x.endsWith('SubModule.xml'))!;
-    const subModuleFilePath = path.join(destinationPath, subModuleRelFilePath);
-    const subModuleFile = await readFile(subModuleFilePath, {
-      encoding: 'utf-8',
-    });
-
-    const moduleInfo = BannerlordModuleManager.getModuleInfoWithMetadata(
-      subModuleFile,
-      vetypes.ModuleProviderType.Default,
-      subModuleFilePath
+    return await installModuleAsync(
+      files,
+      destinationPath,
+      archivePath,
+      this.api,
+      this.launcherManager,
     );
-
-    if (moduleInfo === undefined) {
-      const { localize: t } = LocalizationManager.getInstance(this.api);
-      this.api.showErrorNotification?.('Error', t('Failed to parse SubModule.xml'));
-      return {
-        instructions: [],
-      };
-    }
-
-    const filesWithFullPath = files.map<string>((x) => path.join(destinationPath, x));
-    const resultRaw = this.launcherManager.installModule(filesWithFullPath, [moduleInfo]);
-    const result: vetypes.InstallResult = {
-      instructions: resultRaw.instructions.map<vetypes.InstallInstruction>((x) => {
-        if (x.source !== undefined) {
-          x.source = x.source.replace(destinationPath, '');
-        }
-        return x;
-      }),
-    };
-
-    const state = this.api.getState();
-
-    const availableStores = result.instructions.reduce<string[]>((map, current) => {
-      if (current.store !== undefined) {
-        return map.includes(current.store) ? map : [...map, current.store];
-      }
-      return map;
-    }, []);
-
-    const hasObfuscatedBinaries = await this.launcherManager.isObfuscatedAsync(moduleInfo);
-
-    let useSteamBinaries = false;
-
-    let useSteamBinariesToggle = false;
-    if (hasSessionWithBannerlord(state.session)) {
-      useSteamBinariesToggle = state.session[GAME_ID].useSteamBinariesOnXbox ?? false;
-    }
-
-    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
-    const store = vortexStoreToLibraryStore(discovery?.store ?? '');
-    if (!availableStores.includes(store) && store === 'Xbox') {
-      if (useSteamBinariesToggle) {
-        availableStores.push(store);
-        useSteamBinaries = true;
-      } else {
-        const { localize: t } = LocalizationManager.getInstance(this.api);
-
-        let modName = '';
-
-        if (archivePath !== undefined && archivePath.length > 0) {
-          if (hasPersistentBannerlordMods(state.persistent)) {
-            const archiveFileName = path.basename(archivePath!, path.extname(archivePath!));
-            const mod = state.persistent.mods.mountandblade2bannerlord[archiveFileName];
-            if (mod) {
-              modName = mod.attributes?.modName ?? '';
-            }
-          }
-        }
-        // Not sure we even can get here
-        if (modName.length === 0) {
-          modName = result.instructions
-            .filter((x) => x.moduleInfo !== undefined)
-            .filter((value, index, self) => self.indexOf(value) === index)
-            .map<vetypes.ModuleInfoExtended>((x) => x.moduleInfo!)
-            .map<string>((x) => `* ${x.name} (${x.id})`)
-            .join('\n ');
-        }
-
-        const no = t('No, remove the mods');
-        const yes = t('Install, I accept the risks');
-        const yesForAll = t(`Install, I accept the risks. Don't ask again for the current session`);
-        const dialogResult = await this.api.showDialog?.(
-          'question',
-          t(`Compatibility Issue With Game Pass PC Version of the Game!`),
-          {
-            message: t(
-              `The following mods:
-{{ modName }}
-
-Do not provide binaries for Game Pass PC (Xbox)!
-Do you want to install binaries for Steam/GOG/Epic version of the game?
-
-Warning! This can lead to issues!`,
-              { replace: { modName: modName } }
-            ),
-          },
-          [{ label: no }, { label: yes }, { label: yesForAll }]
-        );
-        switch (dialogResult?.action) {
-          case yes:
-            availableStores.push(store);
-            useSteamBinaries = true;
-            break;
-          case yesForAll:
-            availableStores.push(store);
-            useSteamBinaries = true;
-            this.api.store?.dispatch(actionsLauncher.setUseSteamBinariesOnXbox(true));
-            break;
-        }
-      }
-    }
-
-    const subModsIds = Array<string>();
-    const transformedResult: types.IInstallResult = {
-      instructions: result.instructions.reduce<types.IInstruction[]>((map, current) => {
-        switch (current.type) {
-          case 'Copy':
-            map.push({
-              type: 'copy',
-              source: current.source ?? '',
-              destination: current.destination ?? '',
-            });
-            break;
-          case 'ModuleInfo':
-            if (current.moduleInfo) {
-              subModsIds.push(current.moduleInfo.id);
-            }
-            break;
-          case 'CopyStore':
-            if (current.store === store) {
-              map.push({
-                type: 'copy',
-                source: current.source ?? '',
-                destination: current.destination ?? '',
-              });
-            }
-            if (current.store === 'Steam' && useSteamBinaries) {
-              map.push({
-                type: 'copy',
-                source: current.source ?? '',
-                destination: current.destination?.replace(BINARY_FOLDER_STANDARD, BINARY_FOLDER_XBOX) ?? '',
-              });
-            }
-            break;
-        }
-        return map;
-      }, []),
-    };
-    transformedResult.instructions.push({
-      type: 'attribute',
-      key: SUB_MODS_IDS,
-      value: subModsIds,
-    });
-    transformedResult.instructions.push({
-      type: 'attribute',
-      key: AVAILABLE_STORES,
-      value: availableStores,
-    });
-    transformedResult.instructions.push({
-      type: 'attribute',
-      key: STEAM_BINARIES_ON_XBOX,
-      value: useSteamBinaries,
-    });
-    transformedResult.instructions.push({
-      type: 'attribute',
-      key: OBFUSCATED_BINARIES,
-      value: hasObfuscatedBinaries,
-    });
-
-    return transformedResult;
   };
 
   /**
    *
    * @returns
    */
-  public isObfuscatedAsync = async (module: vetypes.ModuleInfoExtendedWithMetadata): Promise<boolean> => {
+  public isObfuscatedAsync = async (
+    module: vetypes.ModuleInfoExtendedWithMetadata,
+  ): Promise<boolean> => {
     return await this.launcherManager.isObfuscatedAsync(module);
   };
 
@@ -393,17 +242,35 @@ Warning! This can lead to issues!`,
   /**
    * Callback
    */
-  private setGameParametersAsync = (_executable: string, gameParameters: string[]): Promise<void> => {
-    const params = gameParameters.filter((x) => x !== ' ' && x.length > 0).join(' ');
+  private setGameParametersAsync = (
+    _executable: string,
+    gameParameters: string[],
+  ): Promise<void> => {
+    const params = gameParameters
+      .filter((x) => x !== " " && x.length > 0)
+      .join(" ");
 
     const state = this.api.getState();
-    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
-    const cliTools = Object.values(discovery?.tools ?? {}).filter((tool) => tool.id && tool.id.endsWith('-cli'));
-    const batchedActions = cliTools.map((tool) =>
-      actions.addDiscoveredTool(GAME_ID, tool.id, { ...tool, parameters: [params] }, true)
+    const discovery: types.IDiscoveryResult | undefined =
+      selectors.currentGameDiscovery(state);
+    const cliTools = Object.values(discovery?.tools ?? {}).filter(
+      (tool) => tool.id && tool.id.endsWith("-cli"),
     );
-    const gameParamAction = actions.setGameParameters(GAME_ID, { parameters: [params] });
-    util.batchDispatch(this.api.store?.dispatch, [...batchedActions, gameParamAction]);
+    const batchedActions = cliTools.map((tool) =>
+      actions.addDiscoveredTool(
+        GAME_ID,
+        tool.id,
+        { ...tool, parameters: [params] },
+        true,
+      ),
+    );
+    const gameParamAction = actions.setGameParameters(GAME_ID, {
+      parameters: [params],
+    });
+    util.batchDispatch(this.api.store?.dispatch, [
+      ...batchedActions,
+      gameParamAction,
+    ]);
 
     return Promise.resolve();
   };
@@ -414,37 +281,37 @@ Warning! This can lead to issues!`,
     id: string,
     type: vetypes.NotificationType,
     message: string,
-    delayMS: number
+    delayMS: number,
   ): Promise<void> => {
     switch (type) {
-      case 'hint':
+      case "hint":
         this.api.sendNotification?.({
           id: id,
-          type: 'activity',
+          type: "activity",
           message: message,
           displayMS: delayMS,
         });
         break;
-      case 'info':
+      case "info":
         this.api.sendNotification?.({
           id: id,
-          type: 'info',
+          type: "info",
           message: message,
           displayMS: delayMS,
         });
         break;
-      case 'warning':
+      case "warning":
         this.api.sendNotification?.({
           id: id,
-          type: 'warning',
+          type: "warning",
           message: message,
           displayMS: delayMS,
         });
         break;
-      case 'error':
+      case "error":
         this.api.sendNotification?.({
           id: id,
-          type: 'error',
+          type: "error",
           message: message,
           displayMS: delayMS,
         });
@@ -460,29 +327,31 @@ Warning! This can lead to issues!`,
     type: vetypes.DialogType,
     title: string,
     message: string,
-    filters: vetypes.FileFilter[]
+    filters: vetypes.FileFilter[],
   ): Promise<string> => {
     const { localize: t } = LocalizationManager.getInstance(this.api);
 
     switch (type) {
-      case 'warning': {
-        const messageFull = message.split('--CONTENT-SPLIT--', 2).join('\n');
-        const no = t('No');
-        const yes = t('Yes');
-        const result = await this.api.showDialog?.('question', title, { message: messageFull }, [
-          { label: no },
-          { label: yes },
-        ]);
+      case "warning": {
+        const messageFull = message.split("--CONTENT-SPLIT--", 2).join("\n");
+        const no = t("No");
+        const yes = t("Yes");
+        const result = await this.api.showDialog?.(
+          "question",
+          title,
+          { message: messageFull },
+          [{ label: no }, { label: yes }],
+        );
         switch (result?.action) {
           case yes:
-            return 'true';
+            return "true";
           case no:
-            return 'false';
+            return "false";
           default:
-            return '';
+            return "";
         }
       }
-      case 'fileOpen': {
+      case "fileOpen": {
         const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
           name: x.name,
           extensions: x.extensions,
@@ -492,7 +361,7 @@ Warning! This can lead to issues!`,
         });
         return result;
       }
-      case 'fileSave': {
+      case "fileSave": {
         const fileName = message;
         const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
           name: x.name,
@@ -511,8 +380,16 @@ Warning! This can lead to issues!`,
    */
   private getInstallPathAsync = (): Promise<string> => {
     const state = this.api.getState();
-    const discovery: types.IDiscoveryResult | undefined = selectors.currentGameDiscovery(state);
-    return Promise.resolve(discovery?.path ?? '');
+    const discovery: types.IDiscoveryResult | undefined =
+      selectors.currentGameDiscovery(state);
+    const installPath = discovery?.path ?? "";
+    log("debug", "[BLSE Debug] getInstallPathAsync called", {
+      hasDiscovery: discovery !== undefined,
+      path: installPath,
+      pathType: typeof installPath,
+      store: discovery?.store,
+    });
+    return Promise.resolve(installPath);
   };
   /**
    * Callback
@@ -520,12 +397,12 @@ Warning! This can lead to issues!`,
   private readFileContentAsync = async (
     filePath: string,
     offset: number,
-    length: number
+    length: number,
   ): Promise<Uint8Array | null> => {
     try {
       let fileHandle: FileHandle | null = null;
       try {
-        fileHandle = await open(filePath, 'r');
+        fileHandle = await open(filePath, "r");
         if (length === -1) {
           const stats = await fileHandle.stat();
           length = stats.size;
@@ -538,18 +415,21 @@ Warning! This can lead to issues!`,
       }
     } catch (err) {
       // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(this.api);
-      this.api.showErrorNotification?.(t('Error reading file content'), err);
+      this.api.showErrorNotification?.(t("Error reading file content"), err);
     }
     return null;
   };
   /**
    * Callback
    */
-  private writeFileContentAsync = async (filePath: string, data: Uint8Array): Promise<void> => {
+  private writeFileContentAsync = async (
+    filePath: string,
+    data: Uint8Array,
+  ): Promise<void> => {
     try {
       if (data === null) {
         await rm(filePath);
@@ -558,46 +438,57 @@ Warning! This can lead to issues!`,
       }
     } catch (err) {
       // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
         return;
       }
       const { localize: t } = LocalizationManager.getInstance(this.api);
-      this.api.showErrorNotification?.(t('Error writing file content'), err);
+      this.api.showErrorNotification?.(t("Error writing file content"), err);
     }
   };
   /**
    * Callback
    */
-  private readDirectoryFileListAsync = async (directoryPath: string): Promise<string[] | null> => {
+  private readDirectoryFileListAsync = async (
+    directoryPath: string,
+  ): Promise<string[] | null> => {
     try {
       const dirs = await readdir(directoryPath, { withFileTypes: true });
-      const res = dirs.filter((x) => x.isFile()).map<string>((x) => path.join(directoryPath, x.name));
+      const res = dirs
+        .filter((x) => x.isFile())
+        .map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
       // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(this.api);
-      this.api.showErrorNotification?.(t('Error reading directory file list'), err);
+      this.api.showErrorNotification?.(
+        t("Error reading directory file list"),
+        err,
+      );
     }
     return null;
   };
   /**
    * Callback
    */
-  private readDirectoryListAsync = async (directoryPath: string): Promise<string[] | null> => {
+  private readDirectoryListAsync = async (
+    directoryPath: string,
+  ): Promise<string[] | null> => {
     try {
       const dirs = await readdir(directoryPath, { withFileTypes: true });
-      const res = dirs.filter((x) => x.isDirectory()).map<string>((x) => path.join(directoryPath, x.name));
+      const res = dirs
+        .filter((x) => x.isDirectory())
+        .map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
       // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(this.api);
-      this.api.showErrorNotification?.(t('Error reading directory list'), err);
+      this.api.showErrorNotification?.(t("Error reading directory list"), err);
     }
     return null;
   };
@@ -605,7 +496,9 @@ Warning! This can lead to issues!`,
    * Callback
    * Returns the ViewModels that are currenty displayed by Vortex
    */
-  private getModuleViewModelsAsync = async (): Promise<vetypes.ModuleViewModel[] | null> => {
+  private getModuleViewModelsAsync = async (): Promise<
+    vetypes.ModuleViewModel[] | null
+  > => {
     const allModules = await this.getAllModulesAsync();
     const loadOrder = this.getLoadOrderFromVortex();
     const viewModels = vortexToLibraryVM(loadOrder, allModules);
@@ -616,11 +509,15 @@ Warning! This can lead to issues!`,
    * Callback
    * Returns all available ViewModels for possible displaying
    */
-  private getAllModuleViewModelsAsync = async (): Promise<vetypes.ModuleViewModel[] | null> => {
+  private getAllModuleViewModelsAsync = async (): Promise<
+    vetypes.ModuleViewModel[] | null
+  > => {
     const allModules = await this.getAllModulesAsync();
-    const existingModuleViewModels = (await this.getModuleViewModelsAsync()) ?? [];
+    const existingModuleViewModels =
+      (await this.getModuleViewModelsAsync()) ?? [];
     const modulesToConvert = Object.values(allModules).filter(
-      (x) => !existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id)
+      (x) =>
+        !existingModuleViewModels.find((y) => y.moduleInfoExtended.id === x.id),
     );
 
     const viewModels = libraryToLibraryVM(modulesToConvert);
@@ -630,18 +527,35 @@ Warning! This can lead to issues!`,
   /**
    * Callback
    */
-  private setModuleViewModelsAsync = (moduleViewModels: vetypes.ModuleViewModel[]): Promise<void> => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
+  private setModuleViewModelsAsync = (
+    moduleViewModels: vetypes.ModuleViewModel[],
+  ): Promise<void> => {
+    const profile = selectors.activeProfile(this.api.getState());
+    if (!profile) {
+      return Promise.resolve();
+    }
+
     const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
-    this.api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder));
+
+    this.api.store?.dispatch(
+      actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder),
+    );
     return Promise.resolve();
   };
   /**
    * Callback
    */
   private getOptionsAsync = (): Promise<vetypes.LauncherOptions> => {
-    const profile: types.IProfile | undefined = selectors.activeProfile(this.api.getState());
-    const betaSorting = getBetaSortingFromSettings(this.api, profile.id) ?? false;
+    const profile = selectors.activeProfile(this.api.getState());
+    if (!profile) {
+      return Promise.resolve({
+        betaSorting: false,
+      });
+    }
+
+    const betaSorting =
+      getBetaSortingFromSettings(this.api, profile.id) ?? false;
+
     return Promise.resolve({
       betaSorting: betaSorting,
     });
