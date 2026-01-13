@@ -112,6 +112,15 @@ const webpack = () => {
 const pack7z = () => {
   console.log('Pack 7z');
 
+  // Ensure the 7zip binary has execute permissions on Unix systems
+  if (process.platform !== 'win32') {
+    try {
+      fs.chmodSync(SEVEN_ZIP, 0o755);
+    } catch (/** @type {any} */ error) {
+      console.warn('Failed to set execute permissions on 7zip binary:', error.message);
+    }
+  }
+
   exec(`"${SEVEN_ZIP}" a -t7z "game-mount-and-blade2.7z" "./dist/*.*"`);
 };
 
