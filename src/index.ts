@@ -523,12 +523,14 @@ const main = (context: types.IExtensionContext): boolean => {
     );
   });
 
+  /*
   context.once(() => {
     if (logger === null) {
       logger = new VortexLauncherManagerLogger();
       logger.useVortexFunctions();
     }
   });
+  */
   // Register Callbacks
 
   return true;
