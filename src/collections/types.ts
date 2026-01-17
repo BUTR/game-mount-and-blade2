@@ -22,11 +22,9 @@ export interface IModWithCollection<T = unknown> extends types.IMod {
   attributes?: IModAttributesWithCollection<T>;
 }
 
-export interface IModWithIncludedModOptions
-  extends IModWithCollection<IncludedModOptions> {}
+export interface IModWithIncludedModOptions extends IModWithCollection<IncludedModOptions> {}
 
-export interface IStatePersistentWithModsWithIncludedModOptions
-  extends IStatePersistent {
+export interface IStatePersistentWithModsWithIncludedModOptions extends IStatePersistent {
   mods: {
     [gameId: string]: {
       [modId: string]: IModWithCollection<IncludedModOptions>;
@@ -58,19 +56,16 @@ export interface ICollectionGeneralData {
   suggestedLoadOrder: PersistenceLoadOrderStorage;
 }
 export interface ICollectionDataWithGeneralData
-  extends ICollectionData,
-    ICollectionGeneralData {}
+  extends ICollectionData, ICollectionGeneralData {}
 
 export interface ICollectionLegacyData {
   loadOrder: types.ILoadOrderEntry<never>[];
 }
 export interface ICollectionDataWithLegacyData
-  extends ICollectionData,
-    ICollectionLegacyData {}
+  extends ICollectionData, ICollectionLegacyData {}
 
 export interface ICollectionSettingsData {
   includedModOptions: PersistentModOptionsEntry[];
 }
 export interface ICollectionDataWithSettingsData
-  extends ICollectionData,
-    ICollectionSettingsData {}
+  extends ICollectionData, ICollectionSettingsData {}

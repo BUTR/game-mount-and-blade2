@@ -60,12 +60,11 @@ import {
   modTranslationInstaller,
 } from "./vortex/modTranslation";
 import { version } from "../package.json";
-//import { VortexLauncherManagerLogger } from "./launcher/logger";
+import { VortexLauncherManagerLogger } from "./launcher/logger";
 import React from "react";
 
 // TODO: Better dialogs with settings
-
-//let logger: VortexLauncherManagerLogger | null = null;
+let logger: VortexLauncherManagerLogger | null = null;
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
@@ -524,14 +523,12 @@ const main = (context: types.IExtensionContext): boolean => {
     );
   });
 
-  /*
   context.once(() => {
     if (logger === null) {
       logger = new VortexLauncherManagerLogger();
       logger.useVortexFunctions();
     }
   });
-  */
   // Register Callbacks
 
   return true;
