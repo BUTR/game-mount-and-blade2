@@ -247,7 +247,7 @@ const mapState = (state: types.IState): IFromState => {
 
   const saveName =
     profile !== undefined
-      ? getSaveFromSettings(state, profile.id) ?? "No Save"
+      ? (getSaveFromSettings(state, profile.id) ?? "No Save")
       : "No Save";
 
   const mods = getPersistentBannerlordMods(state.persistent);

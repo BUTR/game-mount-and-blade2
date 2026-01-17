@@ -59,7 +59,7 @@ const parseLegacyLoadOrderAsync = async (
         const mod = state.persistent.mods[GAME_ID]?.[id];
         const modIds: string[] =
           mod?.attributes?.[SUB_MODS_IDS] !== undefined
-            ? mod.attributes[SUB_MODS_IDS] ?? []
+            ? (mod.attributes[SUB_MODS_IDS] ?? [])
             : [id];
         modIds.forEach((modId) => {
           if (allModules[modId]) {

@@ -1,5 +1,6 @@
 import { NativeLogger } from "@butr/vortexextensionnative";
-import { log, LogLevel } from "vortex-api/lib/util/log";
+import { log } from "vortex-api";
+import { LogLevel } from "vortex-api/lib/util/log";
 
 const getLogLevel = (level: number): LogLevel => {
   switch (level) {

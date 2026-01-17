@@ -77,15 +77,15 @@ const updateFromFile = (configuration) => {
   const extensionBasePath = path.resolve(ROOT_DIR, '../Bannerlord.LauncherManager');
   const extensionPath = path.join(extensionBasePath, 'src/Bannerlord.LauncherManager.Native.TypeScript');
 
-  exec('npm remove @butr/vortexextensionnative');
+  exec('yarn remove @butr/vortexextensionnative');
 
-  exec('npm run clean', extensionPath);
-  exec(`npm run build -- ${configuration}`, extensionPath);
-  exec('npm pack', extensionPath);
+  exec('yarn run clean', extensionPath);
+  exec(`yarn run build -- ${configuration}`, extensionPath);
 
-  const tgzFile = 'butr-vortexextensionnative-2.0.0.tgz';
+  const tgzFile = 'butr-vortexextensionnative.tgz';
+  exec(`yarn pack --filename ${tgzFile}`, extensionPath);
   fs.copyFileSync(path.join(extensionPath, tgzFile), path.join(ROOT_DIR, tgzFile));
-  exec(`npm i ./${tgzFile}`);
+  exec(`yarn add file:./${tgzFile}`);
 };
 
 const updateFromNpm = () => {

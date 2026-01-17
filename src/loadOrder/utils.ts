@@ -40,7 +40,7 @@ export const getModuleAttributes = (
 ): ModIdResult[] => {
   const state = api.getState();
   const gameId: string | undefined = selectors.activeGameId(state);
-  const gameMods = gameId ? state.persistent.mods[gameId] ?? {} : {};
+  const gameMods = gameId ? (state.persistent.mods[gameId] ?? {}) : {};
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
     if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
       return arr;
