@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { ListGroup } from "react-bootstrap";
 import { ModOptionsEntryView } from "./ModOptionsEntryView";
 import { ModOptionsEntry, ModOptionsStorage } from "../../../modoptions";
@@ -10,7 +10,7 @@ export type SpecialSettingsProps = {
   toggleEntry: (newValue: boolean, entry: ModOptionsEntry) => void;
 };
 
-export const SpecialSettings = (props: SpecialSettingsProps): JSX.Element => {
+export const SpecialSettings: FC<SpecialSettingsProps> = (props) => {
   const { settings, isToggled, toggleEntry } = props;
 
   const { localize: t } = useLocalization();
@@ -19,7 +19,7 @@ export const SpecialSettings = (props: SpecialSettingsProps): JSX.Element => {
     <div>
       <h5>{t("Special Options")}</h5>
       <ListGroup id="collections-load-order-list">
-        {Object.values(settings).map<React.JSX.Element>((entry) => (
+        {Object.values(settings).map((entry) => (
           <ModOptionsEntryView
             key={entry.name}
             entry={entry}

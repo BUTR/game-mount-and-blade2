@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { FC, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { More, selectors, Toggle, types } from "vortex-api";
 import { useLocalization } from "../../../localization";
@@ -8,25 +8,29 @@ import {
   getSortOnDeployFromSettings,
 } from "../../../settings";
 
-interface IFromState {
-  profile: types.IProfile | undefined;
-  autoSortOnDeploy: boolean;
-  fixCommonIssues: boolean;
-  betaSorting: boolean;
-}
-
 export type SettingsProps = {
   onSetSortOnDeploy: (profileId: string, sort: boolean) => void;
   onSetFixCommonIssues: (profileId: string, fixCommonIssues: boolean) => void;
   onSetBetaSorting: (profileId: string, betaSorting: boolean) => void;
 };
 
-export const Settings = (props: SettingsProps): JSX.Element => {
+export const Settings: FC<SettingsProps> = (props) => {
   const { onSetSortOnDeploy, /*onSetFixCommonIssues,*/ onSetBetaSorting } =
     props;
 
-  const { profile, autoSortOnDeploy, /*fixCommonIssues,*/ betaSorting } =
-    useSelector(mapState);
+  const profile = useSelector(selectors.activeProfile);
+  const autoSortOnDeploy = useSelector(
+    (state: types.IState) =>
+      getSortOnDeployFromSettings(state, profile!.id) ?? true,
+  );
+  /*const fixCommonIssues = useSelector(
+    (state: types.IState) =>
+      getFixCommonIssuesFromSettings(state, profile!.id) ?? true,
+  );*/
+  const betaSorting = useSelector(
+    (state: types.IState) =>
+      getBetaSortingFromSettings(state, profile!.id) ?? false,
+  );
 
   const setSortCallback = useCallback(
     (value: boolean): void => {
@@ -91,18 +95,4 @@ export const Settings = (props: SettingsProps): JSX.Element => {
       </Toggle>
     </div>
   );
-};
-
-const mapState = (state: types.IState): IFromState => {
-  const profile = selectors.activeProfile(state);
-  const sortOnDeploy = getSortOnDeployFromSettings(state, profile!.id) ?? true;
-  const fixCommonIssues =
-    getFixCommonIssuesFromSettings(state, profile!.id) ?? true;
-  const betaSorting = getBetaSortingFromSettings(state, profile!.id) ?? false;
-  return {
-    profile: profile,
-    autoSortOnDeploy: sortOnDeploy,
-    fixCommonIssues: fixCommonIssues,
-    betaSorting: betaSorting,
-  };
 };

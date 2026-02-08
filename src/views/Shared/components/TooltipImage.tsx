@@ -1,4 +1,4 @@
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, FC } from "react";
 import { OverlayTrigger, Popover } from "react-bootstrap";
 import { ITooltipProps } from "vortex-api/lib/controls/TooltipControls";
 
@@ -10,7 +10,7 @@ export type TooltipImageProps = ITooltipProps & {
   style?: CSSProperties;
 };
 
-export const TooltipImage = (props: TooltipImageProps): JSX.Element => {
+export const TooltipImage: FC<TooltipImageProps> = (props) => {
   const { tooltip, placement, className, ...relayProps } = props;
 
   const classes = ["fake-link"].concat((className ?? "").split(" "));

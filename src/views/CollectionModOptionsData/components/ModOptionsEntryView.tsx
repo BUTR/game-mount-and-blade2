@@ -1,4 +1,4 @@
-import React, { BaseSyntheticEvent } from "react";
+import React, { BaseSyntheticEvent, FC } from "react";
 import { Checkbox, ListGroupItem } from "react-bootstrap";
 import { ModOptionsEntry } from "../../../modoptions";
 
@@ -8,9 +8,7 @@ export type ModOptionsEntryViewProps = {
   toggleEntry: (newValue: boolean, entry: ModOptionsEntry) => void;
 };
 
-export const ModOptionsEntryView = (
-  props: ModOptionsEntryViewProps,
-): JSX.Element | null => {
+export const ModOptionsEntryView: FC<ModOptionsEntryViewProps> = (props) => {
   const { entry, isToggled, toggleEntry } = props;
 
   if (!entry) {

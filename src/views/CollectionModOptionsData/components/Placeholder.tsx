@@ -1,8 +1,8 @@
-import React from "react";
+import React, { FC } from "react";
 import { EmptyPlaceholder } from "vortex-api";
 import { useLocalization } from "../../../localization";
 
-export const Placeholder = (): JSX.Element => {
+export const Placeholder: FC = () => {
   const { localize: t } = useLocalization();
 
   return (

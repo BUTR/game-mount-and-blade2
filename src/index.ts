@@ -356,8 +356,8 @@ const main = (context: types.IExtensionContext): boolean => {
     isGroupable: false,
     condition: () => selectors.activeGameId(context.api.getState()) === GAME_ID,
     calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
-    customRenderer: (mod: types.IMod, detailCell: boolean) => {
-      return React.createElement(DetailsRenderer, { mod: mod, detailCell }, []);
+    customRenderer: (mod: types.IMod, _detailCell: boolean) => {
+      return React.createElement(DetailsRenderer, { mod }, []);
     },
     edit: {},
   });

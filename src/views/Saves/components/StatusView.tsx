@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { tooltip, types } from "vortex-api";
 import { ISaveGame } from "../types";
 import { LocalizationManager } from "../../../localization";
@@ -9,7 +9,7 @@ export type StatusViewProps = {
 };
 
 // Custom Renderer has no Context access
-export const StatusView = (props: StatusViewProps): JSX.Element => {
+export const StatusView: FC<StatusViewProps> = (props) => {
   const appendIssues = (
     allIssues: string[],
     issues: string[] | undefined,

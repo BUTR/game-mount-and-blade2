@@ -1,11 +1,11 @@
-import React from "react";
+import React, { FC } from "react";
 
 export type IssueSnippetProps = {
   issueHeading: string;
   issue: string[] | undefined;
 };
 
-export const IssueSnippet = (props: IssueSnippetProps): JSX.Element => {
+export const IssueSnippet: FC<IssueSnippetProps> = (props) => {
   const { issueHeading, issue } = props;
 
   if (issue && issue.length) {
@@ -13,7 +13,7 @@ export const IssueSnippet = (props: IssueSnippetProps): JSX.Element => {
       <>
         <p>{issueHeading}</p>
         <ul>
-          {issue.map<React.JSX.Element>((object) => (
+          {issue.map((object) => (
             <li key={object}>{object}</li>
           ))}
         </ul>
@@ -21,5 +21,5 @@ export const IssueSnippet = (props: IssueSnippetProps): JSX.Element => {
     );
   }
 
-  return <></>;
+  return null;
 };

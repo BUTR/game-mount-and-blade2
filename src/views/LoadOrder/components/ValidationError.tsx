@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { tooltip, types } from "vortex-api";
 import { IVortexViewModelData } from "../../../types";
 
@@ -7,9 +7,7 @@ export type ValidationErrorProps = {
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>;
 };
 
-export const ValidationError = (
-  props: ValidationErrorProps,
-): JSX.Element | null => {
+export const ValidationError: FC<ValidationErrorProps> = (props) => {
   const { invalidEntries, item } = props;
   const invalidEntryList = invalidEntries
     ? invalidEntries

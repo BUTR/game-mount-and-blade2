@@ -1,14 +1,12 @@
-import React from "react";
+import React, { FC } from "react";
 import { tooltip } from "vortex-api";
 import { useLocalization } from "../../../localization";
 
-export type ObfuscaedBinariesProps = {
+export type ObfuscatedBinariesProps = {
   hasObfuscatedBinaries: boolean;
 };
 
-export const ObfuscaedBinaries = (
-  props: ObfuscaedBinariesProps,
-): JSX.Element => {
+export const ObfuscatedBinaries: FC<ObfuscatedBinariesProps> = (props) => {
   const { hasObfuscatedBinaries } = props;
 
   const { localize: t } = useLocalization();

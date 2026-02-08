@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { tooltip, types } from "vortex-api";
 import { GAME_ID } from "../../../common";
@@ -21,9 +21,7 @@ import { nameof } from "../../../nameof";
 
 export type ModOptionsDataPageProps = ICollectionFeatureProps;
 
-export const ModOptionsDataPage = (
-  props: ModOptionsDataPageProps,
-): JSX.Element => {
+export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
   const { collection, onSetCollectionAttribute } = props;
 
   const { localize: t } = useLocalization();

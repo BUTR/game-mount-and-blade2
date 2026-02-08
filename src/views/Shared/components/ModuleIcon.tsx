@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { FC, useMemo } from "react";
 import { Utils } from "@butr/vortexextensionnative";
 import { TooltipImage } from "./TooltipImage";
 import { IVortexViewModelData } from "../../../types";
@@ -8,7 +8,7 @@ export type ModuleIconProps = {
   data: IVortexViewModelData | undefined;
 };
 
-export const ModuleIcon = (props: ModuleIconProps): JSX.Element => {
+export const ModuleIcon: FC<ModuleIconProps> = (props) => {
   const { data } = props;
 
   const isOfficial = data !== undefined && data.moduleInfoExtended.isOfficial;

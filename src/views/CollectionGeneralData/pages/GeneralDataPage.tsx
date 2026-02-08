@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { FC, useContext, useEffect, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { MainContext, selectors, tooltip, types } from "vortex-api";
@@ -8,11 +8,7 @@ import {
   Placeholder,
   Requirements,
 } from "../components";
-import {
-  IBannerlordModStorage,
-  PersistenceLoadOrderStorage,
-  VortexLoadOrderStorage,
-} from "../../../types";
+import { PersistenceLoadOrderStorage } from "../../../types";
 import { ICollectionFeatureProps } from "../../types";
 import {
   getCompatibilityScoresAsync,
@@ -25,24 +21,24 @@ import {
   getPersistentLoadOrder,
 } from "../../../vortex";
 
-interface IFromState {
-  profile: types.IProfile | undefined;
-  loadOrder: VortexLoadOrderStorage;
-  mods: IBannerlordModStorage;
-}
-
 export type BannerlordGeneralDataPageProps = ICollectionFeatureProps;
 
-export const BannerlordGeneralDataPage = (
-  _props: BannerlordGeneralDataPageProps,
-): JSX.Element => {
+export const BannerlordGeneralDataPage: FC<BannerlordGeneralDataPageProps> = (
+  _props,
+) => {
   const [compatibilityInfoCache, setCompatibilityInfoCache] =
     useState<IModuleCompatibilityInfoCache>({});
   const [hasBLSE, setHasBLSE] = useState<boolean>(false);
   const [persistentLoadOrder, setPersistentLoadOrder] =
     useState<PersistenceLoadOrderStorage>([]);
 
-  const { profile, loadOrder, mods } = useSelector(mapState);
+  const profile = useSelector(selectors.activeProfile);
+  const loadOrder = useSelector((state: types.IState) =>
+    getPersistentLoadOrder(state.persistent, profile?.id),
+  );
+  const mods = useSelector((state: types.IState) =>
+    getPersistentBannerlordMods(state.persistent),
+  );
 
   const context = useContext(MainContext);
 
@@ -99,7 +95,7 @@ export const BannerlordGeneralDataPage = (
       </p>
       <LoadOrderEditInfo />
       <ListGroup id="collections-load-order-list">
-        {Object.values(persistentLoadOrder).map<React.JSX.Element>((entry) => (
+        {Object.values(persistentLoadOrder).map((entry) => (
           <LoadOrderEntry
             key={entry.id}
             entry={entry}
@@ -112,15 +108,4 @@ export const BannerlordGeneralDataPage = (
   ) : (
     <Placeholder />
   );
-};
-
-const mapState = (state: types.IState): IFromState => {
-  const profile = selectors.activeProfile(state);
-  const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
-  const mods = getPersistentBannerlordMods(state.persistent);
-  return {
-    profile,
-    loadOrder,
-    mods,
-  };
 };

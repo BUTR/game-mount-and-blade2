@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { Icon, types } from "vortex-api";
 import { IVortexViewModelData } from "../../../types";
 import { isExternal } from "../utils";
@@ -8,9 +8,7 @@ export type ExternalBannerProps = {
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>;
 };
 
-export const ExternalBanner = (
-  props: ExternalBannerProps,
-): JSX.Element | null => {
+export const ExternalBanner: FC<ExternalBannerProps> = (props) => {
   const { item } = props;
 
   const { localize: t } = useLocalization();

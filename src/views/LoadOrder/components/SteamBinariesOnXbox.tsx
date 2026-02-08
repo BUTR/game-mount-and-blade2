@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { tooltip } from "vortex-api";
 import { useLocalization } from "../../../localization";
 
@@ -6,9 +6,7 @@ export type SteamBinariesOnXboxProps = {
   hasSteamBinariesOnXbox: boolean;
 };
 
-export const SteamBinariesOnXbox = (
-  props: SteamBinariesOnXboxProps,
-): JSX.Element => {
+export const SteamBinariesOnXbox: FC<SteamBinariesOnXboxProps> = (props) => {
   const { hasSteamBinariesOnXbox } = props;
 
   const { localize: t } = useLocalization();

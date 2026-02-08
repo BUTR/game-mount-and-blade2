@@ -1,9 +1,9 @@
-import React from "react";
+import React, { FC } from "react";
 import { EmptyPlaceholder } from "vortex-api";
 import { OpenLoadOrderButton } from "./OpenLoadOrderButton";
 import { useLocalization } from "../../../localization";
 
-export const Placeholder = (): JSX.Element => {
+export const Placeholder: FC = () => {
   const { localize: t } = useLocalization();
 
   return (
@@ -12,7 +12,7 @@ export const Placeholder = (): JSX.Element => {
       text={t(
         "You have no load order entries (for the current mods in the collection)",
       )}
-      subtext={OpenLoadOrderButton()}
+      subtext={<OpenLoadOrderButton />}
     />
   );
 };

@@ -55,12 +55,12 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.usageInstructions = (): JSX.Element =>
+    this.usageInstructions = () =>
       LoadOrderInfoPanel({
         refreshAsync: this.updateCompatibilityScoresAsync,
       });
 
-    this.customItemRenderer = ({ className = "", item }): JSX.Element => {
+    this.customItemRenderer = ({ className = "", item }) => {
       const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
         .map<vetypes.ModuleProviderType>((x) => x.moduleProviderType);

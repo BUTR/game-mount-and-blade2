@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { ListGroupItem } from "react-bootstrap";
 import {
   IPersistenceLoadOrderEntry,
@@ -19,9 +19,7 @@ export type LoadOrderEntryProps = {
   compatibilityInfoCache: IModuleCompatibilityInfoCache;
 };
 
-export const LoadOrderEntry = (
-  props: LoadOrderEntryProps,
-): JSX.Element | null => {
+export const LoadOrderEntry: FC<LoadOrderEntryProps> = (props) => {
   const { entry, loadOrder, compatibilityInfoCache } = props;
 
   if (!entry) {

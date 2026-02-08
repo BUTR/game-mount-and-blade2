@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { FC, useContext, useEffect, useState } from "react";
 import { MainContext, tooltip } from "vortex-api";
 import { IVortexViewModelData } from "../../../types";
 import { IModuleCompatibilityInfo } from "../../../butr";
@@ -10,9 +10,7 @@ export type CompatibilityInfoProps = {
   compatibilityInfo: IModuleCompatibilityInfo | undefined;
 };
 
-export const CompatibilityInfo = (
-  props: CompatibilityInfoProps,
-): JSX.Element => {
+export const CompatibilityInfo: FC<CompatibilityInfoProps> = (props) => {
   const { compatibilityInfo, data } = props;
 
   const context = useContext(MainContext);

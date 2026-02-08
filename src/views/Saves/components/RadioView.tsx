@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { types } from "vortex-api";
 import { Radio } from "react-bootstrap";
 import { ISaveGame } from "../types";
@@ -12,7 +12,7 @@ export type RadioViewProps = {
 };
 
 // Custom Renderer has no Context access
-export const RadioView = (props: RadioViewProps): JSX.Element => {
+export const RadioView: FC<RadioViewProps> = (props) => {
   const { save, selectedSave, hasBLSE, onChange } = props;
 
   return hasBLSE ? (
@@ -22,7 +22,5 @@ export const RadioView = (props: RadioViewProps): JSX.Element => {
       id={`bannerlord-savegames-radio${save.index}`}
       onChange={() => onChange(save)}
     />
-  ) : (
-    <></>
-  );
+  ) : null;
 };

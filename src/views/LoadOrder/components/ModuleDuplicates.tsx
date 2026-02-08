@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { tooltip } from "vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { IVortexViewModelData } from "../../../types";
@@ -9,7 +9,7 @@ export type ModuleDuplicatesProps = {
   data: IVortexViewModelData | undefined;
 };
 
-export const ModuleDuplicates = (props: ModuleDuplicatesProps): JSX.Element => {
+export const ModuleDuplicates: FC<ModuleDuplicatesProps> = (props) => {
   const { availableProviders, data } = props;
 
   const { localize: t } = useLocalization();

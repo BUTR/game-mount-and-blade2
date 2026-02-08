@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import ticksToDate from "ticks-to-date";
 import {
   IconBar,
@@ -19,23 +19,31 @@ import { getSaveFromSettings } from "../../../settings";
 import { findBLSEMod } from "../../../blse";
 import { getPersistentBannerlordMods, isModActive } from "../../../vortex";
 
-interface IFromState {
-  profile: types.IProfile | undefined;
-  saveName: string;
-  hasBLSE: boolean;
-}
-
 export type SavePageProps = {
   context: types.IExtensionContext;
 };
 
-export const SavePage = (props: SavePageProps): JSX.Element => {
+export const SavePage: FC<SavePageProps> = (props) => {
   const { context } = props;
 
   const localizationManager = useLocalization();
   const { localize: t } = localizationManager;
 
-  const { profile, saveName, hasBLSE } = useSelector(mapState);
+  const profile = useSelector(selectors.activeProfile);
+  const saveName = useSelector((state: types.IState) =>
+    profile !== undefined
+      ? (getSaveFromSettings(state, profile.id) ?? "No Save")
+      : "No Save",
+  );
+  const hasBLSE = useSelector((state: types.IState) => {
+    const mods = getPersistentBannerlordMods(state.persistent);
+    const blseMod = findBLSEMod(mods);
+    return (
+      blseMod !== undefined &&
+      profile !== undefined &&
+      isModActive(profile, blseMod)
+    );
+  });
 
   const store = useStore();
 
@@ -156,7 +164,7 @@ const getTableAttributes = (
     {
       id: "#",
       name: "#",
-      customRenderer: (data): JSX.Element => {
+      customRenderer: (data) => {
         if (
           data.length &&
           typeof data[0] === "string" &&
@@ -209,7 +217,7 @@ const getTableAttributes = (
     {
       id: "status",
       name: t("Status"),
-      customRenderer: (data): JSX.Element => {
+      customRenderer: (data) => {
         if (
           data.length &&
           typeof data[0] === "string" &&
@@ -242,24 +250,3 @@ const getTableAttributes = (
   return tableAttributes;
 };
 
-const mapState = (state: types.IState): IFromState => {
-  const profile = selectors.activeProfile(state);
-
-  const saveName =
-    profile !== undefined
-      ? (getSaveFromSettings(state, profile.id) ?? "No Save")
-      : "No Save";
-
-  const mods = getPersistentBannerlordMods(state.persistent);
-  const blseMod = findBLSEMod(mods);
-  const hasBLSE =
-    blseMod !== undefined &&
-    profile !== undefined &&
-    isModActive(profile, blseMod);
-
-  return {
-    profile: profile,
-    saveName: saveName,
-    hasBLSE: hasBLSE,
-  };
-};

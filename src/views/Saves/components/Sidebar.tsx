@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { IssueSnippet } from "./IssueSnippet";
 import { ISaveGame } from "../types";
 import { useLocalization } from "../../../localization";
@@ -7,14 +7,14 @@ export type SidebarProps = {
   save: ISaveGame | null;
 };
 
-export const Sidebar = (props: SidebarProps): JSX.Element => {
+export const Sidebar: FC<SidebarProps> = (props) => {
   const { save } = props;
 
   const { localize: t } = useLocalization();
 
   // if nothing is selected
   if (!save) {
-    return <></>;
+    return null;
   }
 
   // something is selected

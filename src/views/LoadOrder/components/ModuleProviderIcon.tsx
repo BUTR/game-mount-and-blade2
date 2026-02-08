@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { IVortexViewModelData } from "../../../types";
 import { TooltipImage } from "../../Shared";
 import { STEAM_LOGO } from "../../../common";
@@ -9,9 +9,7 @@ export type ModuleProviderIconProps = {
   data: IVortexViewModelData | undefined;
 };
 
-export const ModuleProviderIcon = (
-  props: ModuleProviderIconProps,
-): JSX.Element => {
+export const ModuleProviderIcon: FC<ModuleProviderIconProps> = (props) => {
   const { data } = props;
 
   const { localize: t } = useLocalization();

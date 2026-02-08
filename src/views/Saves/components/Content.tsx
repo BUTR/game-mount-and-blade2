@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { Panel } from "react-bootstrap";
 import { FlexLayout, ITableRowAction, Table, types } from "vortex-api";
 import { Sidebar } from "./Sidebar";
@@ -14,7 +14,7 @@ export type ContentProps = {
   saveRowSelected: (save: ISaveGame) => void;
 };
 
-export const Content = (props: ContentProps): JSX.Element => {
+export const Content: FC<ContentProps> = (props) => {
   const {
     selectedSave,
     saveActions,

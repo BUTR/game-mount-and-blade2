@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { FC, useCallback } from "react";
 import { tooltip, util } from "vortex-api";
 import { useLocalization } from "../../../localization";
 
@@ -6,9 +6,7 @@ export type LoadOrderInfoPanelProps = {
   refreshAsync: () => Promise<void>;
 };
 
-export const LoadOrderInfoPanel = (
-  props: LoadOrderInfoPanelProps,
-): JSX.Element => {
+export const LoadOrderInfoPanel: FC<LoadOrderInfoPanelProps> = (props) => {
   const { refreshAsync } = props;
 
   const { localize: t } = useLocalization();
