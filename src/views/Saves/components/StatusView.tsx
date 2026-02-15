@@ -1,11 +1,10 @@
 import React, { FC } from "react";
-import { tooltip, types } from "vortex-api";
+import { tooltip } from "vortex-api";
 import { ISaveGame } from "../types";
-import { LocalizationManager } from "../../../localization";
 
 export type StatusViewProps = {
-  api: types.IExtensionApi;
   save: ISaveGame;
+  localize: (key: string) => string;
 };
 
 // Custom Renderer has no Context access
@@ -20,9 +19,7 @@ export const StatusView: FC<StatusViewProps> = (props) => {
     }
   };
 
-  const { api, save } = props;
-
-  const { localize: t } = LocalizationManager.getInstance(api);
+  const { save, localize: t } = props;
 
   const allIssues: string[] = [];
   appendIssues(allIssues, save.loadOrderIssues, t("load order issues"));

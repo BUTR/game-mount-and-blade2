@@ -1,5 +1,5 @@
 export * from "./LoadOrderEditInfo";
-export * from "./LoadOrderEntry";
+export { LoadOrderEntry } from "../../Shared";
 export * from "./OpenLoadOrderButton";
 export * from "./Placeholder";
 export * from "./Requirements";

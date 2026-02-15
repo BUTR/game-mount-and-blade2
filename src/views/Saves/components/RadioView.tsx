@@ -1,10 +1,8 @@
 import React, { FC } from "react";
-import { types } from "vortex-api";
 import { Radio } from "react-bootstrap";
 import { ISaveGame } from "../types";
 
 export type RadioViewProps = {
-  api: types.IExtensionApi;
   save: ISaveGame;
   selectedSave: ISaveGame | null;
   hasBLSE: boolean;

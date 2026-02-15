@@ -9,10 +9,6 @@ import { readFile } from "node:fs/promises";
 import { vortexStoreToLibraryStore } from "./utils";
 import { actionsLauncher } from "./actions";
 import {
-  hasPersistentBannerlordMods,
-  hasSessionWithBannerlord,
-} from "../vortex";
-import {
   AVAILABLE_STORES,
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,
@@ -26,6 +22,7 @@ import {
   getAvailableTranslationLanguages,
   pushTranslationLanguageAttributes,
 } from "../vortex/modTranslation";
+import { IStateWithBannerlord } from "../types";
 
 export const installModuleAsync = async (
   files: string[],
@@ -98,7 +95,7 @@ export const installModuleAsync = async (
     ),
   };
 
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
   const availableStores = result.instructions.reduce<string[]>(
     (map, current) => {
@@ -122,14 +119,10 @@ export const installModuleAsync = async (
 
   let useSteamBinaries = false;
 
-  let useSteamBinariesToggle = false;
-  if (hasSessionWithBannerlord(state.session)) {
-    useSteamBinariesToggle =
-      state.session[GAME_ID].useSteamBinariesOnXbox ?? false;
-  }
+  let useSteamBinariesToggle =
+    state.session.mountandblade2bannerlord?.useSteamBinariesOnXbox ?? false;
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.currentGameDiscovery(state);
+  const discovery = selectors.currentGameDiscovery(state);
   const store = vortexStoreToLibraryStore(discovery?.store ?? "");
   if (!availableStores.includes(store) && store === "Xbox") {
     if (useSteamBinariesToggle) {
@@ -141,16 +134,14 @@ export const installModuleAsync = async (
       let modName = "";
 
       if (archivePath !== undefined && archivePath.length > 0) {
-        if (hasPersistentBannerlordMods(state.persistent)) {
-          const archiveFileName = path.basename(
-            archivePath!,
-            path.extname(archivePath!),
-          );
-          const mod =
-            state.persistent.mods.mountandblade2bannerlord[archiveFileName];
-          if (mod) {
-            modName = mod.attributes?.modName ?? "";
-          }
+        const archiveFileName = path.basename(
+          archivePath!,
+          path.extname(archivePath!),
+        );
+        const mod =
+          state.persistent.mods.mountandblade2bannerlord?.[archiveFileName];
+        if (mod) {
+          modName = mod.attributes?.modName ?? "";
         }
       }
       // Not sure we even can get here

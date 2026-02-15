@@ -1,5 +1,4 @@
 import { selectors, types } from "vortex-api";
-import { SavePageProps } from "./pages/SavePage";
 import { GAME_ID } from "../../common";
 
 export class SavePageOptions implements types.IMainPageOptions {
@@ -20,7 +19,5 @@ export class SavePageOptions implements types.IMainPageOptions {
     }
     return selectors.activeGameId(this.context.api.getState()) === GAME_ID;
   };
-  public props = (): SavePageProps => ({
-    context: this.context,
-  });
+  public props = (): {} => ({});
 }

@@ -7,12 +7,12 @@ import {
   DeployModResult,
   DeployModStatus,
   getBinaryPath,
-  getPersistentBannerlordMods,
   installBLSEAsync,
   installHarmonyAsync,
 } from "../vortex";
 import { BLSE_CLI_EXE } from "../common";
 import { getPathExistsAsync } from "../utils";
+import { IStateWithBannerlord } from "../types";
 
 const sendBLSENotification = (
   api: types.IExtensionApi,
@@ -196,14 +196,14 @@ export const recommendBLSEAsync = async (
     throw new Error(`discovery.path is undefined!`);
   }
 
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (!profile) {
     return;
   }
 
-  const mods = getPersistentBannerlordMods(state.persistent);
+  const mods = state.persistent.mods?.mountandblade2bannerlord ?? {};
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
   const blseDeployResult = checkBLSEDeploy(api, profile, mods);
 

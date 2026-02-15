@@ -1,10 +1,4 @@
 import { types, util } from "vortex-api";
-import {
-  ISettingsInterfaceWithPrimaryTool,
-  IStatePersistentWithBannerlordMods,
-  IStatePersistentWithLoadOrder,
-  IStateSessionWithBannerlord,
-} from "./types";
 import { isStoreSteam, isStoreXbox } from "./store";
 import {
   addBLSETools,
@@ -12,16 +6,9 @@ import {
   addOfficialCLITool,
   addOfficialLauncherTool,
 } from "./tools";
-import { nameof } from "../nameof";
 import { recommendBLSEAsync } from "../blse";
 import { VortexLauncherManager } from "../launcher";
-import { EPICAPP_ID, GAME_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from "../common";
-import {
-  IBannerlordModStorage,
-  IStatePersistent,
-  IStateSession,
-  VortexLoadOrderStorage,
-} from "../types";
+import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from "../common";
 import { LocalizationManager } from "../localization";
 
 type HasSession = {
@@ -37,6 +24,7 @@ type RequiresLauncherResult = {
   addInfo?: unknown;
 };
 
+/*
 export const getPersistentLoadOrder = (
   statePersistent: IStatePersistent,
   profileId: string | undefined,
@@ -82,6 +70,7 @@ export const hasSettingsInterfacePrimaryTool = (
   settings: types.ISettingsInterface,
 ): settings is ISettingsInterfaceWithPrimaryTool =>
   nameof<ISettingsInterfaceWithPrimaryTool>("primaryTool") in settings;
+*/
 
 const launchGameStoreAsync = async (
   api: types.IExtensionApi,

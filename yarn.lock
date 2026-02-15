@@ -19,10 +19,9 @@
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.6.tgz#d267a43cb1836dc4d182cce93ae75ba954ef6d2b"
   integrity sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==
 
-"@butr/vortexextensionnative@2.0.209":
-  version "2.0.209"
-  resolved "https://registry.yarnpkg.com/@butr/vortexextensionnative/-/vortexextensionnative-2.0.209.tgz#4d99239cc90e4a88b8fb843f7400dd764c4a0d9b"
-  integrity sha512-70WWahujcetUfjRdfKzit2HgYZpwBw8ffZX1jEVgCCumlCU5zIHmj6AA4Me6hF1dCubjNK/nHeWo/zA5wjJSKw==
+"@butr/vortexextensionnative@file:./butr-vortexextensionnative.tgz":
+  version "2.0.0"
+  resolved "file:./butr-vortexextensionnative.tgz#3571bd59eff14bf1fd0227015d48871f57d54ea9"
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"

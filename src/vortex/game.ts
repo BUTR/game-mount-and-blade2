@@ -31,8 +31,8 @@ export const getBannerlordMainExe = (
   const xbox = (): string =>
     path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.discoveryByGame(api.getState(), GAME_ID);
+  const state = api.getState();
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (!discovery) {
     return ``;
   }
@@ -66,8 +66,8 @@ export const getBannerlordToolExe = (
   const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
   const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.discoveryByGame(api.getState(), GAME_ID);
+  const state = api.getState();
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (!discovery) {
     return ``;
   }

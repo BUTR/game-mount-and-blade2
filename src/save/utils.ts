@@ -2,11 +2,12 @@ import { selectors, types } from "vortex-api";
 import { actionsSave } from "./actions";
 import { VortexLauncherManager } from "../launcher";
 import { getSaveFromSettings } from "../settings";
+import { IStateWithBannerlord } from "../types";
 
 export const reloadSaveAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
   const profile = selectors.activeProfile(state);
   if (!profile) {
     throw new Error(`Active profile is undefined`);

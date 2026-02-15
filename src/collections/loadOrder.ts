@@ -69,10 +69,7 @@ export const parseCollectionGeneralLoadOrderAsync = async (
 ): Promise<void> => {
   const state = api.getState();
 
-  const profileId: string | undefined = selectors.lastActiveProfileForGame(
-    state,
-    GAME_ID,
-  );
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
     throw new CollectionParseError(
       collection.info.name ?? "",

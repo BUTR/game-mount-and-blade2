@@ -3,8 +3,6 @@ import { GAME_ID } from "../common";
 import {
   IBannerlordModStorage,
   IBannerlordSession,
-  IStatePersistent,
-  IStateSession,
   VortexLoadOrderStorage,
 } from "../types";
 
@@ -28,7 +26,7 @@ export interface IStatePersistentWithBannerlordMods extends IStatePersistent {
 
 export interface ISettingsInterfaceWithPrimaryTool
   extends types.ISettingsInterface {
-  primaryTool: {
+  primaryTool?: {
     [GAME_ID]?: string;
   };
 }

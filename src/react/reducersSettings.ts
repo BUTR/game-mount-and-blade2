@@ -75,11 +75,7 @@ createReducer(
 );
 
 createReducer(
-  actions.setLanguage as ComplexActionCreator1<
-    string,
-    string,
-    Record<string, never>
-  >,
+  actions.setLanguage,
   (state, payload: string) => {
     Utils.setLanguage(languageMap.getNameFromCode(payload));
     return state;

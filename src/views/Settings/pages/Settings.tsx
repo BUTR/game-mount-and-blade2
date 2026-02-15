@@ -4,7 +4,6 @@ import { More, selectors, Toggle, types } from "vortex-api";
 import { useLocalization } from "../../../localization";
 import {
   getBetaSortingFromSettings,
-  getFixCommonIssuesFromSettings,
   getSortOnDeployFromSettings,
 } from "../../../settings";
 

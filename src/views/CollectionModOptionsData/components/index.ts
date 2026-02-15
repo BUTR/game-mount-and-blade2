@@ -1,4 +1,3 @@
-export * from "./GlobalSettings";
 export * from "./ModOptionsEntryView";
+export * from "./ModOptionsSettingsSection";
 export * from "./Placeholder";
-export * from "./SpecialSettings";

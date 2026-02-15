@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { tooltip, types } from "vortex-api";
 import { GAME_ID } from "../../../common";
-import { GlobalSettings, Placeholder, SpecialSettings } from "../components";
+import { ModOptionsSettingsSection, Placeholder } from "../components";
 import { ICollectionFeatureProps } from "../../types";
 import { useLocalization } from "../../../localization";
 import {
@@ -18,6 +18,7 @@ import {
   IncludedModOptions,
 } from "../../../collections";
 import { nameof } from "../../../nameof";
+import { IStateWithBannerlord } from "../../../types";
 
 export type ModOptionsDataPageProps = ICollectionFeatureProps;
 
@@ -30,7 +31,7 @@ export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
   const [globalSettings, setGlobalSettings] = useState<ModOptionsStorage>({});
 
   const includedModOptions = useSelector<
-    types.IState,
+    IStateWithBannerlord,
     PersistentModOptionsEntry[]
   >((state) => {
     if (
@@ -42,7 +43,8 @@ export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
       return [];
     }
 
-    const collectionMod = state.persistent.mods[GAME_ID]?.[collection.id];
+    const collectionMod =
+      state.persistent.mods.mountandblade2bannerlord?.[collection.id];
     return collectionMod?.attributes?.collection?.includedModOptions ?? [];
   });
 
@@ -89,12 +91,14 @@ export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
       >
         {t("Reload")}
       </tooltip.Button>
-      <SpecialSettings
+      <ModOptionsSettingsSection
+        title={t("Special Options")}
         settings={specialSettings}
         isToggled={isToggled}
         toggleEntry={toggleEntryAsync}
       />
-      <GlobalSettings
+      <ModOptionsSettingsSection
+        title={t("Global Options")}
         settings={globalSettings}
         isToggled={isToggled}
         toggleEntry={toggleEntryAsync}

@@ -6,6 +6,7 @@ import {
   restoreOriginalModOptionsAsync,
 } from "../modoptions";
 import { LocalizationManager } from "../localization";
+import { IStateWithBannerlord } from "../types";
 
 /**
  * Event function, be careful
@@ -14,7 +15,8 @@ export const willRemoveModCollectionsAsync = async (
   api: types.IExtensionApi,
   modId: string,
 ): Promise<void> => {
-  const mod = api.getState().persistent.mods[GAME_ID]?.[modId];
+  const state = api.getState<IStateWithBannerlord>();
+  const mod = state.persistent.mods.mountandblade2bannerlord?.[modId];
   if (!mod) {
     return;
   }

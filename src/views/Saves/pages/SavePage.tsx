@@ -1,30 +1,27 @@
-import React, { FC, useCallback, useEffect, useState } from "react";
-import ticksToDate from "ticks-to-date";
+import React, { FC, useCallback, useContext, useEffect, useState } from "react";
 import {
   IconBar,
   ITableRowAction,
+  MainContext,
   MainPage,
   selectors,
   ToolbarIcon,
   types,
 } from "vortex-api";
 import { useSelector, useStore } from "react-redux";
-import { Content, RadioView, StatusView } from "../components";
+import { Content } from "../components";
 import { ISaveGame } from "../types";
 import { getSavesAsync } from "../utils";
-import { LocalizationManager, useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization";
 import { actionsSave } from "../../../save";
-import { versionToString, VortexLauncherManager } from "../../../launcher";
+import { VortexLauncherManager } from "../../../launcher";
 import { getSaveFromSettings } from "../../../settings";
-import { findBLSEMod } from "../../../blse";
-import { getPersistentBannerlordMods, isModActive } from "../../../vortex";
+import { useHasBLSE } from "../../../blse";
+import { getTableAttributes } from "../tableAttributes";
 
-export type SavePageProps = {
-  context: types.IExtensionContext;
-};
-
-export const SavePage: FC<SavePageProps> = (props) => {
-  const { context } = props;
+export const SavePage: FC = () => {
+  const context = useContext(MainContext);
+  const api = context.api;
 
   const localizationManager = useLocalization();
   const { localize: t } = localizationManager;
@@ -35,15 +32,7 @@ export const SavePage: FC<SavePageProps> = (props) => {
       ? (getSaveFromSettings(state, profile.id) ?? "No Save")
       : "No Save",
   );
-  const hasBLSE = useSelector((state: types.IState) => {
-    const mods = getPersistentBannerlordMods(state.persistent);
-    const blseMod = findBLSEMod(mods);
-    return (
-      blseMod !== undefined &&
-      profile !== undefined &&
-      isModActive(profile, blseMod)
-    );
-  });
+  const hasBLSE = useHasBLSE();
 
   const store = useStore();
 
@@ -78,7 +67,7 @@ export const SavePage: FC<SavePageProps> = (props) => {
   };
 
   const setSaveAsync = useCallback(
-    async (api: types.IExtensionApi, saveId: string | null): Promise<void> => {
+    async (saveId: string | null): Promise<void> => {
       if (profile) {
         store.dispatch(actionsSave.setCurrentSave(profile.id, saveId));
       }
@@ -86,20 +75,20 @@ export const SavePage: FC<SavePageProps> = (props) => {
       const launcherManager = VortexLauncherManager.getInstance(api);
       await launcherManager.setSaveFileAsync(saveId ?? "");
     },
-    [profile, store],
+    [profile, store, api],
   );
 
   const saveSelectedAsync = useCallback(
     async (save: ISaveGame): Promise<void> => {
-      await setSaveAsync(context.api, save.index !== 0 ? save.name : null);
+      await setSaveAsync(save.index !== 0 ? save.name : null);
       setSelectedSave(save);
     },
-    [context.api, setSaveAsync],
+    [setSaveAsync],
   );
 
   const reloadSavesAsync = useCallback(async (): Promise<void> => {
     try {
-      const saveList = await getSavesAsync(context.api);
+      const saveList = await getSavesAsync(api);
       setSortedSaveGameList(
         Object.entries(saveList).sort(
           ([, saveA], [, saveB]) => saveA.index - saveB.index,
@@ -112,12 +101,12 @@ export const SavePage: FC<SavePageProps> = (props) => {
       setSelectedSave(foundSave ?? null);
       setSelectedRowSave(foundSave ?? null);
       if (!foundSave) {
-        await setSaveAsync(context.api, null);
+        await setSaveAsync(null);
       }
     } catch (err) {
-      context.api.showErrorNotification?.(t("Failed to reload saves"), err);
+      api.showErrorNotification?.(t("Failed to reload saves"), err);
     }
-  }, [context.api, t, saveName, setSaveAsync]);
+  }, [api, t, saveName, setSaveAsync]);
 
   useEffect(() => {
     void reloadSavesAsync();
@@ -130,123 +119,24 @@ export const SavePage: FC<SavePageProps> = (props) => {
           group="bannerlord-saves-icons"
           staticElements={mainButtonList}
           className="menubar"
-          t={context.api.translate}
+          t={api.translate}
         />
       </MainPage.Header>
       <MainPage.Body>
-        {Content({
-          selectedSave: selectedSave,
-          saveActions: saveActions,
-          sortedSaveGameList: sortedSaveGameList,
-          tableAttributes: getTableAttributes(
-            context.api,
+        <Content
+          selectedSave={selectedSave}
+          saveActions={saveActions}
+          sortedSaveGameList={sortedSaveGameList}
+          tableAttributes={getTableAttributes(
+            api,
             hasBLSE,
             selectedSave,
             saveSelectedAsync,
-          ),
-          selectedRowSave: selectedRowSave,
-          saveRowSelected: saveRowSelected,
-        })}
+          )}
+          selectedRowSave={selectedRowSave}
+          saveRowSelected={saveRowSelected}
+        />
       </MainPage.Body>
     </MainPage>
   );
 };
-
-const getTableAttributes = (
-  api: types.IExtensionApi,
-  hasBLSE: boolean,
-  selectedSave: ISaveGame | null,
-  saveSelectedAsync: (save: ISaveGame) => Promise<void>,
-): types.ITableAttribute<[string, ISaveGame]>[] => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
-  const tableAttributes: types.ITableAttribute<[string, ISaveGame]>[] = [
-    {
-      id: "#",
-      name: "#",
-      customRenderer: (data) => {
-        if (
-          data.length &&
-          typeof data[0] === "string" &&
-          !Array.isArray(data[1])
-        ) {
-          const save = data[1];
-          return (
-            <RadioView
-              api={api}
-              hasBLSE={hasBLSE}
-              save={save}
-              selectedSave={selectedSave}
-              onChange={saveSelectedAsync}
-            />
-          );
-        }
-        return <></>;
-      },
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "name",
-      name: t("{=JtelOsIW}Name"),
-      calc: ([, save]) => save.name,
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "characterName",
-      name: t("{=OJsGrGVi}Character"),
-      calc: ([, save]) => save.characterName ?? "",
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "mainHeroLevel",
-      name: t("{=JxpEEQdF}Level"),
-      calc: ([, save]) => save.mainHeroLevel ?? "",
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "dayLong",
-      name: t("{=qkkTPycE}Days"),
-      calc: ([, save]) => save.dayLong?.toFixed(0) ?? "",
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "status",
-      name: t("Status"),
-      customRenderer: (data) => {
-        if (
-          data.length &&
-          typeof data[0] === "string" &&
-          !Array.isArray(data[1])
-        ) {
-          const save = data[1];
-          return <StatusView api={api} save={save} />;
-        }
-        return <></>;
-      },
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "applicationVersion",
-      name: t("{=14WBFIS1}Version"),
-      calc: ([, save]) =>
-        save.applicationVersion ? versionToString(save.applicationVersion) : "",
-      placement: "both",
-      edit: {},
-    },
-    {
-      id: "creationTime",
-      name: t("{=aYWWDkKX}CreatedAt"),
-      calc: ([, save]) => ticksToDate(save.creationTime)?.toLocaleString(),
-      placement: "both",
-      edit: {},
-    },
-  ];
-  return tableAttributes;
-};
-

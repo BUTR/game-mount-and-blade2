@@ -27,15 +27,17 @@ export const hasStatePersistentCollectionModWithIncludedModOptions = (
   statePersistent: IStatePersistent,
   collectionId: string,
 ): statePersistent is IStatePersistentWithModsWithIncludedModOptions => {
-  if (!statePersistent.mods[GAME_ID]) {
+  if (!statePersistent.mods.mountandblade2bannerlord) {
     return false;
   }
 
-  if (!statePersistent.mods[GAME_ID][collectionId]) {
+  if (!statePersistent.mods.mountandblade2bannerlord[collectionId]) {
     return false;
   }
 
-  return hasIncludedModOptions(statePersistent.mods[GAME_ID][collectionId]!);
+  return hasIncludedModOptions(
+    statePersistent.mods.mountandblade2bannerlord[collectionId]!,
+  );
 };
 
 export const hasModAttributeCollection = <T = unknown>(

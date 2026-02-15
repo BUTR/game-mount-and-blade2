@@ -4,12 +4,10 @@ import {
   IPersistenceLoadOrderEntry,
   VortexLoadOrderStorage,
 } from "../../../types";
-import {
-  CompatibilityInfo,
-  isOptional,
-  ModuleIcon,
-  OptionalBanner,
-} from "../../Shared";
+import { CompatibilityInfo } from "./CompatibilityInfo";
+import { isOptional } from "./OptionalBanner";
+import { ModuleIcon } from "./ModuleIcon";
+import { OptionalBanner } from "./OptionalBanner";
 import { IModuleCompatibilityInfoCache } from "../../../butr";
 import { versionToString } from "../../../launcher";
 

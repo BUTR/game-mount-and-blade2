@@ -1,8 +1,11 @@
 import { selectors, types } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../common";
-import { hasPersistentBannerlordMods } from "../vortex";
-import { IBannerlordMod, IBannerlordModStorage } from "../types";
+import {
+  IBannerlordMod,
+  IBannerlordModStorage,
+  IStateWithBannerlord,
+} from "../types";
 
 export const isModActive = (
   profile: types.IProfile | undefined,
@@ -83,13 +86,11 @@ export const isActiveMod = (
   api: types.IExtensionApi,
   moduleId: string,
 ): boolean => {
-  const state = api.getState();
-
-  if (!hasPersistentBannerlordMods(state.persistent)) return false;
+  const state = api.getState<IStateWithBannerlord>();
 
   const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
-  const foundMods: IBannerlordMod[] = Object.values(mods).filter(
-    (mod: IBannerlordMod) => isMod(mod, moduleId),
+  const foundMods = Object.values(mods).filter((mod: IBannerlordMod) =>
+    isMod(mod, moduleId),
   );
 
   if (foundMods.length === 0) {

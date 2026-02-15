@@ -200,6 +200,27 @@ export const modTranslationInstaller = async (
   );
   pushTranslationLanguageAttributes(instructions, languageCodesNorm);
 
+  let rule: types.IModRule = {
+    reference: {},
+    type: "conflicts",
+  };
+  if (inferredTargetUsed !== undefined) {
+    rule = {
+      type: "attribute",
+      key: "inferredTranslationTarget",
+      value: inferredTargetUsed,
+    };
+  } else if (warnedMissingTarget) {
+    rule = {
+      type: "attribute",
+      key: "inferredTranslationTarget",
+      value: "unknown",
+    };
+  }
+  if (rule !== undefined) {
+    instructions.push(rule);
+  }
+
   const result: types.IInstallResult = {
     instructions,
   };

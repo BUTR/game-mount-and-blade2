@@ -14,7 +14,11 @@ import {
   DetailsRenderer,
 } from "./views";
 import { BannerlordGame } from "./game";
-import { IAddedFiles, IBannerlordModStorage } from "./types";
+import {
+  IAddedFiles,
+  IBannerlordModStorage,
+  IStateWithBannerlord,
+} from "./types";
 import { reducerSession, reducerSettings } from "./react";
 import { actionsSettings } from "./settings";
 import {
@@ -48,8 +52,6 @@ import { gamemodeActivatedSaveAsync } from "./save";
 import {
   addedFilesEventAsync,
   getInstallPathModule,
-  getPersistentBannerlordMods,
-  getPersistentLoadOrder,
   installedMod,
   isModTypeModule,
 } from "./vortex";
@@ -115,10 +117,15 @@ const main = (context: types.IExtensionContext): boolean => {
           return {};
         }
 
-        const state = context.api.getState();
+        const state = context.api.getState<IStateWithBannerlord>();
+
         const profile = selectors.activeProfile(state);
-        const loadOrder = getPersistentLoadOrder(state.persistent, profile?.id);
-        const mods = getPersistentBannerlordMods(state.persistent);
+        if (profile === undefined) {
+          return {};
+        }
+
+        const loadOrder = state.persistent.loadOrder?.[profile.id] ?? [];
+        const mods = state.persistent.mods?.mountandblade2bannerlord ?? {};
 
         const includedMods = Object.values(mods)
           .filter((mod) => includedModIds.includes(mod.id))

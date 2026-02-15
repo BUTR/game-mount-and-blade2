@@ -8,7 +8,6 @@ import path from "path";
 import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
 import { vortexStoreToLibraryStore } from "./utils";
 import { installModuleAsync } from "./installer";
-import { hasPersistentLoadOrder } from "../vortex";
 import {
   actionsLoadOrder,
   libraryToLibraryVM,
@@ -18,7 +17,11 @@ import {
 import { getBetaSortingFromSettings } from "../settings";
 import { filterEntryWithInvalidId } from "../utils";
 import { GAME_ID } from "../common";
-import { IModuleCache, VortexLoadOrderStorage } from "../types";
+import {
+  IModuleCache,
+  IStateWithBannerlord,
+  VortexLoadOrderStorage,
+} from "../types";
 import { LocalizationManager } from "../localization";
 
 export class VortexLauncherManager {
@@ -59,17 +62,14 @@ export class VortexLauncherManager {
    * Gets the LoadOrder from Vortex's Load Order Page
    */
   private getLoadOrderFromVortex = (): VortexLoadOrderStorage => {
-    const state = this.api.getState();
-    if (!hasPersistentLoadOrder(state.persistent)) {
-      return [];
-    }
+    const state = this.api.getState<IStateWithBannerlord>();
 
     const profile = selectors.activeProfile(state);
     if (!profile) {
       return [];
     }
 
-    const loadOrder = state.persistent.loadOrder[profile.id] ?? [];
+    const loadOrder = state.persistent.loadOrder?.[profile.id] ?? [];
     if (!Array.isArray(loadOrder)) {
       return [];
     }
@@ -251,8 +251,7 @@ export class VortexLauncherManager {
       .join(" ");
 
     const state = this.api.getState();
-    const discovery: types.IDiscoveryResult | undefined =
-      selectors.currentGameDiscovery(state);
+    const discovery = selectors.currentGameDiscovery(state);
     const cliTools = Object.values(discovery?.tools ?? {}).filter(
       (tool) => tool.id && tool.id.endsWith("-cli"),
     );
@@ -380,8 +379,7 @@ export class VortexLauncherManager {
    */
   private getInstallPathAsync = (): Promise<string> => {
     const state = this.api.getState();
-    const discovery: types.IDiscoveryResult | undefined =
-      selectors.currentGameDiscovery(state);
+    const discovery = selectors.currentGameDiscovery(state);
     const installPath = discovery?.path ?? "";
     log("debug", "[BLSE Debug] getInstallPathAsync called", {
       hasDiscovery: discovery !== undefined,
@@ -546,15 +544,16 @@ export class VortexLauncherManager {
    * Callback
    */
   private getOptionsAsync = (): Promise<vetypes.LauncherOptions> => {
-    const profile = selectors.activeProfile(this.api.getState());
+    const state = this.api.getState<IStateWithBannerlord>();
+
+    const profile = selectors.activeProfile(state);
     if (!profile) {
       return Promise.resolve({
         betaSorting: false,
       });
     }
 
-    const betaSorting =
-      getBetaSortingFromSettings(this.api, profile.id) ?? false;
+    const betaSorting = getBetaSortingFromSettings(state, profile.id) ?? false;
 
     return Promise.resolve({
       betaSorting: betaSorting,

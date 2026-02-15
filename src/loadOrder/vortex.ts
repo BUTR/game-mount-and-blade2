@@ -37,7 +37,19 @@ export const readLoadOrderAsync = async (
     const loFilePath = getLoadOrderFilePath(api, loFileName);
     const fileContents = await readFile(loFilePath, "utf8");
 
-    const loadOrder: PersistenceLoadOrderStorage = JSON.parse(fileContents);
+    // Trim the file contents to remove any trailing whitespace or extra content
+    const trimmedContents = fileContents.trim();
+
+    // Try to find the end of the JSON array if there's extra content
+    let jsonString = trimmedContents;
+    if (trimmedContents.startsWith("[")) {
+      const lastBracketIndex = trimmedContents.lastIndexOf("]");
+      if (lastBracketIndex !== -1) {
+        jsonString = trimmedContents.substring(0, lastBracketIndex + 1);
+      }
+    }
+
+    const loadOrder: PersistenceLoadOrderStorage = JSON.parse(jsonString);
     return loadOrder.filter(
       (x) => x !== undefined && filterEntryWithInvalidId(x),
     );

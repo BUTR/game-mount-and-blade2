@@ -1,12 +1,13 @@
 import { actions, selectors, types, util } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
-import {
-  downloadAndEnableLatestModVersionAsync,
-  hasPersistentBannerlordMods,
-} from "../vortex";
+import { downloadAndEnableLatestModVersionAsync } from "../vortex";
 import { LocalizationManager } from "../localization";
-import { IBannerlordMod, IBannerlordModStorage } from "../types";
+import {
+  IBannerlordMod,
+  IBannerlordModStorage,
+  IStateWithBannerlord,
+} from "../types";
 
 const isModActive = (
   profile: types.IProfile | undefined,
@@ -62,7 +63,7 @@ export const findBLSEMod = (
 export const findBLSEDownload = (
   api: types.IExtensionApi,
 ): string | undefined => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
   const downloadedFiles = state.persistent.downloads.files;
   if (downloadedFiles === undefined) {
     return undefined;
@@ -85,13 +86,11 @@ export const findBLSEDownload = (
 };
 
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
-  const state = api.getState();
-
-  if (!hasPersistentBannerlordMods(state.persistent)) return false;
+  const state = api.getState<IStateWithBannerlord>();
 
   const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
-  const blseMods: IBannerlordMod[] = Object.values(mods).filter(
-    (mod: IBannerlordMod) => isModBLSE(mod),
+  const blseMods = Object.values(mods).filter((mod: IBannerlordMod) =>
+    isModBLSE(mod),
   );
 
   if (blseMods.length === 0) {
@@ -110,8 +109,8 @@ export const deployBLSEAsync = async (
     api.events.emit("start-quick-discovery", () => cb(null)),
   );
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.currentGameDiscovery(api.getState());
+  const state = api.getState();
+  const discovery = selectors.currentGameDiscovery(state);
   const tool = discovery?.tools?.["blse-cli"];
   if (tool) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));

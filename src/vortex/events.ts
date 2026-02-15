@@ -2,9 +2,8 @@ import Bluebird from "bluebird";
 import { actions, fs, selectors, types, util } from "vortex-api";
 import path from "path";
 import { copyFile, rm } from "node:fs/promises";
-import { hasPersistentBannerlordMods } from "./utils";
 import { GAME_ID } from "../common";
-import { IAddedFiles } from "../types";
+import { IAddedFiles, IStateWithBannerlord } from "../types";
 import { vortexStoreToLibraryStore } from "../launcher";
 import { LocalizationManager } from "../localization";
 
@@ -26,10 +25,7 @@ export const addedFilesEventAsync = async (
 
   const game = util.getGame(GAME_ID);
   const modPaths = game.getModPaths?.(discovery.path) ?? {};
-  const installPath: string | undefined = selectors.installPathForGame(
-    state,
-    game.id,
-  );
+  const installPath = selectors.installPathForGame(state, game.id);
   if (installPath === undefined) {
     // Can't do anything without a install path.
     return;
@@ -83,12 +79,9 @@ export const installedMod = (
   archiveId: string,
   modId: string,
 ): void => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
-  if (!hasPersistentBannerlordMods(state.persistent)) {
-    return;
-  }
-  const mod = state.persistent.mods.mountandblade2bannerlord[modId];
+  const mod = state.persistent.mods.mountandblade2bannerlord?.[modId];
   if (mod === undefined) {
     return;
   }
@@ -99,7 +92,7 @@ export const installedMod = (
   }
 
   const discovery = selectors.discoveryByGame(state, GAME_ID);
-  if (discovery === undefined) {
+  if (discovery === undefined || discovery.store === undefined) {
     return;
   }
 
