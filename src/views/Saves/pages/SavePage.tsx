@@ -6,7 +6,6 @@ import {
   MainPage,
   selectors,
   ToolbarIcon,
-  types,
 } from "vortex-api";
 import { useSelector, useStore } from "react-redux";
 import { Content } from "../components";
@@ -15,7 +14,8 @@ import { getSavesAsync } from "../utils";
 import { useLocalization } from "../../../localization";
 import { actionsSave } from "../../../save";
 import { VortexLauncherManager } from "../../../launcher";
-import { getSaveFromSettings } from "../../../settings";
+import { bselectors } from "../../../selectors";
+import { IStateWithBannerlord } from "../../../types";
 import { useHasBLSE } from "../../../blse";
 import { getTableAttributes } from "../tableAttributes";
 
@@ -27,9 +27,9 @@ export const SavePage: FC = () => {
   const { localize: t } = localizationManager;
 
   const profile = useSelector(selectors.activeProfile);
-  const saveName = useSelector((state: types.IState) =>
+  const saveName = useSelector((state: IStateWithBannerlord) =>
     profile !== undefined
-      ? (getSaveFromSettings(state, profile.id) ?? "No Save")
+      ? (bselectors.saveNameForProfile(state, profile.id) ?? "No Save")
       : "No Save",
   );
   const hasBLSE = useHasBLSE();

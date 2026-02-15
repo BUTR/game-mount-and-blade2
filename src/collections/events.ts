@@ -1,11 +1,11 @@
 import { types } from "vortex-api";
-import { GAME_ID } from "../common";
 import {
   hasBackupModOptionsAsync,
   removeOriginalModOptionsAsync,
   restoreOriginalModOptionsAsync,
 } from "../modoptions";
 import { LocalizationManager } from "../localization";
+import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 
 /**
@@ -16,7 +16,7 @@ export const willRemoveModCollectionsAsync = async (
   modId: string,
 ): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
-  const mod = state.persistent.mods.mountandblade2bannerlord?.[modId];
+  const mod = bselectors.bannerlordModById(state, modId);
   if (!mod) {
     return;
   }

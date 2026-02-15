@@ -9,7 +9,7 @@ import {
   XBOX_ID,
 } from "./common";
 import { findGameAsync, getBannerlordMainExe, setupAsync } from "./vortex";
-import { VortexLauncherManager } from "./launcher";
+import { FetchBannerlordVersion } from "@butr/vortexextensionnative";
 
 export class BannerlordGame implements types.IGame {
   private api: types.IExtensionApi;
@@ -50,12 +50,14 @@ export class BannerlordGame implements types.IGame {
     return `.`;
   };
   public getGameVersion = (
-    _gamePath: string,
+    gamePath: string,
     _exePath: string,
   ): PromiseLike<string> => {
-    return VortexLauncherManager.getInstance(
-      this.api,
-    ).getGameVersionVortexAsync();
+    const version = FetchBannerlordVersion.getVersion(
+      gamePath,
+      "TaleWorlds.Library.dll",
+    );
+    return Promise.resolve(version);
   };
   public executable = (discoveredPath?: string): string => {
     return getBannerlordMainExe(discoveredPath, this.api);

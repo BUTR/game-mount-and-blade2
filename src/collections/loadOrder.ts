@@ -1,12 +1,9 @@
-import { selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "vortex-api";
 import { ICollectionDataWithGeneralData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID } from "../common";
 import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from "../types";
-import {
-  actionsLoadOrder,
-  orderCurrentLoadOrderByExternalLoadOrderAsync,
-} from "../loadOrder";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder";
 
 const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== "collection";
@@ -85,5 +82,5 @@ export const parseCollectionGeneralLoadOrderAsync = async (
     suggestedLoadOrder,
   );
 
-  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
+  api.store?.dispatch(actions.setFBLoadOrder(profileId, loadOrder));
 };

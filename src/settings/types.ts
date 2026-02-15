@@ -2,18 +2,10 @@ import { types } from "vortex-api";
 import { GAME_ID } from "../common";
 
 export interface IBannerlordSettings {
-  saveName: {
-    [profileId: string]: string | null;
-  };
-  sortOnDeploy: {
-    [profileId: string]: boolean;
-  };
-  fixCommonIssues: {
-    [profileId: string]: boolean;
-  };
-  betaSorting: {
-    [profileId: string]: boolean;
-  };
+  saveName: Record<string, string | null>;
+  sortOnDeploy: Record<string, boolean>;
+  fixCommonIssues: Record<string, boolean>;
+  betaSorting: Record<string, boolean>;
 }
 
 export interface ISettingsWithBannerlord extends types.ISettings {

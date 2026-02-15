@@ -3,6 +3,8 @@ import path from "path";
 import { readFile } from "node:fs/promises";
 import { isModTypeModule } from "./modType";
 import { GAME_ID, SUBMODULE_FILE } from "../common";
+import { bselectors } from "../selectors";
+import { IStateWithBannerlord } from "../types";
 import { VortexLauncherManager } from "../launcher/manager";
 import { languageMap, LocalizationManager } from "../localization";
 
@@ -59,8 +61,8 @@ const inferModuleIdFromDownload = async (
   try {
     if (archivePath === undefined) return undefined;
 
-    const state = api.getState();
-    const downloads = state.persistent.downloads.files ?? {};
+    const state = api.getState<IStateWithBannerlord>();
+    const downloads = bselectors.downloadFiles(state);
     const archiveName = path.basename(archivePath);
 
     const entries = Object.values(downloads);
@@ -200,25 +202,18 @@ export const modTranslationInstaller = async (
   );
   pushTranslationLanguageAttributes(instructions, languageCodesNorm);
 
-  let rule: types.IModRule = {
-    reference: {},
-    type: "conflicts",
-  };
   if (inferredTargetUsed !== undefined) {
-    rule = {
+    instructions.push({
       type: "attribute",
       key: "inferredTranslationTarget",
       value: inferredTargetUsed,
-    };
+    });
   } else if (warnedMissingTarget) {
-    rule = {
+    instructions.push({
       type: "attribute",
       key: "inferredTranslationTarget",
       value: "unknown",
-    };
-  }
-  if (rule !== undefined) {
-    instructions.push(rule);
+    });
   }
 
   const result: types.IInstallResult = {

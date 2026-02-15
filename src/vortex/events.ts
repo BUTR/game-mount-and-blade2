@@ -3,6 +3,7 @@ import { actions, fs, selectors, types, util } from "vortex-api";
 import path from "path";
 import { copyFile, rm } from "node:fs/promises";
 import { GAME_ID } from "../common";
+import { bselectors } from "../selectors";
 import { IAddedFiles, IStateWithBannerlord } from "../types";
 import { vortexStoreToLibraryStore } from "../launcher";
 import { LocalizationManager } from "../localization";
@@ -14,10 +15,9 @@ export const addedFilesEventAsync = async (
   api: types.IExtensionApi,
   files: IAddedFiles[],
 ): Promise<void> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.discoveryByGame(state, GAME_ID);
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (discovery?.path === undefined) {
     // Can't do anything without a discovery path.
     return;
@@ -40,7 +40,7 @@ export const addedFilesEventAsync = async (
       return;
     }
 
-    const mod = state.persistent.mods[game.id]?.[entry.candidates[0]!];
+    const mod = bselectors.bannerlordModById(state, entry.candidates[0]!);
     if (!mod) {
       return;
     }
@@ -81,7 +81,7 @@ export const installedMod = (
 ): void => {
   const state = api.getState<IStateWithBannerlord>();
 
-  const mod = state.persistent.mods.mountandblade2bannerlord?.[modId];
+  const mod = bselectors.bannerlordModById(state, modId);
   if (mod === undefined) {
     return;
   }
@@ -92,7 +92,7 @@ export const installedMod = (
   }
 
   const discovery = selectors.discoveryByGame(state, GAME_ID);
-  if (discovery === undefined || discovery.store === undefined) {
+  if (!discovery || discovery.store === undefined) {
     return;
   }
 

@@ -1,7 +1,7 @@
 import React, { BaseSyntheticEvent, FC, useCallback } from "react";
 import { Checkbox, ListGroupItem } from "react-bootstrap";
 import { useSelector, useStore } from "react-redux";
-import { Icon, selectors, types } from "vortex-api";
+import { actions, Icon, selectors } from "vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { ValidationError } from "./ValidationError";
 import { ExternalBanner } from "./ExternalBanner";
@@ -12,8 +12,9 @@ import { CompatibilityInfo, ModuleIcon } from "../../Shared";
 import { isExternal, isLocked } from "../utils";
 import { IModuleCompatibilityInfo } from "../../../butr";
 import { versionToString } from "../../../launcher";
-import { actionsLoadOrder, IFBLOItemRendererProps } from "../../../loadOrder";
-import { getPersistentLoadOrder } from "../../../vortex";
+import { IFBLOItemRendererProps } from "../../../loadOrder";
+import { bselectors } from "../../../selectors";
+import { IStateWithBannerlord } from "../../../types";
 import { ObfuscatedBinaries } from ".";
 
 export type LoadOrderItemRendererProps = {
@@ -28,8 +29,8 @@ export const LoadOrderItemRenderer: FC<LoadOrderItemRendererProps> = (
 ) => {
   const { className, item, availableProviders, compatibilityInfo } = props;
   const profile = useSelector(selectors.activeProfile);
-  const loadOrder = useSelector((state: types.IState) =>
-    getPersistentLoadOrder(state.persistent, profile?.id),
+  const loadOrder = useSelector((state: IStateWithBannerlord) =>
+    bselectors.bannerlordLoadOrder(state, profile?.id),
   );
 
   const key = item.loEntry.id;
@@ -67,7 +68,7 @@ export const LoadOrderItemRenderer: FC<LoadOrderItemRendererProps> = (
         enabled: evt.target.checked,
       };
       if (profile) {
-        store.dispatch(actionsLoadOrder.setFBLoadOrderEntry(profile.id, entry));
+        store.dispatch(actions.setFBLoadOrderEntry(profile.id, entry));
       }
     },
     [store, item, profile],

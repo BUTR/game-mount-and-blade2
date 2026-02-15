@@ -1,20 +1,18 @@
 import { actions, types } from "vortex-api";
-import { findBLSEMod } from "./utils";
 import { GAME_ID } from "../common";
+import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 
 export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
 
-  const primaryTool =
-    state.settings.interface.primaryTool?.mountandblade2bannerlord;
+  const primaryTool = bselectors.bannerlordPrimaryTool(state);
 
-  const mods = state.persistent.mods?.mountandblade2bannerlord ?? {};
-  const blseMod = findBLSEMod(mods);
-  if (blseMod && primaryTool === undefined) {
+  const currentBlseMod = bselectors.blseMod(state);
+  if (currentBlseMod && primaryTool === undefined) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, "blse-cli"));
   }
-  if (!blseMod && primaryTool === "blse-cli") {
+  if (!currentBlseMod && primaryTool === "blse-cli") {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
 
@@ -27,15 +25,13 @@ export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
 export const didPurgeBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
 
-  const primaryTool =
-    state.settings.interface.primaryTool?.mountandblade2bannerlord;
+  const primaryTool = bselectors.bannerlordPrimaryTool(state);
   if (primaryTool !== "blse-cli") {
     return Promise.resolve();
   }
 
-  const mods = state.persistent.mods?.mountandblade2bannerlord ?? {};
-  const blseMod = findBLSEMod(mods);
-  if (blseMod) {
+  const currentBlseMod = bselectors.blseMod(state);
+  if (currentBlseMod) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
 

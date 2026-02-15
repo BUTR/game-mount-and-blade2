@@ -1,6 +1,5 @@
 import { actions, types } from "vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
-import { ComplexActionCreator1 } from "redux-act";
 import { createReducer, updateAuto } from "./redux";
 import { actionsSave } from "../save";
 import { actionsSettings, IBannerlordSettings } from "../settings";

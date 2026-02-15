@@ -3,6 +3,7 @@ import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
 import { downloadAndEnableLatestModVersionAsync } from "../vortex";
 import { LocalizationManager } from "../localization";
+import { bselectors } from "../selectors";
 import {
   IBannerlordMod,
   IBannerlordModStorage,
@@ -16,6 +17,7 @@ const isModActive = (
   // Warning: modState is not guaranteed to be present in the profile
   return profile?.modState?.[mod.id]?.enabled ?? false;
 };
+
 const isModBLSE = (mod: IBannerlordMod): boolean => {
   return (
     mod.type === `bannerlord-blse` ||
@@ -63,8 +65,8 @@ export const findBLSEMod = (
 export const findBLSEDownload = (
   api: types.IExtensionApi,
 ): string | undefined => {
-  const state = api.getState<IStateWithBannerlord>();
-  const downloadedFiles = state.persistent.downloads.files;
+  const state = api.getState();
+  const downloadedFiles = bselectors.downloadFiles(state);
   if (downloadedFiles === undefined) {
     return undefined;
   }
@@ -88,17 +90,13 @@ export const findBLSEDownload = (
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
   const state = api.getState<IStateWithBannerlord>();
 
-  const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
-  const blseMods = Object.values(mods).filter((mod: IBannerlordMod) =>
-    isModBLSE(mod),
-  );
-
-  if (blseMods.length === 0) {
+  const blse = bselectors.blseMod(state);
+  if (!blse) {
     return false;
   }
 
   const profile = selectors.activeProfile(state);
-  return blseMods.filter((x) => isModActive(profile, x)).length >= 1;
+  return isModActive(profile, blse);
 };
 
 export const deployBLSEAsync = async (

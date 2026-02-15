@@ -56,6 +56,7 @@ import {
   isModTypeModule,
 } from "./vortex";
 import { LocalizationManager } from "./localization";
+import { bselectors } from "./selectors";
 import {
   isModTranslationArchive,
   isModTypeTranslation,
@@ -124,8 +125,8 @@ const main = (context: types.IExtensionContext): boolean => {
           return {};
         }
 
-        const loadOrder = state.persistent.loadOrder?.[profile.id] ?? [];
-        const mods = state.persistent.mods?.mountandblade2bannerlord ?? {};
+        const loadOrder = bselectors.bannerlordLoadOrder(state, profile.id);
+        const mods = bselectors.bannerlordMods(state);
 
         const includedMods = Object.values(mods)
           .filter((mod) => includedModIds.includes(mod.id))

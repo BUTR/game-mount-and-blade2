@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { tooltip, types } from "vortex-api";
-import { GAME_ID } from "../../../common";
+import { tooltip, selectors } from "vortex-api";
 import { ModOptionsSettingsSection, Placeholder } from "../components";
 import { ICollectionFeatureProps } from "../../types";
 import { useLocalization } from "../../../localization";
@@ -14,11 +13,12 @@ import {
   readSettingsContentAsync,
 } from "../../../modoptions";
 import {
-  hasStatePersistentCollectionModWithIncludedModOptions,
+  hasIncludedModOptions,
   IncludedModOptions,
 } from "../../../collections";
 import { nameof } from "../../../nameof";
 import { IStateWithBannerlord } from "../../../types";
+import { GAME_ID } from "../../../common";
 
 export type ModOptionsDataPageProps = ICollectionFeatureProps;
 
@@ -34,18 +34,12 @@ export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
     IStateWithBannerlord,
     PersistentModOptionsEntry[]
   >((state) => {
-    if (
-      !hasStatePersistentCollectionModWithIncludedModOptions(
-        state.persistent,
-        collection.id,
-      )
-    ) {
+    const collectionMod = selectors.getMod(state, GAME_ID, collection.id);
+    if (!collectionMod || !hasIncludedModOptions(collectionMod)) {
       return [];
     }
 
-    const collectionMod =
-      state.persistent.mods.mountandblade2bannerlord?.[collection.id];
-    return collectionMod?.attributes?.collection?.includedModOptions ?? [];
+    return collectionMod.attributes?.collection?.includedModOptions ?? [];
   });
 
   const toggleEntryAsync = useCallback(

@@ -1,11 +1,9 @@
 import React, { FC, useCallback } from "react";
 import { useSelector } from "react-redux";
-import { More, selectors, Toggle, types } from "vortex-api";
+import { More, selectors, Toggle } from "vortex-api";
 import { useLocalization } from "../../../localization";
-import {
-  getBetaSortingFromSettings,
-  getSortOnDeployFromSettings,
-} from "../../../settings";
+import { bselectors } from "../../../selectors";
+import { IStateWithBannerlord } from "../../../types";
 
 export type SettingsProps = {
   onSetSortOnDeploy: (profileId: string, sort: boolean) => void;
@@ -19,16 +17,16 @@ export const Settings: FC<SettingsProps> = (props) => {
 
   const profile = useSelector(selectors.activeProfile);
   const autoSortOnDeploy = useSelector(
-    (state: types.IState) =>
-      getSortOnDeployFromSettings(state, profile!.id) ?? true,
+    (state: IStateWithBannerlord) =>
+      bselectors.sortOnDeployForProfile(state, profile!.id) ?? true,
   );
   /*const fixCommonIssues = useSelector(
-    (state: types.IState) =>
-      getFixCommonIssuesFromSettings(state, profile!.id) ?? true,
+    (state: IStateWithBannerlord) =>
+      fixCommonIssuesForProfile(state, profile!.id) ?? true,
   );*/
   const betaSorting = useSelector(
-    (state: types.IState) =>
-      getBetaSortingFromSettings(state, profile!.id) ?? false,
+    (state: IStateWithBannerlord) =>
+      bselectors.betaSortingForProfile(state, profile!.id) ?? false,
   );
 
   const setSortCallback = useCallback(

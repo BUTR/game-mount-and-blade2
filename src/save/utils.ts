@@ -1,7 +1,7 @@
 import { selectors, types } from "vortex-api";
 import { actionsSave } from "./actions";
 import { VortexLauncherManager } from "../launcher";
-import { getSaveFromSettings } from "../settings";
+import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 
 export const reloadSaveAsync = async (
@@ -12,11 +12,7 @@ export const reloadSaveAsync = async (
   if (!profile) {
     throw new Error(`Active profile is undefined`);
   }
-  let save = getSaveFromSettings(state, profile.id);
-
-  if (save === "No Save") {
-    save = null;
-  }
+  const save = bselectors.saveNameForProfile(state, profile.id);
 
   api.store?.dispatch(actionsSave.setCurrentSave(profile.id, save));
 

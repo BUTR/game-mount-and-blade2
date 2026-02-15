@@ -29,15 +29,13 @@ export interface IBannerlordMod extends types.IMod {
   attributes?: IBannerlordModAttributes;
 }
 
-export interface IBannerlordModStorage {
-  [modId: string]: IBannerlordMod;
-}
+export interface IBannerlordModStorage extends Record<string, IBannerlordMod> {}
 
 export interface IBannerlordSession {
   useSteamBinariesOnXbox: boolean;
 }
 
-export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
+export interface PersistenceLoadOrderStorage extends Array<IPersistenceLoadOrderEntry> {}
 export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
@@ -46,8 +44,8 @@ export interface IPersistenceLoadOrderEntry {
   index: number;
 }
 
-export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
-export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
+export interface VortexLoadOrderStorage extends Array<VortexLoadOrderEntry> {}
+export interface VortexLoadOrderEntry extends types.ILoadOrderEntry<IVortexViewModelData> {}
 export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
   hasSteamBinariesOnXbox: boolean | null;
@@ -55,9 +53,10 @@ export interface IVortexViewModelData {
   index: number;
 }
 
-export interface IModuleCache {
-  [moduleId: string]: vetypes.ModuleInfoExtendedWithMetadata;
-}
+export interface IModuleCache extends Record<
+  string,
+  vetypes.ModuleInfoExtendedWithMetadata
+> {}
 
 /**
  * Vortex

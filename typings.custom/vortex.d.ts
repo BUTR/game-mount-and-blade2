@@ -1,14 +1,25 @@
 export {};
 
-import { selectors, types } from "vortex-api";
-import { ComplexActionCreator1 } from "redux-act";
-import { IStateWithBannerlord } from "../src/types";
+import { types } from "vortex-api";
+import { ComplexActionCreator1, ComplexActionCreator2 } from "redux-act";
 
 declare module "vortex-api" {
   namespace actions {
     const setLanguage: ComplexActionCreator1<
       string,
       string,
+      Record<string, never>
+    >;
+    const setFBLoadOrderEntry: ComplexActionCreator2<
+      string,
+      types.ILoadOrderEntry,
+      { profileId: string; loEntry: types.ILoadOrderEntry },
+      Record<string, never>
+    >;
+    const setFBLoadOrder: ComplexActionCreator2<
+      string,
+      types.LoadOrder,
+      { profileId: string; loadOrder: types.LoadOrder },
       Record<string, never>
     >;
   }

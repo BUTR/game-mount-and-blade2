@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { actions, selectors, types } from "vortex-api";
 import { Utils, types as vetypes } from "@butr/vortexextensionnative";
 import {
   libraryToVortex,
@@ -6,7 +6,6 @@ import {
   persistenceToLibrary,
   vortexToPersistence,
 } from "./converters";
-import { actionsLoadOrder } from "./actions";
 import {
   OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
@@ -15,14 +14,14 @@ import {
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
+  IStateWithBannerlord,
   PersistenceLoadOrderStorage,
   RequiredProperties,
   VortexLoadOrderStorage,
 } from "../types";
 import { VortexLauncherManager } from "../launcher";
 import { LocalizationManager } from "../localization";
-import { hasPersistentLoadOrder } from "../vortex";
-import { getSortOnDeployFromSettings } from "../settings";
+import { bselectors } from "../selectors";
 
 type ModIdResult = {
   id: string;
@@ -38,9 +37,8 @@ export const getModuleAttributes = (
   api: types.IExtensionApi,
   moduleId: string,
 ): ModIdResult[] => {
-  const state = api.getState();
-  const gameId: string | undefined = selectors.activeGameId(state);
-  const gameMods = gameId ? (state.persistent.mods[gameId] ?? {}) : {};
+  const state = api.getState<IStateWithBannerlord>();
+  const gameMods = bselectors.bannerlordMods(state);
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
     if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
       return arr;
@@ -164,14 +162,14 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   allModules: Readonly<IModuleCache>,
   savedLoadOrder: PersistenceLoadOrderStorage,
 ): Promise<VortexLoadOrderStorage> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (profile === undefined) {
     return [];
   }
 
-  const autoSort = getSortOnDeployFromSettings(state, profile.id) ?? true;
+  const autoSort = bselectors.sortOnDeployForProfile(state, profile.id) ?? true;
 
   const launcherManager = VortexLauncherManager.getInstance(api);
 
@@ -210,19 +208,15 @@ export const toggleLoadOrderAsync = async (
   api: types.IExtensionApi,
   toggle: boolean,
 ): Promise<void> => {
-  const state = api.getState();
-
-  if (!hasPersistentLoadOrder(state.persistent)) {
-    return;
-  }
+  const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (!profile) {
     return;
   }
 
-  const currentLoadOrder = state.persistent.loadOrder[profile.id];
-  if (!currentLoadOrder) {
+  const currentLoadOrder = bselectors.bannerlordLoadOrder(state, profile.id);
+  if (currentLoadOrder.length === 0) {
     return;
   }
 
@@ -240,7 +234,5 @@ export const toggleLoadOrderAsync = async (
     allModules,
     loadOrder,
   );
-  api.store?.dispatch(
-    actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder),
-  );
+  api.store?.dispatch(actions.setFBLoadOrder(profile.id, orderedLoadOrder));
 };

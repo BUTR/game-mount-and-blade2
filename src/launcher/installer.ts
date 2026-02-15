@@ -12,7 +12,6 @@ import {
   AVAILABLE_STORES,
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,
-  GAME_ID,
   OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
@@ -23,6 +22,7 @@ import {
   pushTranslationLanguageAttributes,
 } from "../vortex/modTranslation";
 import { IStateWithBannerlord } from "../types";
+import { bselectors } from "../selectors";
 
 export const installModuleAsync = async (
   files: string[],
@@ -119,8 +119,7 @@ export const installModuleAsync = async (
 
   let useSteamBinaries = false;
 
-  let useSteamBinariesToggle =
-    state.session.mountandblade2bannerlord?.useSteamBinariesOnXbox ?? false;
+  const useSteamBinariesToggle = bselectors.useSteamBinariesOnXbox(state);
 
   const discovery = selectors.currentGameDiscovery(state);
   const store = vortexStoreToLibraryStore(discovery?.store ?? "");
@@ -138,8 +137,7 @@ export const installModuleAsync = async (
           archivePath!,
           path.extname(archivePath!),
         );
-        const mod =
-          state.persistent.mods.mountandblade2bannerlord?.[archiveFileName];
+        const mod = bselectors.bannerlordModById(state, archiveFileName);
         if (mod) {
           modName = mod.attributes?.modName ?? "";
         }

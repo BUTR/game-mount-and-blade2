@@ -9,8 +9,8 @@ import {
   Utils,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { libraryToPersistence, vortexToLibrary } from "./converters";
 import { actionsLoadOrder } from "./actions";
+import { libraryToPersistence, vortexToLibrary } from "./converters";
 import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "./utils";
 import { IFBLOItemRendererProps } from "./types";
 import { readLoadOrderAsync, writeLoadOrderAsync } from "./vortex";

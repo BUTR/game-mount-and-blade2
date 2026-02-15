@@ -1,13 +1,10 @@
-import { actions, types, util } from "vortex-api";
+import { actions, types } from "vortex-api";
 import {
   ICollectionData,
   ICollectionDataWithSettingsData,
   ICollectionSettingsData,
-  IModAttributesWithCollection,
-  IncludedModOptions,
 } from "./types";
-import { hasIncludedModOptions, hasModAttributeCollection } from "./utils";
-import { nameof } from "../nameof";
+import { hasCollectionWithModOptions, hasIncludedModOptions } from "./utils";
 import {
   getGlobalSettingsAsync,
   getSpecialSettings,
@@ -50,11 +47,7 @@ export const cloneCollectionModOptionsDataAsync = async (
     return;
   }
 
-  if (
-    !hasModAttributeCollection(to) ||
-    to.attributes?.collection === undefined ||
-    to.attributes.collection === null
-  ) {
+  if (!hasCollectionWithModOptions(to)) {
     return;
   }
 
@@ -68,17 +61,14 @@ export const cloneCollectionModOptionsDataAsync = async (
     return availableModOptions.some((iter) => iter.name === modOption.name);
   });
 
-  const attributes = util.setSafe(
-    to.attributes.collection,
-    [nameof<IncludedModOptions>("includedModOptions")],
-    availableIncludedModOptions,
-  );
+  to.attributes["collection"].includedModOptions = availableIncludedModOptions;
+
   api.store?.dispatch(
     actions.setModAttribute(
       gameId,
       to.id,
-      nameof<IModAttributesWithCollection>("collection"),
-      attributes,
+      "collection",
+      to.attributes["collection"],
     ),
   );
 };

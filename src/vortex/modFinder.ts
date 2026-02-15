@@ -1,6 +1,7 @@
 import { selectors, types } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../common";
+import { bselectors } from "../selectors";
 import {
   IBannerlordMod,
   IBannerlordModStorage,
@@ -60,8 +61,8 @@ export const findModDownload = (
   api: types.IExtensionApi,
   modId: number,
 ): string | undefined => {
-  const state = api.getState();
-  const downloadedFiles = state.persistent.downloads.files;
+  const state = api.getState<IStateWithBannerlord>();
+  const downloadedFiles = bselectors.downloadFiles(state);
   if (downloadedFiles === undefined) {
     return undefined;
   }
@@ -88,7 +89,7 @@ export const isActiveMod = (
 ): boolean => {
   const state = api.getState<IStateWithBannerlord>();
 
-  const mods = state.persistent.mods.mountandblade2bannerlord ?? {};
+  const mods = bselectors.bannerlordMods(state);
   const foundMods = Object.values(mods).filter((mod: IBannerlordMod) =>
     isMod(mod, moduleId),
   );

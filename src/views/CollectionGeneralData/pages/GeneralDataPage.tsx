@@ -1,14 +1,17 @@
 import React, { FC, useContext, useEffect, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import { MainContext, selectors, tooltip, types } from "vortex-api";
+import { MainContext, selectors, tooltip } from "vortex-api";
 import {
   LoadOrderEditInfo,
   LoadOrderEntry,
   Placeholder,
   Requirements,
 } from "../components";
-import { PersistenceLoadOrderStorage } from "../../../types";
+import {
+  IStateWithBannerlord,
+  PersistenceLoadOrderStorage,
+} from "../../../types";
 import { ICollectionFeatureProps } from "../../types";
 import {
   getCompatibilityScoresAsync,
@@ -16,10 +19,7 @@ import {
 } from "../../../butr";
 import { genCollectionGeneralDataAsync } from "../../../collections";
 import { useLocalization } from "../../../localization";
-import {
-  getPersistentBannerlordMods,
-  getPersistentLoadOrder,
-} from "../../../vortex";
+import { bselectors } from "../../../selectors";
 
 export type BannerlordGeneralDataPageProps = ICollectionFeatureProps;
 
@@ -33,12 +33,10 @@ export const BannerlordGeneralDataPage: FC<BannerlordGeneralDataPageProps> = (
     useState<PersistenceLoadOrderStorage>([]);
 
   const profile = useSelector(selectors.activeProfile);
-  const loadOrder = useSelector((state: types.IState) =>
-    getPersistentLoadOrder(state.persistent, profile?.id),
+  const loadOrder = useSelector((state: IStateWithBannerlord) =>
+    bselectors.bannerlordLoadOrder(state, profile?.id),
   );
-  const mods = useSelector((state: types.IState) =>
-    getPersistentBannerlordMods(state.persistent),
-  );
+  const mods = useSelector(bselectors.bannerlordMods);
 
   const context = useContext(MainContext);
 

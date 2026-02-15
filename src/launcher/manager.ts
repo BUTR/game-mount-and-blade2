@@ -9,12 +9,11 @@ import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
 import { vortexStoreToLibraryStore } from "./utils";
 import { installModuleAsync } from "./installer";
 import {
-  actionsLoadOrder,
   libraryToLibraryVM,
   libraryVMToVortex,
   vortexToLibraryVM,
 } from "../loadOrder";
-import { getBetaSortingFromSettings } from "../settings";
+import { bselectors } from "../selectors";
 import { filterEntryWithInvalidId } from "../utils";
 import { GAME_ID } from "../common";
 import {
@@ -69,7 +68,7 @@ export class VortexLauncherManager {
       return [];
     }
 
-    const loadOrder = state.persistent.loadOrder?.[profile.id] ?? [];
+    const loadOrder = bselectors.bannerlordLoadOrder(state, profile.id);
     if (!Array.isArray(loadOrder)) {
       return [];
     }
@@ -535,9 +534,7 @@ export class VortexLauncherManager {
 
     const loadOrder = libraryVMToVortex(this.api, moduleViewModels);
 
-    this.api.store?.dispatch(
-      actionsLoadOrder.setFBLoadOrder(profile.id, loadOrder),
-    );
+    this.api.store?.dispatch(actions.setFBLoadOrder(profile.id, loadOrder));
     return Promise.resolve();
   };
   /**
@@ -553,7 +550,8 @@ export class VortexLauncherManager {
       });
     }
 
-    const betaSorting = getBetaSortingFromSettings(state, profile.id) ?? false;
+    const betaSorting =
+      bselectors.betaSortingForProfile(state, profile.id) ?? false;
 
     return Promise.resolve({
       betaSorting: betaSorting,

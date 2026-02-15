@@ -9,9 +9,7 @@ export type ModOptionsEntry = {
   type: ModOptionsEntryType;
 };
 
-export type ModOptionsStorage = {
-  [key: string]: ModOptionsEntry;
-};
+export type ModOptionsStorage = Record<string, ModOptionsEntry>;
 
 export type PersistentModOptionsEntry = ModOptionsEntry & {
   contentBase64: string;
