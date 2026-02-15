@@ -5,7 +5,9 @@
       "Bash(yarn lint:*)",
       "Bash(yarn eslint:*)",
       "Bash(dir /b \"D:\\Git\\NexusMods\\Vortex\\extensions\\script-extender-installer\\src\")",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(git rm:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

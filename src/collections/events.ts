@@ -3,7 +3,7 @@ import {
   hasBackupModOptionsAsync,
   removeOriginalModOptionsAsync,
   restoreOriginalModOptionsAsync,
-} from "../modoptions";
+} from "../modOptions";
 import { LocalizationManager } from "../localization";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";

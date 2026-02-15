@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { tooltip, selectors } from "vortex-api";
-import { ModOptionsSettingsSection, Placeholder } from "../components";
-import { ICollectionFeatureProps } from "../../types";
-import { useLocalization } from "../../../localization";
+import { ModOptionsSettingsSection, Placeholder } from "./components";
+import { ICollectionFeatureProps } from "../types";
+import { useLocalization } from "../../localization";
 import {
   getGlobalSettingsAsync,
   getSpecialSettings,
@@ -11,14 +11,11 @@ import {
   ModOptionsStorage,
   PersistentModOptionsEntry,
   readSettingsContentAsync,
-} from "../../../modoptions";
-import {
-  hasIncludedModOptions,
-  IncludedModOptions,
-} from "../../../collections";
-import { nameof } from "../../../nameof";
-import { IStateWithBannerlord } from "../../../types";
-import { GAME_ID } from "../../../common";
+} from "../../modOptions";
+import { hasIncludedModOptions, IncludedModOptions } from "../../collections";
+import { nameof } from "../../utils";
+import { IStateWithBannerlord } from "../../types";
+import { GAME_ID } from "../../common";
 
 export type ModOptionsDataPageProps = ICollectionFeatureProps;
 

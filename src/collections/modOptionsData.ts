@@ -9,7 +9,7 @@ import {
   getGlobalSettingsAsync,
   getSpecialSettings,
   overrideModOptionsAsync,
-} from "../modoptions";
+} from "../modOptions";
 import { LocalizationManager } from "../localization";
 
 /**

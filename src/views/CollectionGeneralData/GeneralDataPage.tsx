@@ -7,19 +7,16 @@ import {
   LoadOrderEntry,
   Placeholder,
   Requirements,
-} from "../components";
-import {
-  IStateWithBannerlord,
-  PersistenceLoadOrderStorage,
-} from "../../../types";
-import { ICollectionFeatureProps } from "../../types";
+} from "./components";
+import { IStateWithBannerlord, PersistenceLoadOrderStorage } from "../../types";
+import { ICollectionFeatureProps } from "../types";
 import {
   getCompatibilityScoresAsync,
   IModuleCompatibilityInfoCache,
-} from "../../../butr";
-import { genCollectionGeneralDataAsync } from "../../../collections";
-import { useLocalization } from "../../../localization";
-import { bselectors } from "../../../selectors";
+} from "../../butr";
+import { genCollectionGeneralDataAsync } from "../../collections";
+import { useLocalization } from "../../localization";
+import { bselectors } from "../../selectors";
 
 export type BannerlordGeneralDataPageProps = ICollectionFeatureProps;
 

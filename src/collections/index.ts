@@ -4,5 +4,6 @@ export * from "./generalData";
 export * from "./legacyData";
 export * from "./loadOrder";
 export * from "./modOptionsData";
+export * from "./register";
 export * from "./types";
 export * from "./utils";

@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { ListGroup } from "react-bootstrap";
 import { ModOptionsEntryView } from "./ModOptionsEntryView";
-import { ModOptionsEntry, ModOptionsStorage } from "../../../modoptions";
+import { ModOptionsEntry, ModOptionsStorage } from "../../../modOptions";
 
 export type ModOptionsSettingsSectionProps = {
   title: string;

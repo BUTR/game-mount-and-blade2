@@ -1,2 +1,2 @@
-export * from "./pages/SavePage";
+export * from "./SavePage";
 export * from "./options";

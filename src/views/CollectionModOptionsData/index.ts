@@ -1,1 +1,1 @@
-export * from "./pages/ModOptionsDataPage";
+export * from "./ModOptionsDataPage";

@@ -13,7 +13,7 @@ import { actionsLoadOrder } from "./actions";
 import { libraryToPersistence, vortexToLibrary } from "./converters";
 import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "./utils";
 import { IFBLOItemRendererProps } from "./types";
-import { readLoadOrderAsync, writeLoadOrderAsync } from "./vortex";
+import { readLoadOrderAsync, writeLoadOrderAsync } from "./persistence";
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,

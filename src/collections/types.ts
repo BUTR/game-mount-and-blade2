@@ -2,7 +2,7 @@ import { types } from "vortex-api";
 import { ICollection as ICollectionDataToExport } from "collections/src/types/ICollection";
 import { IExtensionFeature } from "collections/src/util/extension";
 import { IModAttributes, PersistenceLoadOrderStorage } from "../types";
-import { PersistentModOptionsEntry } from "../modoptions";
+import { PersistentModOptionsEntry } from "../modOptions";
 
 export interface ICollectionData extends ICollectionDataToExport {}
 

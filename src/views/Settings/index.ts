@@ -1,1 +1,1 @@
-export * from "./pages/Settings";
+export * from "./Settings";

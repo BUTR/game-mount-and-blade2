@@ -5,6 +5,8 @@ export * from "./modDownloader";
 export * from "./modFinder";
 export * from "./modInstaller";
 export * from "./modType";
+export * from "./modTranslation";
+export * from "./register";
 export * from "./store";
 export * from "./tools";
 export * from "./utils";

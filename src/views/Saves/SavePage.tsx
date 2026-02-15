@@ -8,16 +8,16 @@ import {
   ToolbarIcon,
 } from "vortex-api";
 import { useSelector, useStore } from "react-redux";
-import { Content } from "../components";
-import { ISaveGame } from "../types";
-import { getSavesAsync } from "../utils";
-import { useLocalization } from "../../../localization";
-import { actionsSave } from "../../../save";
-import { VortexLauncherManager } from "../../../launcher";
-import { bselectors } from "../../../selectors";
-import { IStateWithBannerlord } from "../../../types";
-import { useHasBLSE } from "../../../blse";
-import { getTableAttributes } from "../tableAttributes";
+import { Content } from "./components";
+import { ISaveGame } from "./types";
+import { getSavesAsync } from "./utils";
+import { useLocalization } from "../../localization";
+import { actionsSave } from "../../save";
+import { VortexLauncherManager } from "../../launcher";
+import { bselectors } from "../../selectors";
+import { IStateWithBannerlord } from "../../types";
+import { useHasBLSE } from "../../blse";
+import { getTableAttributes } from "./tableAttributes";
 
 export const SavePage: FC = () => {
   const context = useContext(MainContext);

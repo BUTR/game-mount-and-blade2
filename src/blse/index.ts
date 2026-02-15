@@ -3,4 +3,4 @@ export * from "./hooks";
 export * from "./installer";
 export * from "./modType";
 export * from "./utils";
-export * from "./vortex";
+export * from "./deploy";

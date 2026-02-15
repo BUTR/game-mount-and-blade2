@@ -9,3 +9,9 @@ export const getPathExistsAsync = async (path: string): Promise<boolean> => {
 export const filterEntryWithInvalidId = (entry: { id: string }): boolean => {
   return entry.id !== undefined && entry.id !== "";
 };
+
+export function nameof<TObject>(obj: TObject, key: keyof TObject): string;
+export function nameof<TObject>(key: keyof TObject): string;
+export function nameof(key1: unknown, key2?: unknown): unknown {
+  return key2 ?? key1;
+}
