@@ -1,5 +1,5 @@
 import { types, util } from "vortex-api";
-import { isStoreSteam, isStoreXbox } from "./store";
+import { isStoreSteam } from "./store";
 import {
   addBLSETools,
   addModdingKitTool,
@@ -10,11 +10,6 @@ import { recommendBLSEAsync } from "../blse";
 import { VortexLauncherManager } from "../launcher";
 import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from "../common";
 import { LocalizationManager } from "../localization";
-
-type RequiresLauncherResult = {
-  launcher: string;
-  addInfo?: unknown;
-};
 
 const launchGameStoreAsync = async (
   api: types.IExtensionApi,
@@ -64,26 +59,6 @@ export const setupAsync = async (
   addBLSETools(api, discovery);
 
   await prepareForModdingAsync(api, discovery);
-};
-
-export const requiresLauncher = (
-  store?: string,
-): RequiresLauncherResult | null => {
-  if (isStoreXbox(store)) {
-    return {
-      launcher: `xbox`,
-      addInfo: {
-        appId: XBOX_ID,
-        parameters: [
-          {
-            appExecName: `bin.Gaming.Desktop.x64.Shipping.Client.Launcher.Native`,
-          },
-        ],
-      },
-    };
-  }
-  // The API doesn't expect undefined, but it's allowed
-  return null;
 };
 
 export const findGameAsync = async (): Promise<types.IGameStoreEntry> => {

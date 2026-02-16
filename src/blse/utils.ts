@@ -4,15 +4,9 @@ import {
   downloadAndEnableLatestModVersionAsync,
   findModByPredicate,
   findModDownload,
-  isModActive,
 } from "../vortex";
 import { LocalizationManager } from "../localization";
-import { bselectors } from "../selectors";
-import {
-  IBannerlordMod,
-  IBannerlordModStorage,
-  IStateWithBannerlord,
-} from "../types";
+import { IBannerlordMod, IBannerlordModStorage } from "../types";
 
 const isModBLSE = (mod: IBannerlordMod): boolean => {
   return (
@@ -31,18 +25,6 @@ export const findBLSEDownload = (
   api: types.IExtensionApi,
 ): string | undefined => {
   return findModDownload(api, 1);
-};
-
-export const isActiveBLSE = (api: types.IExtensionApi): boolean => {
-  const state = api.getState<IStateWithBannerlord>();
-
-  const blse = bselectors.blseMod(state);
-  if (!blse) {
-    return false;
-  }
-
-  const profile = selectors.activeProfile(state);
-  return isModActive(profile, blse);
 };
 
 export const deployBLSEAsync = async (

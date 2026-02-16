@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { types } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import {
   GAME_ID,
@@ -91,25 +91,6 @@ export const findModDownload = (
   const [downloadId, _download] = modFiles[0]!;
 
   return downloadId;
-};
-
-export const isActiveMod = (
-  api: types.IExtensionApi,
-  moduleId: string,
-): boolean => {
-  const state = api.getState<IStateWithBannerlord>();
-
-  const mods = bselectors.bannerlordMods(state);
-  const foundMods = Object.values(mods).filter((mod: IBannerlordMod) =>
-    isMod(mod, moduleId),
-  );
-
-  if (foundMods.length === 0) {
-    return false;
-  }
-
-  const profile = selectors.activeProfile(state);
-  return foundMods.filter((x) => isModActive(profile, x)).length >= 1;
 };
 
 type ModIdResult = {

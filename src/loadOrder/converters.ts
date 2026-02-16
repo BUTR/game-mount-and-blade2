@@ -17,32 +17,6 @@ const isLockedEntry = (entry: VortexLoadOrderEntry): boolean =>
   entry.locked !== undefined &&
   (entry.locked === `true` || entry.locked === `always`);
 
-export const persistenceToVortex = (
-  api: types.IExtensionApi,
-  modules: Readonly<IModuleCache>,
-  loadOrder: PersistenceLoadOrderStorage,
-): VortexLoadOrderStorage => {
-  const loadOrderConverted = loadOrder
-    .map<VortexLoadOrderEntry>((x) => {
-      const result = getModuleAttributes(api, x.id);
-      return {
-        id: x.id,
-        name: x.name,
-        enabled: x.isSelected,
-        ...(result[0]?.id !== undefined && { modId: result[0].id }),
-        data: {
-          moduleInfoExtended: modules[x.id]!,
-          index: x.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
-          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
-        },
-      };
-    })
-    .filter((x) => x.data)
-    .sort((x, y) => x.data!.index - y.data!.index);
-  return loadOrderConverted;
-};
-
 export const persistenceToLibrary = (
   loadOrder: PersistenceLoadOrderStorage,
 ): vetypes.LoadOrder => {
