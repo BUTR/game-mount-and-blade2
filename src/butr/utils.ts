@@ -2,11 +2,25 @@ import { types } from "vortex-api";
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
+  IModAnalyzerResultModule,
   IModuleCompatibilityInfoCache,
 } from "./types";
 import { ModAnalyzerProxy } from "./modAnalyzerProxy";
 import { VortexLauncherManager } from "../launcher";
 import { versionToString } from "./version";
+
+export const buildCompatibilityCache = (
+  modules: IModAnalyzerResultModule[],
+): IModuleCompatibilityInfoCache => {
+  return modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
+    map[curr.moduleId] = {
+      score: curr.compatibility,
+      recommendedScore: curr.recommendedCompatibility,
+      recommendedVersion: curr.recommendedModuleVersion,
+    };
+    return map;
+  }, {});
+};
 
 export const getCompatibilityScoresAsync = async (
   api: types.IExtensionApi,
@@ -24,12 +38,5 @@ export const getCompatibilityScoresAsync = async (
     })),
   };
   const result = await proxy.analyzeAsync(api, query);
-  return result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-    map[curr.moduleId] = {
-      score: curr.compatibility,
-      recommendedScore: curr.recommendedCompatibility,
-      recommendedVersion: curr.recommendedModuleVersion,
-    };
-    return map;
-  }, {});
+  return buildCompatibilityCache(result.modules);
 };

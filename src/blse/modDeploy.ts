@@ -1,6 +1,6 @@
 import { types, util } from "vortex-api";
 import { findMod, findModDownload, isModActive } from "../vortex";
-import { IBannerlordModStorage } from "../types";
+import { IBannerlordMod, IBannerlordModStorage } from "../types";
 import { findBLSEDownload, findBLSEMod } from "./utils";
 import { HARMONY_MOD_ID } from "../common";
 
@@ -17,39 +17,31 @@ export type DeployModResult = {
   downloadId?: string | undefined;
 };
 
+const checkModDeploy = (
+  profile: types.IProfile,
+  mod: IBannerlordMod | undefined,
+  downloadId: string | undefined,
+): DeployModResult => {
+  if (mod) {
+    if (!isModActive(profile, mod)) {
+      return { status: DeployModStatus.NOT_ENABLED, modId: mod.id };
+    }
+  } else {
+    if (downloadId !== undefined) {
+      return { status: DeployModStatus.NOT_INSTALLED, downloadId };
+    } else {
+      return { status: DeployModStatus.NOT_DOWNLOADED };
+    }
+  }
+  return { status: DeployModStatus.OK };
+};
+
 export const checkBLSEDeploy = (
   api: types.IExtensionApi,
   profile: types.IProfile,
   mods: IBannerlordModStorage,
 ): DeployModResult => {
-  const blseMod = findBLSEMod(mods);
-  if (blseMod) {
-    // Found but not enabled
-    const blseIsActive = isModActive(profile, blseMod);
-    if (!blseIsActive) {
-      return {
-        status: DeployModStatus.NOT_ENABLED,
-        modId: blseMod.id,
-      };
-    }
-  } else {
-    const blseDownload = findBLSEDownload(api);
-    if (blseDownload !== undefined) {
-      // Downloaded but not installed
-      return {
-        status: DeployModStatus.NOT_INSTALLED,
-        downloadId: blseDownload,
-      };
-    } else {
-      // Non existent
-      return {
-        status: DeployModStatus.NOT_DOWNLOADED,
-      };
-    }
-  }
-  return {
-    status: DeployModStatus.OK,
-  };
+  return checkModDeploy(profile, findBLSEMod(mods), findBLSEDownload(api));
 };
 
 export const checkHarmonyDeploy = (
@@ -57,34 +49,11 @@ export const checkHarmonyDeploy = (
   profile: types.IProfile,
   mods: IBannerlordModStorage,
 ): DeployModResult => {
-  const harmonyMod = findMod(mods, "Bannerlord.Harmony");
-  if (harmonyMod) {
-    // Found but not enabled
-    const harmonyIsActive = isModActive(profile, harmonyMod);
-    if (!harmonyIsActive) {
-      return {
-        status: DeployModStatus.NOT_ENABLED,
-        modId: harmonyMod.id,
-      };
-    }
-  } else {
-    const harmonyDownload = findModDownload(api, HARMONY_MOD_ID);
-    if (harmonyDownload !== undefined) {
-      // Downloaded but not installed
-      return {
-        status: DeployModStatus.NOT_INSTALLED,
-        downloadId: harmonyDownload,
-      };
-    } else {
-      // Non existent
-      return {
-        status: DeployModStatus.NOT_DOWNLOADED,
-      };
-    }
-  }
-  return {
-    status: DeployModStatus.OK,
-  };
+  return checkModDeploy(
+    profile,
+    findMod(mods, "Bannerlord.Harmony"),
+    findModDownload(api, HARMONY_MOD_ID),
+  );
 };
 
 export const deployModAsync = async (

@@ -15,6 +15,7 @@ import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "./utils";
 import { IFBLOItemRendererProps } from "./types";
 import { readLoadOrderAsync, writeLoadOrderAsync } from "./persistence";
 import {
+  buildCompatibilityCache,
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
   IModuleCompatibilityInfoCache,
@@ -88,15 +89,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       })),
     };
     const result = await proxy.analyzeAsync(this.api, query);
-    this.compatibilityScoresCache =
-      result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-        map[curr.moduleId] = {
-          score: curr.compatibility,
-          recommendedScore: curr.recommendedCompatibility,
-          recommendedVersion: curr.recommendedModuleVersion,
-        };
-        return map;
-      }, {});
+    this.compatibilityScoresCache = buildCompatibilityCache(result.modules);
     this.forceRefresh();
   };
 

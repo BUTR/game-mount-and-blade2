@@ -125,43 +125,16 @@ export const libraryVMToVortex = (
   );
   return loadOrderConverted;
 };
-export const libraryVMToLibrary = (
-  loadOrder: vetypes.ModuleViewModel[],
-): vetypes.LoadOrder => {
-  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>(
-    (map, curr) => {
-      map[curr.moduleInfoExtended.id] = {
-        id: curr.moduleInfoExtended.id,
-        name: curr.moduleInfoExtended.name,
-        isSelected: curr.isSelected,
-        isDisabled: curr.isDisabled,
-        index: curr.index,
-      };
-      return map;
-    },
-    {},
-  );
-  return loadOrderConverted;
-};
 export const libraryToLibraryVM = (
   modules: vetypes.ModuleInfoExtendedWithMetadata[],
 ): vetypes.ModuleViewModel[] => {
-  //const validationManager = ValidationManager.fromLibrary(loadOrder);
-  const loadOrderConverted = modules.reduce<vetypes.ModuleViewModel[]>(
-    (arr, curr) => {
-      arr.push({
-        moduleInfoExtended: curr,
-        //isValid: BannerlordModuleManager.validateModule(modules, curr, validationManager).length === 0,
-        isValid: false,
-        isSelected: false,
-        isDisabled: false,
-        index: 0,
-      });
-      return arr;
-    },
-    [],
-  );
-  return loadOrderConverted;
+  return modules.map<vetypes.ModuleViewModel>((curr) => ({
+    moduleInfoExtended: curr,
+    isValid: false,
+    isSelected: false,
+    isDisabled: false,
+    index: 0,
+  }));
 };
 
 export const vortexToLibrary = (
