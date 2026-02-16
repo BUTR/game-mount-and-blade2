@@ -7,11 +7,6 @@ import {
   vortexToPersistence,
 } from "./converters";
 import {
-  OBFUSCATED_BINARIES,
-  STEAM_BINARIES_ON_XBOX,
-  SUB_MODS_IDS,
-} from "../common";
-import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
   IStateWithBannerlord,
@@ -22,42 +17,6 @@ import {
 import { VortexLauncherManager } from "../launcher";
 import { LocalizationManager } from "../localization";
 import { bselectors } from "../selectors";
-
-type ModIdResult = {
-  id: string;
-  source: string | undefined;
-  hasSteamBinariesOnXbox: boolean;
-  hasObfuscatedBinaries: boolean;
-};
-
-/**
- * I have no idea what to do if we have multiple mods that provide the same Module
- */
-export const getModuleAttributes = (
-  api: types.IExtensionApi,
-  moduleId: string,
-): ModIdResult[] => {
-  const state = api.getState<IStateWithBannerlord>();
-  const gameMods = bselectors.bannerlordMods(state);
-  const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
-    if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
-      return arr;
-    }
-    const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
-    if (subModsIds.has(moduleId)) {
-      arr.push({
-        id: mod.id,
-        source: mod.attributes["source"],
-        hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
-        hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
-      });
-    }
-
-    return arr;
-  }, []);
-
-  return modIds;
-};
 
 const getExcludedLoadOrder = (
   loadOrder: VortexLoadOrderStorage,

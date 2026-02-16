@@ -1,7 +1,11 @@
 import { actions, selectors, types, util } from "vortex-api";
-import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
-import { downloadAndEnableLatestModVersionAsync, isModActive } from "../vortex";
+import {
+  downloadAndEnableLatestModVersionAsync,
+  findModByPredicate,
+  findModDownload,
+  isModActive,
+} from "../vortex";
 import { LocalizationManager } from "../localization";
 import { bselectors } from "../selectors";
 import {
@@ -20,63 +24,13 @@ const isModBLSE = (mod: IBannerlordMod): boolean => {
 export const findBLSEMod = (
   mods: IBannerlordModStorage,
 ): IBannerlordMod | undefined => {
-  const blseMods: IBannerlordMod[] = Object.values(mods).filter(
-    (mod: IBannerlordMod) => isModBLSE(mod),
-  );
-
-  if (blseMods.length === 0) return undefined;
-
-  if (blseMods.length === 1) return blseMods[0];
-
-  return blseMods.reduce<IBannerlordMod | undefined>(
-    (prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
-      if (!prev) {
-        return iter;
-      }
-      const compareResult = BannerlordModuleManager.compareVersions(
-        BannerlordModuleManager.parseApplicationVersion(
-          iter.attributes?.version ?? "",
-        ),
-        BannerlordModuleManager.parseApplicationVersion(
-          prev.attributes?.version ?? "",
-        ),
-      );
-      switch (compareResult) {
-        case 1:
-          return iter;
-        case -1:
-          return prev;
-        default:
-          return iter;
-      }
-    },
-    undefined,
-  );
+  return findModByPredicate(mods, isModBLSE);
 };
 
 export const findBLSEDownload = (
   api: types.IExtensionApi,
 ): string | undefined => {
-  const state = api.getState();
-  const downloadedFiles = bselectors.downloadFiles(state);
-  if (downloadedFiles === undefined) {
-    return undefined;
-  }
-
-  const blseFiles = Object.entries(downloadedFiles)
-    .filter(([, download]) => download.game.includes(GAME_ID))
-    .filter(([, download]) => download.modInfo?.["nexus"]?.ids?.modId === 1)
-    .sort(
-      ([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime,
-    );
-
-  if (blseFiles.length === 0) {
-    return undefined;
-  }
-
-  const [downloadId, _download] = blseFiles[0]!;
-
-  return downloadId;
+  return findModDownload(api, 1);
 };
 
 export const isActiveBLSE = (api: types.IExtensionApi): boolean => {

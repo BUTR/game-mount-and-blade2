@@ -1,6 +1,11 @@
 import { selectors, types } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
-import { GAME_ID } from "../common";
+import {
+  GAME_ID,
+  OBFUSCATED_BINARIES,
+  STEAM_BINARIES_ON_XBOX,
+  SUB_MODS_IDS,
+} from "../common";
 import { bselectors } from "../selectors";
 import {
   IBannerlordMod,
@@ -19,13 +24,11 @@ const isMod = (mod: IBannerlordMod, moduleId: string): boolean => {
   return mod.attributes?.subModsIds?.includes(moduleId) ?? false;
 };
 
-export const findMod = (
+export const findModByPredicate = (
   mods: IBannerlordModStorage,
-  moduleId: string,
+  predicate: (mod: IBannerlordMod) => boolean,
 ): IBannerlordMod | undefined => {
-  const foundMods: IBannerlordMod[] = Object.values(mods).filter(
-    (mod: IBannerlordMod) => isMod(mod, moduleId),
-  );
+  const foundMods: IBannerlordMod[] = Object.values(mods).filter(predicate);
 
   if (foundMods.length === 0) return undefined;
 
@@ -55,6 +58,13 @@ export const findMod = (
     },
     undefined,
   );
+};
+
+export const findMod = (
+  mods: IBannerlordModStorage,
+  moduleId: string,
+): IBannerlordMod | undefined => {
+  return findModByPredicate(mods, (mod) => isMod(mod, moduleId));
 };
 
 export const findModDownload = (
@@ -100,4 +110,40 @@ export const isActiveMod = (
 
   const profile = selectors.activeProfile(state);
   return foundMods.filter((x) => isModActive(profile, x)).length >= 1;
+};
+
+type ModIdResult = {
+  id: string;
+  source: string | undefined;
+  hasSteamBinariesOnXbox: boolean;
+  hasObfuscatedBinaries: boolean;
+};
+
+/**
+ * I have no idea what to do if we have multiple mods that provide the same Module
+ */
+export const getModuleAttributes = (
+  api: types.IExtensionApi,
+  moduleId: string,
+): ModIdResult[] => {
+  const state = api.getState<IStateWithBannerlord>();
+  const gameMods = bselectors.bannerlordMods(state);
+  const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
+    if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
+      return arr;
+    }
+    const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
+    if (subModsIds.has(moduleId)) {
+      arr.push({
+        id: mod.id,
+        source: mod.attributes["source"],
+        hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
+        hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
+      });
+    }
+
+    return arr;
+  }, []);
+
+  return modIds;
 };

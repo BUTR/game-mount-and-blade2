@@ -3,7 +3,7 @@ import {
   BannerlordModuleManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { getModuleAttributes } from "./utils";
+import { getModuleAttributes } from "../vortex";
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -12,6 +12,10 @@ import {
   VortexLoadOrderStorage,
 } from "../types";
 import { ValidationManager } from "../validation";
+
+const isLockedEntry = (entry: VortexLoadOrderEntry): boolean =>
+  entry.locked !== undefined &&
+  (entry.locked === `true` || entry.locked === `always`);
 
 export const persistenceToVortex = (
   api: types.IExtensionApi,
@@ -67,8 +71,7 @@ export const vortexToPersistence = (
     id: x.id,
     name: x.name,
     isSelected: x.enabled,
-    isDisabled:
-      x.locked !== undefined && (x.locked === `true` || x.locked === `always`),
+    isDisabled: isLockedEntry(x),
     index: index,
   }));
   return loadOrderConverted;
@@ -114,9 +117,7 @@ export const vortexToLibraryVM = (
                 validationManager,
               ).length,
             isSelected: entry.enabled,
-            isDisabled:
-              entry.locked !== undefined &&
-              (entry.locked === `true` || entry.locked === `always`),
+            isDisabled: isLockedEntry(entry),
             index: entry.data.index,
           }
         : [];
@@ -198,9 +199,7 @@ export const vortexToLibrary = (
         id: curr.id,
         name: curr.name,
         isSelected: curr.enabled,
-        isDisabled:
-          curr.locked !== undefined &&
-          (curr.locked === `true` || curr.locked === `always`),
+        isDisabled: isLockedEntry(curr),
         index: loadOrder.indexOf(curr),
       };
       return map;

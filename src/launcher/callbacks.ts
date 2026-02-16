@@ -255,16 +255,17 @@ export const writeFileContentCallback =
     }
   };
 
-/**
- * Callback: lists files in a directory
- */
-export const readDirectoryFileListCallback =
-  (api: types.IExtensionApi) =>
+const readDirectoryEntriesCallback =
+  (
+    api: types.IExtensionApi,
+    filter: (entry: { isFile(): boolean; isDirectory(): boolean }) => boolean,
+    errorMessage: string,
+  ) =>
   async (directoryPath: string): Promise<string[] | null> => {
     try {
       const dirs = await readdir(directoryPath, { withFileTypes: true });
       const res = dirs
-        .filter((x) => x.isFile())
+        .filter(filter)
         .map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
@@ -273,33 +274,30 @@ export const readDirectoryFileListCallback =
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
-      api.showErrorNotification?.(t("Error reading directory file list"), err);
+      api.showErrorNotification?.(t(errorMessage), err);
     }
     return null;
   };
 
 /**
+ * Callback: lists files in a directory
+ */
+export const readDirectoryFileListCallback = (api: types.IExtensionApi) =>
+  readDirectoryEntriesCallback(
+    api,
+    (x) => x.isFile(),
+    "Error reading directory file list",
+  );
+
+/**
  * Callback: lists subdirectories in a directory
  */
-export const readDirectoryListCallback =
-  (api: types.IExtensionApi) =>
-  async (directoryPath: string): Promise<string[] | null> => {
-    try {
-      const dirs = await readdir(directoryPath, { withFileTypes: true });
-      const res = dirs
-        .filter((x) => x.isDirectory())
-        .map<string>((x) => path.join(directoryPath, x.name));
-      return res;
-    } catch (err) {
-      // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
-        return null;
-      }
-      const { localize: t } = LocalizationManager.getInstance(api);
-      api.showErrorNotification?.(t("Error reading directory list"), err);
-    }
-    return null;
-  };
+export const readDirectoryListCallback = (api: types.IExtensionApi) =>
+  readDirectoryEntriesCallback(
+    api,
+    (x) => x.isDirectory(),
+    "Error reading directory list",
+  );
 
 /**
  * Callback: returns the ViewModels currently displayed by Vortex

@@ -19,45 +19,23 @@ import { getPathExistsAsync } from "../utils";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 
-const sendBLSENotification = (
+const sendDeployNotification = (
   api: types.IExtensionApi,
+  id: string,
   title: string,
+  message: string,
   actionTitle: string,
   action: (dismiss: types.NotificationDismiss) => void,
 ): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
   api.sendNotification?.({
-    id: "blse-missing",
+    id,
     type: "warning",
-    title: title,
-    message: t("BLSE is recommended to mod Bannerlord."),
+    title,
+    message,
     actions: [
       {
         title: actionTitle,
-        action: action,
-      },
-    ],
-  });
-};
-
-const sendHarmonyNotification = (
-  api: types.IExtensionApi,
-  title: string,
-  actionTitle: string,
-  action: (dismiss: types.NotificationDismiss) => void,
-): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
-  api.sendNotification?.({
-    id: "harmony-missing",
-    type: "warning",
-    title: title,
-    message: t("Harmony is required for BLSE."),
-    actions: [
-      {
-        title: actionTitle,
-        action: action,
+        action,
       },
     ],
   });
@@ -84,9 +62,11 @@ const doBLSEDeploy = (
               .finally(() => dismiss());
           });
       };
-      sendBLSENotification(
+      sendDeployNotification(
         api,
+        "blse-missing",
         t("BLSE is not installed via Vortex"),
+        t("BLSE is recommended to mod Bannerlord."),
         t("Get BLSE"),
         action,
       );
@@ -105,9 +85,11 @@ const doBLSEDeploy = (
               .finally(() => dismiss());
           });
       };
-      sendBLSENotification(
+      sendDeployNotification(
         api,
+        "blse-missing",
         t("BLSE is not installed"),
+        t("BLSE is recommended to mod Bannerlord."),
         t("Install"),
         action,
       );
@@ -126,7 +108,14 @@ const doBLSEDeploy = (
               .finally(() => dismiss());
           });
       };
-      sendBLSENotification(api, t("BLSE is not enabled"), t("Enable"), action);
+      sendDeployNotification(
+        api,
+        "blse-missing",
+        t("BLSE is not enabled"),
+        t("BLSE is recommended to mod Bannerlord."),
+        t("Enable"),
+        action,
+      );
       return;
     }
   }
@@ -148,9 +137,11 @@ const doHarmonyDeploy = (
           .catch(() => {})
           .finally(() => dismiss());
       };
-      sendHarmonyNotification(
+      sendDeployNotification(
         api,
+        "harmony-missing",
         t("Harmony is not installed via Vortex"),
+        t("Harmony is required for BLSE."),
         t("Get Harmony"),
         action,
       );
@@ -168,9 +159,11 @@ const doHarmonyDeploy = (
           .catch(() => {})
           .finally(() => dismiss());
       };
-      sendHarmonyNotification(
+      sendDeployNotification(
         api,
+        "harmony-missing",
         t("Harmony is not installed"),
+        t("Harmony is required for BLSE."),
         t("Install"),
         action,
       );
@@ -182,9 +175,11 @@ const doHarmonyDeploy = (
           .catch(() => {})
           .finally(() => dismiss());
       };
-      sendHarmonyNotification(
+      sendDeployNotification(
         api,
+        "harmony-missing",
         t("Harmony is not enabled"),
+        t("Harmony is required for BLSE."),
         t("Enable"),
         action,
       );
