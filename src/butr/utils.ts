@@ -5,7 +5,8 @@ import {
   IModuleCompatibilityInfoCache,
 } from "./types";
 import { ModAnalyzerProxy } from "./modAnalyzerProxy";
-import { versionToString, VortexLauncherManager } from "../launcher";
+import { VortexLauncherManager } from "../launcher";
+import { versionToString } from "./version";
 
 export const getCompatibilityScoresAsync = async (
   api: types.IExtensionApi,

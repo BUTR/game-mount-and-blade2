@@ -11,7 +11,7 @@ import { SteamBinariesOnXbox } from "./SteamBinariesOnXbox";
 import { CompatibilityInfo, ModuleIcon } from "../../Shared";
 import { isExternal, isLocked } from "../utils";
 import { IModuleCompatibilityInfo } from "../../../butr";
-import { versionToString } from "../../../launcher";
+import { versionToString } from "../../../butr";
 import { IFBLOItemRendererProps } from "../../../loadOrder";
 import { bselectors } from "../../../selectors";
 import { IStateWithBannerlord } from "../../../types";

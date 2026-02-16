@@ -3,7 +3,8 @@ import { MainContext, tooltip } from "vortex-api";
 import { IVortexViewModelData } from "../../../types";
 import { IModuleCompatibilityInfo } from "../../../butr";
 import { useLocalization } from "../../../localization";
-import { useLauncher, versionToString } from "../../../launcher";
+import { useLauncher } from "../../../launcher";
+import { versionToString } from "../../../butr";
 
 export type CompatibilityInfoProps = {
   data: IVortexViewModelData | undefined;

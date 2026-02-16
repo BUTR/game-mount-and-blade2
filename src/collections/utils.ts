@@ -11,9 +11,9 @@ import { IStateWithBannerlord } from "../types";
 import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
-  installBLSEAsync,
-  installHarmonyAsync,
-} from "../vortex";
+  resolveBLSEDeployAsync,
+  resolveHarmonyDeployAsync,
+} from "../blse";
 
 export const hasContextWithCollectionFeature = (
   context: types.IExtensionContext,
@@ -66,8 +66,8 @@ export const collectionInstallBLSEAsync = async (
   const mods = bselectors.bannerlordMods(state);
 
   const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
-  await installHarmonyAsync(api, profile, harmonyDeployResult);
+  await resolveHarmonyDeployAsync(api, profile, harmonyDeployResult);
 
   const blseDeployResult = checkBLSEDeploy(api, profile, mods);
-  await installBLSEAsync(api, profile, blseDeployResult);
+  await resolveBLSEDeployAsync(api, profile, blseDeployResult);
 };

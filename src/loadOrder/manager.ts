@@ -24,7 +24,8 @@ import {
 import { GAME_ID } from "../common";
 import { LoadOrderInfoPanel, LoadOrderItemRenderer } from "../views";
 import { VortexLoadOrderStorage } from "../types";
-import { versionToString, VortexLauncherManager } from "../launcher";
+import { VortexLauncherManager } from "../launcher";
+import { versionToString } from "../butr";
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager | undefined;

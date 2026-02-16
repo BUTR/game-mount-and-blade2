@@ -9,7 +9,7 @@ import { isOptional } from "./OptionalBanner";
 import { ModuleIcon } from "./ModuleIcon";
 import { OptionalBanner } from "./OptionalBanner";
 import { IModuleCompatibilityInfoCache } from "../../../butr";
-import { versionToString } from "../../../launcher";
+import { versionToString } from "../../../butr";
 
 export type LoadOrderEntryProps = {
   entry: IPersistenceLoadOrderEntry | undefined;

@@ -12,7 +12,8 @@ import {
 } from "./types";
 import { IModuleCache } from "../../types";
 import { LocalizationManager } from "../../localization";
-import { versionToString, VortexLauncherManager } from "../../launcher";
+import { VortexLauncherManager } from "../../launcher";
+import { versionToString } from "../../butr";
 
 const createSaveGame = (
   api: types.IExtensionApi,

@@ -1,7 +1,7 @@
 import { actions, selectors, types, util } from "vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
-import { downloadAndEnableLatestModVersionAsync } from "../vortex";
+import { downloadAndEnableLatestModVersionAsync, isModActive } from "../vortex";
 import { LocalizationManager } from "../localization";
 import { bselectors } from "../selectors";
 import {
@@ -9,14 +9,6 @@ import {
   IBannerlordModStorage,
   IStateWithBannerlord,
 } from "../types";
-
-const isModActive = (
-  profile: types.IProfile | undefined,
-  mod: IBannerlordMod,
-): boolean => {
-  // Warning: modState is not guaranteed to be present in the profile
-  return profile?.modState?.[mod.id]?.enabled ?? false;
-};
 
 const isModBLSE = (mod: IBannerlordMod): boolean => {
   return (

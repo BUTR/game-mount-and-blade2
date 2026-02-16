@@ -1,15 +1,19 @@
-import { selectors, types } from "vortex-api";
+import { actions, selectors, types } from "vortex-api";
 import path from "path";
 import { LocalizationManager } from "../localization";
+import { getBinaryPath } from "../vortex";
 import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
   DeployModResult,
   DeployModStatus,
-  getBinaryPath,
-  installBLSEAsync,
-  installHarmonyAsync,
-} from "../vortex";
+  deployModAsync,
+} from "./modDeploy";
+import {
+  deployBLSEAsync,
+  downloadBLSEAsync,
+  downloadHarmonyAsync,
+} from "./utils";
 import { BLSE_CLI_EXE } from "../common";
 import { getPathExistsAsync } from "../utils";
 import { bselectors } from "../selectors";
@@ -72,10 +76,10 @@ const doBLSEDeploy = (
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        void installHarmonyAsync(api, profile, harmonyDeployResult)
+        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(async () => {
-            await installBLSEAsync(api, profile, blseResult)
+            await resolveBLSEDeployAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -93,10 +97,10 @@ const doBLSEDeploy = (
         if (blseResult.downloadId === undefined) {
           return;
         }
-        void installHarmonyAsync(api, profile, harmonyDeployResult)
+        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(async () => {
-            await installBLSEAsync(api, profile, blseResult)
+            await resolveBLSEDeployAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -111,13 +115,13 @@ const doBLSEDeploy = (
     }
     case DeployModStatus.NOT_ENABLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        void installHarmonyAsync(api, profile, harmonyDeployResult)
+        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
           .catch(() => {})
           .finally(async () => {
             if (blseResult.modId === undefined) {
               return;
             }
-            await installBLSEAsync(api, profile, blseResult)
+            await resolveBLSEDeployAsync(api, profile, blseResult)
               .catch(() => {})
               .finally(() => dismiss());
           });
@@ -140,7 +144,7 @@ const doHarmonyDeploy = (
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        installHarmonyAsync(api, profile, result)
+        resolveHarmonyDeployAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -160,7 +164,7 @@ const doHarmonyDeploy = (
         api.events.emit("start-install-download", result.downloadId, {
           allowAutoEnable: true,
         });
-        void installHarmonyAsync(api, profile, result)
+        void resolveHarmonyDeployAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -174,7 +178,7 @@ const doHarmonyDeploy = (
     }
     case DeployModStatus.NOT_ENABLED: {
       const action = (dismiss: types.NotificationDismiss): void => {
-        void installHarmonyAsync(api, profile, result)
+        void resolveHarmonyDeployAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
       };
@@ -226,5 +230,63 @@ export const recommendBLSEAsync = async (
   const binaryExists = await getPathExistsAsync(binaryPath);
   if (!binaryExists || blseDeployResult.status !== DeployModStatus.OK) {
     doBLSEDeploy(api, profile, harmonyDeployResult, blseDeployResult);
+  }
+};
+
+export const resolveHarmonyDeployAsync = async (
+  api: types.IExtensionApi,
+  profile: types.IProfile,
+  result: DeployModResult,
+): Promise<void> => {
+  switch (result.status) {
+    case DeployModStatus.OK:
+      return;
+    case DeployModStatus.NOT_DOWNLOADED: {
+      await downloadHarmonyAsync(api);
+      return;
+    }
+    case DeployModStatus.NOT_INSTALLED: {
+      await deployModAsync(api);
+      return;
+    }
+    case DeployModStatus.NOT_ENABLED: {
+      if (result.modId === undefined) {
+        return;
+      }
+      api.store?.dispatch(
+        actions.setModEnabled(profile.id, result.modId, true),
+      );
+      await deployModAsync(api);
+      return;
+    }
+  }
+};
+
+export const resolveBLSEDeployAsync = async (
+  api: types.IExtensionApi,
+  profile: types.IProfile,
+  result: DeployModResult,
+): Promise<void> => {
+  switch (result.status) {
+    case DeployModStatus.OK:
+      return;
+    case DeployModStatus.NOT_DOWNLOADED: {
+      await downloadBLSEAsync(api);
+      return;
+    }
+    case DeployModStatus.NOT_INSTALLED: {
+      await deployBLSEAsync(api);
+      return;
+    }
+    case DeployModStatus.NOT_ENABLED: {
+      if (result.modId === undefined) {
+        return;
+      }
+      api.store?.dispatch(
+        actions.setModEnabled(profile.id, result.modId, true),
+      );
+      await deployBLSEAsync(api);
+      return;
+    }
   }
 };

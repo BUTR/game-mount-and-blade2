@@ -1,7 +1,7 @@
 import { types, util } from "vortex-api";
-import { findMod, findModDownload, isModActive } from "./modFinder";
+import { findMod, findModDownload, isModActive } from "../vortex";
 import { IBannerlordModStorage } from "../types";
-import { findBLSEDownload, findBLSEMod } from "../blse";
+import { findBLSEDownload, findBLSEMod } from "./utils";
 import { HARMONY_MOD_ID } from "../common";
 
 export enum DeployModStatus {

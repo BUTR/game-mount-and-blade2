@@ -5,7 +5,7 @@ import { copyFile, rm } from "node:fs/promises";
 import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { IAddedFiles, IStateWithBannerlord } from "../types";
-import { vortexStoreToLibraryStore } from "../launcher";
+import { vortexStoreToLibraryStore } from "./store";
 import { LocalizationManager } from "../localization";
 
 /**

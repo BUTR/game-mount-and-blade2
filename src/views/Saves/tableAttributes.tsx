@@ -4,7 +4,7 @@ import { types } from "vortex-api";
 import { RadioView, StatusView } from "./components";
 import { ISaveGame } from "./types";
 import { LocalizationManager } from "../../localization";
-import { versionToString } from "../../launcher";
+import { versionToString } from "../../butr";
 
 export const getTableAttributes = (
   api: types.IExtensionApi,

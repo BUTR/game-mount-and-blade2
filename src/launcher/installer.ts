@@ -6,7 +6,7 @@ import {
 } from "@butr/vortexextensionnative";
 import path from "path";
 import { readFile } from "node:fs/promises";
-import { vortexStoreToLibraryStore } from "./utils";
+import { vortexStoreToLibraryStore } from "../vortex";
 import { actionsLauncher } from "./actions";
 import {
   AVAILABLE_STORES,
