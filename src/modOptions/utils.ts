@@ -18,107 +18,84 @@ export const getSettingsPath = (): string => {
   );
 };
 
-export const readSettingsContentAsync = async (
-  entry: ModOptionsEntry,
-): Promise<string> => {
-  switch (entry.type) {
+const getBackupId = (mod: types.IMod): string =>
+  `bak.vortex.${mod.archiveId}}`;
+
+const getModOptionFilePath = (
+  type: string,
+  relativePath: string,
+): string => {
+  switch (type) {
     case "global":
-      return await readFile(
-        path.join(getSettingsPath(), "Global", entry.path),
-        "base64",
-      );
+      return path.join(getSettingsPath(), "Global", relativePath);
     case "special":
-      return await readFile(path.join(getSettingsPath(), entry.path), "base64");
+      return path.join(getSettingsPath(), relativePath);
     default:
       return "";
   }
+};
+
+const findBackupFilesAsync = async (
+  mod: types.IMod,
+): Promise<string[]> => {
+  const id = getBackupId(mod);
+  const settingsPath = getSettingsPath();
+  await fs.ensureDirAsync(settingsPath);
+  const backupFiles: string[] = [];
+  await turbowalk(
+    settingsPath,
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isDirectory && entry.filePath.endsWith(`.${id}`)) {
+          backupFiles.push(entry.filePath);
+        }
+      }
+    },
+    { recurse: true },
+  );
+  return backupFiles;
+};
+
+export const readSettingsContentAsync = async (
+  entry: ModOptionsEntry,
+): Promise<string> => {
+  const filePath = getModOptionFilePath(entry.type, entry.path);
+  return filePath ? await readFile(filePath, "base64") : "";
 };
 
 export const overrideModOptionsAsync = async (
   mod: types.IMod,
   modOptions: PersistentModOptionsEntry[],
 ): Promise<void> => {
-  const id = `bak.vortex.${mod.archiveId}}`;
+  const id = getBackupId(mod);
 
   for (const modOption of modOptions) {
-    switch (modOption.type) {
-      case "global":
-        {
-          const filePath = path.join(
-            getSettingsPath(),
-            "Global",
-            modOption.path,
-          );
-          await fs.ensureDirAsync(path.dirname(filePath));
-          try {
-            await rename(filePath, `${filePath}.${id}`);
-          } catch {
-            /* empty */
-          }
-          await writeFile(filePath, modOption.contentBase64, "base64");
-        }
-        break;
-      case "special":
-        {
-          const filePath = path.join(getSettingsPath(), modOption.path);
-          await fs.ensureDirAsync(path.dirname(filePath));
-          try {
-            await rename(filePath, `${filePath}.${id}`);
-          } catch {
-            /* empty */
-          }
-          await writeFile(filePath, modOption.contentBase64, "base64");
-        }
-        break;
+    const filePath = getModOptionFilePath(modOption.type, modOption.path);
+    if (!filePath) continue;
+    await fs.ensureDirAsync(path.dirname(filePath));
+    try {
+      await rename(filePath, `${filePath}.${id}`);
+    } catch {
+      /* empty */
     }
+    await writeFile(filePath, modOption.contentBase64, "base64");
   }
 };
 
 export const hasBackupModOptionsAsync = async (
   mod: types.IMod,
 ): Promise<boolean> => {
-  const id = `bak.vortex.${mod.archiveId}}`;
-
-  let hasBackup = false;
-  const settingsPath = getSettingsPath();
-  await fs.ensureDirAsync(settingsPath);
-  await turbowalk(
-    settingsPath,
-    (entries) => {
-      const backupFiles = entries.filter(
-        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
-      );
-      hasBackup = backupFiles.length > 0;
-    },
-    { recurse: true },
-  );
-  return hasBackup;
+  const backupFiles = await findBackupFilesAsync(mod);
+  return backupFiles.length > 0;
 };
 
 export const restoreOriginalModOptionsAsync = async (
   mod: types.IMod,
 ): Promise<void> => {
-  const id = `bak.vortex.${mod.archiveId}}`;
-
-  const filesToRemove: { fullPath: string; originalPath: string }[] = [];
-  const settingsPath = getSettingsPath();
-  await fs.ensureDirAsync(settingsPath);
-  await turbowalk(
-    settingsPath,
-    (entries) => {
-      const backupFiles = entries.filter(
-        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
-      );
-      for (const file of backupFiles) {
-        const fullPath = file.filePath;
-        const originalPath = fullPath.slice(0, fullPath.length - id.length - 1);
-        filesToRemove.push({ fullPath, originalPath });
-      }
-    },
-    { recurse: true },
-  );
-  for (const file of filesToRemove) {
-    const { fullPath, originalPath } = file;
+  const id = getBackupId(mod);
+  const backupFiles = await findBackupFilesAsync(mod);
+  for (const fullPath of backupFiles) {
+    const originalPath = fullPath.slice(0, fullPath.length - id.length - 1);
     try {
       await rm(originalPath);
     } catch {
@@ -135,25 +112,8 @@ export const restoreOriginalModOptionsAsync = async (
 export const removeOriginalModOptionsAsync = async (
   mod: types.IMod,
 ): Promise<void> => {
-  const id = `bak.vortex.${mod.archiveId}}`;
-
-  const filesToRemove: string[] = [];
-  const settingsPath = getSettingsPath();
-  await fs.ensureDirAsync(settingsPath);
-  await turbowalk(
-    settingsPath,
-    (entries) => {
-      const backupFiles = entries.filter(
-        (entry) => !entry.isDirectory && entry.filePath.endsWith(`.${id}`),
-      );
-      for (const file of backupFiles) {
-        const fullPath = file.filePath;
-        filesToRemove.push(fullPath);
-      }
-    },
-    { recurse: true },
-  );
-  for (const file of filesToRemove) {
+  const backupFiles = await findBackupFilesAsync(mod);
+  for (const file of backupFiles) {
     try {
       await rm(file);
     } catch {

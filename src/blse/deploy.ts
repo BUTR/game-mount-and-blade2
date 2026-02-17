@@ -228,20 +228,22 @@ export const recommendBLSEAsync = async (
   }
 };
 
-export const resolveHarmonyDeployAsync = async (
+const resolveDeployAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult,
+  downloadFn: (api: types.IExtensionApi) => Promise<void>,
+  deployFn: (api: types.IExtensionApi) => Promise<void>,
 ): Promise<void> => {
   switch (result.status) {
     case DeployModStatus.OK:
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
-      await downloadHarmonyAsync(api);
+      await downloadFn(api);
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
-      await deployModAsync(api);
+      await deployFn(api);
       return;
     }
     case DeployModStatus.NOT_ENABLED: {
@@ -251,37 +253,22 @@ export const resolveHarmonyDeployAsync = async (
       api.store?.dispatch(
         actions.setModEnabled(profile.id, result.modId, true),
       );
-      await deployModAsync(api);
+      await deployFn(api);
       return;
     }
   }
 };
 
+export const resolveHarmonyDeployAsync = async (
+  api: types.IExtensionApi,
+  profile: types.IProfile,
+  result: DeployModResult,
+): Promise<void> =>
+  resolveDeployAsync(api, profile, result, downloadHarmonyAsync, deployModAsync);
+
 export const resolveBLSEDeployAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult,
-): Promise<void> => {
-  switch (result.status) {
-    case DeployModStatus.OK:
-      return;
-    case DeployModStatus.NOT_DOWNLOADED: {
-      await downloadBLSEAsync(api);
-      return;
-    }
-    case DeployModStatus.NOT_INSTALLED: {
-      await deployBLSEAsync(api);
-      return;
-    }
-    case DeployModStatus.NOT_ENABLED: {
-      if (result.modId === undefined) {
-        return;
-      }
-      api.store?.dispatch(
-        actions.setModEnabled(profile.id, result.modId, true),
-      );
-      await deployBLSEAsync(api);
-      return;
-    }
-  }
-};
+): Promise<void> =>
+  resolveDeployAsync(api, profile, result, downloadBLSEAsync, deployBLSEAsync);
