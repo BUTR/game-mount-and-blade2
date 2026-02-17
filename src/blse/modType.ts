@@ -1,14 +1,8 @@
-import { selectors, types } from "vortex-api";
+import { types } from "vortex-api";
 import { BLSE_CLI_EXE } from "../common";
+import { getGameInstallPath } from "../vortex";
 
-export const getInstallPathBLSE = (
-  api: types.IExtensionApi,
-  game: types.IGame,
-): string => {
-  const state = api.getState();
-  const discovery = selectors.discoveryByGame(state, game.id);
-  return discovery?.path ?? ``;
-};
+export const getInstallPathBLSE = getGameInstallPath;
 
 export const isModTypeBLSE = (instructions: types.IInstruction[]): boolean => {
   return instructions.some(

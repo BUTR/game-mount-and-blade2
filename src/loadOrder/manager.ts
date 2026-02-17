@@ -175,7 +175,6 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     ).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) => {
       return entry.data && entry.enabled ? entry.data.moduleInfoExtended : [];
     });
-    //const validationManager = ValidationManager.fromVortex(newLO);
 
     const invalidResults: IInvalidResult[] = [];
     for (const enabledModule of modules) {

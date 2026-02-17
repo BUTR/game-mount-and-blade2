@@ -1,7 +1,7 @@
 import { selectors, types } from "vortex-api";
 import { SUBMODULE_FILE } from "../common";
 
-export const getInstallPathModule = (
+export const getGameInstallPath = (
   api: types.IExtensionApi,
   game: types.IGame,
 ): string => {

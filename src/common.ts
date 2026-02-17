@@ -34,16 +34,6 @@ export const HARMONY_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${HARMONY_
 
 export const MODULES = `Modules`;
 
-export const OFFICIAL_MODULES = new Set([
-  `Native`,
-  `CustomBattle`,
-  `SandBoxCore`,
-  `Sandbox`,
-  `StoryMode`,
-  `BirthAndDeath`,
-  `Multiplayer`,
-]);
-
 export const EXTENSION_BASE_ID = `MAB2B`;
 export const GOG_IDS = [`1802539526`, `1564781494`];
 export const STEAMAPP_ID = 261550;

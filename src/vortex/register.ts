@@ -4,7 +4,7 @@ import { selectors, types } from "vortex-api";
 import { GAME_ID } from "../common";
 import { DetailsRenderer } from "../views";
 import { VortexLauncherManager } from "../launcher";
-import { getInstallPathModule, isModTypeModule } from "./modType";
+import { getGameInstallPath, isModTypeModule } from "./modType";
 import {
   isModTranslationArchive,
   isModTypeTranslation,
@@ -52,7 +52,7 @@ export const registerVortexModTypes = (
     /*id:*/ "bannerlord-module",
     /*priority:*/ 25,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
-    /*getPath:*/ (game) => getInstallPathModule(context.api, game),
+    /*getPath:*/ (game) => getGameInstallPath(context.api, game),
     /*test:*/ toBluebird(isModTypeModule),
   );
 
@@ -92,7 +92,7 @@ export const registerVortexModTypes = (
     /*id:*/ "bannerlord-translation",
     /*priority:*/ 30,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
-    /*getPath:*/ (game) => getInstallPathModule(context.api, game),
+    /*getPath:*/ (game) => getGameInstallPath(context.api, game),
     /*test:*/ toBluebird(isModTypeTranslation),
   );
 

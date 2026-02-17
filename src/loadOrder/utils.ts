@@ -38,24 +38,34 @@ const getExcludedLoadOrder = (
   return excludedLoadOrder;
 };
 
+const warnSortIssues = (
+  api: types.IExtensionApi,
+  autoSort: boolean,
+  issues: string[],
+): void => {
+  if (!autoSort || issues.length === 0) {
+    return;
+  }
+  const { localize: t } = LocalizationManager.getInstance(api);
+  api.sendNotification?.({
+    type: "warning",
+    message: t(
+      `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
+      {
+        NL: "\n",
+        REASONS: issues.join(`\n`),
+      },
+    ),
+  });
+};
+
 const checkOrderByLoadOrderResult = (
   api: types.IExtensionApi,
   autoSort: boolean,
   result: vetypes.OrderByLoadOrderResult,
 ): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
-  if (autoSort && result.issues) {
-    api.sendNotification?.({
-      type: "warning",
-      message: t(
-        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
-        {
-          NL: "\n",
-          REASONS: result.issues.join(`\n`),
-        },
-      ),
-    });
+  if (result.issues) {
+    warnSortIssues(api, autoSort, result.issues);
   }
 };
 
@@ -92,8 +102,6 @@ const checkSavedLoadOrder = (
   autoSort: boolean,
   loadOrder: VortexLoadOrderStorage,
 ): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
   const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
     loadOrder
       .filter((x) => x.enabled)
@@ -101,19 +109,7 @@ const checkSavedLoadOrder = (
         (x) => x.data!.moduleInfoExtended,
       ),
   );
-  if (autoSort && savedLoadOrderIssues.length > 0) {
-    // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
-    api.sendNotification?.({
-      type: "warning",
-      message: t(
-        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
-        {
-          NL: "\n",
-          REASONS: savedLoadOrderIssues.join(`\n`),
-        },
-      ),
-    });
-  }
+  warnSortIssues(api, autoSort, savedLoadOrderIssues);
 };
 
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (

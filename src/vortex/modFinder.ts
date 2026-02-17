@@ -78,19 +78,16 @@ export const findModDownload = (
   }
 
   const modFiles = Object.entries(downloadedFiles)
-    .filter(([, download]) => download.game.includes(GAME_ID))
-    .filter(([, download]) => download.modInfo?.["nexus"]?.ids?.modId === modId)
+    .filter(
+      ([, download]) =>
+        download.game.includes(GAME_ID) &&
+        download.modInfo?.["nexus"]?.ids?.modId === modId,
+    )
     .sort(
       ([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime,
     );
 
-  if (modFiles.length === 0) {
-    return undefined;
-  }
-
-  const [downloadId, _download] = modFiles[0]!;
-
-  return downloadId;
+  return modFiles.length > 0 ? modFiles[0]![0] : undefined;
 };
 
 type ModIdResult = {
