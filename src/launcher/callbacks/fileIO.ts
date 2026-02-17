@@ -1,7 +1,5 @@
 import { types } from "vortex-api";
-import {
-  allocWithoutOwnership,
-} from "@butr/vortexextensionnative";
+import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
 import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization";

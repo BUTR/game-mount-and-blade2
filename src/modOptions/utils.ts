@@ -18,13 +18,9 @@ export const getSettingsPath = (): string => {
   );
 };
 
-const getBackupId = (mod: types.IMod): string =>
-  `bak.vortex.${mod.archiveId}}`;
+const getBackupId = (mod: types.IMod): string => `bak.vortex.${mod.archiveId}}`;
 
-const getModOptionFilePath = (
-  type: string,
-  relativePath: string,
-): string => {
+const getModOptionFilePath = (type: string, relativePath: string): string => {
   switch (type) {
     case "global":
       return path.join(getSettingsPath(), "Global", relativePath);
@@ -35,9 +31,7 @@ const getModOptionFilePath = (
   }
 };
 
-const findBackupFilesAsync = async (
-  mod: types.IMod,
-): Promise<string[]> => {
+const findBackupFilesAsync = async (mod: types.IMod): Promise<string[]> => {
   const id = getBackupId(mod);
   const settingsPath = getSettingsPath();
   await fs.ensureDirAsync(settingsPath);

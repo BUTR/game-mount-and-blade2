@@ -39,7 +39,10 @@ export const setGameParametersCallback =
     return Promise.resolve();
   };
 
-const notificationTypeMap: Record<vetypes.NotificationType, types.NotificationType> = {
+const notificationTypeMap: Record<
+  vetypes.NotificationType,
+  types.NotificationType
+> = {
   hint: "activity",
   info: "info",
   warning: "warning",

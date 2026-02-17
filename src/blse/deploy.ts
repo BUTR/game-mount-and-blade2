@@ -264,7 +264,13 @@ export const resolveHarmonyDeployAsync = async (
   profile: types.IProfile,
   result: DeployModResult,
 ): Promise<void> =>
-  resolveDeployAsync(api, profile, result, downloadHarmonyAsync, deployModAsync);
+  resolveDeployAsync(
+    api,
+    profile,
+    result,
+    downloadHarmonyAsync,
+    deployModAsync,
+  );
 
 export const resolveBLSEDeployAsync = async (
   api: types.IExtensionApi,

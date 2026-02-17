@@ -57,9 +57,18 @@ const createSaveGame = (
     clanInfluence: parseFloatField(current, "ClanInfluence"),
 
     mainPartyFood: parseFloatField(current, "MainPartyFood"),
-    mainPartyHealthyMemberCount: parseIntField(current, "MainPartyHealthyMemberCount"),
-    mainPartyPrisonerMemberCount: parseIntField(current, "MainPartyPrisonerMemberCount"),
-    mainPartyWoundedMemberCount: parseIntField(current, "MainPartyWoundedMemberCount"),
+    mainPartyHealthyMemberCount: parseIntField(
+      current,
+      "MainPartyHealthyMemberCount",
+    ),
+    mainPartyPrisonerMemberCount: parseIntField(
+      current,
+      "MainPartyPrisonerMemberCount",
+    ),
+    mainPartyWoundedMemberCount: parseIntField(
+      current,
+      "MainPartyWoundedMemberCount",
+    ),
     version: parseIntField(current, "Version"),
     modules: {}, // blank dictionary for now
   };

@@ -4,7 +4,7 @@ import * as semver from "semver";
 import path from "path";
 import { GAME_ID } from "./common";
 import { SavePage, SavePageOptions, Settings, SettingsProps } from "./views";
-import { BannerlordGame } from "./vortex";
+import { BannerlordGame, getGameInstallPath } from "./vortex";
 import { IAddedFiles } from "./types";
 import { reducerSession, reducerSettings } from "./store";
 import { actionsSettings } from "./settings";
@@ -20,7 +20,6 @@ import {
 import {
   didDeployBLSEAsync,
   didPurgeBLSEAsync,
-  getInstallPathBLSE,
   installBLSEAsync,
   isModTypeBLSE,
   testBLSEAsync,
@@ -117,7 +116,7 @@ const main = (context: types.IExtensionContext): boolean => {
     /*id:*/ "bannerlord-blse",
     /*priority:*/ 30,
     /*isSupported:*/ (gameId) => gameId === GAME_ID,
-    /*getPath:*/ (game) => getInstallPathBLSE(context.api, game),
+    /*getPath:*/ (game) => getGameInstallPath(context.api, game),
     /*test:*/ toBluebird(isModTypeBLSE),
   );
 
