@@ -39,6 +39,13 @@ export const setGameParametersCallback =
     return Promise.resolve();
   };
 
+const notificationTypeMap: Record<vetypes.NotificationType, types.NotificationType> = {
+  hint: "activity",
+  info: "info",
+  warning: "warning",
+  error: "error",
+};
+
 /**
  * Callback: sends a notification to the user
  */
@@ -50,43 +57,23 @@ export const sendNotificationCallback =
     message: string,
     delayMS: number,
   ): Promise<void> => {
-    switch (type) {
-      case "hint":
-        api.sendNotification?.({
-          id: id,
-          type: "activity",
-          message: message,
-          displayMS: delayMS,
-        });
-        break;
-      case "info":
-        api.sendNotification?.({
-          id: id,
-          type: "info",
-          message: message,
-          displayMS: delayMS,
-        });
-        break;
-      case "warning":
-        api.sendNotification?.({
-          id: id,
-          type: "warning",
-          message: message,
-          displayMS: delayMS,
-        });
-        break;
-      case "error":
-        api.sendNotification?.({
-          id: id,
-          type: "error",
-          message: message,
-          displayMS: delayMS,
-        });
-        break;
-    }
+    api.sendNotification?.({
+      id,
+      type: notificationTypeMap[type],
+      message,
+      displayMS: delayMS,
+    });
 
     return Promise.resolve();
   };
+
+const toVortexFileFilters = (
+  filters: vetypes.FileFilter[],
+): types.IFileFilter[] =>
+  filters.map<types.IFileFilter>((x) => ({
+    name: x.name,
+    extensions: x.extensions,
+  }));
 
 /**
  * Callback: shows a dialog to the user
@@ -122,26 +109,15 @@ export const sendDialogCallback =
         }
       }
       case "fileOpen": {
-        const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
-          name: x.name,
-          extensions: x.extensions,
-        }));
-        const result = await api.selectFile({
-          filters: filtersTransformed,
+        return await api.selectFile({
+          filters: toVortexFileFilters(filters),
         });
-        return result;
       }
       case "fileSave": {
-        const fileName = message;
-        const filtersTransformed = filters.map<types.IFileFilter>((x) => ({
-          name: x.name,
-          extensions: x.extensions,
-        }));
-        const result = await api.saveFile({
-          filters: filtersTransformed,
-          defaultPath: fileName,
+        return await api.saveFile({
+          filters: toVortexFileFilters(filters),
+          defaultPath: message,
         });
-        return result;
       }
     }
   };

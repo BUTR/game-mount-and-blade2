@@ -3,7 +3,7 @@ import path from "path";
 import { readFile, writeFile } from "node:fs/promises";
 import { GAME_ID, LOAD_ORDER_SUFFIX } from "../common";
 import { PersistenceLoadOrderStorage } from "../types";
-import { filterEntryWithInvalidId } from "../utils";
+import { filterEntryWithInvalidId, isFileNotFoundError } from "../utils";
 import { LocalizationManager } from "../localization";
 
 const getLoadOrderFileName = (profileId: string): string => {
@@ -54,8 +54,7 @@ export const readLoadOrderAsync = async (
       (x) => x !== undefined && filterEntryWithInvalidId(x),
     );
   } catch (err) {
-    // ENOENT means that a file or folder is not found, it's an expected error
-    if (err instanceof Error && "code" in err && err.code === "ENOENT") {
+    if (isFileNotFoundError(err)) {
       return [];
     }
     const { localize: t } = LocalizationManager.getInstance(api);

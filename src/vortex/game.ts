@@ -30,14 +30,15 @@ export const getBinaryModdingPath = (_store: string | undefined): string => {
   return path.join(`bin`, BINARY_FOLDER_STANDARD_MODDING_KIT);
 };
 
-export const getBannerlordMainExe = (
+const getExeByStore = (
   discoveryPath: string | undefined,
   api: types.IExtensionApi,
+  standardExe: string,
+  xboxExe: string,
 ): string => {
   const standard = (): string =>
-    path.join(`bin`, BINARY_FOLDER_STANDARD, BANNERLORD_EXE);
-  const xbox = (): string =>
-    path.join(`bin`, BINARY_FOLDER_XBOX, BANNERLORD_EXE_XBOX);
+    path.join(`bin`, BINARY_FOLDER_STANDARD, standardExe);
+  const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, xboxExe);
 
   const state = api.getState();
   const discovery = selectors.discoveryByGame(state, GAME_ID);
@@ -65,41 +66,18 @@ export const getBannerlordMainExe = (
 
   return standard();
 };
+
+export const getBannerlordMainExe = (
+  discoveryPath: string | undefined,
+  api: types.IExtensionApi,
+): string =>
+  getExeByStore(discoveryPath, api, BANNERLORD_EXE, BANNERLORD_EXE_XBOX);
 
 export const getBannerlordToolExe = (
   discoveryPath: string | undefined,
   api: types.IExtensionApi,
   exe: string,
-): string => {
-  const standard = (): string => path.join(`bin`, BINARY_FOLDER_STANDARD, exe);
-  const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, exe);
-
-  const state = api.getState();
-  const discovery = selectors.discoveryByGame(state, GAME_ID);
-  if (!discovery) {
-    return ``;
-  }
-
-  if (isStoreXbox(discovery.store)) {
-    return xbox();
-  }
-
-  if (isStoreStandard(discovery.store)) {
-    return standard();
-  }
-
-  if (discovery.store === undefined && discoveryPath !== undefined) {
-    // Brute force the detection by manually checking the paths.
-    try {
-      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
-      return xbox();
-    } catch {
-      return standard();
-    }
-  }
-
-  return standard();
-};
+): string => getExeByStore(discoveryPath, api, exe, exe);
 
 export class BannerlordGame implements types.IGame {
   private api: types.IExtensionApi;
@@ -155,7 +133,4 @@ export class BannerlordGame implements types.IGame {
   public setup = toBluebird(async (discovery: types.IDiscoveryResult) => {
     await setupAsync(this.api, discovery);
   });
-  //public requiresLauncher = toBluebird(async (_gamePath: string, store?: string) => {
-  //  return await requiresLauncher(store);
-  //});
 }

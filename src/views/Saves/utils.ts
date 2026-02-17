@@ -15,6 +15,18 @@ import { LocalizationManager } from "../../localization";
 import { VortexLauncherManager } from "../../launcher";
 import { versionToString } from "../../butr";
 
+const parseIntField = (
+  metadata: vetypes.SaveMetadata,
+  key: string,
+): number | undefined =>
+  metadata[key] !== undefined ? parseInt(metadata[key]) : undefined;
+
+const parseFloatField = (
+  metadata: vetypes.SaveMetadata,
+  key: string,
+): number | undefined =>
+  metadata[key] !== undefined ? parseFloat(metadata[key]) : undefined;
+
 const createSaveGame = (
   api: types.IExtensionApi,
   allModules: Readonly<IModuleCache>,
@@ -34,54 +46,21 @@ const createSaveGame = (
             current["ApplicationVersion"],
           )
         : undefined,
-    creationTime:
-      current["CreationTime"] !== undefined
-        ? parseInt(current["CreationTime"])
-        : undefined,
+    creationTime: parseIntField(current, "CreationTime"),
     characterName: current["CharacterName"],
-    mainHeroGold:
-      current["MainHeroGold"] !== undefined
-        ? parseInt(current["MainHeroGold"])
-        : undefined,
-    mainHeroLevel:
-      current["MainHeroLevel"] !== undefined
-        ? parseInt(current["MainHeroLevel"])
-        : undefined,
-    dayLong:
-      current["DayLong"] !== undefined
-        ? parseFloat(current["DayLong"])
-        : undefined,
+    mainHeroGold: parseIntField(current, "MainHeroGold"),
+    mainHeroLevel: parseIntField(current, "MainHeroLevel"),
+    dayLong: parseFloatField(current, "DayLong"),
 
     clanBannerCode: current["ClanBannerCode"],
-    clanFiefs:
-      current["ClanFiefs"] !== undefined
-        ? parseInt(current["ClanFiefs"])
-        : undefined,
-    clanInfluence:
-      current["ClanInfluence"] !== undefined
-        ? parseFloat(current["ClanInfluence"])
-        : undefined,
+    clanFiefs: parseIntField(current, "ClanFiefs"),
+    clanInfluence: parseFloatField(current, "ClanInfluence"),
 
-    mainPartyFood:
-      current["MainPartyFood"] !== undefined
-        ? parseFloat(current["MainPartyFood"])
-        : undefined,
-    mainPartyHealthyMemberCount:
-      current["MainPartyHealthyMemberCount"] !== undefined
-        ? parseInt(current["MainPartyHealthyMemberCount"])
-        : undefined,
-    mainPartyPrisonerMemberCount:
-      current["MainPartyPrisonerMemberCount"] !== undefined
-        ? parseInt(current["MainPartyPrisonerMemberCount"])
-        : undefined,
-    mainPartyWoundedMemberCount:
-      current["MainPartyWoundedMemberCount"] !== undefined
-        ? parseInt(current["MainPartyWoundedMemberCount"])
-        : undefined,
-    version:
-      current["Version"] !== undefined
-        ? parseInt(current["Version"])
-        : undefined,
+    mainPartyFood: parseFloatField(current, "MainPartyFood"),
+    mainPartyHealthyMemberCount: parseIntField(current, "MainPartyHealthyMemberCount"),
+    mainPartyPrisonerMemberCount: parseIntField(current, "MainPartyPrisonerMemberCount"),
+    mainPartyWoundedMemberCount: parseIntField(current, "MainPartyWoundedMemberCount"),
+    version: parseIntField(current, "Version"),
     modules: {}, // blank dictionary for now
   };
 

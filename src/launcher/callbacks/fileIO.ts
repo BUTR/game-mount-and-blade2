@@ -5,6 +5,7 @@ import {
 import path from "path";
 import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization";
+import { isFileNotFoundError } from "../../utils";
 
 /**
  * Callback: reads file content at a given path
@@ -31,8 +32,7 @@ export const readFileContentCallback =
         await fileHandle?.close();
       }
     } catch (err) {
-      // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
+      if (isFileNotFoundError(err)) {
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
@@ -54,8 +54,7 @@ export const writeFileContentCallback =
         await writeFile(filePath, data);
       }
     } catch (err) {
-      // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
+      if (isFileNotFoundError(err)) {
         return;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
@@ -77,8 +76,7 @@ const readDirectoryEntriesCallback =
         .map<string>((x) => path.join(directoryPath, x.name));
       return res;
     } catch (err) {
-      // ENOENT means that a file or folder is not found, it's an expected error
-      if (err instanceof Error && "code" in err && err.code === "ENOENT") {
+      if (isFileNotFoundError(err)) {
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
