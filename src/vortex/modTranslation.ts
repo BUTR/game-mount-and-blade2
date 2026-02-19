@@ -62,6 +62,7 @@ const inferModuleIdFromDownload = async (
     if (archivePath === undefined) return undefined;
 
     const state = api.getState<IStateWithBannerlord>();
+
     const downloads = bselectors.downloadFiles(state);
     const archiveName = path.basename(archivePath);
 

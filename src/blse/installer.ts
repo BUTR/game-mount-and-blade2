@@ -13,6 +13,7 @@ export const installBLSEAsync = (
   files: string[],
 ): Promise<types.IInstallResult> => {
   const state = api.getState();
+
   const discovery = selectors.currentGameDiscovery(state);
   if (discovery === undefined) {
     return Promise.resolve({

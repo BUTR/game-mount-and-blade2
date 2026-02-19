@@ -72,6 +72,7 @@ export const findModDownload = (
   modId: number,
 ): string | undefined => {
   const state = api.getState<IStateWithBannerlord>();
+
   const downloadedFiles = bselectors.downloadFiles(state);
   if (downloadedFiles === undefined) {
     return undefined;
@@ -105,6 +106,7 @@ export const getModuleAttributes = (
   moduleId: string,
 ): ModIdResult[] => {
   const state = api.getState<IStateWithBannerlord>();
+
   const gameMods = bselectors.bannerlordMods(state);
   const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
     if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {

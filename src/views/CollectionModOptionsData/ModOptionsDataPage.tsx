@@ -13,7 +13,7 @@ import {
   readSettingsContentAsync,
 } from "../../modOptions";
 import { hasIncludedModOptions, IncludedModOptions } from "../../collections";
-import { nameof } from "../../utils";
+
 import { IStateWithBannerlord } from "../../types";
 import { GAME_ID } from "../../common";
 
@@ -48,7 +48,7 @@ export const ModOptionsDataPage: FC<ModOptionsDataPageProps> = (props) => {
           ]
         : includedModOptions.filter((x) => x.name !== entry.name);
       onSetCollectionAttribute(
-        [nameof<IncludedModOptions>("includedModOptions")],
+        ["includedModOptions" satisfies keyof IncludedModOptions],
         newEntries,
       );
     },

@@ -14,10 +14,8 @@ const getLoadOrderFilePath = (
   api: types.IExtensionApi,
   loadOrderFileName: string,
 ): string => {
-  return path.join(
-    selectors.installPathForGame(api.getState(), GAME_ID),
-    loadOrderFileName,
-  );
+  const installPath = selectors.installPathForGame(api.getState(), GAME_ID);
+  return path.join(installPath ?? "", loadOrderFileName);
 };
 
 /**

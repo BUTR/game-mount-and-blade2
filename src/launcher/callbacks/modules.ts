@@ -77,7 +77,9 @@ export const getAllModuleViewModelsCallback =
 export const setModuleViewModelsCallback =
   (api: types.IExtensionApi) =>
   (moduleViewModels: vetypes.ModuleViewModel[]): Promise<void> => {
-    const profile = selectors.activeProfile(api.getState());
+    const state = api.getState();
+
+    const profile = selectors.activeProfile(state);
     if (!profile) {
       return Promise.resolve();
     }

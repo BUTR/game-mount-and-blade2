@@ -16,6 +16,7 @@ export const willRemoveModCollectionsAsync = async (
   modId: string,
 ): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
+
   const mod = bselectors.bannerlordModById(state, modId);
   if (!mod) {
     return;

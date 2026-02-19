@@ -179,6 +179,7 @@ const main = (context: types.IExtensionContext): boolean => {
       `added-files`,
       async (profileId: string, files: IAddedFiles[]) => {
         const state = context.api.getState();
+
         const profile = selectors.profileById(state, profileId);
         if (profile?.gameId !== GAME_ID) {
           return;
@@ -191,6 +192,7 @@ const main = (context: types.IExtensionContext): boolean => {
     // TODO: listen to profile switch events and check for BLSE
     context.api.onAsync("did-deploy", async (profileId: string) => {
       const state = context.api.getState();
+
       const profile = selectors.profileById(state, profileId);
       if (profile?.gameId !== GAME_ID) {
         return;
@@ -202,6 +204,7 @@ const main = (context: types.IExtensionContext): boolean => {
 
     context.api.onAsync("did-purge", async (profileId: string) => {
       const state = context.api.getState();
+
       const profile = selectors.profileById(state, profileId);
       if (profile?.gameId !== GAME_ID) {
         return;

@@ -16,6 +16,7 @@ export const setGameParametersCallback =
       .join(" ");
 
     const state = api.getState();
+
     const discovery = selectors.currentGameDiscovery(state);
     const cliTools = Object.values(discovery?.tools ?? {}).filter(
       (tool) => tool.id && tool.id.endsWith("-cli"),
@@ -131,6 +132,7 @@ export const sendDialogCallback =
 export const getInstallPathCallback =
   (api: types.IExtensionApi) => (): Promise<string> => {
     const state = api.getState();
+
     const discovery = selectors.currentGameDiscovery(state);
     const installPath = discovery?.path ?? "";
     return Promise.resolve(installPath);

@@ -41,6 +41,7 @@ const getExeByStore = (
   const xbox = (): string => path.join(`bin`, BINARY_FOLDER_XBOX, xboxExe);
 
   const state = api.getState();
+
   const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (!discovery) {
     return ``;

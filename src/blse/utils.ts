@@ -36,6 +36,7 @@ export const deployBLSEAsync = async (
   );
 
   const state = api.getState();
+
   const discovery = selectors.currentGameDiscovery(state);
   const tool = discovery?.tools?.["blse-cli"];
   if (tool) {

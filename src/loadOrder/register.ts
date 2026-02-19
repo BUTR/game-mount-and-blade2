@@ -9,11 +9,8 @@ export const registerLoadOrder = (context: types.IExtensionContext): void => {
     /*gameInfo:*/ LoadOrderManager.getInstance(context.api),
   );
 
-  const isMB2 = (): boolean => {
-    const state = context.api.getState();
-    const activeGame = selectors.activeGameId(state);
-    return activeGame === GAME_ID;
-  };
+  const isMB2 = (): boolean =>
+    selectors.activeGameId(context.api.getState()) === GAME_ID;
 
   context.registerAction(
     /*group:*/ `fb-load-order-icons`,

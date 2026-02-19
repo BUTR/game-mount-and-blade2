@@ -5,8 +5,7 @@ export const getGameInstallPath = (
   api: types.IExtensionApi,
   game: types.IGame,
 ): string => {
-  const state = api.getState();
-  const discovery = selectors.discoveryByGame(state, game.id);
+  const discovery = selectors.discoveryByGame(api.getState(), game.id);
   return discovery?.path ?? ``;
 };
 

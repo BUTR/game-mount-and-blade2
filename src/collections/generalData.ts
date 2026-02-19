@@ -51,6 +51,7 @@ export const parseCollectionGeneralDataAsync = async (
   }
 
   const state = api.getState();
+
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile = selectors.profileById(state, profileId ?? "");
   if (profile?.gameId !== GAME_ID) {

@@ -8,6 +8,7 @@ export const reloadSaveAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
+
   const profile = selectors.activeProfile(state);
   if (!profile) {
     throw new Error(`Active profile is undefined`);
