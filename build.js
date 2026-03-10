@@ -110,8 +110,8 @@ const updateFromFile = (configuration) => {
 const updateFromNpm = () => {
   console.log("Updating @butr/vortexextensionnative from NPM");
 
-  exec("npx tsc -p tsconfig.json");
-  exec("npx tsc -p tsconfig.module.json");
+  exec("pnpm exec tsc -p tsconfig.json");
+  exec("pnpm exec tsc -p tsconfig.module.json");
 };
 
 const lint = () => {
@@ -121,11 +121,11 @@ const lint = () => {
   exec("pnpm lint");
 };
 
-const webpack = () => {
-  console.log("Webpack");
+const bundle = () => {
+  console.log("Bundle");
 
-  exec("npx webpack --config webpack.config.js --color");
-  exec("npx extractInfo");
+  exec("pnpm exec rolldown --config rolldown.config.mjs");
+  exec("pnpm exec extractInfo");
 };
 
 const pack7z = () => {
@@ -207,7 +207,7 @@ const build = (options) => {
       effectiveType,
     )
   ) {
-    webpack();
+    bundle();
   }
 
   // 7z
