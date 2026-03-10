@@ -10,20 +10,14 @@ const vortexApiDir = dirname(require.resolve("vortex-api/package.json"));
 function getExternals() {
   const builtins = builtinModules.filter((m) => !m.startsWith("_"));
 
+  // Read the externals list shipped with vortex-api
   let appDeps = [];
   try {
-    const pkg = JSON.parse(
-      readFileSync(resolve(vortexApiDir, "../../src/main/package.json"), "utf8"),
+    appDeps = JSON.parse(
+      readFileSync(resolve(vortexApiDir, "externals.json"), "utf8"),
     );
-    appDeps = Object.keys(pkg.dependencies || {});
   } catch {
-    try {
-      appDeps = JSON.parse(
-        readFileSync(resolve(vortexApiDir, "externals.json"), "utf8"),
-      );
-    } catch {
-      // nop
-    }
+    // nop
   }
 
   return [...new Set([...builtins, ...appDeps, "electron", "vortex-api"])];
