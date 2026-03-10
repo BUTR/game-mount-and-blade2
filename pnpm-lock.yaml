@@ -47,7 +47,7 @@ importers:
         version: 8.47.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       vortex-api:
         specifier: file:./vortex-api-0.0.5-local.tgz
-        version: file:vortex-api-0.0.5-local.tgz(2a3d949d5b3ed10610568cb77d426398)
+        version: file:vortex-api-0.0.5-local.tgz(f437b92fe2a30493300c7d220dcf0ac4)
 
 packages:
 
@@ -767,8 +767,8 @@ packages:
   '@types/feedparser@2.2.8':
     resolution: {integrity: sha512-hIxDfr1VSgxZazxZZEGzbgDEQHtxWtMjLh7xAzuld/IA8xmneak9I16R0mA7Tnb10/McjE177H9daAyYBwTQOw==}
 
-  '@types/fs-extra@8.1.5':
-    resolution: {integrity: sha512-0dzKcwO+S8s2kuF5Z9oUWatQJj5Uq/iqphEtE3GQJVRRYm/tD1LglU2UnXi2A8jLq5umkGouOXOR9y0n613ZwQ==}
+  '@types/fs-extra@11.0.4':
+    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
 
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
@@ -795,6 +795,9 @@ packages:
 
   '@types/json-socket@0.1.21':
     resolution: {integrity: sha512-biVPVTJpMDWLhbH4ynHvIEiRC8Lj/Az2tfhgXR5yNPA9SL8x4nXB6QTkddi3iLZmPR55OW8gXXEPOkT+idtWMg==}
+
+  '@types/jsonfile@6.1.4':
+    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
@@ -4147,8 +4150,9 @@ snapshots:
       '@types/node': 24.12.0
       '@types/sax': 1.2.7
 
-  '@types/fs-extra@8.1.5':
+  '@types/fs-extra@11.0.4':
     dependencies:
+      '@types/jsonfile': 6.1.4
       '@types/node': 24.12.0
 
   '@types/geojson@7946.0.16': {}
@@ -4171,6 +4175,10 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/json-socket@0.1.21':
+    dependencies:
+      '@types/node': 24.12.0
+
+  '@types/jsonfile@6.1.4':
     dependencies:
       '@types/node': 24.12.0
 
@@ -6911,7 +6919,7 @@ snapshots:
 
   void-elements@3.1.0: {}
 
-  vortex-api@file:vortex-api-0.0.5-local.tgz(2a3d949d5b3ed10610568cb77d426398):
+  vortex-api@file:vortex-api-0.0.5-local.tgz(f437b92fe2a30493300c7d220dcf0ac4):
     dependencies:
       '@electron/remote': 2.1.3(electron@40.8.0)
       '@headlessui/react': 1.7.19(react-dom@16.14.0(react@16.14.0))(react@16.14.0)
@@ -6933,7 +6941,7 @@ snapshots:
       '@types/draggabilly': 2.1.6
       '@types/encoding-down': 5.0.5
       '@types/feedparser': 2.2.8
-      '@types/fs-extra': 8.1.5
+      '@types/fs-extra': 11.0.4
       '@types/graphlib': 2.1.12
       '@types/json-socket': 0.1.21
       '@types/jsonwebtoken': 9.0.10
