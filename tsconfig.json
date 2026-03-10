@@ -19,6 +19,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
+    "paths": {
+      "collections/*": ["./typings.custom/collections/*"]
+    },
 
     "strict": true,
 
