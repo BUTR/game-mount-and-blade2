@@ -122,10 +122,10 @@ const lint = () => {
   exec("pnpm lint:cycles");
 };
 
-const webpack = () => {
-  console.log("Webpack");
+const bundle = () => {
+  console.log("Bundle");
 
-  exec("pnpm exec webpack --config webpack.config.js --color");
+  exec("pnpm exec rolldown --config rolldown.config.mjs");
   exec("pnpm exec extractInfo");
   publishLobbyBridge();
 };
@@ -223,7 +223,7 @@ const build = (options) => {
       effectiveType,
     )
   ) {
-    webpack();
+    bundle();
   }
 
   // 7z
