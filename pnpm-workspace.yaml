@@ -1,0 +1,8 @@
+allowBuilds:
+  '@butr/vortexextensionnative': true
+  '@parcel/watcher': true
+  core-js: true
+  electron: true
+  leveldown: true
+  protobufjs: true
+  xxhash-addon: true
