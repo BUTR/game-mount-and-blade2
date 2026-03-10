@@ -144,7 +144,7 @@ const pack7z = () => {
  * @param {boolean} isDev
  */
 const copyToVortex = (isDev) => {
-  const deployPath = isDev ? "vortex_devel/plugins" : "Vortex/plugins";
+  const deployPath = isDev ? "@vortex/main/plugins" : "Vortex/plugins";
 
   try {
     const appDataPath = process.env.APPDATA;

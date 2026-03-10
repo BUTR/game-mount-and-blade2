@@ -9,6 +9,7 @@ export default defineConfig([
   {
     ignores: [
       "dist/**",
+      "typings.custom/**",
     ],
   },
   {
