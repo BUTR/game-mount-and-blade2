@@ -87,18 +87,24 @@ const updateFromFile = (configuration) => {
     "src/Bannerlord.LauncherManager.Native.TypeScript",
   );
 
-  exec("yarn remove @butr/vortexextensionnative");
+  exec("pnpm remove @butr/vortexextensionnative");
 
-  exec("yarn run clean", extensionPath);
-  exec(`yarn run build -- ${configuration}`, extensionPath);
+  exec("pnpm run clean", extensionPath);
+  exec(`pnpm run build -- ${configuration}`, extensionPath);
 
   const tgzFile = "butr-vortexextensionnative.tgz";
-  exec(`yarn pack --filename ${tgzFile}`, extensionPath);
-  fs.copyFileSync(
-    path.join(extensionPath, tgzFile),
-    path.join(ROOT_DIR, tgzFile),
+  exec(`pnpm pack --pack-destination ${ROOT_DIR}`, extensionPath);
+  // pnpm pack produces a scoped filename; rename to expected name
+  const packedFiles = fs.readdirSync(ROOT_DIR).filter(
+    (f) => f.startsWith("butr-vortexextensionnative-") && f.endsWith(".tgz"),
   );
-  exec(`yarn add file:./${tgzFile}`);
+  if (packedFiles.length > 0) {
+    fs.renameSync(
+      path.join(ROOT_DIR, packedFiles[0]),
+      path.join(ROOT_DIR, tgzFile),
+    );
+  }
+  exec(`pnpm add file:./${tgzFile}`);
 };
 
 const updateFromNpm = () => {
@@ -111,8 +117,8 @@ const updateFromNpm = () => {
 const lint = () => {
   console.log("Lint");
 
-  exec("yarn format:check");
-  exec("yarn lint");
+  exec("pnpm format:check");
+  exec("pnpm lint");
 };
 
 const webpack = () => {
