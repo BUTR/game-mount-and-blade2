@@ -19,15 +19,11 @@ export interface IModAnalyzerResult {
   modules: IModAnalyzerResultModule[];
 }
 
-export interface IModuleCompatibilityInfoCache extends Record<
-  string,
-  IModuleCompatibilityInfo
-> {}
+export interface IModuleCompatibilityInfoCache
+  extends Record<string, IModuleCompatibilityInfo> {}
 
-export interface IModuleObfuscationCacheInfoCache extends Record<
-  string,
-  boolean
-> {}
+export interface IModuleObfuscationCacheInfoCache
+  extends Record<string, boolean> {}
 
 export interface IModuleCompatibilityInfo {
   score: number;
