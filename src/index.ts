@@ -1,6 +1,5 @@
 import { method as toBluebird } from "bluebird";
 import { log, selectors, types } from "@nexusmods/vortex-api";
-import * as semver from "semver";
 import path from "path";
 import { GAME_ID } from "./common";
 import { SavePage } from "./views/Saves/SavePage";
@@ -29,7 +28,6 @@ import { VortexLauncherManagerLogger } from "./launcher/logger";
 import { gamemodeActivatedSaveAsync } from "./save/events";
 import { addedFilesEventAsync, installedMod } from "./vortex/events";
 import { registerVortexModTypes } from "./vortex/register";
-import { LocalizationManager } from "./localization/manager";
 import { version } from "../package.json";
 import { watchNoModsProfile } from "./servers/noModsProfile";
 import { watchProfiles } from "./servers/profileWatch";
@@ -50,6 +48,10 @@ let logger: VortexLauncherManagerLogger | null = null;
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
+
+  // Vortex skips the extension on older versions, including 1.x, instead of loading it
+  // Matches the @nexusmods/vortex-api version the extension is built against
+  context.requireVersion(">=2.7.0-beta.1");
 
   // Reducers
   context.registerReducer(

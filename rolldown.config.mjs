@@ -90,7 +90,15 @@ function copyAssetsPlugin() {
 
 export default defineConfig({
   input: "src/index.ts",
-  output: { file: "dist/index.js", format: "cjs", sourcemap: true, exports: "auto" },
+  output: {
+    file: "dist/index.js",
+    format: "cjs",
+    sourcemap: true,
+    exports: "auto",
+    // Emit the legacy module id: Vortex 1.x only provides `vortex-api`, Vortex 2.x accepts both.
+    // This lets Vortex 1.x load the bundle far enough to reject it through `requireVersion`.
+    paths: { "@nexusmods/vortex-api": "vortex-api" },
+  },
   external: getExternals(),
   platform: "node",
   resolve: { extensions: [".js", ".jsx", ".json", ".ts", ".tsx"], tsconfigFilename: "tsconfig.json" },
