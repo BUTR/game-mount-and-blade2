@@ -8,6 +8,14 @@ export const DEFAULT_SERVER_PORT = 7210;
 
 const HOSTNAME_PATTERN = /^[A-Za-z0-9.-]+$/;
 const IPV6_PATTERN = /^[0-9A-Fa-f:.]+$/;
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
+
+/**
+ * Single-line text a server sent, with its control characters turned into spaces and trimmed
+ */
+export const sanitizeServerText = (value: string): string =>
+  value.replace(CONTROL_CHARACTERS, " ").trim();
 
 export interface IServerAddress {
   address: string;

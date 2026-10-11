@@ -1,5 +1,6 @@
 import { getFromServerAsync, isRecord, parseJsonBody } from "./http";
 import { IServerEntry } from "./types";
+import { sanitizeServerText } from "./utils";
 
 /**
  * Endpoint exposed by the BUTR server extension on the dedicated server's HTTP host alongside `/maps/list`.
@@ -13,8 +14,6 @@ const MAX_LINKS = 10;
 const MAX_TEXT_LENGTH = 256;
 const MAX_DESCRIPTION_LENGTH = 4000;
 const VERSION_PATTERN = /^([abdev])(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$/;
-// eslint-disable-next-line no-control-regex
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
 // Matches control characters except line feeds (\n), preserving line breaks in multiline text.
 const CONTROL_CHARACTERS_EXCEPT_LINE_FEED =
   // eslint-disable-next-line no-control-regex
@@ -100,7 +99,7 @@ const toText = (
         .replace(/\r\n?/g, "\n")
         .replace(CONTROL_CHARACTERS_EXCEPT_LINE_FEED, "")
         .trim()
-    : value.replace(CONTROL_CHARACTERS, " ").trim();
+    : sanitizeServerText(value);
   return text.length > 0 ? text.slice(0, maxLength) : null;
 };
 

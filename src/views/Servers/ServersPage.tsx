@@ -30,6 +30,7 @@ import {
   getJoinUnsupportedReason,
   isServerJoinAvailable,
   checkServerJoinDeploy,
+  isServerJoinDisabled,
   setUpServerJoinAsync,
   SERVER_JOIN_URL,
   launchJoinAsync,
@@ -539,7 +540,7 @@ export const ServersPage: FC = () => {
     // The download cache first, so the Maps tab doesn't wait for the scenes of every other module
     const downloaded = await readDownloadedScenesAsync(gamePath);
     setLocalScenes((previous) => withDownloadedScenes(previous, downloaded));
-    setLocalScenes(await readLocalScenesAsync(gamePath));
+    setLocalScenes(await readLocalScenesAsync(gamePath, downloaded));
   }, [gamePath, setLocalScenes]);
   useEffect(() => {
     void refreshLocalScenesAsync();
@@ -941,10 +942,11 @@ export const ServersPage: FC = () => {
       }
 
       const required = getRequiredStatuses(row, modules);
+      // The profile can have changed since this was rendered, a join switches to the server's profile first
       const blockers = getCurrentProfileBlockers(
         modules,
         required,
-        serverJoinDisabled,
+        isServerJoinDisabled(api),
       );
       if (blockers.length > 0) {
         showJoinBlockers(blockers);
@@ -1006,7 +1008,6 @@ export const ServersPage: FC = () => {
       getRequiredStatuses,
       showJoinBlockers,
       downloadMapsForJoinAsync,
-      serverJoinDisabled,
     ],
   );
 
@@ -1053,17 +1054,22 @@ export const ServersPage: FC = () => {
       requirements: IClientModuleRequirement[] = getRequiredClientModules(row),
     ) => {
       const state = api.getState<IStateWithBannerlord>();
+      // Without it the mods' modules can't be read, and the plan would come out empty
+      const currentStagingPath = selectors.installPathForGame(state, GAME_ID);
+      if (currentStagingPath === undefined) {
+        throw new Error("The mods folder for Bannerlord is not known yet");
+      }
       const currentMods = state.persistent.mods[GAME_ID] ?? {};
       const deployed =
         await VortexLauncherManager.getInstance(api).getAllModulesAsync();
       const plan = planServerProfile(
         requirements,
-        await readStagedModulesAsync(stagingPath ?? "", currentMods),
+        await readStagedModulesAsync(currentStagingPath, currentMods),
         getUnmanagedModules(deployed, currentMods),
       );
       return { state, currentMods, plan };
     },
-    [api, stagingPath],
+    [api],
   );
 
   /**

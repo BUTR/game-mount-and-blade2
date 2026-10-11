@@ -181,9 +181,12 @@ const addScenes = (scenes: LocalScenes, added: ILocalScene[]): void => {
  * Discovers scenes across all installed game modules.
  * Scans several hundred scene descriptor files across modules; use `readDownloadedScenesAsync`
  * when only the shared download cache needs to be queried.
+ *
+ * @param downloaded the download cache's scenes when they were just read, so that folder isn't read again
  */
 export const readLocalScenesAsync = async (
   gamePath: string,
+  downloaded?: ILocalScene[],
 ): Promise<LocalScenes> => {
   const scenes: LocalScenes = new Map();
   const modulesPath = path.join(gamePath, MODULES);
@@ -193,7 +196,12 @@ export const readLocalScenesAsync = async (
   const moduleScenes = await Promise.all(
     modules
       .filter((module) => module.isDirectory())
-      .map((module) => readModuleScenesAsync(modulesPath, module.name)),
+      .map((module) =>
+        downloaded !== undefined &&
+        module.name.toLowerCase() === MAP_MODULE.toLowerCase()
+          ? downloaded
+          : readModuleScenesAsync(modulesPath, module.name),
+      ),
   );
   for (const added of moduleScenes) {
     addScenes(scenes, added);

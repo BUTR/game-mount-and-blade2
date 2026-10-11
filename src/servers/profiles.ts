@@ -6,10 +6,15 @@ import {
   BannerlordModuleManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { getJoinModuleBlocker, isServerJoinMod, JOIN_MODULE_ID } from "./join";
+import {
+  getJoinModuleBlocker,
+  getRequiredDependencyIds,
+  isServerJoinMod,
+  JOIN_MODULE_ID,
+} from "./join";
 import { IClientModuleRequirement } from "./modules";
 import { IServerRow } from "./row";
-import { formatServerAddress } from "./utils";
+import { formatServerAddress, sanitizeServerText } from "./utils";
 import {
   GAME_ID,
   MULTIPLAYER_PROFILE_FEATURE,
@@ -85,10 +90,7 @@ export const findNoModsProfile = (
  * The server's name as the lobby lists it, without control characters. Undefined when the lobby doesn't list it
  */
 export const getServerName = (row: IServerRow): string | undefined => {
-  const name = (row.lobby?.ServerName ?? "")
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001f\u007f]/g, "")
-    .trim();
+  const name = sanitizeServerText(row.lobby?.ServerName ?? "");
   return name.length > 0 ? name : undefined;
 };
 
@@ -352,17 +354,7 @@ export const planServerProfile = (
     }
     modules.push({ id: module.id, name: module.name });
 
-    for (const dependency of BannerlordModuleManager.getDependenciesAll(
-      module,
-    )) {
-      if (
-        !dependency.isOptional &&
-        !dependency.isIncompatible &&
-        dependency.loadType !== vetypes.LoadType.LoadAfterThis
-      ) {
-        queue.push(dependency.id);
-      }
-    }
+    queue.push(...getRequiredDependencyIds(module));
   }
   return { modIds: [...modIds], modules, missing, wrongVersion };
 };

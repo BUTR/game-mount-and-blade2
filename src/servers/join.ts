@@ -19,6 +19,7 @@ import {
   checkModDeploy,
   DeployModResult,
   deployModAsync,
+  DeployModStatus,
 } from "../blse/modDeploy";
 import { resolveModDeployAsync } from "../blse/deploy";
 import { downloadAndEnableLatestModVersionAsync } from "../vortex/modDownloader";
@@ -173,6 +174,20 @@ export const checkServerJoinDeploy = (
   );
 
 /**
+ * Whether Server Join is installed in Vortex but not enabled in the active profile. Reads the state now, so it holds
+ * for the profile a join just switched to
+ */
+export const isServerJoinDisabled = (api: types.IExtensionApi): boolean => {
+  const state = api.getState<IStateWithBannerlord>();
+  const profile = selectors.activeProfile(state);
+  return (
+    profile !== undefined &&
+    checkServerJoinDeploy(api, profile, state.persistent.mods[GAME_ID] ?? {})
+      .status === DeployModStatus.NOT_ENABLED
+  );
+};
+
+/**
  * Gets, installs or enables whatever Server Join is missing in the active profile, and deploys it unless it had to
  * be downloaded, which only enables it
  */
@@ -243,6 +258,22 @@ export const getJoinBlockers = (
 ];
 
 /**
+ * The modules a module needs loaded with it when joining. Optional dependencies, incompatible modules and modules
+ * that only have to load after it are left out
+ */
+export const getRequiredDependencyIds = (
+  module: vetypes.ModuleInfoExtended,
+): string[] =>
+  BannerlordModuleManager.getDependenciesAll(module)
+    .filter(
+      (dependency) =>
+        !dependency.isOptional &&
+        !dependency.isIncompatible &&
+        dependency.loadType !== vetypes.LoadType.LoadAfterThis,
+    )
+    .map((dependency) => dependency.id);
+
+/**
  * Native, Multiplayer, the modules enabled in the multiplayer load order, the server's modules, everything they need
  * and the join module, in a valid load order. Optional dependencies and modules that are not installed are left out;
  * the server only enforces its own list
@@ -276,17 +307,7 @@ export const resolveJoinModules = (
       continue;
     }
     selected.set(id, module);
-    for (const dependency of BannerlordModuleManager.getDependenciesAll(
-      module,
-    )) {
-      if (
-        !dependency.isOptional &&
-        !dependency.isIncompatible &&
-        dependency.loadType !== vetypes.LoadType.LoadAfterThis
-      ) {
-        queue.push(dependency.id);
-      }
-    }
+    queue.push(...getRequiredDependencyIds(module));
   }
   return {
     modules: BannerlordModuleManager.sort([...selected.values()]),

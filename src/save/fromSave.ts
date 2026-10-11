@@ -17,7 +17,7 @@ import {
 import { ISaveGame } from "../views/Saves/types";
 // Not the indexes, which reach the views
 import {
-  readProfileLoadOrderAsync,
+  readProfileLoadOrderOrThrowAsync,
   writeProfileLoadOrderAsync,
 } from "../loadOrder/persistence";
 import { reloadLoadOrderAsync } from "../loadOrder/gameMode";
@@ -235,7 +235,7 @@ export const applySaveLoadOrderAsync = async (
     await enableModsAsync(api, profile.id, plan.modIds);
     // The newly enabled mods' modules have to be in the game for the load order to list them
     await ensureModsDeployedAsync(api);
-    const existing = await readProfileLoadOrderAsync(
+    const existing = await readProfileLoadOrderOrThrowAsync(
       api,
       profile.id,
       "singleplayer",

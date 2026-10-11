@@ -66,6 +66,49 @@ export const removeProfileLoadOrdersAsync = async (
 
 /**
  * Reads the load order stored for a profile and game mode, regardless of whether the profile is currently active.
+ * A missing file is an empty load order, any other failure throws, so callers that write the result back don't
+ * replace a load order they couldn't read
+ */
+export const readProfileLoadOrderOrThrowAsync = async (
+  api: types.IExtensionApi,
+  profileId: string,
+  gameMode: GameMode,
+): Promise<PersistenceLoadOrderStorage> => {
+  const loFilePath = getLoadOrderFilePath(
+    api,
+    getLoadOrderFileName(profileId, gameMode),
+  );
+  let fileContents: string;
+  try {
+    fileContents = await readFile(loFilePath, "utf8");
+  } catch (err) {
+    if (isFileNotFoundError(err)) {
+      return [];
+    }
+    throw err;
+  }
+
+  // Trim the file contents to remove any trailing whitespace or extra content
+  const trimmedContents = fileContents.trim();
+
+  // Try to find the end of the JSON array if there's extra content
+  let jsonString = trimmedContents;
+  if (trimmedContents.startsWith("[")) {
+    const lastBracketIndex = trimmedContents.lastIndexOf("]");
+    if (lastBracketIndex !== -1) {
+      jsonString = trimmedContents.substring(0, lastBracketIndex + 1);
+    }
+  }
+
+  const loadOrder: PersistenceLoadOrderStorage = JSON.parse(jsonString);
+  return loadOrder.filter(
+    (x) => x !== undefined && filterEntryWithInvalidId(x),
+  );
+};
+
+/**
+ * Reads the load order stored for a profile and game mode, regardless of whether the profile is currently active.
+ * A load order that can't be read is reported and read as empty
  */
 export const readProfileLoadOrderAsync = async (
   api: types.IExtensionApi,
@@ -73,32 +116,8 @@ export const readProfileLoadOrderAsync = async (
   gameMode: GameMode,
 ): Promise<PersistenceLoadOrderStorage> => {
   try {
-    const loFilePath = getLoadOrderFilePath(
-      api,
-      getLoadOrderFileName(profileId, gameMode),
-    );
-    const fileContents = await readFile(loFilePath, "utf8");
-
-    // Trim the file contents to remove any trailing whitespace or extra content
-    const trimmedContents = fileContents.trim();
-
-    // Try to find the end of the JSON array if there's extra content
-    let jsonString = trimmedContents;
-    if (trimmedContents.startsWith("[")) {
-      const lastBracketIndex = trimmedContents.lastIndexOf("]");
-      if (lastBracketIndex !== -1) {
-        jsonString = trimmedContents.substring(0, lastBracketIndex + 1);
-      }
-    }
-
-    const loadOrder: PersistenceLoadOrderStorage = JSON.parse(jsonString);
-    return loadOrder.filter(
-      (x) => x !== undefined && filterEntryWithInvalidId(x),
-    );
+    return await readProfileLoadOrderOrThrowAsync(api, profileId, gameMode);
   } catch (err) {
-    if (isFileNotFoundError(err)) {
-      return [];
-    }
     const { localize: t } = LocalizationManager.getInstance(api);
     api.showErrorNotification?.(t("Failed to read load order"), err);
     return [];
@@ -172,7 +191,11 @@ export const enableInProfileLoadOrderAsync = async (
   gameMode: GameMode,
   modules: { id: string; name: string }[],
 ): Promise<void> => {
-  const loadOrder = await readProfileLoadOrderAsync(api, profileId, gameMode);
+  const loadOrder = await readProfileLoadOrderOrThrowAsync(
+    api,
+    profileId,
+    gameMode,
+  );
   const updated = loadOrder.map((entry) =>
     modules.some((module) => module.id === entry.id)
       ? { ...entry, isSelected: true }
