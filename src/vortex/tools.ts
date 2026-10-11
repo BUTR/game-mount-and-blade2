@@ -1,8 +1,7 @@
 // TODO: Translate tool titles?
 import { actions, types } from "vortex-api";
 import path from "path";
-import { getBinaryModdingPath, getBinaryPath } from "./game";
-import { isStoreSteam } from "./store";
+import { getBinaryModdingPath, getBinaryPath, isStoreSteam } from "./store";
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_LAUNCHER,
@@ -75,11 +74,11 @@ export const addBLSETools = (
     },
   ];
   for (const t of tools) {
+    // Not custom: Vortex deletes custom tools instead of hiding them, and the multiplayer mode hides these
     registerTool(api, discovery, {
       ...t,
       logo: `blse.png`,
       binaryPath,
-      custom: true,
     });
   }
 };
@@ -91,6 +90,22 @@ export const addOfficialCLITool = (
   registerTool(api, discovery, {
     id: `vanilla-cli`,
     name: `Official Bannerlord`,
+    logo: `tw_launcher.png`,
+    exe: BANNERLORD_EXE,
+    binaryPath: getBinaryPath(discovery.store),
+  });
+};
+
+/**
+ * The game executable again, as the multiplayer mode's tool. It gets the multiplayer launch arguments
+ */
+export const addOfficialMultiplayerCLITool = (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult,
+): void => {
+  registerTool(api, discovery, {
+    id: `vanilla-mp-cli`,
+    name: `Official Bannerlord Multiplayer`,
     logo: `tw_launcher.png`,
     exe: BANNERLORD_EXE,
     binaryPath: getBinaryPath(discovery.store),

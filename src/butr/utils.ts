@@ -6,7 +6,7 @@ import {
   IModuleCompatibilityInfoCache,
 } from "./types";
 import { ModAnalyzerProxy } from "./modAnalyzerProxy";
-import { VortexLauncherManager } from "../launcher";
+import { VortexLauncherManager } from "../launcher/manager";
 import { versionToString } from "./version";
 
 export const buildCompatibilityCache = (

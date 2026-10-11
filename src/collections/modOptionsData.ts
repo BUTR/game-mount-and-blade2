@@ -9,8 +9,8 @@ import {
   getGlobalSettingsAsync,
   getSpecialSettings,
   overrideModOptionsAsync,
-} from "../modOptions";
-import { LocalizationManager } from "../localization";
+} from "../modOptions/utils";
+import { LocalizationManager } from "../localization/manager";
 
 /**
  * Assumes that the correct Game ID is active and that the profile is set up correctly.

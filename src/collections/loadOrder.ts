@@ -3,7 +3,7 @@ import { ICollectionDataWithGeneralData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID } from "../common";
 import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from "../types";
-import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder/utils";
 
 const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== "collection";

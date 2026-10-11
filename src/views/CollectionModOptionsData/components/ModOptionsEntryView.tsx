@@ -1,6 +1,6 @@
 import React, { BaseSyntheticEvent, FC } from "react";
 import { Checkbox, ListGroupItem } from "react-bootstrap";
-import { ModOptionsEntry } from "../../../modOptions";
+import { ModOptionsEntry } from "../../../modOptions/types";
 
 export type ModOptionsEntryViewProps = {
   entry: ModOptionsEntry | undefined;

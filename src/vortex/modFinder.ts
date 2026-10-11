@@ -1,5 +1,4 @@
 import { types } from "vortex-api";
-import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import {
   GAME_ID,
   OBFUSCATED_BINARIES,
@@ -7,88 +6,63 @@ import {
   SUB_MODS_IDS,
 } from "../common";
 import { bselectors } from "../selectors";
-import {
-  IBannerlordMod,
-  IBannerlordModStorage,
-  IStateWithBannerlord,
-} from "../types";
+import { IStateWithBannerlord } from "../types";
 
-export const isModActive = (
-  profile: types.IProfile | undefined,
-  mod: IBannerlordMod,
-): boolean => {
-  // Warning: modState is not guaranteed to be present in the profile
-  return profile?.modState?.[mod.id]?.enabled ?? false;
-};
-const isMod = (mod: IBannerlordMod, moduleId: string): boolean => {
-  return mod.attributes?.subModsIds?.includes(moduleId) ?? false;
-};
-
-export const findModByPredicate = (
-  mods: IBannerlordModStorage,
-  predicate: (mod: IBannerlordMod) => boolean,
-): IBannerlordMod | undefined => {
-  const foundMods: IBannerlordMod[] = Object.values(mods).filter(predicate);
-
-  if (foundMods.length === 0) return undefined;
-
-  if (foundMods.length === 1) return foundMods[0];
-
-  return foundMods.reduce<IBannerlordMod | undefined>(
-    (prev: IBannerlordMod | undefined, iter: IBannerlordMod) => {
-      if (!prev) {
-        return iter;
+/**
+ * Extracts Nexus Mods IDs (modId and fileId) from download metadata.
+ * Vortex stores these in different metadata locations depending on the source
+ * (mirrors lookupFromDownload in dependencies.ts, which vortex-api exports only from v2.2+).
+ */
+const getDownloadNexusIds = (
+  download: types.IDownload,
+): { modId: number; fileId: number } => {
+  const modInfo = download.modInfo as
+    | {
+        meta?: { details?: { modId?: unknown; fileId?: unknown } };
+        nexus?: { ids?: { modId?: unknown; fileId?: unknown } };
+        ids?: { modId?: unknown; fileId?: unknown };
       }
-      const compareResult = BannerlordModuleManager.compareVersions(
-        BannerlordModuleManager.parseApplicationVersion(
-          iter.attributes?.version ?? "",
-        ),
-        BannerlordModuleManager.parseApplicationVersion(
-          prev.attributes?.version ?? "",
-        ),
-      );
-      switch (compareResult) {
-        case 1:
-          return iter;
-        case -1:
-          return prev;
-        default:
-          return iter;
-      }
-    },
-    undefined,
-  );
+    | undefined;
+  return {
+    modId: Number(
+      modInfo?.meta?.details?.modId ??
+        modInfo?.nexus?.ids?.modId ??
+        modInfo?.ids?.modId,
+    ),
+    fileId: Number(
+      modInfo?.meta?.details?.fileId ??
+        modInfo?.nexus?.ids?.fileId ??
+        modInfo?.ids?.fileId,
+    ),
+  };
 };
 
-export const findMod = (
-  mods: IBannerlordModStorage,
-  moduleId: string,
-): IBannerlordMod | undefined => {
-  return findModByPredicate(mods, (mod) => isMod(mod, moduleId));
-};
-
+/**
+ * Finds the most recent completed download for a Nexus Mods mod, optionally matching a specific file.
+ *
+ * @param fileId Specific file ID to find, or omitted to match any download for the mod.
+ */
 export const findModDownload = (
   api: types.IExtensionApi,
   modId: number,
+  fileId?: number,
 ): string | undefined => {
   const state = api.getState<IStateWithBannerlord>();
 
   const downloadedFiles = bselectors.downloadFiles(state);
-  if (downloadedFiles === undefined) {
-    return undefined;
-  }
-
-  const modFiles = Object.entries(downloadedFiles)
-    .filter(
-      ([, download]) =>
-        download.game.includes(GAME_ID) &&
-        download.modInfo?.["nexus"]?.ids?.modId === modId,
-    )
+  return Object.entries(downloadedFiles)
+    .filter(([, download]) => {
+      if (download.state !== "finished" || !download.game.includes(GAME_ID)) {
+        return false;
+      }
+      const ids = getDownloadNexusIds(download);
+      return (
+        ids.modId === modId && (fileId === undefined || ids.fileId === fileId)
+      );
+    })
     .sort(
-      ([, downloadA], [, downloadB]) => downloadA.fileTime - downloadB.fileTime,
-    );
-
-  return modFiles.length > 0 ? modFiles[0]![0] : undefined;
+      ([, downloadA], [, downloadB]) => downloadB.fileTime - downloadA.fileTime,
+    )[0]?.[0];
 };
 
 type ModIdResult = {

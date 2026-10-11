@@ -1,7 +1,9 @@
-import { actions, selectors, types } from "vortex-api";
+import { selectors, types } from "vortex-api";
 import path from "path";
-import { LocalizationManager } from "../localization";
-import { getBinaryPath } from "../vortex";
+import { LocalizationManager } from "../localization/manager";
+import { enableModsAsync } from "../vortex/deploy";
+import { getBinaryPath } from "../vortex/store";
+import { installAndEnableDownloadAsync } from "../vortex/modDownloader";
 import {
   checkBLSEDeploy,
   checkHarmonyDeploy,
@@ -152,9 +154,6 @@ const doHarmonyDeploy = (
         if (result.downloadId === undefined) {
           return;
         }
-        api.events.emit("start-install-download", result.downloadId, {
-          allowAutoEnable: true,
-        });
         void resolveHarmonyDeployAsync(api, profile, result)
           .catch(() => {})
           .finally(() => dismiss());
@@ -228,7 +227,10 @@ export const recommendBLSEAsync = async (
   }
 };
 
-const resolveDeployAsync = async (
+/**
+ * Resolves mod deployment by downloading, installing, or enabling the mod as needed, followed by deployment.
+ */
+export const resolveModDeployAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult,
@@ -243,6 +245,11 @@ const resolveDeployAsync = async (
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
+      if (result.downloadId === undefined) {
+        return;
+      }
+      // The archive has been downloaded; install and enable it before running deployment.
+      await installAndEnableDownloadAsync(api, result.downloadId);
       await deployFn(api);
       return;
     }
@@ -250,9 +257,7 @@ const resolveDeployAsync = async (
       if (result.modId === undefined) {
         return;
       }
-      api.store?.dispatch(
-        actions.setModEnabled(profile.id, result.modId, true),
-      );
+      await enableModsAsync(api, profile.id, [result.modId]);
       await deployFn(api);
       return;
     }
@@ -264,7 +269,7 @@ export const resolveHarmonyDeployAsync = async (
   profile: types.IProfile,
   result: DeployModResult,
 ): Promise<void> =>
-  resolveDeployAsync(
+  resolveModDeployAsync(
     api,
     profile,
     result,
@@ -272,9 +277,53 @@ export const resolveHarmonyDeployAsync = async (
     deployModAsync,
   );
 
+/**
+ * Evaluates the deployment status of BLSE in the active profile (returns OK when fully enabled).
+ */
+export const getBLSEDeployStatus = (
+  api: types.IExtensionApi,
+): DeployModStatus => {
+  const state = api.getState<IStateWithBannerlord>();
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
+    return DeployModStatus.OK;
+  }
+  return checkBLSEDeploy(api, profile, bselectors.bannerlordMods(state)).status;
+};
+
+/**
+ * Ensures all prerequisites for BLSE are satisfied in the active profile, resolving Harmony first.
+ */
+export const setUpBLSEAsync = async (
+  api: types.IExtensionApi,
+): Promise<void> => {
+  const state = api.getState<IStateWithBannerlord>();
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
+    return;
+  }
+  const mods = bselectors.bannerlordMods(state);
+  await resolveHarmonyDeployAsync(
+    api,
+    profile,
+    checkHarmonyDeploy(api, profile, mods),
+  ).catch(() => {});
+  await resolveBLSEDeployAsync(
+    api,
+    profile,
+    checkBLSEDeploy(api, profile, mods),
+  );
+};
+
 export const resolveBLSEDeployAsync = async (
   api: types.IExtensionApi,
   profile: types.IProfile,
   result: DeployModResult,
 ): Promise<void> =>
-  resolveDeployAsync(api, profile, result, downloadBLSEAsync, deployBLSEAsync);
+  resolveModDeployAsync(
+    api,
+    profile,
+    result,
+    downloadBLSEAsync,
+    deployBLSEAsync,
+  );

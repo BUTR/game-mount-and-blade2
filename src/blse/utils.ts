@@ -1,25 +1,12 @@
 import { actions, selectors, types, util } from "vortex-api";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
-import {
-  downloadAndEnableLatestModVersionAsync,
-  findModByPredicate,
-  findModDownload,
-} from "../vortex";
-import { LocalizationManager } from "../localization";
-import { IBannerlordMod, IBannerlordModStorage } from "../types";
-
-const isModBLSE = (mod: IBannerlordMod): boolean => {
-  return (
-    mod.type === `bannerlord-blse` ||
-    (mod.attributes?.modId === 1 && mod.attributes?.source === `nexus`)
-  );
-};
-
-export const findBLSEMod = (
-  mods: IBannerlordModStorage,
-): IBannerlordMod | undefined => {
-  return findModByPredicate(mods, isModBLSE);
-};
+import { deployModsAsync } from "../vortex/deploy";
+import { downloadAndEnableLatestModVersionAsync } from "../vortex/modDownloader";
+import { findModDownload } from "../vortex/modFinder";
+import { LocalizationManager } from "../localization/manager";
+import { IStateWithBannerlord } from "../types";
+import { bselectors } from "../selectors";
+import { actionsSettings } from "../settings/actions";
 
 export const findBLSEDownload = (
   api: types.IExtensionApi,
@@ -30,17 +17,22 @@ export const findBLSEDownload = (
 export const deployBLSEAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
-  await util.toPromise((cb) => api.events.emit("deploy-mods", cb));
+  await deployModsAsync(api);
   await util.toPromise((cb) =>
     api.events.emit("start-quick-discovery", () => cb(null)),
   );
 
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
   const discovery = selectors.currentGameDiscovery(state);
   const tool = discovery?.tools?.["blse-cli"];
   if (tool) {
-    api.store?.dispatch(actions.setPrimaryTool(GAME_ID, tool.id));
+    // A singleplayer tool: in the multiplayer mode it becomes the primary tool once switching back
+    api.store?.dispatch(
+      bselectors.activeGameMode(state) === "singleplayer"
+        ? actions.setPrimaryTool(GAME_ID, tool.id)
+        : actionsSettings.setModePrimaryTool("singleplayer", tool.id),
+    );
   }
 };
 

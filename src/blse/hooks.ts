@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { selectors } from "vortex-api";
 import { bselectors } from "../selectors";
-import { isModActive } from "../vortex";
+import { isModActive } from "../vortex/modStorage";
 
 export const useHasBLSE = (): boolean => {
   const profile = useSelector(selectors.activeProfile);

@@ -2,7 +2,7 @@ import { types } from "vortex-api";
 import { ICollection as ICollectionDataToExport } from "collections/src/types/ICollection";
 import { IExtensionFeature } from "collections/src/util/extension";
 import { IModAttributes, PersistenceLoadOrderStorage } from "../types";
-import { PersistentModOptionsEntry } from "../modOptions";
+import { PersistentModOptionsEntry } from "../modOptions/types";
 
 export interface ICollectionData extends ICollectionDataToExport {}
 
@@ -46,19 +46,16 @@ export interface ICollectionGeneralData {
   suggestedLoadOrder: PersistenceLoadOrderStorage;
 }
 export interface ICollectionDataWithGeneralData
-  extends ICollectionData,
-    ICollectionGeneralData {}
+  extends ICollectionData, ICollectionGeneralData {}
 
 export interface ICollectionLegacyData {
   loadOrder: types.ILoadOrderEntry<never>[];
 }
 export interface ICollectionDataWithLegacyData
-  extends ICollectionData,
-    ICollectionLegacyData {}
+  extends ICollectionData, ICollectionLegacyData {}
 
 export interface ICollectionSettingsData {
   includedModOptions: PersistentModOptionsEntry[];
 }
 export interface ICollectionDataWithSettingsData
-  extends ICollectionData,
-    ICollectionSettingsData {}
+  extends ICollectionData, ICollectionSettingsData {}

@@ -6,7 +6,7 @@ import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { IAddedFiles, IStateWithBannerlord } from "../types";
 import { vortexStoreToLibraryStore } from "./store";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 
 /**
  * Event function, be careful

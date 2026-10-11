@@ -2,8 +2,8 @@ import { actions, selectors, types } from "vortex-api";
 import { ICollectionData, ICollectionDataWithLegacyData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID, SUB_MODS_IDS } from "../common";
-import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder";
-import { VortexLauncherManager } from "../launcher";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder/utils";
+import { VortexLauncherManager } from "../launcher/manager";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord, PersistenceLoadOrderStorage } from "../types";
 

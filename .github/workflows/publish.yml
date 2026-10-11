@@ -60,15 +60,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22.19
-          cache: "yarn"
+          cache: "pnpm"
 
-      - run: yarn --frozen-lockfile --immutable --network-timeout 600000 install
+      - run: pnpm install --frozen-lockfile
 
-      - run: yarn run build
+      - run: pnpm run build
 
       - uses: actions/upload-artifact@v4
         with:
@@ -97,12 +99,11 @@ jobs:
     uses: BUTR/workflows/.github/workflows/release-nexusmods.yml@master
     with:
       nexusmods_game_id: site
-      nexusmods_mod_id: 875
+      nexusmods_mod_id: 9856949945195
+      nexusmods_file_group_id: 1765774
       mod_filename: game-mount-and-blade2
       mod_version: ${{ needs.get-changelog-info.outputs.version }}
       mod_description: ${{ needs.get-changelog-info.outputs.description }}
       artifact_name: game-mount-and-blade2
-      append_v_to_version: false
     secrets:
       NEXUSMODS_APIKEY: ${{ secrets.ARAGAS_NEXUSMODS_API_KEY }}
-      NEXUSMODS_SESSION_COOKIE: ${{ secrets.ARAGAS_NEXUSMODS_SESSION_COOKIE }}

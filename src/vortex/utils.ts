@@ -5,11 +5,12 @@ import {
   addModdingKitTool,
   addOfficialCLITool,
   addOfficialLauncherTool,
+  addOfficialMultiplayerCLITool,
 } from "./tools";
-import { recommendBLSEAsync } from "../blse";
-import { VortexLauncherManager } from "../launcher";
+import { recommendBLSEAsync } from "../blse/deploy";
+import { VortexLauncherManager } from "../launcher/manager";
 import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from "../common";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 
 const launchGameStoreAsync = async (
   api: types.IExtensionApi,
@@ -54,6 +55,7 @@ export const setupAsync = async (
 
   // Quickly ensure that the official Launcher is added.
   addOfficialCLITool(api, discovery);
+  addOfficialMultiplayerCLITool(api, discovery);
   addOfficialLauncherTool(api, discovery);
   addModdingKitTool(api, discovery);
   addBLSETools(api, discovery);

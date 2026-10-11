@@ -1,6 +1,6 @@
 import { selectors, types } from "vortex-api";
 import { actionsSave } from "./actions";
-import { VortexLauncherManager } from "../launcher";
+import { VortexLauncherManager } from "../launcher/manager";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 

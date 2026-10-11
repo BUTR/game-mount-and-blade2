@@ -32,6 +32,23 @@ export default defineConfig([
     },
   },
   {
+    // No barrels: re-exports hide real dependencies and create import cycles. Import from the declaring file.
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ExportAllDeclaration",
+          message: "Don't re-export (barrels cause import cycles). Import from the declaring file instead.",
+        },
+        {
+          selector: "ExportNamedDeclaration[source]",
+          message: "Don't re-export (barrels cause import cycles). Import from the declaring file instead.",
+        },
+      ],
+    },
+  },
+  {
     ...eslintReact.configs["recommended-typescript"],
     settings: {
       "react-x": {

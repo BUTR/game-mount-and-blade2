@@ -1,10 +1,10 @@
 import React, { FC, useContext, useEffect, useState } from "react";
 import { MainContext, tooltip } from "vortex-api";
 import { IVortexViewModelData } from "../../../types";
-import { IModuleCompatibilityInfo } from "../../../butr";
-import { useLocalization } from "../../../localization";
-import { useLauncher } from "../../../launcher";
-import { versionToString } from "../../../butr";
+import { IModuleCompatibilityInfo } from "../../../butr/types";
+import { useLocalization } from "../../../localization/hooks";
+import { useLauncher } from "../../../launcher/hooks";
+import { versionToString } from "../../../butr/version";
 
 export type CompatibilityInfoProps = {
   data: IVortexViewModelData | undefined;

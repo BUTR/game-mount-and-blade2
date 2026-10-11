@@ -8,8 +8,8 @@ import { CompatibilityInfo } from "./CompatibilityInfo";
 import { isOptional } from "./OptionalBanner";
 import { ModuleIcon } from "./ModuleIcon";
 import { OptionalBanner } from "./OptionalBanner";
-import { IModuleCompatibilityInfoCache } from "../../../butr";
-import { versionToString } from "../../../butr";
+import { IModuleCompatibilityInfoCache } from "../../../butr/types";
+import { versionToString } from "../../../butr/version";
 
 export type LoadOrderEntryProps = {
   entry: IPersistenceLoadOrderEntry | undefined;

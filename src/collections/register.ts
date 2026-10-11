@@ -3,18 +3,21 @@ import { TFunction } from "vortex-api/lib/util/i18n";
 import { GAME_ID } from "../common";
 import { IBannerlordModStorage, IStateWithBannerlord } from "../types";
 import { bselectors } from "../selectors";
-import { BannerlordGeneralDataPage, ModOptionsDataPage } from "../views";
+import { BannerlordGeneralDataPage } from "../views/CollectionGeneralData/GeneralDataPage";
+import { ModOptionsDataPage } from "../views/CollectionModOptionsData/ModOptionsDataPage";
 import {
   cloneCollectionGeneralDataAsync,
-  cloneCollectionModOptionsDataAsync,
   genCollectionGeneralDataAsync,
-  genCollectionModOptionsDataAsync,
-  hasContextWithCollectionFeature,
-  ICollectionData,
   parseCollectionGeneralDataAsync,
-  parseCollectionLegacyDataAsync,
+} from "./generalData";
+import {
+  cloneCollectionModOptionsDataAsync,
+  genCollectionModOptionsDataAsync,
   parseCollectionModOptionsDataAsync,
-} from "./index";
+} from "./modOptionsData";
+import { hasContextWithCollectionFeature } from "./utils";
+import { ICollectionData } from "./types";
+import { parseCollectionLegacyDataAsync } from "./legacyData";
 
 export const registerCollections = (context: types.IExtensionContext): void => {
   if (!hasContextWithCollectionFeature(context)) {

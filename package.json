@@ -19,6 +19,7 @@
     "build-dev": "node build.js build-dev",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
+    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src",
     "format": "prettier src --write",
     "format:check": "prettier src --check",
     "pre-commit": "lint-staged"
@@ -27,7 +28,7 @@
     "7zip-bin": "^5.2.0",
     "@eslint-react/eslint-plugin": "2.3.7",
     "@eslint/js": "9.39.1",
-    "@nexusmods/nexus-api": "git+https://github.com/Nexus-Mods/node-nexus-api.git",
+    "@nexusmods/nexus-api": "git+https://github.com/Nexus-Mods/node-nexus-api.git#eb76107c4ba23d05e3b60600523d3748423c5fb3",
     "@types/bluebird": "3.5.20",
     "@types/immutability-helper": "^2.6.3",
     "@types/lodash": "^4.14.149",
@@ -39,13 +40,15 @@
     "@types/semver": "^7.7.1",
     "@types/webpack": "^5.28.5",
     "bluebird": "^3.7.2",
-    "collections": "git+https://github.com/Nexus-Mods/extension-collections.git",
+    "collections": "git+https://github.com/Nexus-Mods/extension-collections.git#109ae729e82a9b27ade67969f771ba7f6542346b",
     "copy-webpack-plugin": "^12.0.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
+    "globals": "^14.0.0",
     "i18next": "^19.0.1",
     "immutability-helper": "^3.0.1",
-    "modmeta-db": "git+https://github.com/Nexus-Mods/modmeta-db.git",
+    "madge": "8.0.0",
+    "modmeta-db": "git+https://github.com/Nexus-Mods/modmeta-db.git#daa8935b6e38e255ec192c908adfce35d47c0336",
     "native-addon-loader": "^2.0.1",
     "prettier": "^3",
     "react": "^16.12.0",
@@ -58,10 +61,10 @@
     "reselect": "^5.1.1",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.7.0",
-    "turbowalk": "git+https://github.com/Nexus-Mods/node-turbowalk.git",
+    "turbowalk": "git+https://github.com/Nexus-Mods/node-turbowalk.git#cf4238a4d192763c8133500ce9b366a71b262a33",
     "typescript": "^5.4.5",
     "typescript-eslint": "8.47.0",
-    "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api.git",
+    "vortex-api": "git+https://github.com/Nexus-Mods/vortex-api.git#bcd0f8a425ab9a42509cbd39d62c0d1ad8b56424",
     "vortex-ext-common": "^0.4.0",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4",
@@ -71,12 +74,5 @@
     "@butr/vortexextensionnative": "2.0.209",
     "ticks-to-date": "^1.0.6"
   },
-  "resolutions": {
-    "node-gyp": "^10.0.0",
-    "@types/react": "16.14.66",
-    "@types/react-dom": "16.9.25",
-    "**/dir-compare/minimatch": "3.0.5",
-    "winapi-bindings": "git+https://github.com/Nexus-Mods/node-winapi-bindings.git"
-  },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "pnpm@12.10.1"
 }

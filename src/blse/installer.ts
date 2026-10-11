@@ -1,6 +1,6 @@
 import { selectors, types } from "vortex-api";
 import path from "path";
-import { isStoreXbox } from "../vortex";
+import { isStoreXbox } from "../vortex/store";
 import {
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,

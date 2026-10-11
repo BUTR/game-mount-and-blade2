@@ -2,20 +2,16 @@ import React, { FC, useContext, useEffect, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { MainContext, selectors, tooltip } from "vortex-api";
-import {
-  LoadOrderEditInfo,
-  LoadOrderEntry,
-  Placeholder,
-  Requirements,
-} from "./components";
+import { LoadOrderEditInfo } from "./components/LoadOrderEditInfo";
+import { LoadOrderEntry } from "../Shared/components/LoadOrderEntry";
+import { Placeholder } from "./components/Placeholder";
+import { Requirements } from "./components/Requirements";
 import { IStateWithBannerlord, PersistenceLoadOrderStorage } from "../../types";
 import { ICollectionFeatureProps } from "../types";
-import {
-  getCompatibilityScoresAsync,
-  IModuleCompatibilityInfoCache,
-} from "../../butr";
-import { genCollectionGeneralDataAsync } from "../../collections";
-import { useLocalization } from "../../localization";
+import { getCompatibilityScoresAsync } from "../../butr/utils";
+import { IModuleCompatibilityInfoCache } from "../../butr/types";
+import { genCollectionGeneralDataAsync } from "../../collections/generalData";
+import { useLocalization } from "../../localization/hooks";
 import { bselectors } from "../../selectors";
 
 export type BannerlordGeneralDataPageProps = ICollectionFeatureProps;
