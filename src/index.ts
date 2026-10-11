@@ -144,29 +144,6 @@ const main = (context: types.IExtensionContext): boolean => {
   // Module, Translation Installers & Mod Types
   registerVortexModTypes(context);
 
-  // Event Callbacks
-  const checkVortexVersion = async (): Promise<void> => {
-    const state = context.api.getState();
-
-    const vortexVersion = semver.coerce(state.app.appVersion)!.version;
-    if (
-      !semver.satisfies(vortexVersion, "<=1.13.3") &&
-      !semver.satisfies(vortexVersion, ">=1.14.0")
-    ) {
-      const { localize: t } = LocalizationManager.getInstance(context.api);
-
-      await context.api.showDialog?.(
-        "info",
-        t(`Unsupported Vortex Version!`),
-        {
-          text: t(
-            `You are using an unsupported Vortex version! Either upgrade to 1.14.0 or higher or downgrade to 1.13.3 or lower!`,
-          ),
-        },
-        [{ label: t("Close") }],
-      );
-    }
-  };
 
   context.once(() => {
     context.api.setStylesheet(
@@ -198,8 +175,6 @@ const main = (context: types.IExtensionContext): boolean => {
 
       // Vortex picks the defaultPrimary tool on activation, which is BLSE regardless of the mode
       applyGameModeTools(context.api);
-
-      await checkVortexVersion();
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
