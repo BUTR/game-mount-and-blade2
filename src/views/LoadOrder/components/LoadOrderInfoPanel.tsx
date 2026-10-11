@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from "react";
-import { tooltip, util } from "vortex-api";
+import { tooltip, util } from "@nexusmods/vortex-api";
 import { useLocalization } from "../../../localization/hooks";
 
 export type LoadOrderInfoPanelProps = {

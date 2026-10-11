@@ -160,26 +160,62 @@ const pack7z = () => {
 };
 
 /**
+ * Returns true if a Vortex process is currently running (Windows only).
+ * Vortex locks the plugin's native libraries while loaded, so deleting or
+ * overwriting them fails with EPERM/EBUSY.
+ */
+const isVortexRunning = () => {
+  if (process.platform !== "win32") {
+    return false;
+  }
+  try {
+    const out = child_process
+      .execSync('tasklist /FI "IMAGENAME eq Vortex.exe" /NH', {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+      .toLowerCase();
+    return out.includes("vortex.exe");
+  } catch {
+    return false;
+  }
+};
+
+/**
  * @param {boolean} isDev
  */
 const copyToVortex = (isDev) => {
   const deployPath = isDev ? "@vortex/main/plugins" : "Vortex/plugins";
 
-  try {
-    const appDataPath = process.env.APPDATA;
-    if (appDataPath) {
-      const targetPath = path.join(appDataPath, deployPath);
+  const appDataPath = process.env.APPDATA;
+  if (!appDataPath) {
+    console.warn("APPDATA is not set, skipping copy to Vortex plugins");
+    return;
+  }
 
-      console.log(`Copy dist to Vortex plugins: ${targetPath}`);
-      const destPath = path.join(targetPath, "bannerlord");
-      removeIfExists(destPath);
-      copyRecursive(DIST_DIR, destPath);
-    }
-  } catch (err) {
-    // A running Vortex keeps the extension's native library loaded, so the folder can't be replaced
-    console.error(
-      `Copying to Vortex plugins failed, close Vortex and build again: ${err}`,
+  const targetPath = path.join(appDataPath, deployPath);
+  const destPath = path.join(targetPath, "bannerlord");
+  console.log(`Copy dist to Vortex plugins: ${targetPath}`);
+
+  if (isVortexRunning()) {
+    console.warn(
+      "WARNING: Vortex is running. It locks the plugin's native libraries, so the copy will most likely fail. Close Vortex and rerun the build.",
     );
+  }
+
+  try {
+    removeIfExists(destPath);
+    copyRecursive(DIST_DIR, destPath);
+    console.log(`Copied to ${destPath}`);
+  } catch (error) {
+    const err = /** @type {NodeJS.ErrnoException} */ (error);
+    console.error(
+      `ERROR: Failed to copy dist to ${destPath}: ${err.code ?? ""} ${err.message}`,
+    );
+    console.error(
+      "The plugin folder may now contain a mix of old and new files. Close Vortex and rerun the build.",
+    );
+    process.exitCode = 1;
   }
 };
 

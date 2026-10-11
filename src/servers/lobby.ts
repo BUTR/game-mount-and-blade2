@@ -1,7 +1,7 @@
 import { ChildProcess, execFile, spawn } from "child_process";
 import { existsSync } from "node:fs";
 import path from "path";
-import { log, selectors, types } from "vortex-api";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { IServerEntry } from "./types";
 import { formatServerAddress, getServerId } from "./utils";

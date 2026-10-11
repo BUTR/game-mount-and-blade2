@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { MainContext, MainPage, selectors } from "vortex-api";
+import { MainContext, MainPage, selectors } from "@nexusmods/vortex-api";
 import { useSelector, useStore } from "react-redux";
 import { Content } from "./components/Content";
 import { SaveLoadOrderActions } from "./components/Sidebar";

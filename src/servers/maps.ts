@@ -2,7 +2,7 @@ import { createWriteStream, promises as fs, WriteStream } from "fs";
 import { get } from "http";
 import os from "os";
 import path from "path";
-import { util } from "vortex-api";
+import { util } from "@nexusmods/vortex-api";
 import { IServerEntry, IServerMap } from "./types";
 import { formatServerAddress } from "./utils";
 import { MODULES } from "../common";

@@ -53,7 +53,7 @@ export default defineConfig([
     ...eslintReact.configs["recommended-typescript"],
     settings: {
       "react-x": {
-        version: "16",
+        version: "18",
       },
     },
   },

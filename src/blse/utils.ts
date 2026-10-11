@@ -1,4 +1,4 @@
-import { actions, selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
 import { deployModsAsync } from "../vortex/deploy";
 import { downloadAndEnableLatestModVersionAsync } from "../vortex/modDownloader";

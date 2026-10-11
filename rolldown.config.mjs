@@ -1,26 +1,45 @@
 import { defineConfig } from "rolldown";
-import { builtinModules, createRequire } from "node:module";
+import { builtinModules } from "node:module";
+import { fileURLToPath } from "node:url";
 import { readFileSync, readdirSync, globSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve, basename, dirname, extname } from "node:path";
 
-const require = createRequire(import.meta.url);
-const vortexApiDir = dirname(require.resolve("vortex-api/package.json"));
+const rootDir = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Modules provided by Vortex at runtime that must stay external.
+ * The bulk of the list comes from the peerDependencies of `@nexusmods/vortex-api`;
+ * the rest are git-hosted Vortex runtime packages that cannot be declared as peers.
+ */
 function getExternals() {
   const builtins = builtinModules.filter((m) => !m.startsWith("_"));
 
-  // Read the externals list shipped with vortex-api
-  let appDeps = [];
-  try {
-    appDeps = JSON.parse(
-      readFileSync(resolve(vortexApiDir, "externals.json"), "utf8"),
-    );
-  } catch {
-    // nop
-  }
+  // The package `exports` map hides package.json from `require`, so read it by path.
+  const { peerDependencies } = JSON.parse(
+    readFileSync(resolve(rootDir, "node_modules/@nexusmods/vortex-api/package.json"), "utf8"),
+  );
 
-  return [...new Set([...builtins, ...appDeps, "electron", "vortex-api"])];
+  const injected = [
+    "electron",
+    "vortex-api",
+    "@nexusmods/vortex-api",
+    "@nexusmods/nexus-api",
+    "reselect",
+    "re-reselect",
+    "turbowalk",
+  ];
+
+  const ids = [
+    ...builtins,
+    ...builtins.map((m) => `node:${m}`),
+    ...Object.keys(peerDependencies ?? {}),
+    ...injected,
+  ];
+  const idSet = new Set(ids);
+
+  // Match both the package itself and its subpaths, e.g. `react/jsx-runtime`.
+  return (id) => idSet.has(id) || ids.some((e) => id.startsWith(`${e}/`));
 }
 
 function nativeAddonPlugin() {

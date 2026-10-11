@@ -1,7 +1,7 @@
 import React, { FC, useContext, useEffect, useState } from "react";
 import { ListGroup } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import { MainContext, selectors, tooltip } from "vortex-api";
+import { MainContext, selectors, tooltip } from "@nexusmods/vortex-api";
 import { LoadOrderEditInfo } from "./components/LoadOrderEditInfo";
 import { LoadOrderEntry } from "../Shared/components/LoadOrderEntry";
 import { Placeholder } from "./components/Placeholder";

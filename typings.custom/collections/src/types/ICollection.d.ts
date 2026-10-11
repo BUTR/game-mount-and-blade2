@@ -1,9 +1,15 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
+
+export interface ILootReference {
+  name: string;
+  display: string;
+  condition?: string;
+}
 
 interface IUserlistEntry {
   name: string;
   group?: string;
-  after?: string[];
+  after?: Array<string | ILootReference>;
 }
 
 interface IGamebryoRules {
@@ -18,8 +24,12 @@ export interface ICollectionGamebryo {
 
 export interface ICollectionConfig {
   recommendNewProfile: boolean;
+  excludePluginRules: boolean;
+  // Identifies how this collection's member referenceTags were generated:
+  //   absent -> random shortid tags, matched only by the stamped tag.
+  //   a version string -> deterministic tags derived from file identity + installSpec.
+  referenceTagScheme?: string;
 }
-
 
 export interface ICollectionInfo {
   author: string;
@@ -67,11 +77,10 @@ export interface ICollectionMod {
   optional: boolean;
   domainName: string;
   source: ICollectionSourceInfo;
-  // hashes?: types.IFileListItem[];
-  hashes?: any;
+  hashes?: types.IFileListItem[];
   // installer-specific data to replicate the choices the author made
-  choices?: any;
-  patches?: { [filePath: string]: string };
+  choices?: types.IChoiceType;
+  patches?: types.IModPatches;
   instructions?: string;
   author?: string;
   details?: ICollectionModDetails;
@@ -108,6 +117,7 @@ export interface ICollection extends Partial<ICollectionGamebryo> {
   info: ICollectionInfo;
   mods: ICollectionMod[];
   modRules: ICollectionModRule[];
+  collectionConfig?: ICollectionConfig;
 }
 
 export interface ICollectionAttributes {

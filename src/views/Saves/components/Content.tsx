@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, useMemo } from "react";
-import { Icon } from "vortex-api";
+import { Icon } from "@nexusmods/vortex-api";
 import { LaunchBar } from "./LaunchBar";
 import { SaveLoadOrderActions, Sidebar } from "./Sidebar";
 import { ISaveGame } from "../types";

@@ -1,4 +1,4 @@
-import { log, types } from "vortex-api";
+import { log, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { isModTypeModule } from "./modType";
 import { GAME_ID, SUBMODULE_FILE } from "../common";

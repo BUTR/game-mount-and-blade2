@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { Icon, util } from "vortex-api";
+import { Icon, util } from "@nexusmods/vortex-api";
 import { getFolderSizeAsync, ILocalScene } from "../../../servers/maps";
 import { useLocalization } from "../../../localization/hooks";
 import {

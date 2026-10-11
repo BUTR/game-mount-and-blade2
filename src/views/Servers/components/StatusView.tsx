@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { tooltip } from "vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import { IServerQueryResult } from "../../../servers/types";
 import { getStatusText } from "../utils";
 

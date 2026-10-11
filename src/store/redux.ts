@@ -1,6 +1,6 @@
 import { BaseActionCreator, ComplexActionCreator } from "redux-act";
 import update, { CustomCommands, extend, Spec } from "immutability-helper";
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 
 // Extend immutability-helper with $auto to auto-create missing objects
 extend("$auto", (value: Spec<object>, object: object) => {

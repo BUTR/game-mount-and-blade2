@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { ICollection } from "../types/ICollection";
 import { IExtendedInterfaceProps } from "../types/IExtendedInterfaceProps";
 
@@ -22,5 +22,7 @@ export interface IExtensionFeature {
   ) => Promise<void>;
   title: (t: types.TFunction) => string;
   condition?: (state: types.IState, gameId: string) => boolean;
-  editComponent?: React.ComponentType<IExtendedInterfaceProps>;
+  editComponent?: React.ComponentType<
+    React.PropsWithChildren<IExtendedInterfaceProps>
+  >;
 }

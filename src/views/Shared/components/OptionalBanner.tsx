@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Icon, types } from "vortex-api";
+import { Icon, types } from "@nexusmods/vortex-api";
 import { IVortexViewModelData } from "../../../types";
 import { useLocalization } from "../../../localization/hooks";
 

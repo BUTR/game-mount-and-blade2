@@ -1,4 +1,4 @@
-import { actions, selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { actionsSettings } from "../settings/actions";
@@ -190,8 +190,8 @@ export const applyGameModeTools = (api: types.IExtensionApi): void => {
     batched.push(actions.setPrimaryTool(GAME_ID, primaryTool as string));
   }
 
-  if (batched.length > 0) {
-    util.batchDispatch(api.store?.dispatch, batched);
+  if (batched.length > 0 && api.store !== undefined) {
+    util.batchDispatch(api.store.dispatch, batched);
   }
 };
 

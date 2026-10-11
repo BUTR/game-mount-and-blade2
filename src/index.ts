@@ -1,5 +1,5 @@
 import { method as toBluebird } from "bluebird";
-import { log, selectors, types } from "vortex-api";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import * as semver from "semver";
 import path from "path";
 import { GAME_ID } from "./common";
@@ -117,22 +117,21 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerInstaller(
     /*id:*/ "bannerlord-blse-installer",
     /*priority:*/ 30,
-    /*testSupported:*/ toBluebird(async (files: string[], gameId: string) => {
+    /*testSupported:*/ async (files: string[], gameId: string) => {
       if (GAME_ID !== gameId) {
         return undefined!;
       }
 
       return await testBLSEAsync(files, gameId);
-    }),
-    /*install:*/ toBluebird(
-      async (files: string[], _destinationPath: string, gameId: string) => {
-        if (GAME_ID !== gameId) {
-          return undefined!;
-        }
+    },
+    /*install:*/
+    async (files: string[], _destinationPath: string, gameId: string) => {
+      if (GAME_ID !== gameId) {
+        return undefined!;
+      }
 
-        return await installBLSEAsync(context.api, files);
-      },
-    ),
+      return await installBLSEAsync(context.api, files);
+    },
   );
   context.registerModType(
     /*id:*/ "bannerlord-blse",

@@ -1,7 +1,7 @@
 import React, { BaseSyntheticEvent, FC, useCallback } from "react";
 import { Checkbox, ListGroupItem } from "react-bootstrap";
 import { useSelector, useStore } from "react-redux";
-import { actions, Icon, selectors } from "vortex-api";
+import { actions, Icon, selectors } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { ValidationError } from "./ValidationError";
 import { ExternalBanner } from "./ExternalBanner";

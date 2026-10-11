@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../../common";
 
 /**
@@ -32,6 +32,8 @@ export class ServersPageOptions implements types.IMainPageOptions {
   public mdi = SERVERS_ICON_PATH;
   public group: "dashboard" | "global" | "per-game" | "support" | "hidden" =
     "per-game";
+
+  public priority = 55;
 
   constructor(context: types.IExtensionContext) {
     this.context = context;

@@ -1,4 +1,4 @@
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
 import { createReducer, updateAuto } from "./redux";
 import { actionsSave } from "../save/actions";

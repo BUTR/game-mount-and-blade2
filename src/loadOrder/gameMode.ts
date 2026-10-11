@@ -1,4 +1,4 @@
-import { actions, selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { LoadOrderManager } from "./manager";
 import { GameMode } from "../settings/types";
 import { bselectors } from "../selectors";

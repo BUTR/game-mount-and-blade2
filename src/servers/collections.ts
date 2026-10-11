@@ -1,5 +1,5 @@
 import type { IRevision } from "@nexusmods/nexus-api";
-import { selectors, types, util } from "vortex-api";
+import { selectors, types, util } from "@nexusmods/vortex-api";
 import { IServerExtensionCollection } from "./extension";
 import { GAME_ID } from "../common";
 

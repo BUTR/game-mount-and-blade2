@@ -1,4 +1,4 @@
-import { log, types } from "vortex-api";
+import { log, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { readFile } from "node:fs/promises";
 import { languageMap } from "../localization/utils";

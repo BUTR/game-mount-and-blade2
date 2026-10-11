@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { BannerlordModuleManager } from "@butr/vortexextensionnative";
 import { IBannerlordMod, IBannerlordModStorage } from "../types";
 

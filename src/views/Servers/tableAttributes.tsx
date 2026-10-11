@@ -1,5 +1,5 @@
 import React from "react";
-import { tooltip } from "vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import {
   FavoriteToggle,
   HostCell,

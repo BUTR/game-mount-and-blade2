@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Icon, tooltip } from "vortex-api";
+import { Icon, tooltip } from "@nexusmods/vortex-api";
 import {
   ActionButton,
   ExternalLink,

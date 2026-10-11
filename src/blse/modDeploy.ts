@@ -1,4 +1,4 @@
-import { types, util } from "vortex-api";
+import { types, util } from "@nexusmods/vortex-api";
 import { deployModsAsync } from "../vortex/deploy";
 import { findModDownload } from "../vortex/modFinder";
 import { findMod, isModActive } from "../vortex/modStorage";

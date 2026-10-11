@@ -1,4 +1,4 @@
-import { types, util } from "vortex-api";
+import { types, util } from "@nexusmods/vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
 import { Dirent, readdirSync, readFileSync } from "fs";
 import { TranslateValues } from "./types";

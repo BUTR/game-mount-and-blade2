@@ -1,9 +1,5 @@
 import { ComponentType } from "react";
-import { log, selectors, types } from "vortex-api";
-import {
-  IInvalidResult,
-  IValidationResult,
-} from "vortex-api/lib/extensions/file_based_loadorder/types/types";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   Utils,
@@ -219,14 +215,14 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
   public validate = (
     prevLO: VortexLoadOrderStorage,
     newLO: VortexLoadOrderStorage,
-  ): Promise<IValidationResult> => {
+  ): Promise<types.IValidationResult> => {
     const modules = (
       newLO ?? []
     ).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) => {
       return entry.data && entry.enabled ? entry.data.moduleInfoExtended : [];
     });
 
-    const invalidResults: IInvalidResult[] = [];
+    const invalidResults: types.IFBLOInvalidResult[] = [];
     for (const enabledModule of modules) {
       const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(
         modules,

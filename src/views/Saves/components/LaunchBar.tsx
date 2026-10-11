@@ -1,5 +1,5 @@
 import React, { FC, useContext, useState } from "react";
-import { Icon, MainContext } from "vortex-api";
+import { Icon, MainContext } from "@nexusmods/vortex-api";
 import { ActionButton } from "../../Shared/components/Controls";
 import { ISaveGame } from "../types";
 import { useLocalization } from "../../../localization/hooks";

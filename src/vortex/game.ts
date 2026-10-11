@@ -1,5 +1,5 @@
 import { method as toBluebird } from "bluebird";
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { statSync } from "node:fs";
 import { FetchBannerlordVersion } from "@butr/vortexextensionnative";

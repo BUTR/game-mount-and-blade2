@@ -1,4 +1,4 @@
-import { actions, selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { isServerJoinMod } from "./join";
 import { NO_MODS_PROFILE_FEATURE } from "./profiles";
 import { GAME_ID, MULTIPLAYER_PROFILE_FEATURE } from "../common";
@@ -58,12 +58,12 @@ export const watchNoModsProfile = (api: types.IExtensionApi): void => {
         // Uninstalled mods cannot be verified here; defer cleanup to Vortex core.
         .filter((modId) => mods[modId] !== undefined)
         .filter((modId) => !isServerJoinMod(mods[modId]!));
-      if (added.length === 0) {
+      if (added.length === 0 || api.store === undefined) {
         continue;
       }
 
       util.batchDispatch(
-        api.store?.dispatch,
+        api.store.dispatch,
         added.map((modId) => actions.setModEnabled(profile.id, modId, false)),
       );
       const { localize: t } = LocalizationManager.getInstance(api);

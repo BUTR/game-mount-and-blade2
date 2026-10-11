@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import { ModernTableColumn } from "./ModernTable";
 
 export type ColumnToggle = {

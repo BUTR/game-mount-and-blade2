@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { tooltip } from "vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { IVortexViewModelData } from "../../../types";
 import { useLocalization } from "../../../localization/hooks";

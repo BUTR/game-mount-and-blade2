@@ -1,4 +1,4 @@
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import {
   ICollectionData,
   ICollectionDataWithSettingsData,
