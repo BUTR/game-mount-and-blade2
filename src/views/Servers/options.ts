@@ -33,7 +33,7 @@ export class ServersPageOptions implements types.IMainPageOptions {
   public group: "dashboard" | "global" | "per-game" | "support" | "hidden" =
     "per-game";
 
-  public priority = 55;
+  public priority = 50;
 
   constructor(context: types.IExtensionContext) {
     this.context = context;
