@@ -33,7 +33,11 @@ import { LocalizationManager } from "./localization/manager";
 import { version } from "../package.json";
 import { watchNoModsProfile } from "./servers/noModsProfile";
 import { watchProfiles } from "./servers/profileWatch";
-import { applyGameModeTools, watchPrimaryTool } from "./vortex/gameModeTools";
+import {
+  applyGameModeTools,
+  watchBLSEState,
+  watchPrimaryTool,
+} from "./vortex/gameModeTools";
 import { watchGameModeMenu } from "./vortex/gameModeMenu";
 import { registerProfileType } from "./profileType/register";
 import { watchDocumentWhileActive } from "./profileType/documentWatcher";
@@ -180,6 +184,7 @@ const main = (context: types.IExtensionContext): boolean => {
     watchNoModsProfile(context.api);
     watchProfiles(context.api);
     watchPrimaryTool(context.api);
+    watchBLSEState(context.api);
     watchGameModeMenu(context.api);
     watchProfileCards(context.api);
     watchMenuItems(context.api);

@@ -4,6 +4,7 @@ import { bselectors } from "../selectors";
 import { actionsSettings } from "../settings/actions";
 import { GameMode } from "../settings/types";
 import { IStateWithBannerlord } from "../types";
+import { isModActive } from "./modStorage";
 
 type DiscoveredTools = Record<string, types.IDiscoveredTool>;
 type Actions = Parameters<typeof util.batchDispatch>[1];
@@ -33,7 +34,18 @@ export const isToolOfGameMode = (toolId: string, gameMode: GameMode): boolean =>
   !MODE_TOOLS[otherGameMode(gameMode)].includes(toolId);
 
 /**
- * Whether Play can launch the tool in the mode. BLSE tools need BLSE installed
+ * Whether the active profile deploys BLSE. Installed in Vortex isn't enough, a profile can disable it
+ */
+const isBLSEActive = (state: IStateWithBannerlord): boolean => {
+  const blseMod = bselectors.blseMod(state);
+  return (
+    blseMod !== undefined &&
+    isModActive(selectors.activeProfile(state), blseMod)
+  );
+};
+
+/**
+ * Whether Play can launch the tool in the mode. BLSE tools need BLSE enabled in the active profile
  */
 const isLaunchable = (
   state: IStateWithBannerlord,
@@ -43,15 +55,22 @@ const isLaunchable = (
 ): boolean =>
   tools[toolId]?.path !== undefined &&
   isToolOfGameMode(toolId, gameMode) &&
-  (!toolId.startsWith("blse-") || bselectors.blseMod(state) !== undefined);
+  (!toolId.startsWith("blse-") || isBLSEActive(state));
 
+/**
+ * BLSE for Singleplayer, the game itself when the profile doesn't deploy BLSE. Not left unset, Vortex would pick
+ * BLSE's defaultPrimary then
+ */
 const defaultPrimaryTool = (
   state: IStateWithBannerlord,
   tools: DiscoveredTools,
   gameMode: GameMode,
 ): string | undefined => {
-  const toolId = gameMode === "multiplayer" ? "vanilla-mp-cli" : "blse-cli";
-  return isLaunchable(state, tools, toolId, gameMode) ? toolId : undefined;
+  const toolIds =
+    gameMode === "multiplayer"
+      ? ["vanilla-mp-cli"]
+      : ["blse-cli", "vanilla-cli"];
+  return toolIds.find((toolId) => isLaunchable(state, tools, toolId, gameMode));
 };
 
 /**
@@ -81,6 +100,22 @@ const resolvePrimaryTool = (
 };
 
 /**
+ * Whether the mode's remembered tool is only out of use for now, like BLSE in a profile that doesn't enable it.
+ * The tool standing in for it isn't remembered, so the remembered one comes back once it can launch again
+ */
+const isRememberedToolSuspended = (
+  state: IStateWithBannerlord,
+  tools: DiscoveredTools,
+  gameMode: GameMode,
+): boolean => {
+  const remembered = bselectors.modePrimaryTool(state, gameMode);
+  return (
+    typeof remembered === "string" &&
+    !isLaunchable(state, tools, remembered, gameMode)
+  );
+};
+
+/**
  * Remembers the current primary tool for the active mode, before switching away from it
  */
 export const rememberPrimaryTool = (api: types.IExtensionApi): void => {
@@ -94,6 +129,11 @@ export const rememberPrimaryTool = (api: types.IExtensionApi): void => {
     return;
   }
   if (toolId !== null && !isToolOfGameMode(toolId, gameMode)) {
+    return;
+  }
+  const tools: DiscoveredTools =
+    selectors.discoveryByGame(state, GAME_ID)?.tools ?? {};
+  if (isRememberedToolSuspended(state, tools, gameMode)) {
     return;
   }
   api.store?.dispatch(actionsSettings.setModePrimaryTool(gameMode, toolId));
@@ -156,7 +196,7 @@ export const applyGameModeTools = (api: types.IExtensionApi): void => {
 };
 
 /**
- * Remembers the primary tool picked for the active mode. When Vortex picks another mode's tool,
+ * Remembers the primary tool picked for the active mode. When Vortex picks a tool Play can't launch in the mode,
  * as it does with BLSE's defaultPrimary once the primary tool is unset, the mode's own is restored
  */
 export const watchPrimaryTool = (api: types.IExtensionApi): void => {
@@ -173,15 +213,44 @@ export const watchPrimaryTool = (api: types.IExtensionApi): void => {
         return;
       }
       const gameMode = bselectors.activeGameMode(state);
-      if (toolId !== null && !isToolOfGameMode(toolId, gameMode)) {
+      const tools: DiscoveredTools =
+        selectors.discoveryByGame(state, GAME_ID)?.tools ?? {};
+      if (toolId !== null && !isLaunchable(state, tools, toolId, gameMode)) {
         applyGameModeTools(api);
         return;
       }
-      if (bselectors.modePrimaryTool(state, gameMode) !== toolId) {
+      if (
+        bselectors.modePrimaryTool(state, gameMode) !== toolId &&
+        !isRememberedToolSuspended(state, tools, gameMode)
+      ) {
         api.store?.dispatch(
           actionsSettings.setModePrimaryTool(gameMode, toolId),
         );
       }
     },
   );
+};
+
+/**
+ * Picks the Play tool again when the active profile enables or disables BLSE, or BLSE is installed or removed
+ */
+export const watchBLSEState = (api: types.IExtensionApi): void => {
+  let last = isBLSEActive(api.getState<IStateWithBannerlord>());
+  const update = (): void => {
+    const state = api.getState<IStateWithBannerlord>();
+    const current = isBLSEActive(state);
+    if (current === last) {
+      return;
+    }
+    last = current;
+    if (selectors.activeGameId(state) === GAME_ID) {
+      applyGameModeTools(api);
+    }
+  };
+  api.onStateChange?.(["persistent", "profiles"], update);
+  api.onStateChange?.(["persistent", "mods", GAME_ID], update);
+  // A profile switch picks the tool itself, on profile-did-change
+  api.onStateChange?.(["settings", "profiles", "activeProfileId"], () => {
+    last = isBLSEActive(api.getState<IStateWithBannerlord>());
+  });
 };

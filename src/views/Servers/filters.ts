@@ -23,13 +23,20 @@ export const getRequiredClientModules = (
   ).filter((requirement) => requirement.required);
 
 /**
+ * Whether the server's module requirements are known: the lobby lists its modules, or the BUTR extension answered.
+ * A lobby entry without a module list says nothing about them
+ */
+const hasKnownRequirements = (row: IServerRow): boolean =>
+  (row.lobby !== null && row.lobby.LoadedModules !== null) ||
+  row.extension?.state === "available";
+
+/**
  * Identifies whether a server is verified to run without required client mods:
  * advertised by the lobby or BUTR extension with zero required client modules.
  * Servers with unknown module requirements return false.
  */
 export const runsWithoutMods = (row: IServerRow): boolean =>
-  (row.lobby !== null || row.extension?.state === "available") &&
-  getRequiredClientModules(row).length === 0;
+  hasKnownRequirements(row) && getRequiredClientModules(row).length === 0;
 
 /**
  * Evaluates whether all required server modules are deployed in the local installation;
@@ -39,7 +46,7 @@ export const isReadyToJoin = (
   row: IServerRow,
   installed: Readonly<IModuleCache> | null,
 ): boolean | null => {
-  if (installed === null || (row.lobby === null && row.extension === null)) {
+  if (installed === null || !hasKnownRequirements(row)) {
     return null;
   }
   return checkClientModules(getRequiredClientModules(row), installed).every(
