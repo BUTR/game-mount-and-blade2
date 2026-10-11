@@ -1,7 +1,10 @@
 import { types, util } from "vortex-api";
-import { findMod, findModDownload, isModActive } from "../vortex";
+import { deployModsAsync } from "../vortex/deploy";
+import { findModDownload } from "../vortex/modFinder";
+import { findMod, isModActive } from "../vortex/modStorage";
 import { IBannerlordMod, IBannerlordModStorage } from "../types";
-import { findBLSEDownload, findBLSEMod } from "./utils";
+import { findBLSEDownload } from "./utils";
+import { findBLSEMod } from "./modType";
 import { HARMONY_MOD_ID } from "../common";
 
 export enum DeployModStatus {
@@ -17,7 +20,10 @@ export type DeployModResult = {
   downloadId?: string | undefined;
 };
 
-const checkModDeploy = (
+/**
+ * What a mod still needs in the profile: a download, an install or enabling. OK when it is enabled
+ */
+export const checkModDeploy = (
   profile: types.IProfile,
   mod: IBannerlordMod | undefined,
   downloadId: string | undefined,
@@ -59,7 +65,7 @@ export const checkHarmonyDeploy = (
 export const deployModAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
-  await util.toPromise((cb) => api.events.emit("deploy-mods", cb));
+  await deployModsAsync(api);
   await util.toPromise((cb) =>
     api.events.emit("start-quick-discovery", () => cb(null)),
   );

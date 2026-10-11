@@ -60,15 +60,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22.19
-          cache: "yarn"
+          cache: "pnpm"
 
-      - run: yarn --frozen-lockfile --immutable --network-timeout 600000 install
+      - run: pnpm install --frozen-lockfile
 
-      - run: yarn run build
+      - run: pnpm run build
 
       - uses: actions/upload-artifact@v4
         with:

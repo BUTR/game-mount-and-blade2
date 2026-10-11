@@ -2,7 +2,7 @@ import React, { FC, useContext } from "react";
 import { Button } from "react-bootstrap";
 import { MainContext } from "vortex-api";
 import { openLoadOrderPage } from "../utils";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
 export const OpenLoadOrderButton: FC = () => {
   const { localize: t } = useLocalization();

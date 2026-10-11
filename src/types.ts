@@ -35,8 +35,7 @@ export interface IBannerlordSession {
   useSteamBinariesOnXbox: boolean;
 }
 
-export interface PersistenceLoadOrderStorage
-  extends Array<IPersistenceLoadOrderEntry> {}
+export interface PersistenceLoadOrderStorage extends Array<IPersistenceLoadOrderEntry> {}
 export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
@@ -46,8 +45,7 @@ export interface IPersistenceLoadOrderEntry {
 }
 
 export interface VortexLoadOrderStorage extends Array<VortexLoadOrderEntry> {}
-export interface VortexLoadOrderEntry
-  extends types.ILoadOrderEntry<IVortexViewModelData> {}
+export interface VortexLoadOrderEntry extends types.ILoadOrderEntry<IVortexViewModelData> {}
 export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
   hasSteamBinariesOnXbox: boolean | null;
@@ -55,8 +53,10 @@ export interface IVortexViewModelData {
   index: number;
 }
 
-export interface IModuleCache
-  extends Record<string, vetypes.ModuleInfoExtendedWithMetadata> {}
+export interface IModuleCache extends Record<
+  string,
+  vetypes.ModuleInfoExtendedWithMetadata
+> {}
 
 /**
  * Vortex

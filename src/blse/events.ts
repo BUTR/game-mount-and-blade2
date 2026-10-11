@@ -3,8 +3,15 @@ import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 
+/**
+ * BLSE is a singleplayer tool, so the primary tool is only managed in the singleplayer mode.
+ * The multiplayer mode's primary tool is managed by the game mode tools
+ */
 export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
+  if (bselectors.activeGameMode(state) !== "singleplayer") {
+    return Promise.resolve();
+  }
 
   const primaryTool = bselectors.bannerlordPrimaryTool(state);
 
@@ -24,6 +31,9 @@ export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
  */
 export const didPurgeBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
+  if (bselectors.activeGameMode(state) !== "singleplayer") {
+    return Promise.resolve();
+  }
 
   const primaryTool = bselectors.bannerlordPrimaryTool(state);
   if (primaryTool !== "blse-cli") {

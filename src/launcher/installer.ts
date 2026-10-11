@@ -6,7 +6,7 @@ import {
 } from "@butr/vortexextensionnative";
 import path from "path";
 import { readFile } from "node:fs/promises";
-import { vortexStoreToLibraryStore } from "../vortex";
+import { vortexStoreToLibraryStore } from "../vortex/store";
 import { actionsLauncher } from "./actions";
 import {
   AVAILABLE_STORES,
@@ -16,11 +16,11 @@ import {
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
 } from "../common";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 import {
   getAvailableTranslationLanguages,
   pushTranslationLanguageAttributes,
-} from "../vortex/modTranslation";
+} from "../vortex/translationLanguages";
 import { IStateWithBannerlord } from "../types";
 import { bselectors } from "../selectors";
 

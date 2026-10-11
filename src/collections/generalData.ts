@@ -11,10 +11,10 @@ import {
 import { CollectionParseError } from "./errors";
 import { collectionInstallBLSEAsync } from "./utils";
 import { GAME_ID } from "../common";
-import { isModActive } from "../vortex";
-import { findBLSEMod } from "../blse";
-import { vortexToPersistence } from "../loadOrder";
-import { VortexLauncherManager } from "../launcher";
+import { isModActive } from "../vortex/modStorage";
+import { findBLSEMod } from "../blse/modType";
+import { vortexToPersistence } from "../loadOrder/converters";
+import { VortexLauncherManager } from "../launcher/manager";
 import { IBannerlordModStorage, VortexLoadOrderStorage } from "../types";
 
 /**

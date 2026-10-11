@@ -4,7 +4,7 @@ import {
   libraryToLibraryVM,
   libraryVMToVortex,
   vortexToLibraryVM,
-} from "../../loadOrder";
+} from "../../loadOrder/converters";
 import { bselectors } from "../../selectors";
 import { filterEntryWithInvalidId } from "../../utils";
 import {

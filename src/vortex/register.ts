@@ -2,8 +2,8 @@ import { method as toBluebird } from "bluebird";
 import React from "react";
 import { selectors, types } from "vortex-api";
 import { GAME_ID } from "../common";
-import { DetailsRenderer } from "../views";
-import { VortexLauncherManager } from "../launcher";
+import { DetailsRenderer } from "../views/Details/components/DetailsRenderer";
+import { VortexLauncherManager } from "../launcher/manager";
 import { getGameInstallPath, isModTypeModule } from "./modType";
 import {
   isModTranslationArchive,

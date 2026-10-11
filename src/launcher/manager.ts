@@ -3,23 +3,27 @@ import {
   NativeLauncherManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { vortexStoreToLibraryStore } from "../vortex";
+import { vortexStoreToLibraryStore } from "../vortex/store";
 import { installModuleAsync } from "./installer";
 import {
   getAllModuleViewModelsCallback,
-  getInstallPathCallback,
   getModuleViewModelsCallback,
+  setModuleViewModelsCallback,
+} from "./callbacks/modules";
+import {
+  getInstallPathCallback,
   getOptionsCallback,
   getStateCallback,
-  readDirectoryFileListCallback,
-  readDirectoryListCallback,
-  readFileContentCallback,
   sendDialogCallback,
   sendNotificationCallback,
   setGameParametersCallback,
-  setModuleViewModelsCallback,
+} from "./callbacks/ui";
+import {
+  readDirectoryFileListCallback,
+  readDirectoryListCallback,
+  readFileContentCallback,
   writeFileContentCallback,
-} from "./callbacks";
+} from "./callbacks/fileIO";
 import { GAME_ID } from "../common";
 import { IModuleCache } from "../types";
 
@@ -62,7 +66,7 @@ export class VortexLauncherManager {
       getModuleViewModelsAsync,
       setModuleViewModelsCallback(api),
       getOptionsCallback(api),
-      getStateCallback,
+      getStateCallback(api),
     );
   }
 
@@ -206,6 +210,13 @@ export class VortexLauncherManager {
 
   public getSaveFilesAsync = async (): Promise<vetypes.SaveMetadata[]> => {
     return await this.launcherManager.getSaveFilesAsync();
+  };
+
+  /**
+   * The path of the save file with the name, the file name without .sav
+   */
+  public getSaveFilePathAsync = async (saveName: string): Promise<string> => {
+    return await this.launcherManager.getSaveFilePathAsync(saveName);
   };
 
   /**

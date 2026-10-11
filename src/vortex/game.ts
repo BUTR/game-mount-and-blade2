@@ -9,7 +9,6 @@ import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_XBOX,
   BINARY_FOLDER_STANDARD,
-  BINARY_FOLDER_STANDARD_MODDING_KIT,
   BINARY_FOLDER_XBOX,
   EPICAPP_ID,
   GAME_ID,
@@ -18,17 +17,6 @@ import {
   STEAMAPP_ID,
   XBOX_ID,
 } from "../common";
-
-export const getBinaryPath = (store: string | undefined): string => {
-  return path.join(
-    `bin`,
-    isStoreXbox(store) ? BINARY_FOLDER_XBOX : BINARY_FOLDER_STANDARD,
-  );
-};
-
-export const getBinaryModdingPath = (_store: string | undefined): string => {
-  return path.join(`bin`, BINARY_FOLDER_STANDARD_MODDING_KIT);
-};
 
 const getExeByStore = (
   discoveryPath: string | undefined,

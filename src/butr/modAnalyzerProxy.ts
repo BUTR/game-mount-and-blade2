@@ -3,7 +3,7 @@ import { request, RequestOptions } from "https";
 import { BUTR_HOST } from "./const";
 import { IModAnalyzerRequestQuery, IModAnalyzerResult } from "./types";
 import { version } from "../../package.json";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 
 export class ModAnalyzerProxy {
   private options: RequestOptions;

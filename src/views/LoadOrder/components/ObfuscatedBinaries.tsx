@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { tooltip } from "vortex-api";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
 export type ObfuscatedBinariesProps = {
   hasObfuscatedBinaries: boolean;

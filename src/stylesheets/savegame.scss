@@ -1,63 +1,79 @@
-#table-bannerlord-savegames {
-    .radio input[type="radio"] {
-        margin: 0;
-        position: inherit;
+// The Saves page. The look it shares with the other pages is in modern.scss, which is registered first, so the rules
+// here are scoped as #page-bannerlord-saves .bls-page to be as specific as the shared ones and win by coming later
+
+#page-bannerlord-saves .bls-page {
+    .bls-launch-bar {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid var(--bls-stroke-weak);
+        border-radius: var(--bls-radius-lg);
+        background: var(--bls-surface-low);
+
+        strong {
+            font-size: var(--bls-text-md);
+            line-height: 20px;
+            font-weight: 500;
+            color: var(--bls-text-strong);
+            overflow-wrap: anywhere;
+        }
     }
 
-    .header-status {
-        max-width: 5em;
-    }
-    .header-dayLong {
-        max-width: 4em;
-    }
-
-    .header-creationTime {
-        min-width: 12em;
-        max-width: 12em;
+    // Offering BLSE, tinted so it reads as a suggestion and not as the current launch setting
+    .bls-launch-bar-suggest {
+        border-color: color-mix(in srgb, var(--bls-primary) 30%, transparent);
+        background: color-mix(
+            in srgb,
+            var(--bls-primary) 8%,
+            var(--bls-surface-low)
+        );
     }
 
-    .header-mainHeroLevel {
-        max-width: 4em;
-    }
-    .header-applicationVersion {
-        max-width: 9em;
-    }
-
-    .header-name {
-        width: 50%;
+    .bls-launch-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        color: var(--bls-primary);
     }
 
-    .header-characterName {
-        width: 50%;
-    }
-}
-
-#page-bannerlord-saves {
-    #sidebar {
-        padding: 10px;
-        width: 20em;
-        margin-left: 1em;
-        background-color: var(--brand-bg, black);
-        border: 2px solid var(--border-color, white);
-        overflow: auto;
+    .bls-launch-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
     }
 
-    #sidebar > :first-child {
-        margin-top: 0 !important;
+    // A long list, so tighter than the other panel lists
+    .bls-module-item {
+        min-height: 24px;
+        padding: 0;
     }
 
-    #instructions {
-        background-color: var(--brand-bg, black);
-        border: 2px solid var(--border-color, white);
-        padding: 10px;
-        margin-bottom: 1em;
+    .bls-save-name {
+        color: var(--bls-text-strong);
+        font-weight: 500;
     }
 
-    #instructions > :first-child {
-        margin-top: 0 !important;
+    .bls-save-banner {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        overflow: hidden;
+        border-radius: var(--bls-radius-sm);
+        background: var(--bls-wash-low);
+        box-shadow: 0 0 0 1px var(--bls-stroke-weak);
+
+        svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
     }
 
-    #instructions > :last-child {
-        margin-bottom: 0 !important;
+    .bls-issue-group + .bls-issue-group {
+        margin-top: 8px;
     }
 }

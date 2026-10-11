@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { types } from "vortex-api";
-import { languageMap } from "../../../localization";
+import { languageMap } from "../../../localization/utils";
 
 export type ExternalBannerProps = {
   mod: types.IMod;

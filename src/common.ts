@@ -1,6 +1,7 @@
 import path from "path";
 
 export const LOAD_ORDER_SUFFIX = `_loadorder.json`;
+export const MULTIPLAYER_LOAD_ORDER_SUFFIX = `_loadorder_multiplayer.json`;
 
 export const TW_LOGO = path.join(__dirname, `tw_logo.png`);
 export const MODULE_LOGO = path.join(__dirname, `community_mod.png`);
@@ -33,6 +34,11 @@ export const HARMONY_MOD_ID = 2006;
 export const HARMONY_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${HARMONY_MOD_ID}`;
 
 export const MODULES = `Modules`;
+
+/**
+ * The profile feature holding the profile's type: true for Multiplayer, Singleplayer otherwise
+ */
+export const MULTIPLAYER_PROFILE_FEATURE = `bannerlord_multiplayer`;
 
 export const EXTENSION_BASE_ID = `MAB2B`;
 export const GOG_IDS = [`1802539526`, `1564781494`];

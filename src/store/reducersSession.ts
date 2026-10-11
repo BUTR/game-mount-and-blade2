@@ -1,6 +1,6 @@
 import { types } from "vortex-api";
 import { createReducer, updateAuto } from "./redux";
-import { actionsLauncher } from "../launcher";
+import { actionsLauncher } from "../launcher/actions";
 import { IBannerlordSession } from "../types";
 
 const defaults: IBannerlordSession = {

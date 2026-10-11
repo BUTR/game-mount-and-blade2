@@ -5,15 +5,14 @@ import {
   IModWithCollection,
   IModWithIncludedModOptions,
 } from "./types";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
+import { checkBLSEDeploy, checkHarmonyDeploy } from "../blse/modDeploy";
 import {
-  checkBLSEDeploy,
-  checkHarmonyDeploy,
   resolveBLSEDeployAsync,
   resolveHarmonyDeployAsync,
-} from "../blse";
+} from "../blse/deploy";
 
 export const hasContextWithCollectionFeature = (
   context: types.IExtensionContext,

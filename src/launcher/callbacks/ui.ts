@@ -3,23 +3,51 @@ import { types as vetypes } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../../common";
 import { bselectors } from "../../selectors";
 import { IStateWithBannerlord } from "../../types";
-import { LocalizationManager } from "../../localization";
+import { LocalizationManager } from "../../localization/manager";
+import { GameMode } from "../../settings/types";
+import { isToolOfGameMode } from "../../vortex/gameModeTools";
+
+const SINGLEPLAYER_ARGUMENT = "/singleplayer";
+const MULTIPLAYER_ARGUMENT = "/multiplayer";
+const SAVE_ARGUMENTS = ["/continuesave", "/continuegame"];
 
 /**
- * Callback: sets game parameters (CLI args) for discovered tools
+ * The LauncherManager always starts singleplayer. In multiplayer the mode is swapped and the save arguments dropped,
+ * a multiplayer game has no save to continue
+ */
+const toGameModeParameters = (
+  gameParameters: string[],
+  gameMode: GameMode,
+): string[] =>
+  gameMode === "multiplayer"
+    ? gameParameters
+        .filter(
+          (x) => !SAVE_ARGUMENTS.some((argument) => x.startsWith(argument)),
+        )
+        .map((x) => (x === SINGLEPLAYER_ARGUMENT ? MULTIPLAYER_ARGUMENT : x))
+    : gameParameters;
+
+/**
+ * Callback: sets game parameters (CLI args) for the game and the active mode's discovered CLI tools.
+ * The other mode's tools keep the arguments of their own mode
  */
 export const setGameParametersCallback =
   (api: types.IExtensionApi) =>
   (_executable: string, gameParameters: string[]): Promise<void> => {
-    const params = gameParameters
+    const state = api.getState<IStateWithBannerlord>();
+
+    const gameMode = bselectors.activeGameMode(state);
+
+    const params = toGameModeParameters(gameParameters, gameMode)
       .filter((x) => x !== " " && x.length > 0)
       .join(" ");
 
-    const state = api.getState();
-
     const discovery = selectors.currentGameDiscovery(state);
     const cliTools = Object.values(discovery?.tools ?? {}).filter(
-      (tool) => tool.id && tool.id.endsWith("-cli"),
+      (tool) =>
+        tool.id &&
+        tool.id.endsWith("-cli") &&
+        isToolOfGameMode(tool.id, gameMode),
     );
     const batchedActions = cliTools.map((tool) =>
       actions.addDiscoveredTool(
@@ -161,10 +189,13 @@ export const getOptionsCallback =
   };
 
 /**
- * Callback: returns launcher state
+ * Callback: returns launcher state. The LauncherManager orders and lists only the modules of this mode
  */
-export const getStateCallback = (): Promise<vetypes.LauncherState> => {
-  return Promise.resolve({
-    isSingleplayer: true, // We don't support multiplayer yet
-  });
-};
+export const getStateCallback =
+  (api: types.IExtensionApi) => (): Promise<vetypes.LauncherState> => {
+    const state = api.getState<IStateWithBannerlord>();
+
+    return Promise.resolve({
+      isSingleplayer: bselectors.activeGameMode(state) === "singleplayer",
+    });
+  };

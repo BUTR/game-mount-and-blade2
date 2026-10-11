@@ -1,5 +1,7 @@
 import { selectors, types } from "vortex-api";
 import { GAME_ID } from "../../common";
+import { bselectors } from "../../selectors";
+import { IStateWithBannerlord } from "../../types";
 
 export class SavePageOptions implements types.IMainPageOptions {
   private context: types.IExtensionContext;
@@ -13,11 +15,18 @@ export class SavePageOptions implements types.IMainPageOptions {
     this.context = context;
   }
 
+  /**
+   * Saves are singleplayer only
+   */
   public visible = (): boolean => {
     if (!this.context.api.store) {
       return false;
     }
-    return selectors.activeGameId(this.context.api.getState()) === GAME_ID;
+    const state = this.context.api.getState<IStateWithBannerlord>();
+    return (
+      selectors.activeGameId(state) === GAME_ID &&
+      bselectors.activeGameMode(state) === "singleplayer"
+    );
   };
   public props = (): {} => ({});
 }

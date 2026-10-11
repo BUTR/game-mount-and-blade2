@@ -3,7 +3,7 @@ import {
   BannerlordModuleManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { getModuleAttributes } from "../vortex";
+import { getModuleAttributes } from "../vortex/modFinder";
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -11,7 +11,7 @@ import {
   VortexLoadOrderEntry,
   VortexLoadOrderStorage,
 } from "../types";
-import { ValidationManager } from "../validation";
+import { ValidationManager } from "../validation/manager";
 
 const isLockedEntry = (entry: VortexLoadOrderEntry): boolean =>
   entry.locked !== undefined &&

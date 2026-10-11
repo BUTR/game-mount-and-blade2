@@ -87,7 +87,7 @@ const updateFromFile = (configuration) => {
     "src/Bannerlord.LauncherManager.Native.TypeScript",
   );
 
-  exec("yarn remove @butr/vortexextensionnative");
+  exec("pnpm remove @butr/vortexextensionnative");
 
   exec("yarn run clean", extensionPath);
   exec(`yarn run build -- ${configuration}`, extensionPath);
@@ -98,28 +98,41 @@ const updateFromFile = (configuration) => {
     path.join(extensionPath, tgzFile),
     path.join(ROOT_DIR, tgzFile),
   );
-  exec(`yarn add file:./${tgzFile}`);
+  exec(`pnpm add file:./${tgzFile}`);
 };
 
 const updateFromNpm = () => {
   console.log("Updating @butr/vortexextensionnative from NPM");
 
-  exec("npx tsc -p tsconfig.json");
-  exec("npx tsc -p tsconfig.module.json");
+  exec("pnpm exec tsc -p tsconfig.json");
+  exec("pnpm exec tsc -p tsconfig.module.json");
 };
 
 const lint = () => {
   console.log("Lint");
 
-  exec("yarn format:check");
-  exec("yarn lint");
+  exec("pnpm format:check");
+  exec("pnpm lint");
+  exec("pnpm lint:cycles");
 };
 
 const webpack = () => {
   console.log("Webpack");
 
-  exec("npx webpack --config webpack.config.js --color");
-  exec("npx extractInfo");
+  exec("pnpm exec webpack --config webpack.config.js --color");
+  exec("pnpm exec extractInfo");
+  publishLobbyBridge();
+};
+
+/**
+ * The lobby bridge is a framework dependent .NET 9 tool, Vortex makes sure the runtime is installed
+ */
+const publishLobbyBridge = () => {
+  console.log("Publish Bannerlord.LobbyBridge");
+
+  exec(
+    `dotnet publish "tools/Bannerlord.LobbyBridge/Bannerlord.LobbyBridge.csproj" -c Release -o "${DIST_DIR}" -p:DebugType=none -nologo`,
+  );
 };
 
 const pack7z = () => {
@@ -156,8 +169,11 @@ const copyToVortex = (isDev) => {
       removeIfExists(destPath);
       copyRecursive(DIST_DIR, destPath);
     }
-  } catch {
-    // Silently ignore errors (matching PowerShell behavior)
+  } catch (err) {
+    // A running Vortex keeps the extension's native library loaded, so the folder can't be replaced
+    console.error(
+      `Copying to Vortex plugins failed, close Vortex and build again: ${err}`,
+    );
   }
 };
 

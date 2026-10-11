@@ -1,104 +1,155 @@
 import React from "react";
 import ticksToDate from "ticks-to-date";
-import { types } from "vortex-api";
-import { RadioView, StatusView } from "./components";
+import { RadioView } from "./components/RadioView";
+import { StatusView } from "./components/StatusView";
 import { ISaveGame } from "./types";
-import { LocalizationManager } from "../../localization";
-import { versionToString } from "../../butr";
+import { countIssues, formatSaveTime } from "./utils";
+import { versionToString } from "../../butr/version";
+import { BannerImage } from "../Shared/components/BannerImage";
+import { ModernTableColumn } from "../Shared/components/ModernTable";
 
-export const getTableAttributes = (
-  api: types.IExtensionApi,
+type Localize = (key: string, values?: Record<string, string>) => string;
+
+const Text = ({ value }: { value: string }): JSX.Element => (
+  <span className="bls-table-truncate" title={value}>
+    {value}
+  </span>
+);
+
+/**
+ * The list's columns. Narrowing the list is the toolbar's search and Filters popover's job
+ *
+ * @param hasBLSE without BLSE the game can't be started into a save, so there is no Launch column
+ * @param launchSave the save the game is started into, null for none
+ */
+export const getSaveColumns = (
+  t: Localize,
   hasBLSE: boolean,
-  selectedSave: ISaveGame | null,
-  saveSelectedAsync: (save: ISaveGame) => Promise<void>,
-): types.ITableAttribute<[string, ISaveGame]>[] => {
-  const { localize: t } = LocalizationManager.getInstance(api);
+  launchSave: ISaveGame | null,
+  onLaunchSave: (save: ISaveGame) => Promise<void>,
+): ModernTableColumn<ISaveGame>[] => {
+  const launch: ModernTableColumn<ISaveGame> = {
+    id: "launch",
+    label: t("Launch"),
+    width: "52px",
+    render: (save) => (
+      <RadioView
+        save={save}
+        checked={save.name === launchSave?.name}
+        label={t("Load {{save}} on launch", { save: save.name })}
+        onChange={onLaunchSave}
+      />
+    ),
+    sortValue: (save) => (save.name === launchSave?.name ? 1 : 0),
+    firstDirection: "desc",
+  };
 
-  const tableAttributes: types.ITableAttribute<[string, ISaveGame]>[] = [
+  const columns: ModernTableColumn<ISaveGame>[] = [
     {
-      id: "#",
-      name: "#",
-      customRenderer: (data) => {
-        if (
-          data.length &&
-          typeof data[0] === "string" &&
-          !Array.isArray(data[1])
-        ) {
-          const save = data[1];
-          return (
-            <RadioView
-              hasBLSE={hasBLSE}
-              save={save}
-              selectedSave={selectedSave}
-              onChange={saveSelectedAsync}
-            />
-          );
-        }
-        return <></>;
-      },
-      placement: "both",
-      edit: {},
+      id: "banner",
+      label: t("Clan banner"),
+      hideLabel: true,
+      width: "28px",
+      // Fixed-size slot to maintain consistent row alignment while banners load or if a save has none
+      render: (save) => (
+        <span className="bls-save-banner">
+          <BannerImage
+            code={save.clanBannerCode}
+            modules={Object.keys(save.modules)}
+          />
+        </span>
+      ),
     },
     {
       id: "name",
-      name: t("{=JtelOsIW}Name"),
-      calc: ([, save]) => save.name,
-      placement: "both",
-      edit: {},
+      label: t("{=JtelOsIW}Name"),
+      width: "minmax(200px, 1fr)",
+      render: (save) => (
+        <span className="bls-table-truncate bls-save-name" title={save.name}>
+          {save.name}
+        </span>
+      ),
+      sortValue: (save) => save.name,
     },
     {
       id: "characterName",
-      name: t("{=OJsGrGVi}Character"),
-      calc: ([, save]) => save.characterName ?? "",
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("{=OJsGrGVi}Character"),
+      width: "160px",
+      render: (save) => <Text value={save.characterName ?? ""} />,
+      sortValue: (save) => save.characterName ?? null,
+      groupValue: (save) => save.characterName ?? null,
     },
     {
       id: "mainHeroLevel",
-      name: t("{=JxpEEQdF}Level"),
-      calc: ([, save]) => save.mainHeroLevel ?? "",
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("{=JxpEEQdF}Level"),
+      width: "56px",
+      align: "end",
+      render: (save) => save.mainHeroLevel ?? "",
+      sortValue: (save) => save.mainHeroLevel ?? null,
+      firstDirection: "desc",
     },
     {
       id: "dayLong",
-      name: t("{=qkkTPycE}Days"),
-      calc: ([, save]) => save.dayLong?.toFixed(0) ?? "",
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("{=qkkTPycE}Days"),
+      width: "56px",
+      align: "end",
+      render: (save) =>
+        save.dayLong !== undefined ? Math.floor(save.dayLong) : "",
+      sortValue: (save) =>
+        save.dayLong !== undefined ? Math.floor(save.dayLong) : null,
+      firstDirection: "desc",
     },
     {
       id: "status",
-      name: t("Status"),
-      customRenderer: (data) => {
-        if (
-          data.length &&
-          typeof data[0] === "string" &&
-          !Array.isArray(data[1])
-        ) {
-          const save = data[1];
-          return <StatusView save={save} localize={t} />;
-        }
-        return <></>;
-      },
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("Issues"),
+      width: "100px",
+      render: (save) => <StatusView save={save} localize={t} />,
+      sortValue: (save) => countIssues(save),
+      firstDirection: "desc",
     },
     {
       id: "applicationVersion",
-      name: t("{=14WBFIS1}Version"),
-      calc: ([, save]) =>
-        save.applicationVersion ? versionToString(save.applicationVersion) : "",
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("{=14WBFIS1}Version"),
+      width: "100px",
+      render: (save) => (
+        <Text
+          value={
+            save.applicationVersion
+              ? versionToString(save.applicationVersion)
+              : ""
+          }
+        />
+      ),
+      sortValue: (save) =>
+        save.applicationVersion
+          ? versionToString(save.applicationVersion)
+          : null,
+      groupValue: (save) =>
+        save.applicationVersion
+          ? versionToString(save.applicationVersion)
+          : null,
+      // The newest game version first
+      groupDirection: "desc",
     },
     {
       id: "creationTime",
-      name: t("{=aYWWDkKX}CreatedAt"),
-      calc: ([, save]) => ticksToDate(save.creationTime)?.toLocaleString(),
-      placement: "both",
-      edit: {},
+      toggleable: true,
+      label: t("{=aYWWDkKX}CreatedAt"),
+      width: "160px",
+      render: (save) => <Text value={formatSaveTime(save)} />,
+      // Sorted by the time, shown as a date
+      sortValue: (save) =>
+        save.creationTime !== undefined
+          ? (ticksToDate(save.creationTime)?.getTime() ?? null)
+          : null,
+      firstDirection: "desc",
     },
   ];
-  return tableAttributes;
+
+  return hasBLSE ? [launch, ...columns] : columns;
 };

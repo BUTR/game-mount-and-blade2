@@ -3,36 +3,43 @@ import { log, selectors, types } from "vortex-api";
 import * as semver from "semver";
 import path from "path";
 import { GAME_ID } from "./common";
-import { SavePage, SavePageOptions, Settings, SettingsProps } from "./views";
-import { BannerlordGame, getGameInstallPath } from "./vortex";
+import { SavePage } from "./views/Saves/SavePage";
+import { SavePageOptions } from "./views/Saves/options";
+import { ServersPage } from "./views/Servers/ServersPage";
+import { ServersPageOptions } from "./views/Servers/options";
+import { Settings, SettingsProps } from "./views/Settings/Settings";
+import { BannerlordGame } from "./vortex/game";
+import { getGameInstallPath } from "./vortex/modType";
 import { IAddedFiles } from "./types";
-import { reducerSession, reducerSettings } from "./store";
-import { actionsSettings } from "./settings";
-import {
-  registerCollections,
-  willRemoveModCollectionsAsync,
-} from "./collections";
+import { reducerSession } from "./store/reducersSession";
+import { reducerSettings } from "./store/reducersSettings";
+import { actionsSettings } from "./settings/actions";
+import { registerCollections } from "./collections/register";
+import { willRemoveModCollectionsAsync } from "./collections/events";
 import {
   didDeployLoadOrderAsync,
   gamemodeActivatedLoadOrderAsync,
-  registerLoadOrder,
-} from "./loadOrder";
-import {
-  didDeployBLSEAsync,
-  didPurgeBLSEAsync,
-  installBLSEAsync,
-  isModTypeBLSE,
-  testBLSEAsync,
-} from "./blse";
-import { VortexLauncherManagerLogger } from "./launcher";
-import { gamemodeActivatedSaveAsync } from "./save";
-import {
-  addedFilesEventAsync,
-  installedMod,
-  registerVortexModTypes,
-} from "./vortex";
-import { LocalizationManager } from "./localization";
+} from "./loadOrder/events";
+import { registerLoadOrder } from "./loadOrder/register";
+import { watchActiveProfileType } from "./loadOrder/gameMode";
+import { didDeployBLSEAsync, didPurgeBLSEAsync } from "./blse/events";
+import { installBLSEAsync, testBLSEAsync } from "./blse/installer";
+import { isModTypeBLSE } from "./blse/modType";
+import { VortexLauncherManagerLogger } from "./launcher/logger";
+import { gamemodeActivatedSaveAsync } from "./save/events";
+import { addedFilesEventAsync, installedMod } from "./vortex/events";
+import { registerVortexModTypes } from "./vortex/register";
+import { LocalizationManager } from "./localization/manager";
 import { version } from "../package.json";
+import { watchNoModsProfile } from "./servers/noModsProfile";
+import { watchProfiles } from "./servers/profileWatch";
+import { applyGameModeTools, watchPrimaryTool } from "./vortex/gameModeTools";
+import { watchGameModeMenu } from "./vortex/gameModeMenu";
+import { registerProfileType } from "./profileType/register";
+import { watchDocumentWhileActive } from "./profileType/documentWatcher";
+import { watchMenuItems } from "./profileType/menuItems";
+import { watchProfileCards } from "./profileType/profileCards";
+import { watchProfileTypes } from "./profileType/assignTypes";
 
 // TODO: Better dialogs with settings
 let logger: VortexLauncherManagerLogger | null = null;
@@ -90,6 +97,17 @@ const main = (context: types.IExtensionContext): boolean => {
     /*element:*/ SavePage,
     /*options:*/ new SavePageOptions(context),
   );
+
+  // Server Browser
+  context.registerMainPage(
+    /*icon:*/ "connection",
+    /*title:*/ "Servers",
+    /*element:*/ ServersPage,
+    /*options:*/ new ServersPageOptions(context),
+  );
+
+  // Profile types
+  registerProfileType(context);
 
   // BLSE Installer & Mod Type
   context.registerInstaller(
@@ -149,19 +167,48 @@ const main = (context: types.IExtensionContext): boolean => {
 
   context.once(() => {
     context.api.setStylesheet(
+      "bannerlord-modern",
+      path.join(__dirname, "modern.scss"),
+    );
+    context.api.setStylesheet(
       "savegame",
       path.join(__dirname, "savegame.scss"),
     );
+    context.api.setStylesheet("servers", path.join(__dirname, "servers.scss"));
+
+    watchProfileTypes(context.api);
+    watchNoModsProfile(context.api);
+    watchProfiles(context.api);
+    watchPrimaryTool(context.api);
+    watchGameModeMenu(context.api);
+    watchProfileCards(context.api);
+    watchMenuItems(context.api);
+    // After the document's watchers, only while Bannerlord is the active game
+    watchDocumentWhileActive(context.api);
+    watchActiveProfileType(context.api);
 
     context.api.events.on("gamemode-activated", async (gameId: string) => {
       if (GAME_ID !== gameId) {
         return;
       }
 
+      // Vortex picks the defaultPrimary tool on activation, which is BLSE regardless of the mode
+      applyGameModeTools(context.api);
+
       await checkVortexVersion();
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
+    });
+
+    // Each profile has its own mode
+    context.api.events.on("profile-did-change", (profileId: string): void => {
+      const profile = selectors.profileById(context.api.getState(), profileId);
+      if (profile?.gameId !== GAME_ID) {
+        return;
+      }
+
+      applyGameModeTools(context.api);
     });
 
     context.api.events.on(

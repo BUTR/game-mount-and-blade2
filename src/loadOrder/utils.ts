@@ -12,11 +12,38 @@ import {
   IStateWithBannerlord,
   PersistenceLoadOrderStorage,
   RequiredProperties,
+  VortexLoadOrderEntry,
   VortexLoadOrderStorage,
 } from "../types";
-import { VortexLauncherManager } from "../launcher";
-import { LocalizationManager } from "../localization";
+import { VortexLauncherManager } from "../launcher/manager";
+import { LocalizationManager } from "../localization/manager";
 import { bselectors } from "../selectors";
+import { GameMode } from "../settings/types";
+
+/**
+ * Whether the mode lists the module, the rule the LauncherManager orders by: Native is in both modes
+ */
+export const isModuleOfGameMode = (
+  module: vetypes.ModuleInfoExtended,
+  gameMode: GameMode,
+): boolean =>
+  module.id.toLowerCase() === "native" ||
+  (gameMode === "multiplayer"
+    ? module.isMultiplayerModule
+    : module.isSingleplayerModule);
+
+/**
+ * Drops the other mode's modules. Entries of modules that aren't installed are kept, their mode isn't known
+ */
+export const filterLoadOrderByGameMode = (
+  loadOrder: VortexLoadOrderStorage,
+  gameMode: GameMode,
+): VortexLoadOrderStorage =>
+  loadOrder.filter(
+    (entry) =>
+      entry.data?.moduleInfoExtended === undefined ||
+      isModuleOfGameMode(entry.data.moduleInfoExtended, gameMode),
+  );
 
 const getExcludedLoadOrder = (
   loadOrder: VortexLoadOrderStorage,
@@ -36,6 +63,30 @@ const getExcludedLoadOrder = (
     [],
   );
   return excludedLoadOrder;
+};
+
+/**
+ * Appends the modules the saved Load Order doesn't list yet as disabled entries.
+ * Otherwise a module that was dropped from the saved Load Order (e.g. while it was being updated)
+ * or a freshly installed one would never show up
+ */
+const appendMissingModules = (
+  api: types.IExtensionApi,
+  loadOrder: VortexLoadOrderStorage,
+  moduleViewModels: vetypes.ModuleViewModel[] | undefined,
+): VortexLoadOrderStorage => {
+  const knownIds = new Set(loadOrder.map((x) => x.id));
+  const missingModules = libraryVMToVortex(
+    api,
+    (moduleViewModels ?? []).filter(
+      (x) => !knownIds.has(x.moduleInfoExtended.id),
+    ),
+  ).map<VortexLoadOrderEntry>((entry, index) => ({
+    ...entry,
+    enabled: false,
+    data: { ...entry.data!, index: loadOrder.length + index },
+  }));
+  return [...loadOrder, ...missingModules];
 };
 
 const warnSortIssues = (
@@ -129,10 +180,10 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   const launcherManager = VortexLauncherManager.getInstance(api);
 
   const savedLoadOrderLibrary = persistenceToLibrary(savedLoadOrder);
-  const savedLoadOrderVortex = libraryToVortex(
-    api,
-    allModules,
-    savedLoadOrderLibrary,
+  // The other mode's modules are never listed, the LauncherManager drops them from the sorted list too
+  const savedLoadOrderVortex = filterLoadOrderByGameMode(
+    libraryToVortex(api, allModules, savedLoadOrderLibrary),
+    bselectors.activeGameMode(state),
   );
 
   checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
@@ -144,19 +195,29 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
     savedLoadOrderLibrary,
   );
   if (!checkResult(api, autoSort, result)) {
-    return savedLoadOrderVortex;
+    // The native side still returns the visible modules when the ordering fails
+    return appendMissingModules(
+      api,
+      savedLoadOrderVortex,
+      result?.orderedModuleViewModels,
+    );
   }
 
   // Not even sure this will trigger
   checkOrderByLoadOrderResult(api, autoSort, result);
 
   // Use the sorted to closest valid state Load Order
-  if (autoSort) {
+  // Also when nothing is saved yet, like a game mode used for the first time, or the list would be empty
+  if (autoSort || savedLoadOrderVortex.length === 0) {
     return libraryVMToVortex(api, result.orderedModuleViewModels);
   }
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-  return getExcludedLoadOrder(savedLoadOrderVortex, result);
+  return appendMissingModules(
+    api,
+    getExcludedLoadOrder(savedLoadOrderVortex, result),
+    result.orderedModuleViewModels,
+  );
 };
 
 export const toggleLoadOrderAsync = async (

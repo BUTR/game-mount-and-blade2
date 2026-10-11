@@ -8,14 +8,15 @@ import { ExternalBanner } from "./ExternalBanner";
 import { ModuleDuplicates } from "./ModuleDuplicates";
 import { ModuleProviderIcon } from "./ModuleProviderIcon";
 import { SteamBinariesOnXbox } from "./SteamBinariesOnXbox";
-import { CompatibilityInfo, ModuleIcon } from "../../Shared";
+import { CompatibilityInfo } from "../../Shared/components/CompatibilityInfo";
+import { ModuleIcon } from "../../Shared/components/ModuleIcon";
 import { isExternal, isLocked } from "../utils";
-import { IModuleCompatibilityInfo } from "../../../butr";
-import { versionToString } from "../../../butr";
-import { IFBLOItemRendererProps } from "../../../loadOrder";
+import { IModuleCompatibilityInfo } from "../../../butr/types";
+import { versionToString } from "../../../butr/version";
+import { IFBLOItemRendererProps } from "../../../loadOrder/types";
 import { bselectors } from "../../../selectors";
 import { IStateWithBannerlord } from "../../../types";
-import { ObfuscatedBinaries } from ".";
+import { ObfuscatedBinaries } from "./ObfuscatedBinaries";
 
 export type LoadOrderItemRendererProps = {
   className?: string;
