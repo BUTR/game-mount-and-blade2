@@ -7,6 +7,11 @@ import { resolve, basename, dirname, extname } from "node:path";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
+// The package `exports` map hides package.json from `require`, so read it by path.
+const vortexApiPackage = JSON.parse(
+  readFileSync(resolve(rootDir, "node_modules/@nexusmods/vortex-api/package.json"), "utf8"),
+);
+
 /**
  * Modules provided by Vortex at runtime that must stay external.
  * The bulk of the list comes from the peerDependencies of `@nexusmods/vortex-api`;
@@ -15,10 +20,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 function getExternals() {
   const builtins = builtinModules.filter((m) => !m.startsWith("_"));
 
-  // The package `exports` map hides package.json from `require`, so read it by path.
-  const { peerDependencies } = JSON.parse(
-    readFileSync(resolve(rootDir, "node_modules/@nexusmods/vortex-api/package.json"), "utf8"),
-  );
+  const { peerDependencies } = vortexApiPackage;
 
   const injected = [
     "electron",
@@ -101,6 +103,10 @@ export default defineConfig({
   },
   external: getExternals(),
   platform: "node",
+  transform: {
+    // The minimum Vortex version is the API version the extension is built against
+    define: { __VORTEX_API_VERSION__: JSON.stringify(vortexApiPackage.version) },
+  },
   resolve: { extensions: [".js", ".jsx", ".json", ".ts", ".tsx"], tsconfigFilename: "tsconfig.json" },
   plugins: [nativeAddonPlugin(), copyAssetsPlugin()],
 });

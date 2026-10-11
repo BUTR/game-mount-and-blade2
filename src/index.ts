@@ -50,8 +50,7 @@ const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
 
   // Vortex skips the extension on older versions, including 1.x, instead of loading it
-  // Matches the @nexusmods/vortex-api version the extension is built against
-  context.requireVersion(">=2.7.0-beta.1");
+  context.requireVersion(`>=${__VORTEX_API_VERSION__}`);
 
   // Reducers
   context.registerReducer(
