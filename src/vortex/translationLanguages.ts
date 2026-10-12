@@ -96,9 +96,21 @@ export const pushTranslationLanguageAttributes = (
 ): void => {
   if (languages.length === 0) return;
 
-  const i18nLanguages = languages
-    .map((lang) => languageMap.getCodeFromName(lang.trim()))
-    .filter((lang) => lang && lang.length > 0);
+  // Entries are display names, or uppercase folder codes when language_data.xml could not provide a name
+  // A name and a code can resolve to the same language, so dedupe
+  const i18nLanguages = [
+    ...new Set(
+      languages
+        .map((lang) => {
+          const value = lang.trim();
+          return (
+            languageMap.getCodeFromName(value) ??
+            languageMap.getCodeFromName(languageMap.getNameFromCode(value))
+          );
+        })
+        .filter((lang) => lang !== undefined && lang.length > 0),
+    ),
+  ];
   // Machine-readable array attribute
   instructions.push({
     type: "attribute",

@@ -37,6 +37,12 @@ export const encodePng = (
   width: number,
   height: number,
 ): Buffer => {
+  // subarray() would cut short rows silently and they would encode as black pixels
+  if (rgba.length !== width * height * 4) {
+    throw new Error(
+      `Expected ${width * height * 4} bytes of RGBA data, got ${rgba.length}`,
+    );
+  }
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
   header.writeUInt32BE(height, 4);

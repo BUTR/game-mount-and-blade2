@@ -23,9 +23,15 @@ export const getFromServerAsync = (
     const startedAt = Date.now();
     let responseTimeMs: number | null = null;
     let settled = false;
+    // The socket timeout only covers inactivity, a server trickling bytes would keep the request open forever
+    const deadline = setTimeout(() => {
+      fail(new Error("The server did not respond in time"));
+      request.destroy();
+    }, REQUEST_TIMEOUT_MS);
     const finish = (result: ServerHttpResult): void => {
       if (!settled) {
         settled = true;
+        clearTimeout(deadline);
         resolve(result);
       }
     };

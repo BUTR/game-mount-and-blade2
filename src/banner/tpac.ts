@@ -137,6 +137,20 @@ class Reader {
 }
 
 /**
+ * Fills the buffer from the file position, a short read would otherwise leave zero filled bytes that parse as data
+ */
+const readExactAsync = async (
+  file: fs.FileHandle,
+  buffer: Buffer,
+  position: number,
+): Promise<void> => {
+  const { bytesRead } = await file.read(buffer, 0, buffer.length, position);
+  if (bytesRead !== buffer.length) {
+    throw new Error("Unexpected end of the package file");
+  }
+};
+
+/**
  * Reads item headers and metadata from a package without loading large data segment payloads into memory.
  *
  * @param wanted Predicate filter to retain matching items and skip others.
@@ -148,7 +162,7 @@ export const readTpacItemsAsync = async (
   const file = await fs.open(filePath, "r");
   try {
     const intro = Buffer.alloc(40);
-    await file.read(intro, 0, intro.length, 0);
+    await readExactAsync(file, intro, 0);
     const introReader = new Reader(intro);
     if (introReader.u32() !== TPAC_MAGIC) {
       throw new Error(`Not an asset package: ${filePath}`);
@@ -161,7 +175,7 @@ export const readTpacItemsAsync = async (
 
     // Item headers immediately follow the package intro, followed by data segment blocks
     const header = Buffer.alloc(introReader.position + itemHeadersSize);
-    await file.read(header, 0, header.length, 0);
+    await readExactAsync(file, header, 0);
     const reader = new Reader(header);
     reader.position = introReader.position;
 
@@ -223,7 +237,7 @@ const readSegmentAsync = async (
   const file = await fs.open(filePath, "r");
   try {
     const stored = Buffer.alloc(segment.storageSize);
-    await file.read(stored, 0, segment.storageSize, segment.offset);
+    await readExactAsync(file, stored, segment.offset);
     switch (segment.storageFormat) {
       case STORAGE_UNCOMPRESSED:
         return stored;

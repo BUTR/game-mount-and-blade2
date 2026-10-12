@@ -6,13 +6,8 @@ import {
   IModWithIncludedModOptions,
 } from "./types";
 import { LocalizationManager } from "../localization/manager";
-import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
-import { checkBLSEDeploy, checkHarmonyDeploy } from "../blse/modDeploy";
-import {
-  resolveBLSEDeployAsync,
-  resolveHarmonyDeployAsync,
-} from "../blse/deploy";
+import { setUpBLSEAsync } from "../blse/deploy";
 
 export const hasContextWithCollectionFeature = (
   context: types.IExtensionContext,
@@ -62,11 +57,6 @@ export const collectionInstallBLSEAsync = async (
     return;
   }
 
-  const mods = bselectors.bannerlordMods(state);
-
-  const harmonyDeployResult = checkHarmonyDeploy(api, profile, mods);
-  await resolveHarmonyDeployAsync(api, profile, harmonyDeployResult);
-
-  const blseDeployResult = checkBLSEDeploy(api, profile, mods);
-  await resolveBLSEDeployAsync(api, profile, blseDeployResult);
+  // Stops before BLSE when Harmony could not be set up
+  await setUpBLSEAsync(api);
 };

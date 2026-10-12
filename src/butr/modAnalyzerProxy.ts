@@ -5,6 +5,8 @@ import { IModAnalyzerRequestQuery, IModAnalyzerResult } from "./types";
 import { version } from "../../package.json";
 import { LocalizationManager } from "../localization/manager";
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 export class ModAnalyzerProxy {
   private options: RequestOptions;
   constructor() {
@@ -21,35 +23,64 @@ export class ModAnalyzerProxy {
     };
   }
 
+  /**
+   * Reports a failure to the user before rejecting, callers can ignore the rejection
+   */
   public async analyzeAsync(
     api: types.IExtensionApi,
     query: IModAnalyzerRequestQuery,
   ): Promise<IModAnalyzerResult> {
+    try {
+      return await this.requestAsync(query);
+    } catch (err) {
+      const { localize: t } = LocalizationManager.getInstance(api);
+      api.showErrorNotification?.(
+        t("Failed to get compatibility scores!"),
+        err,
+        {
+          allowReport: false,
+        },
+      );
+      throw err;
+    }
+  }
+
+  private requestAsync(
+    query: IModAnalyzerRequestQuery,
+  ): Promise<IModAnalyzerResult> {
     return new Promise((resolve, reject) => {
       const req = request(this.options, (res) => {
-        let body = Buffer.from([]);
+        if (res.statusCode !== 200) {
+          res.resume();
+          reject(
+            new Error(`The BUTR server responded with HTTP ${res.statusCode}`),
+          );
+          return;
+        }
+        const chunks: Buffer[] = [];
         res
-          .on("error", (err) => reject(err))
-          .on("data", (chunk) => {
-            body = Buffer.concat([body, chunk]);
-          })
+          .on("error", reject)
+          .on("data", (chunk: Buffer) => chunks.push(chunk))
           .on("end", () => {
-            const textual = body.toString("utf8");
             try {
-              const parsed = JSON.parse(textual);
-              resolve(parsed);
+              resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
             } catch (err) {
-              const { localize: t } = LocalizationManager.getInstance(api);
-              api.showErrorNotification?.(
-                t("Failed to get compatibility scores!"),
-                err,
-              );
               reject(err);
             }
+          })
+          .on("close", () => {
+            if (!res.complete) {
+              reject(new Error("The BUTR server closed the connection early"));
+            }
           });
-      }).on("error", (err) => reject(err));
-      req.write(JSON.stringify(query));
-      req.end();
+      });
+      // An absolute deadline, a socket timeout would only catch inactivity
+      const deadline = setTimeout(
+        () => req.destroy(new Error("The BUTR server did not respond in time")),
+        REQUEST_TIMEOUT_MS,
+      );
+      req.on("error", reject).on("close", () => clearTimeout(deadline));
+      req.end(JSON.stringify(query));
     });
   }
 }

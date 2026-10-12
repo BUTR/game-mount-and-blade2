@@ -85,6 +85,16 @@ interface IGameData {
   strings: Buffer;
 }
 
+/**
+ * The bytes at start, subarray() would silently cut a length that runs past the data short
+ */
+const slice = (buf: Buffer, start: number, length: number): Buffer => {
+  if (length < 0 || start < 0 || start + length > buf.length) {
+    throw new Error("Unexpected end of the save data");
+  }
+  return buf.subarray(start, start + length);
+};
+
 const readArchive = (buf: Buffer): IArchive => {
   let p = 0;
   const i32 = (): number => {
@@ -92,10 +102,12 @@ const readArchive = (buf: Buffer): IArchive => {
     p += 4;
     return v;
   };
+  const u8 = (): number => slice(buf, p++, 1)[0]!;
   const i24 = (): number => {
-    const a = buf[p]!;
-    const b = buf[p + 1]!;
-    const c = buf[p + 2]!;
+    const bytes = slice(buf, p, 3);
+    const a = bytes[0]!;
+    const b = bytes[1]!;
+    const c = bytes[2]!;
     p += 3;
     return a === 255 && b === 255 && c === 255 ? -1 : a | (b << 8) | (c << 16);
   };
@@ -104,16 +116,16 @@ const readArchive = (buf: Buffer): IArchive => {
     const parent = i24();
     const global = i24();
     const local = i24();
-    folders.push({ parent, global, local, ext: buf[p++]! });
+    folders.push({ parent, global, local, ext: u8() });
   }
   const entries: IEntry[] = [];
   for (let i = 0, n = i32(); i < n; i++) {
     const folder = i24();
     const id = i24();
-    const ext = buf[p++]!;
+    const ext = u8();
     const length = buf.readInt16LE(p);
     p += 2;
-    entries.push({ folder, id, ext, data: buf.subarray(p, p + length) });
+    entries.push({ folder, id, ext, data: slice(buf, p, length) });
     p += length;
   }
   return { folders, entries };
@@ -170,7 +182,7 @@ const readMember = (data: Buffer): IMember => {
     const typeId = data.readInt32LE(5);
     member.value =
       type === MEMBER_ENUM
-        ? data.toString("utf8", 13, 13 + data.readInt32LE(9))
+        ? slice(data, 13, data.readInt32LE(9)).toString("utf8")
         : readBasic(typeId, data, 9);
   }
   return member;
@@ -181,7 +193,7 @@ const readGameData = (body: Buffer): IGameData => {
   let p = 0;
   const bytes = (): Buffer => {
     const length = body.readInt32LE(p);
-    const b = body.subarray(p + 4, p + 4 + length);
+    const b = slice(body, p + 4, length);
     p += 4 + length;
     return b;
   };
@@ -207,7 +219,7 @@ const LEGACY_SIGNATURE = Buffer.from([
  */
 const readLegacyGameData = (body: Buffer): IGameData => {
   let p = 0;
-  const u8 = (): number => body[p++]!;
+  const u8 = (): number => slice(body, p++, 1)[0]!;
   const i32 = (): number => {
     const v = body.readInt32LE(p);
     p += 4;
@@ -265,7 +277,7 @@ const readLegacyGameData = (body: Buffer): IGameData => {
       // An array of bytes
       const count = i32();
       u8();
-      arrays.set(id, body.subarray(p, p + count));
+      arrays.set(id, slice(body, p, count));
       p += count;
     } else if (record === 7) {
       // An array of references to arrays of bytes
@@ -342,7 +354,7 @@ class SaveReader {
       if (entry.folder === stringsFolder && entry.ext === ENTRY_TXT) {
         this.strings.set(
           entry.id,
-          entry.data.toString("utf8", 4, 4 + entry.data.readInt32LE(0)),
+          slice(entry.data, 4, entry.data.readInt32LE(0)).toString("utf8"),
         );
       }
     }

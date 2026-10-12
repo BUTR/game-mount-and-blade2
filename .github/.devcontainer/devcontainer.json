@@ -26,6 +26,9 @@
         },
         "ghcr.io/devcontainers/features/powershell:1": {
             
+        },
+        "ghcr.io/devcontainers/features/dotnet:2": {
+            "version": "9.0"
         }
     },
     "overrideFeatureInstallOrder": [
@@ -34,6 +37,7 @@
         "ghcr.io/butr/devcontainer/7z",
         "ghcr.io/devcontainers/features/node",
         "ghcr.io/devcontainers/features/python",
-        "ghcr.io/devcontainers/features/powershell"
+        "ghcr.io/devcontainers/features/powershell",
+        "ghcr.io/devcontainers/features/dotnet"
     ]
 }

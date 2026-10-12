@@ -43,27 +43,35 @@ const sendDeployNotification = (
   });
 };
 
+/**
+ * Runs the setup behind a notification button, reporting a failure instead of dropping it
+ */
+const runSetupAction = (
+  api: types.IExtensionApi,
+  setUp: (api: types.IExtensionApi) => Promise<void>,
+  errorTitle: string,
+  dismiss: types.NotificationDismiss,
+): void => {
+  void setUp(api)
+    .catch((err: unknown) => {
+      api.showErrorNotification?.(errorTitle, err, { allowReport: false });
+    })
+    .finally(() => dismiss());
+};
+
 const doBLSEDeploy = (
   api: types.IExtensionApi,
-  profile: types.IProfile,
-  harmonyDeployResult: DeployModResult,
   blseResult: DeployModResult,
 ): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
+
+  const action = (dismiss: types.NotificationDismiss): void =>
+    runSetupAction(api, setUpBLSEAsync, t("Failed to set up BLSE"), dismiss);
 
   switch (blseResult.status) {
     case DeployModStatus.OK:
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
-          .catch(() => {})
-          .finally(async () => {
-            await resolveBLSEDeployAsync(api, profile, blseResult)
-              .catch(() => {})
-              .finally(() => dismiss());
-          });
-      };
       sendDeployNotification(
         api,
         "blse-missing",
@@ -75,18 +83,6 @@ const doBLSEDeploy = (
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        if (blseResult.downloadId === undefined) {
-          return;
-        }
-        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
-          .catch(() => {})
-          .finally(async () => {
-            await resolveBLSEDeployAsync(api, profile, blseResult)
-              .catch(() => {})
-              .finally(() => dismiss());
-          });
-      };
       sendDeployNotification(
         api,
         "blse-missing",
@@ -98,18 +94,6 @@ const doBLSEDeploy = (
       return;
     }
     case DeployModStatus.NOT_ENABLED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        void resolveHarmonyDeployAsync(api, profile, harmonyDeployResult)
-          .catch(() => {})
-          .finally(async () => {
-            if (blseResult.modId === undefined) {
-              return;
-            }
-            await resolveBLSEDeployAsync(api, profile, blseResult)
-              .catch(() => {})
-              .finally(() => dismiss());
-          });
-      };
       sendDeployNotification(
         api,
         "blse-missing",
@@ -125,20 +109,22 @@ const doBLSEDeploy = (
 
 const doHarmonyDeploy = (
   api: types.IExtensionApi,
-  profile: types.IProfile,
   result: DeployModResult,
 ): void => {
   const { localize: t } = LocalizationManager.getInstance(api);
+
+  const action = (dismiss: types.NotificationDismiss): void =>
+    runSetupAction(
+      api,
+      setUpHarmonyAsync,
+      t("Failed to set up Harmony"),
+      dismiss,
+    );
 
   switch (result.status) {
     case DeployModStatus.OK:
       return;
     case DeployModStatus.NOT_DOWNLOADED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        resolveHarmonyDeployAsync(api, profile, result)
-          .catch(() => {})
-          .finally(() => dismiss());
-      };
       sendDeployNotification(
         api,
         "harmony-missing",
@@ -150,14 +136,6 @@ const doHarmonyDeploy = (
       return;
     }
     case DeployModStatus.NOT_INSTALLED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        if (result.downloadId === undefined) {
-          return;
-        }
-        void resolveHarmonyDeployAsync(api, profile, result)
-          .catch(() => {})
-          .finally(() => dismiss());
-      };
       sendDeployNotification(
         api,
         "harmony-missing",
@@ -169,11 +147,6 @@ const doHarmonyDeploy = (
       return;
     }
     case DeployModStatus.NOT_ENABLED: {
-      const action = (dismiss: types.NotificationDismiss): void => {
-        void resolveHarmonyDeployAsync(api, profile, result)
-          .catch(() => {})
-          .finally(() => dismiss());
-      };
       sendDeployNotification(
         api,
         "harmony-missing",
@@ -210,7 +183,7 @@ export const recommendBLSEAsync = async (
     harmonyDeployResult.status !== DeployModStatus.OK &&
     blseDeployResult.status === DeployModStatus.OK
   ) {
-    doHarmonyDeploy(api, profile, harmonyDeployResult);
+    doHarmonyDeploy(api, harmonyDeployResult);
   }
 
   // skip if BLSE found
@@ -223,7 +196,7 @@ export const recommendBLSEAsync = async (
   );
   const binaryExists = await getPathExistsAsync(binaryPath);
   if (!binaryExists || blseDeployResult.status !== DeployModStatus.OK) {
-    doBLSEDeploy(api, profile, harmonyDeployResult, blseDeployResult);
+    doBLSEDeploy(api, blseDeployResult);
   }
 };
 
@@ -292,9 +265,9 @@ export const getBLSEDeployStatus = (
 };
 
 /**
- * Ensures all prerequisites for BLSE are satisfied in the active profile, resolving Harmony first.
+ * Downloads, installs or enables Harmony in the active profile as needed. Rejects when Harmony is still not in place
  */
-export const setUpBLSEAsync = async (
+export const setUpHarmonyAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
   const state = api.getState<IStateWithBannerlord>();
@@ -302,16 +275,45 @@ export const setUpBLSEAsync = async (
   if (!profile) {
     return;
   }
-  const mods = bselectors.bannerlordMods(state);
   await resolveHarmonyDeployAsync(
     api,
     profile,
-    checkHarmonyDeploy(api, profile, mods),
-  ).catch(() => {});
+    checkHarmonyDeploy(api, profile, bselectors.bannerlordMods(state)),
+  );
+
+  // The download path reports its own failures without rejecting, so check the outcome
+  const updatedState = api.getState<IStateWithBannerlord>();
+  const updatedProfile = selectors.activeProfile(updatedState);
+  if (
+    updatedProfile &&
+    checkHarmonyDeploy(
+      api,
+      updatedProfile,
+      bselectors.bannerlordMods(updatedState),
+    ).status !== DeployModStatus.OK
+  ) {
+    throw new Error("Harmony could not be set up");
+  }
+};
+
+/**
+ * Ensures all prerequisites for BLSE are satisfied in the active profile, resolving Harmony first.
+ * Rejects without touching BLSE when Harmony could not be set up
+ */
+export const setUpBLSEAsync = async (
+  api: types.IExtensionApi,
+): Promise<void> => {
+  await setUpHarmonyAsync(api);
+
+  const state = api.getState<IStateWithBannerlord>();
+  const profile = selectors.activeProfile(state);
+  if (!profile) {
+    return;
+  }
   await resolveBLSEDeployAsync(
     api,
     profile,
-    checkBLSEDeploy(api, profile, mods),
+    checkBLSEDeploy(api, profile, bselectors.bannerlordMods(state)),
   );
 };
 

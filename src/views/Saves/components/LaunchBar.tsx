@@ -35,7 +35,11 @@ export const LaunchBar: FC<LaunchBarProps> = (props) => {
     const setUp = (): void => {
       setSettingUp(true);
       void setUpBLSEAsync(api)
-        .catch(() => {})
+        .catch((err: unknown) => {
+          api.showErrorNotification?.(t("Failed to set up BLSE"), err, {
+            allowReport: false,
+          });
+        })
         .finally(() => setSettingUp(false));
     };
     return (
