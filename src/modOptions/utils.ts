@@ -1,4 +1,4 @@
-import { fs, types, util } from "vortex-api";
+import { fs, types, util } from "@nexusmods/vortex-api";
 import turbowalk from "turbowalk";
 import path from "path";
 import { readFile, rename, rm, writeFile } from "node:fs/promises";

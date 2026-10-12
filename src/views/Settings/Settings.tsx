@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from "react";
 import { useSelector } from "react-redux";
-import { More, selectors, Toggle } from "vortex-api";
+import { More, selectors, Toggle } from "@nexusmods/vortex-api";
 import { useLocalization } from "../../localization/hooks";
 import { bselectors } from "../../selectors";
 import { IStateWithBannerlord } from "../../types";

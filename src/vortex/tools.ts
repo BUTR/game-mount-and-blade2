@@ -1,5 +1,5 @@
 // TODO: Translate tool titles?
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { getBinaryModdingPath, getBinaryPath, isStoreSteam } from "./store";
 import {

@@ -4,8 +4,8 @@
     "incremental": true,
     "isolatedModules": true,
     "target": "esnext",
-    "module": "node16",
-    "moduleResolution": "node16",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "jsx": "react",
     "inlineSourceMap": true,
     "inlineSources": true,
@@ -19,6 +19,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
+    "paths": {
+      "collections/*": ["./typings.custom/collections/*"]
+    },
 
     "strict": true,
 

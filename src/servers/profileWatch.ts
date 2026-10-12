@@ -1,4 +1,4 @@
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import {
   NO_MODS_PROFILE_FEATURE,
   SERVER_NAME_PROFILE_FEATURE,

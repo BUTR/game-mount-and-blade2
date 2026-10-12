@@ -14,7 +14,7 @@ import {
   selectors,
   types,
   util,
-} from "vortex-api";
+} from "@nexusmods/vortex-api";
 import { useSelector, useStore } from "react-redux";
 import { Content } from "./components/Content";
 import { FirstRun } from "./components/FirstRun";

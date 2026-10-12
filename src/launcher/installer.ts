@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   NativeLauncherManager,

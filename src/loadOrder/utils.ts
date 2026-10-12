@@ -1,4 +1,4 @@
-import { actions, selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { Utils, types as vetypes } from "@butr/vortexextensionnative";
 import {
   libraryToVortex,

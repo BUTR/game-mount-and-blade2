@@ -89,15 +89,21 @@ const updateFromFile = (configuration) => {
 
   exec("pnpm remove @butr/vortexextensionnative");
 
-  exec("yarn run clean", extensionPath);
-  exec(`yarn run build -- ${configuration}`, extensionPath);
+  exec("pnpm run clean", extensionPath);
+  exec(`pnpm run build -- ${configuration}`, extensionPath);
 
   const tgzFile = "butr-vortexextensionnative.tgz";
-  exec(`yarn pack --filename ${tgzFile}`, extensionPath);
-  fs.copyFileSync(
-    path.join(extensionPath, tgzFile),
-    path.join(ROOT_DIR, tgzFile),
+  exec(`pnpm pack --pack-destination ${ROOT_DIR}`, extensionPath);
+  // pnpm pack produces a scoped filename; rename to expected name
+  const packedFiles = fs.readdirSync(ROOT_DIR).filter(
+    (f) => f.startsWith("butr-vortexextensionnative-") && f.endsWith(".tgz"),
   );
+  if (packedFiles.length > 0) {
+    fs.renameSync(
+      path.join(ROOT_DIR, packedFiles[0]),
+      path.join(ROOT_DIR, tgzFile),
+    );
+  }
   exec(`pnpm add file:./${tgzFile}`);
 };
 
@@ -116,10 +122,10 @@ const lint = () => {
   exec("pnpm lint:cycles");
 };
 
-const webpack = () => {
-  console.log("Webpack");
+const bundle = () => {
+  console.log("Bundle");
 
-  exec("pnpm exec webpack --config webpack.config.js --color");
+  exec("pnpm exec rolldown --config rolldown.config.mjs");
   exec("pnpm exec extractInfo");
   publishLobbyBridge();
 };
@@ -154,26 +160,62 @@ const pack7z = () => {
 };
 
 /**
+ * Returns true if a Vortex process is currently running (Windows only).
+ * Vortex locks the plugin's native libraries while loaded, so deleting or
+ * overwriting them fails with EPERM/EBUSY.
+ */
+const isVortexRunning = () => {
+  if (process.platform !== "win32") {
+    return false;
+  }
+  try {
+    const out = child_process
+      .execSync('tasklist /FI "IMAGENAME eq Vortex.exe" /NH', {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+      .toLowerCase();
+    return out.includes("vortex.exe");
+  } catch {
+    return false;
+  }
+};
+
+/**
  * @param {boolean} isDev
  */
 const copyToVortex = (isDev) => {
-  const deployPath = isDev ? "vortex_devel/plugins" : "Vortex/plugins";
+  const deployPath = isDev ? "@vortex/main/plugins" : "Vortex/plugins";
+
+  const appDataPath = process.env.APPDATA;
+  if (!appDataPath) {
+    console.warn("APPDATA is not set, skipping copy to Vortex plugins");
+    return;
+  }
+
+  const targetPath = path.join(appDataPath, deployPath);
+  const destPath = path.join(targetPath, "bannerlord");
+  console.log(`Copy dist to Vortex plugins: ${targetPath}`);
+
+  if (isVortexRunning()) {
+    console.warn(
+      "WARNING: Vortex is running. It locks the plugin's native libraries, so the copy will most likely fail. Close Vortex and rerun the build.",
+    );
+  }
 
   try {
-    const appDataPath = process.env.APPDATA;
-    if (appDataPath) {
-      const targetPath = path.join(appDataPath, deployPath);
-
-      console.log(`Copy dist to Vortex plugins: ${targetPath}`);
-      const destPath = path.join(targetPath, "bannerlord");
-      removeIfExists(destPath);
-      copyRecursive(DIST_DIR, destPath);
-    }
-  } catch (err) {
-    // A running Vortex keeps the extension's native library loaded, so the folder can't be replaced
+    removeIfExists(destPath);
+    copyRecursive(DIST_DIR, destPath);
+    console.log(`Copied to ${destPath}`);
+  } catch (error) {
+    const err = /** @type {NodeJS.ErrnoException} */ (error);
     console.error(
-      `Copying to Vortex plugins failed, close Vortex and build again: ${err}`,
+      `ERROR: Failed to copy dist to ${destPath}: ${err.code ?? ""} ${err.message}`,
     );
+    console.error(
+      "The plugin folder may now contain a mix of old and new files. Close Vortex and rerun the build.",
+    );
+    process.exitCode = 1;
   }
 };
 
@@ -217,7 +259,7 @@ const build = (options) => {
       effectiveType,
     )
   ) {
-    webpack();
+    bundle();
   }
 
   // 7z

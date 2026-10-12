@@ -1,4 +1,4 @@
-import { actions, selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { GAME_ID } from "../../common";
 import { bselectors } from "../../selectors";
@@ -60,7 +60,10 @@ export const setGameParametersCallback =
     const gameParamAction = actions.setGameParameters(GAME_ID, {
       parameters: [params],
     });
-    util.batchDispatch(api.store?.dispatch, [
+    if (api.store === undefined) {
+      return Promise.resolve();
+    }
+    util.batchDispatch(api.store.dispatch, [
       ...batchedActions,
       gameParamAction,
     ]);

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { MainContext } from "vortex-api";
+import { MainContext } from "@nexusmods/vortex-api";
 import { LocalizationManager } from "./manager";
 
 export const useLocalization = (): LocalizationManager => {

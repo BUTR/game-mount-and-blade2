@@ -1,5 +1,5 @@
 import React, { FC, MouseEvent, ReactNode } from "react";
-import { Icon, util } from "vortex-api";
+import { Icon, util } from "@nexusmods/vortex-api";
 
 export type ActionButtonProps = {
   variant: "primary" | "moderate" | "subdued" | "weak" | "link";

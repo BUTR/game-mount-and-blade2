@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { tooltip } from "vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import { ISaveGame } from "../types";
 import { countIssues } from "../utils";
 

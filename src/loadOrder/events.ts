@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { LoadOrderManager } from "./manager";
 import { LocalizationManager } from "../localization/manager";
 

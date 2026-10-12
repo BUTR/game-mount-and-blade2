@@ -1,5 +1,5 @@
 import ticksToDate from "ticks-to-date";
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   Utils,

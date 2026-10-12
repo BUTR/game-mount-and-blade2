@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { ICollection as ICollectionDataToExport } from "collections/src/types/ICollection";
 import { IExtensionFeature } from "collections/src/util/extension";
 import { IModAttributes, PersistenceLoadOrderStorage } from "../types";

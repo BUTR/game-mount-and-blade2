@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { languageMap } from "../../../localization/utils";
 
 export type ExternalBannerProps = {

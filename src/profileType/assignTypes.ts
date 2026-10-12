@@ -1,4 +1,4 @@
-import { actions, selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { GAME_ID, MULTIPLAYER_PROFILE_FEATURE } from "../common";
 // Not the servers index, which reaches the views
 import {
@@ -21,11 +21,11 @@ const assignTypes = (api: types.IExtensionApi, profiles: Profiles): void => {
       profile.gameId === GAME_ID &&
       typeof profile.features?.[MULTIPLAYER_PROFILE_FEATURE] !== "boolean",
   );
-  if (untyped.length === 0) {
+  if (untyped.length === 0 || api.store === undefined) {
     return;
   }
   util.batchDispatch(
-    api.store?.dispatch,
+    api.store.dispatch,
     untyped.map((profile) =>
       actions.setFeature(
         profile.id,

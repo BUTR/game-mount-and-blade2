@@ -1,6 +1,6 @@
 import { method as toBluebird } from "bluebird";
 import React from "react";
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { DetailsRenderer } from "../views/Details/components/DetailsRenderer";
 import { VortexLauncherManager } from "../launcher/manager";
@@ -17,36 +17,34 @@ export const registerVortexModTypes = (
   context.registerInstaller(
     /*id:*/ `bannerlord-module-installer`,
     /*priority:*/ 25,
-    /*testSupported:*/ toBluebird(async (files: string[], gameId: string) => {
+    /*testSupported:*/ async (files: string[], gameId: string) => {
       if (GAME_ID !== gameId) {
         return undefined!;
       }
 
       const launcherManager = VortexLauncherManager.getInstance(context.api);
       return await launcherManager.testModule(files, gameId);
-    }),
-    /*install:*/ toBluebird(
-      async (
-        files: string[],
-        destinationPath: string,
-        gameId: string,
-        _progressDelegate: types.ProgressDelegate,
-        _choices?: unknown,
-        _unattended?: boolean,
-        archivePath?: string,
-      ) => {
-        if (GAME_ID !== gameId) {
-          return undefined!;
-        }
+    },
+    /*install:*/ async (
+      files: string[],
+      destinationPath: string,
+      gameId: string,
+      _progressDelegate: types.ProgressDelegate,
+      _choices?: unknown,
+      _unattended?: boolean,
+      archivePath?: string,
+    ) => {
+      if (GAME_ID !== gameId) {
+        return undefined!;
+      }
 
-        const launcherManager = VortexLauncherManager.getInstance(context.api);
-        return await launcherManager.installModuleAsync(
-          files,
-          destinationPath,
-          archivePath,
-        );
-      },
-    ),
+      const launcherManager = VortexLauncherManager.getInstance(context.api);
+      return await launcherManager.installModuleAsync(
+        files,
+        destinationPath,
+        archivePath,
+      );
+    },
   );
   context.registerModType(
     /*id:*/ "bannerlord-module",
@@ -59,33 +57,31 @@ export const registerVortexModTypes = (
   context.registerInstaller(
     /*id:*/ `bannerlord-translation-installer`,
     /*priority:*/ 30,
-    /*testSupported:*/ toBluebird(isModTranslationArchive),
-    /*install:*/ toBluebird(
-      async (
-        files: string[],
-        destinationPath: string,
-        gameId: string,
-        _progressDelegate: types.ProgressDelegate,
-        _choices?: unknown,
-        _unattended?: boolean,
-        archivePath?: string,
-      ) => {
-        if (GAME_ID !== gameId) {
-          return undefined!;
-        }
+    /*testSupported:*/ isModTranslationArchive,
+    /*install:*/ async (
+      files: string[],
+      destinationPath: string,
+      gameId: string,
+      _progressDelegate: types.ProgressDelegate,
+      _choices?: unknown,
+      _unattended?: boolean,
+      archivePath?: string,
+    ) => {
+      if (GAME_ID !== gameId) {
+        return undefined!;
+      }
 
-        return await modTranslationInstaller(
-          context.api,
-          files,
-          destinationPath,
-          gameId,
-          _progressDelegate,
-          _choices,
-          _unattended,
-          archivePath,
-        );
-      },
-    ),
+      return await modTranslationInstaller(
+        context.api,
+        files,
+        destinationPath,
+        gameId,
+        _progressDelegate,
+        _choices,
+        _unattended,
+        archivePath,
+      );
+    },
   );
 
   context.registerModType(

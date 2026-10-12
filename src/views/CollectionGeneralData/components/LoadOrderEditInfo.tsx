@@ -1,5 +1,5 @@
 import React, { FC, useContext } from "react";
-import { FlexLayout, Icon, MainContext } from "vortex-api";
+import { FlexLayout, Icon, MainContext } from "@nexusmods/vortex-api";
 import { openLoadOrderPage } from "../utils";
 import { useLocalization } from "../../../localization/hooks";
 

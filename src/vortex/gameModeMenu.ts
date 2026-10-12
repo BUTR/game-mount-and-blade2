@@ -1,4 +1,4 @@
-import { actions, selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";

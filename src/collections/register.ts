@@ -1,5 +1,4 @@
-import { selectors, types } from "vortex-api";
-import { TFunction } from "vortex-api/lib/util/i18n";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { IBannerlordModStorage, IStateWithBannerlord } from "../types";
 import { bselectors } from "../selectors";
@@ -88,7 +87,7 @@ export const registerCollections = (context: types.IExtensionContext): void => {
         to,
       );
     },
-    /*title:*/ (t: TFunction) => {
+    /*title:*/ (t: types.TFunction) => {
       return t(`Requirements & Load Order`);
     },
     /*condition?:*/ (_state: types.IState, gameId: string) => {
@@ -138,7 +137,7 @@ export const registerCollections = (context: types.IExtensionContext): void => {
         to,
       );
     },
-    /*title:*/ (t: TFunction) => {
+    /*title:*/ (t: types.TFunction) => {
       return t(`Mod Options`);
     },
     /*condition?:*/ (_state: types.IState, gameId: string) => {

@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
 import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";

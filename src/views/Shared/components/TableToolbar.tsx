@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Icon } from "vortex-api";
+import { Icon } from "@nexusmods/vortex-api";
 import { PathIcon } from "./ModernTable";
 
 /**

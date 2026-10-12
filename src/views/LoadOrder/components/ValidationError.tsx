@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { tooltip, types } from "vortex-api";
+import { tooltip, types } from "@nexusmods/vortex-api";
 import { IVortexViewModelData } from "../../../types";
 
 export type ValidationErrorProps = {

@@ -1,7 +1,7 @@
 import path from "path";
 import { randomBytes } from "crypto";
 import { promises as fs } from "fs";
-import { actions, types, util } from "vortex-api";
+import { actions, types, util } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   types as vetypes,
@@ -478,8 +478,8 @@ export const syncServerProfileNames = (
         : []),
     ];
   });
-  if (updates.length > 0) {
-    util.batchDispatch(api.store?.dispatch, updates);
+  if (updates.length > 0 && api.store !== undefined) {
+    util.batchDispatch(api.store.dispatch, updates);
   }
 };
 

@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { request, RequestOptions } from "https";
 import { BUTR_HOST } from "./const";
 import { IModAnalyzerRequestQuery, IModAnalyzerResult } from "./types";

@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { reloadSaveAsync } from "./utils";
 import { LocalizationManager } from "../localization/manager";
 

@@ -1,5 +1,5 @@
 import path from "path";
-import { actions, log, selectors, types } from "vortex-api";
+import { actions, log, selectors, types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   types as vetypes,

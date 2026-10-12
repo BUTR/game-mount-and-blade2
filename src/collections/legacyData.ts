@@ -1,4 +1,4 @@
-import { actions, selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { ICollectionData, ICollectionDataWithLegacyData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID, SUB_MODS_IDS } from "../common";

@@ -1,4 +1,4 @@
-import { selectors, types, util } from "vortex-api";
+import { selectors, types, util } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
 import { enableModsAsync } from "./deploy";
 import { findModDownload } from "./modFinder";

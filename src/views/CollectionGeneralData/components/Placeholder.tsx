@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { EmptyPlaceholder } from "vortex-api";
+import { EmptyPlaceholder } from "@nexusmods/vortex-api";
 import { OpenLoadOrderButton } from "./OpenLoadOrderButton";
 import { useLocalization } from "../../../localization/hooks";
 

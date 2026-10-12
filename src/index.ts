@@ -1,6 +1,5 @@
 import { method as toBluebird } from "bluebird";
-import { log, selectors, types } from "vortex-api";
-import * as semver from "semver";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { GAME_ID } from "./common";
 import { SavePage } from "./views/Saves/SavePage";
@@ -29,7 +28,6 @@ import { VortexLauncherManagerLogger } from "./launcher/logger";
 import { gamemodeActivatedSaveAsync } from "./save/events";
 import { addedFilesEventAsync, installedMod } from "./vortex/events";
 import { registerVortexModTypes } from "./vortex/register";
-import { LocalizationManager } from "./localization/manager";
 import { version } from "../package.json";
 import { watchNoModsProfile } from "./servers/noModsProfile";
 import { watchProfiles } from "./servers/profileWatch";
@@ -50,6 +48,9 @@ let logger: VortexLauncherManagerLogger | null = null;
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
+
+  // Vortex skips the extension on older versions, including 1.x, instead of loading it
+  context.requireVersion(`>=${__VORTEX_API_VERSION__}`);
 
   // Reducers
   context.registerReducer(
@@ -117,22 +118,21 @@ const main = (context: types.IExtensionContext): boolean => {
   context.registerInstaller(
     /*id:*/ "bannerlord-blse-installer",
     /*priority:*/ 30,
-    /*testSupported:*/ toBluebird(async (files: string[], gameId: string) => {
+    /*testSupported:*/ async (files: string[], gameId: string) => {
       if (GAME_ID !== gameId) {
         return undefined!;
       }
 
       return await testBLSEAsync(files, gameId);
-    }),
-    /*install:*/ toBluebird(
-      async (files: string[], _destinationPath: string, gameId: string) => {
-        if (GAME_ID !== gameId) {
-          return undefined!;
-        }
+    },
+    /*install:*/
+    async (files: string[], _destinationPath: string, gameId: string) => {
+      if (GAME_ID !== gameId) {
+        return undefined!;
+      }
 
-        return await installBLSEAsync(context.api, files);
-      },
-    ),
+      return await installBLSEAsync(context.api, files);
+    },
   );
   context.registerModType(
     /*id:*/ "bannerlord-blse",
@@ -145,29 +145,6 @@ const main = (context: types.IExtensionContext): boolean => {
   // Module, Translation Installers & Mod Types
   registerVortexModTypes(context);
 
-  // Event Callbacks
-  const checkVortexVersion = async (): Promise<void> => {
-    const state = context.api.getState();
-
-    const vortexVersion = semver.coerce(state.app.appVersion)!.version;
-    if (
-      !semver.satisfies(vortexVersion, "<=1.13.3") &&
-      !semver.satisfies(vortexVersion, ">=1.14.0")
-    ) {
-      const { localize: t } = LocalizationManager.getInstance(context.api);
-
-      await context.api.showDialog?.(
-        "info",
-        t(`Unsupported Vortex Version!`),
-        {
-          text: t(
-            `You are using an unsupported Vortex version! Either upgrade to 1.14.0 or higher or downgrade to 1.13.3 or lower!`,
-          ),
-        },
-        [{ label: t("Close") }],
-      );
-    }
-  };
 
   context.once(() => {
     context.api.setStylesheet(
@@ -199,8 +176,6 @@ const main = (context: types.IExtensionContext): boolean => {
 
       // Vortex picks the defaultPrimary tool on activation, which is BLSE regardless of the mode
       applyGameModeTools(context.api);
-
-      await checkVortexVersion();
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);

@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { actionsSave } from "./actions";
 import { VortexLauncherManager } from "../launcher/manager";
 import { bselectors } from "../selectors";

@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { tooltip } from "vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import { useLocalization } from "../../../localization/hooks";
 
 export type SteamBinariesOnXboxProps = {

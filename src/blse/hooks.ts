@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { selectors } from "vortex-api";
+import { selectors } from "@nexusmods/vortex-api";
 import { bselectors } from "../selectors";
 import { isModActive } from "../vortex/modStorage";
 

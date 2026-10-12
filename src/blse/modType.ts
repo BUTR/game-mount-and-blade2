@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { BLSE_CLI_EXE } from "../common";
 import { IBannerlordMod, IBannerlordModStorage } from "../types";
 import { findModByPredicate } from "../vortex/modStorage";

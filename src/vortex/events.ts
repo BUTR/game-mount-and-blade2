@@ -1,5 +1,4 @@
-import Bluebird from "bluebird";
-import { actions, fs, selectors, types, util } from "vortex-api";
+import { actions, fs, selectors, types, util } from "@nexusmods/vortex-api";
 import path from "path";
 import { copyFile, rm } from "node:fs/promises";
 import { GAME_ID } from "../common";
@@ -71,7 +70,7 @@ export const addedFilesEventAsync = async (
     }
   };
 
-  await Bluebird.map<IAddedFiles, void>(files, handleFileAsync);
+  await Promise.all(files.map(handleFileAsync));
 };
 
 export const installedMod = (

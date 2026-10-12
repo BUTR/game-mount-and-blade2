@@ -1,8 +1,8 @@
 import React, { CSSProperties, FC } from "react";
 import { OverlayTrigger, Popover } from "react-bootstrap";
-import { ITooltipProps } from "vortex-api/lib/controls/TooltipControls";
+import type { tooltip as tooltipControls } from "@nexusmods/vortex-api";
 
-export type TooltipImageProps = ITooltipProps & {
+export type TooltipImageProps = tooltipControls.ITooltipProps & {
   className?: string;
   fixedWidth?: boolean;
   flip?: "horizontal" | "vertical";

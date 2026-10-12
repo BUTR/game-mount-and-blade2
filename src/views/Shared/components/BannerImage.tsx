@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { log, selectors, types } from "vortex-api";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import {
   BANNER_VIEW_BOX,
   BannerShape,

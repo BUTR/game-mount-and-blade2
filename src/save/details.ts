@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { MainContext, types } from "vortex-api";
+import { MainContext, types } from "@nexusmods/vortex-api";
 import { getSaveDetailsAsync, ISaveDetails } from "./saveFile";
 import { VortexLauncherManager } from "../launcher/manager";
 

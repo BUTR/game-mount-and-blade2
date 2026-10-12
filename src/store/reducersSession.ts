@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { createReducer, updateAuto } from "./redux";
 import { actionsLauncher } from "../launcher/actions";
 import { IBannerlordSession } from "../types";

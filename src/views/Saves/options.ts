@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../../common";
 import { bselectors } from "../../selectors";
 import { IStateWithBannerlord } from "../../types";
@@ -10,6 +10,8 @@ export class SavePageOptions implements types.IMainPageOptions {
   public hotkey = "A";
   public group: "dashboard" | "global" | "per-game" | "support" | "hidden" =
     "per-game";
+
+  public priority = 50;
 
   constructor(context: types.IExtensionContext) {
     this.context = context;

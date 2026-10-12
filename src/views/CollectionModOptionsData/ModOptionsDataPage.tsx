@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { tooltip, selectors } from "vortex-api";
+import { tooltip, selectors } from "@nexusmods/vortex-api";
 import { ModOptionsSettingsSection } from "./components/ModOptionsSettingsSection";
 import { Placeholder } from "./components/Placeholder";
 import { ICollectionFeatureProps } from "../types";

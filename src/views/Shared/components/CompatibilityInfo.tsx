@@ -1,5 +1,5 @@
 import React, { FC, useContext, useEffect, useState } from "react";
-import { MainContext, tooltip } from "vortex-api";
+import { MainContext, tooltip } from "@nexusmods/vortex-api";
 import { IVortexViewModelData } from "../../../types";
 import { IModuleCompatibilityInfo } from "../../../butr/types";
 import { useLocalization } from "../../../localization/hooks";

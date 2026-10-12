@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID, MULTIPLAYER_PROFILE_FEATURE } from "../common";
 import { bselectors } from "../selectors";
 import { GameMode } from "../settings/types";
