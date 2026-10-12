@@ -15,3 +15,6 @@ allowBuilds:
   core-js: false
   leveldown: false
   winapi-bindings: false
+
+minimumReleaseAgeExclude:
+  - "@butr/vortexextensionnative@2.0.213"
