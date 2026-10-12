@@ -104,7 +104,7 @@ jobs:
     uses: BUTR/workflows/.github/workflows/release-nexusmods.yml@master
     with:
       nexusmods_game_id: site
-      nexusmods_mod_id: 9856949945195
+      nexusmods_mod_id: 875
       nexusmods_file_group_id: 1765774
       mod_filename: game-mount-and-blade2
       mod_version: ${{ needs.get-changelog-info.outputs.version }}
