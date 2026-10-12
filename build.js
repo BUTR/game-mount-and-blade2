@@ -13,6 +13,8 @@ const DIST_DIR = path.join(ROOT_DIR, "dist");
 const SEVEN_ZIP = sevenZipBin.path7za;
 
 /**
+ * Runs a command through the shell. Only pass constant strings here, never paths
+ * or user input, use run() for those
  * @param {string} command
  * @param {string} [cwd]
  */
@@ -22,6 +24,20 @@ const exec = (command, cwd = ROOT_DIR) => {
     cwd,
     stdio: "inherit",
     shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
+  });
+};
+
+/**
+ * Runs an executable directly, without a shell, so arguments are never interpreted
+ * @param {string} file
+ * @param {string[]} args
+ * @param {string} [cwd]
+ */
+const run = (file, args, cwd = ROOT_DIR) => {
+  console.log(`> ${[file, ...args].join(" ")}`);
+  child_process.execFileSync(file, args, {
+    cwd,
+    stdio: "inherit",
   });
 };
 
@@ -87,22 +103,28 @@ const updateFromFile = (configuration) => {
     "src/Bannerlord.LauncherManager.Native.TypeScript",
   );
 
+  if (!/^[A-Za-z]+$/.test(configuration)) {
+    throw new Error(`Invalid configuration: ${configuration}`);
+  }
+
   exec("pnpm remove @butr/vortexextensionnative");
 
   exec("pnpm run clean", extensionPath);
   exec(`pnpm run build -- ${configuration}`, extensionPath);
 
   const tgzFile = "butr-vortexextensionnative.tgz";
-  exec(`pnpm pack --pack-destination ${ROOT_DIR}`, extensionPath);
-  // pnpm pack produces a scoped filename; rename to expected name
-  const packedFiles = fs.readdirSync(ROOT_DIR).filter(
-    (f) => f.startsWith("butr-vortexextensionnative-") && f.endsWith(".tgz"),
-  );
-  if (packedFiles.length > 0) {
-    fs.renameSync(
-      path.join(ROOT_DIR, packedFiles[0]),
-      path.join(ROOT_DIR, tgzFile),
+  // Pack into the extension folder so no absolute path goes through the shell
+  exec("pnpm pack", extensionPath);
+  // pnpm pack produces a scoped filename; move it here under the expected name
+  const packedFiles = fs
+    .readdirSync(extensionPath)
+    .filter(
+      (f) => f.startsWith("butr-vortexextensionnative-") && f.endsWith(".tgz"),
     );
+  if (packedFiles.length > 0) {
+    const packedPath = path.join(extensionPath, packedFiles[0]);
+    fs.copyFileSync(packedPath, path.join(ROOT_DIR, tgzFile));
+    fs.unlinkSync(packedPath);
   }
   exec(`pnpm add file:./${tgzFile}`);
 };
@@ -136,9 +158,16 @@ const bundle = () => {
 const publishLobbyBridge = () => {
   console.log("Publish Bannerlord.LobbyBridge");
 
-  exec(
-    `dotnet publish "tools/Bannerlord.LobbyBridge/Bannerlord.LobbyBridge.csproj" -c Release -o "${DIST_DIR}" -p:DebugType=none -nologo`,
-  );
+  run("dotnet", [
+    "publish",
+    "tools/Bannerlord.LobbyBridge/Bannerlord.LobbyBridge.csproj",
+    "-c",
+    "Release",
+    "-o",
+    DIST_DIR,
+    "-p:DebugType=none",
+    "-nologo",
+  ]);
 };
 
 const pack7z = () => {
@@ -156,7 +185,7 @@ const pack7z = () => {
     }
   }
 
-  exec(`"${SEVEN_ZIP}" a -t7z "game-mount-and-blade2.7z" "./dist/*.*"`);
+  run(SEVEN_ZIP, ["a", "-t7z", "game-mount-and-blade2.7z", "./dist/*.*"]);
 };
 
 /**
