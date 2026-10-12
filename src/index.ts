@@ -145,7 +145,6 @@ const main = (context: types.IExtensionContext): boolean => {
   // Module, Translation Installers & Mod Types
   registerVortexModTypes(context);
 
-
   context.once(() => {
     context.api.setStylesheet(
       "bannerlord-modern",
