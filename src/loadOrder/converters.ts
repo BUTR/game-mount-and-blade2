@@ -1,9 +1,9 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { getModuleAttributes } from "./utils";
+import { getModuleAttributes } from "../vortex/modFinder";
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
@@ -11,33 +11,11 @@ import {
   VortexLoadOrderEntry,
   VortexLoadOrderStorage,
 } from "../types";
-import { ValidationManager } from "../validation";
+import { ValidationManager } from "../validation/manager";
 
-export const persistenceToVortex = (
-  api: types.IExtensionApi,
-  modules: Readonly<IModuleCache>,
-  loadOrder: PersistenceLoadOrderStorage,
-): VortexLoadOrderStorage => {
-  const loadOrderConverted = loadOrder
-    .map<VortexLoadOrderEntry>((x) => {
-      const result = getModuleAttributes(api, x.id);
-      return {
-        id: x.id,
-        name: x.name,
-        enabled: x.isSelected,
-        ...(result[0]?.id !== undefined && { modId: result[0].id }),
-        data: {
-          moduleInfoExtended: modules[x.id]!,
-          index: x.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
-          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
-        },
-      };
-    })
-    .filter((x) => x.data)
-    .sort((x, y) => x.data!.index - y.data!.index);
-  return loadOrderConverted;
-};
+const isLockedEntry = (entry: VortexLoadOrderEntry): boolean =>
+  entry.locked !== undefined &&
+  (entry.locked === `true` || entry.locked === `always`);
 
 export const persistenceToLibrary = (
   loadOrder: PersistenceLoadOrderStorage,
@@ -67,8 +45,7 @@ export const vortexToPersistence = (
     id: x.id,
     name: x.name,
     isSelected: x.enabled,
-    isDisabled:
-      x.locked !== undefined && (x.locked === `true` || x.locked === `always`),
+    isDisabled: isLockedEntry(x),
     index: index,
   }));
   return loadOrderConverted;
@@ -114,9 +91,7 @@ export const vortexToLibraryVM = (
                 validationManager,
               ).length,
             isSelected: entry.enabled,
-            isDisabled:
-              entry.locked !== undefined &&
-              (entry.locked === `true` || entry.locked === `always`),
+            isDisabled: isLockedEntry(entry),
             index: entry.data.index,
           }
         : [];
@@ -150,43 +125,16 @@ export const libraryVMToVortex = (
   );
   return loadOrderConverted;
 };
-export const libraryVMToLibrary = (
-  loadOrder: vetypes.ModuleViewModel[],
-): vetypes.LoadOrder => {
-  const loadOrderConverted = loadOrder.reduce<vetypes.LoadOrder>(
-    (map, curr) => {
-      map[curr.moduleInfoExtended.id] = {
-        id: curr.moduleInfoExtended.id,
-        name: curr.moduleInfoExtended.name,
-        isSelected: curr.isSelected,
-        isDisabled: curr.isDisabled,
-        index: curr.index,
-      };
-      return map;
-    },
-    {},
-  );
-  return loadOrderConverted;
-};
 export const libraryToLibraryVM = (
   modules: vetypes.ModuleInfoExtendedWithMetadata[],
 ): vetypes.ModuleViewModel[] => {
-  //const validationManager = ValidationManager.fromLibrary(loadOrder);
-  const loadOrderConverted = modules.reduce<vetypes.ModuleViewModel[]>(
-    (arr, curr) => {
-      arr.push({
-        moduleInfoExtended: curr,
-        //isValid: BannerlordModuleManager.validateModule(modules, curr, validationManager).length === 0,
-        isValid: false,
-        isSelected: false,
-        isDisabled: false,
-        index: 0,
-      });
-      return arr;
-    },
-    [],
-  );
-  return loadOrderConverted;
+  return modules.map<vetypes.ModuleViewModel>((curr) => ({
+    moduleInfoExtended: curr,
+    isValid: false,
+    isSelected: false,
+    isDisabled: false,
+    index: 0,
+  }));
 };
 
 export const vortexToLibrary = (
@@ -198,9 +146,7 @@ export const vortexToLibrary = (
         id: curr.id,
         name: curr.name,
         isSelected: curr.enabled,
-        isDisabled:
-          curr.locked !== undefined &&
-          (curr.locked === `true` || curr.locked === `always`),
+        isDisabled: isLockedEntry(curr),
         index: loadOrder.indexOf(curr),
       };
       return map;

@@ -1,11 +1,12 @@
-import { types } from "vortex-api";
-import { GAME_ID } from "../common";
+import { types } from "@nexusmods/vortex-api";
 import {
   hasBackupModOptionsAsync,
   removeOriginalModOptionsAsync,
   restoreOriginalModOptionsAsync,
-} from "../modoptions";
-import { LocalizationManager } from "../localization";
+} from "../modOptions/utils";
+import { LocalizationManager } from "../localization/manager";
+import { bselectors } from "../selectors";
+import { IStateWithBannerlord } from "../types";
 
 /**
  * Event function, be careful
@@ -14,7 +15,9 @@ export const willRemoveModCollectionsAsync = async (
   api: types.IExtensionApi,
   modId: string,
 ): Promise<void> => {
-  const mod = api.getState().persistent.mods[GAME_ID]?.[modId];
+  const state = api.getState<IStateWithBannerlord>();
+
+  const mod = bselectors.bannerlordModById(state, modId);
   if (!mod) {
     return;
   }

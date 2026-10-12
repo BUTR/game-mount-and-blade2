@@ -1,12 +1,12 @@
-import React from "react";
+import React, { FC } from "react";
 import { ListGroup } from "react-bootstrap";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
 export type RequirementsProps = {
   hasBLSE: boolean;
 };
 
-export const Requirements = (props: RequirementsProps): JSX.Element => {
+export const Requirements: FC<RequirementsProps> = (props) => {
   const { hasBLSE } = props;
 
   const { localize: t } = useLocalization();

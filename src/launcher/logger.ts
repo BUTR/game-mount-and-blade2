@@ -1,6 +1,7 @@
 import { NativeLogger } from "@butr/vortexextensionnative";
-import { log } from "vortex-api";
-import { LogLevel } from "vortex-api/lib/util/log";
+import { log } from "@nexusmods/vortex-api";
+
+type LogLevel = Parameters<typeof log>[0];
 
 const getLogLevel = (level: number): LogLevel => {
   switch (level) {

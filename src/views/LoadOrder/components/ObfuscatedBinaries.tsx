@@ -1,14 +1,12 @@
-import React from "react";
-import { tooltip } from "vortex-api";
-import { useLocalization } from "../../../localization";
+import React, { FC } from "react";
+import { tooltip } from "@nexusmods/vortex-api";
+import { useLocalization } from "../../../localization/hooks";
 
-export type ObfuscaedBinariesProps = {
+export type ObfuscatedBinariesProps = {
   hasObfuscatedBinaries: boolean;
 };
 
-export const ObfuscaedBinaries = (
-  props: ObfuscaedBinariesProps,
-): JSX.Element => {
+export const ObfuscatedBinaries: FC<ObfuscatedBinariesProps> = (props) => {
   const { hasObfuscatedBinaries } = props;
 
   const { localize: t } = useLocalization();

@@ -1,21 +1,19 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { actionsSave } from "./actions";
-import { VortexLauncherManager } from "../launcher";
-import { getSaveFromSettings } from "../settings";
+import { VortexLauncherManager } from "../launcher/manager";
+import { bselectors } from "../selectors";
+import { IStateWithBannerlord } from "../types";
 
 export const reloadSaveAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
+
   const profile = selectors.activeProfile(state);
   if (!profile) {
     throw new Error(`Active profile is undefined`);
   }
-  let save = getSaveFromSettings(state, profile.id);
-
-  if (save === "No Save") {
-    save = null;
-  }
+  const save = bselectors.saveNameForProfile(state, profile.id);
 
   api.store?.dispatch(actionsSave.setCurrentSave(profile.id, save));
 

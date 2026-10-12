@@ -1,0 +1,223 @@
+// The Servers page. The look it shares with the other pages is in modern.scss, which is registered first, so the rules
+// here are scoped as #page-bannerlord-servers .bls-page to be as specific as the shared ones and win by coming later
+
+#page-bannerlord-servers .bls-page {
+    .bls-lobby-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding-right: 8px;
+        color: var(--bls-text-subdued);
+
+        .bls-dot {
+            width: 6px;
+            height: 6px;
+        }
+    }
+
+    .bls-remove-server {
+        align-self: flex-start;
+        margin-top: 4px;
+        color: var(--bls-danger);
+    }
+
+    .bls-join-option {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 4px;
+    }
+}
+
+// Server list
+
+#page-bannerlord-servers .bls-page {
+    // A long host name is cut short, the badge stays
+    .bls-host > span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bls-row-join {
+        min-height: 28px;
+        padding: 0 10px;
+    }
+
+    .bls-star {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--bls-radius-sm);
+        background: none;
+        color: var(--bls-text-weak);
+        cursor: pointer;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        &:hover {
+            background: var(--bls-wash-mid);
+            color: var(--bls-text-strong);
+        }
+
+        &.is-favorite {
+            color: var(--bls-primary);
+        }
+    }
+
+    .bls-host,
+    .bls-mods {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    // The server the active profile was made for
+    .bls-table-row.server-profile-row {
+        box-shadow: inset 3px 0 0 var(--bls-primary);
+    }
+
+    .bls-server-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+
+        > span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--bls-text-strong);
+            font-weight: 500;
+        }
+    }
+
+    // Lined up by digit, the column is right aligned
+    .bls-ping {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    // Says a time was taken over TCP, the host doesn't answer the game's ping
+    .bls-ping-method {
+        padding: 0 4px;
+        border-radius: var(--bls-radius-sm);
+        background: var(--bls-wash-mid);
+        color: var(--bls-text-subdued);
+        font-size: 10px;
+        line-height: 14px;
+        letter-spacing: 0.04em;
+    }
+
+    .bls-players {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-variant-numeric: tabular-nums;
+
+        > span:first-child {
+            min-width: 44px;
+        }
+    }
+
+    .bls-meter {
+        flex: 1;
+        max-width: 44px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--bls-wash-mid);
+        overflow: hidden;
+
+        > span {
+            display: block;
+            height: 100%;
+            background: var(--bls-text-moderate);
+
+            &.is-full {
+                background: var(--bls-warning);
+            }
+        }
+    }
+}
+
+// First run
+
+#page-bannerlord-servers .bls-page {
+    .bls-first-run {
+        flex: 1;
+        gap: 32px;
+
+        p {
+            font-size: var(--bls-text-md);
+            line-height: 20px;
+        }
+    }
+
+    .bls-first-run-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .bls-steps {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        width: 100%;
+        max-width: 880px;
+        text-align: left;
+
+        li {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 16px;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-lg);
+            background: var(--bls-surface-low);
+        }
+
+        .bls-title-xs {
+            color: var(--bls-primary);
+        }
+
+        strong {
+            font-size: var(--bls-text-md);
+            line-height: 20px;
+            font-weight: 500;
+            color: var(--bls-text-strong);
+        }
+    }
+}
+
+// Maps tab
+
+#page-bannerlord-servers .bls-page {
+    // The table scrolls inside the space the summary leaves
+    .bls-maps-table {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    .bls-map-name {
+        color: var(--bls-text-strong);
+        font-weight: 500;
+    }
+}

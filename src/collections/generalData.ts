@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import {
   ICollectionData,
   ICollectionDataWithGeneralData,
@@ -11,10 +11,10 @@ import {
 import { CollectionParseError } from "./errors";
 import { collectionInstallBLSEAsync } from "./utils";
 import { GAME_ID } from "../common";
-import { isModActive } from "../vortex";
-import { findBLSEMod } from "../blse";
-import { vortexToPersistence } from "../loadOrder";
-import { VortexLauncherManager } from "../launcher";
+import { isModActive } from "../vortex/modStorage";
+import { findBLSEMod } from "../blse/modType";
+import { vortexToPersistence } from "../loadOrder/converters";
+import { VortexLauncherManager } from "../launcher/manager";
 import { IBannerlordModStorage, VortexLoadOrderStorage } from "../types";
 
 /**
@@ -51,10 +51,8 @@ export const parseCollectionGeneralDataAsync = async (
   }
 
   const state = api.getState();
-  const profileId: string | undefined = selectors.lastActiveProfileForGame(
-    state,
-    GAME_ID,
-  );
+
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   const profile = selectors.profileById(state, profileId ?? "");
   if (profile?.gameId !== GAME_ID) {
     const collectionName =

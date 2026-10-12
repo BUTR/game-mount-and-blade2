@@ -1,6 +1,6 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import path from "path";
-import { isStoreXbox } from "../vortex";
+import { isStoreXbox } from "../vortex/store";
 import {
   BINARY_FOLDER_STANDARD,
   BINARY_FOLDER_XBOX,
@@ -12,8 +12,9 @@ export const installBLSEAsync = (
   api: types.IExtensionApi,
   files: string[],
 ): Promise<types.IInstallResult> => {
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.currentGameDiscovery(api.getState());
+  const state = api.getState();
+
+  const discovery = selectors.currentGameDiscovery(state);
   if (discovery === undefined) {
     return Promise.resolve({
       instructions: [],

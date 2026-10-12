@@ -1,28 +1,27 @@
-import React from "react";
-import { types } from "vortex-api";
-import { Radio } from "react-bootstrap";
+import React, { FC } from "react";
 import { ISaveGame } from "../types";
 
 export type RadioViewProps = {
-  api: types.IExtensionApi;
   save: ISaveGame;
-  selectedSave: ISaveGame | null;
-  hasBLSE: boolean;
-  onChange: (save: ISaveGame) => void;
+  checked: boolean;
+  label: string;
+  onChange: (save: ISaveGame) => Promise<void>;
 };
 
 // Custom Renderer has no Context access
-export const RadioView = (props: RadioViewProps): JSX.Element => {
-  const { save, selectedSave, hasBLSE, onChange } = props;
+// Controlled, so it follows the launch save when it is changed from the details panel or the launch bar
+export const RadioView: FC<RadioViewProps> = (props) => {
+  const { save, checked, label, onChange } = props;
 
-  return hasBLSE ? (
-    <Radio
-      name="radioGroup"
-      defaultChecked={save.name === selectedSave?.name}
-      id={`bannerlord-savegames-radio${save.index}`}
-      onChange={() => onChange(save)}
+  return (
+    <input
+      type="radio"
+      className="bls-radio"
+      name="bannerlord-savegames-launch"
+      aria-label={label}
+      checked={checked}
+      onClick={(event) => event.stopPropagation()}
+      onChange={() => void onChange(save)}
     />
-  ) : (
-    <></>
   );
 };

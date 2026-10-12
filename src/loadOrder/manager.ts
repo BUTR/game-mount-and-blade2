@@ -1,30 +1,33 @@
 import { ComponentType } from "react";
-import { selectors, types } from "vortex-api";
-import {
-  IInvalidResult,
-  IValidationResult,
-} from "vortex-api/lib/extensions/file_based_loadorder/types/types";
+import { log, selectors, types } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   Utils,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { libraryToPersistence, vortexToLibrary } from "./converters";
 import { actionsLoadOrder } from "./actions";
-import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "./utils";
+import { libraryToPersistence, vortexToLibrary } from "./converters";
+import {
+  filterLoadOrderByGameMode,
+  orderCurrentLoadOrderByExternalLoadOrderAsync,
+} from "./utils";
 import { IFBLOItemRendererProps } from "./types";
-import { readLoadOrderAsync, writeLoadOrderAsync } from "./vortex";
+import { readLoadOrderAsync, writeLoadOrderAsync } from "./persistence";
+import { buildCompatibilityCache } from "../butr/utils";
 import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
   IModuleCompatibilityInfoCache,
   IModuleObfuscationCacheInfoCache,
-  ModAnalyzerProxy,
-} from "../butr";
+} from "../butr/types";
+import { ModAnalyzerProxy } from "../butr/modAnalyzerProxy";
 import { GAME_ID } from "../common";
-import { LoadOrderInfoPanel, LoadOrderItemRenderer } from "../views";
-import { VortexLoadOrderStorage } from "../types";
-import { versionToString, VortexLauncherManager } from "../launcher";
+import { LoadOrderInfoPanel } from "../views/LoadOrder/components/LoadOrderInfoPanel";
+import { LoadOrderItemRenderer } from "../views/LoadOrder/components/LoadOrderItemRenderer";
+import { IStateWithBannerlord, VortexLoadOrderStorage } from "../types";
+import { bselectors } from "../selectors";
+import { VortexLauncherManager } from "../launcher/manager";
+import { versionToString } from "../butr/version";
 
 export class LoadOrderManager implements types.ILoadOrderGameInfo {
   private static instance: LoadOrderManager | undefined;
@@ -55,12 +58,12 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   constructor(api: types.IExtensionApi) {
     this.api = api;
-    this.usageInstructions = (): JSX.Element =>
+    this.usageInstructions = () =>
       LoadOrderInfoPanel({
         refreshAsync: this.updateCompatibilityScoresAsync,
       });
 
-    this.customItemRenderer = ({ className = "", item }): JSX.Element => {
+    this.customItemRenderer = ({ className = "", item }) => {
       const availableProviders = this.allModules
         .filter((x) => x.id === item.loEntry.id)
         .map<vetypes.ModuleProviderType>((x) => x.moduleProviderType);
@@ -87,15 +90,7 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
       })),
     };
     const result = await proxy.analyzeAsync(this.api, query);
-    this.compatibilityScoresCache =
-      result.modules.reduce<IModuleCompatibilityInfoCache>((map, curr) => {
-        map[curr.moduleId] = {
-          score: curr.compatibility,
-          recommendedScore: curr.recommendedCompatibility,
-          recommendedVersion: curr.recommendedModuleVersion,
-        };
-        return map;
-      }, {});
+    this.compatibilityScoresCache = buildCompatibilityCache(result.modules);
     this.forceRefresh();
   };
 
@@ -111,6 +106,16 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     newLO: VortexLoadOrderStorage,
     _prevLO: VortexLoadOrderStorage,
   ): Promise<void> => {
+    // The mode's file is picked by the active mode, so the other mode's order must never reach it.
+    // That order arrives when a read started before switching modes finishes after it
+    const gameMode = bselectors.activeGameMode(this.api.getState());
+    if (filterLoadOrderByGameMode(newLO, gameMode).length !== newLO.length) {
+      log("warn", "Skipped writing a load order of the other game mode", {
+        gameMode,
+      });
+      return;
+    }
+
     const loadOrderConverted = vortexToLibrary(newLO);
     await writeLoadOrderAsync(
       this.api,
@@ -151,39 +156,73 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     }
   };
 
-  public deserializeLoadOrder = async (): Promise<VortexLoadOrderStorage> => {
-    const launcherManager = VortexLauncherManager.getInstance(this.api);
-
-    // Make sure the LauncherManager has the latest module list
-    await launcherManager.refreshModulesAsync();
-    this.allModules = await launcherManager.getAllModulesWithDuplicatesAsync();
-
-    // Get the saved Load Order
-    const allModules = await launcherManager.getAllModulesAsync();
-    const savedLoadOrder = await readLoadOrderAsync(this.api);
-
-    const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(
-      this.api,
-      allModules,
-      savedLoadOrder,
+  /**
+   * Vortex and the extension both read the load order, and switching modes or profiles while a read is running
+   * would return the old one. Reads run one at a time, and one that saw a switch reads again
+   */
+  public deserializeLoadOrder = (): Promise<VortexLoadOrderStorage> => {
+    const read = this.deserializeQueue.then(
+      this.deserializeCurrentLoadOrderAsync,
+      this.deserializeCurrentLoadOrderAsync,
     );
-    await this.populateMissingAttributes(loadOrder);
-    await this.setParametersAsync(vortexToLibrary(loadOrder));
-    return loadOrder;
+    this.deserializeQueue = read.catch(() => undefined);
+    return read;
   };
+
+  private deserializeQueue: Promise<unknown> = Promise.resolve();
+
+  private deserializeCurrentLoadOrderAsync =
+    async (): Promise<VortexLoadOrderStorage> => {
+      const readTarget = (): string => {
+        const state = this.api.getState<IStateWithBannerlord>();
+        return `${selectors.activeProfile(state)?.id}:${bselectors.activeGameMode(state)}`;
+      };
+
+      // A switch outpacing every read would never settle, a few reads are enough
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const target = readTarget();
+        const loadOrder = await this.deserializeLoadOrderAsync();
+        if (readTarget() === target) {
+          return loadOrder;
+        }
+      }
+      return await this.deserializeLoadOrderAsync();
+    };
+
+  private deserializeLoadOrderAsync =
+    async (): Promise<VortexLoadOrderStorage> => {
+      const launcherManager = VortexLauncherManager.getInstance(this.api);
+
+      // Make sure the LauncherManager has the latest module list
+      await launcherManager.refreshModulesAsync();
+      this.allModules =
+        await launcherManager.getAllModulesWithDuplicatesAsync();
+
+      // Get the saved Load Order
+      const allModules = await launcherManager.getAllModulesAsync();
+      const savedLoadOrder = await readLoadOrderAsync(this.api);
+
+      const loadOrder = await orderCurrentLoadOrderByExternalLoadOrderAsync(
+        this.api,
+        allModules,
+        savedLoadOrder,
+      );
+      await this.populateMissingAttributes(loadOrder);
+      await this.setParametersAsync(vortexToLibrary(loadOrder));
+      return loadOrder;
+    };
 
   public validate = (
     prevLO: VortexLoadOrderStorage,
     newLO: VortexLoadOrderStorage,
-  ): Promise<IValidationResult> => {
+  ): Promise<types.IValidationResult> => {
     const modules = (
       newLO ?? []
     ).flatMap<vetypes.ModuleInfoExtendedWithMetadata>((entry) => {
       return entry.data && entry.enabled ? entry.data.moduleInfoExtended : [];
     });
-    //const validationManager = ValidationManager.fromVortex(newLO);
 
-    const invalidResults: IInvalidResult[] = [];
+    const invalidResults: types.IFBLOInvalidResult[] = [];
     for (const enabledModule of modules) {
       const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(
         modules,

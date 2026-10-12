@@ -1,10 +1,10 @@
-import React, { useContext } from "react";
+import React, { FC, useContext } from "react";
 import { Button } from "react-bootstrap";
-import { MainContext } from "vortex-api";
+import { MainContext } from "@nexusmods/vortex-api";
 import { openLoadOrderPage } from "../utils";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
-export const OpenLoadOrderButton = (): JSX.Element => {
+export const OpenLoadOrderButton: FC = () => {
   const { localize: t } = useLocalization();
 
   const context = useContext(MainContext);

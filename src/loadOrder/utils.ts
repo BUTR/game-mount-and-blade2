@@ -1,4 +1,4 @@
-import { selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { Utils, types as vetypes } from "@butr/vortexextensionnative";
 import {
   libraryToVortex,
@@ -6,60 +6,44 @@ import {
   persistenceToLibrary,
   vortexToPersistence,
 } from "./converters";
-import { actionsLoadOrder } from "./actions";
-import {
-  OBFUSCATED_BINARIES,
-  STEAM_BINARIES_ON_XBOX,
-  SUB_MODS_IDS,
-} from "../common";
 import {
   IModuleCache,
   IPersistenceLoadOrderEntry,
+  IStateWithBannerlord,
   PersistenceLoadOrderStorage,
   RequiredProperties,
+  VortexLoadOrderEntry,
   VortexLoadOrderStorage,
 } from "../types";
-import { VortexLauncherManager } from "../launcher";
-import { LocalizationManager } from "../localization";
-import { hasPersistentLoadOrder } from "../vortex";
-import { getSortOnDeployFromSettings } from "../settings";
-
-type ModIdResult = {
-  id: string;
-  source: string | undefined;
-  hasSteamBinariesOnXbox: boolean;
-  hasObfuscatedBinaries: boolean;
-};
+import { VortexLauncherManager } from "../launcher/manager";
+import { LocalizationManager } from "../localization/manager";
+import { bselectors } from "../selectors";
+import { GameMode } from "../settings/types";
 
 /**
- * I have no idea what to do if we have multiple mods that provide the same Module
+ * Whether the mode lists the module, the rule the LauncherManager orders by: Native is in both modes
  */
-export const getModuleAttributes = (
-  api: types.IExtensionApi,
-  moduleId: string,
-): ModIdResult[] => {
-  const state = api.getState();
-  const gameId: string | undefined = selectors.activeGameId(state);
-  const gameMods = gameId ? (state.persistent.mods[gameId] ?? {}) : {};
-  const modIds = Object.values(gameMods).reduce<ModIdResult[]>((arr, mod) => {
-    if (!mod.attributes || mod.attributes[SUB_MODS_IDS] === undefined) {
-      return arr;
-    }
-    const subModsIds: Set<string> = new Set(mod.attributes[SUB_MODS_IDS]);
-    if (subModsIds.has(moduleId)) {
-      arr.push({
-        id: mod.id,
-        source: mod.attributes["source"],
-        hasSteamBinariesOnXbox: mod.attributes[STEAM_BINARIES_ON_XBOX] ?? false,
-        hasObfuscatedBinaries: mod.attributes[OBFUSCATED_BINARIES] ?? false,
-      });
-    }
+export const isModuleOfGameMode = (
+  module: vetypes.ModuleInfoExtended,
+  gameMode: GameMode,
+): boolean =>
+  module.id.toLowerCase() === "native" ||
+  (gameMode === "multiplayer"
+    ? module.isMultiplayerModule
+    : module.isSingleplayerModule);
 
-    return arr;
-  }, []);
-
-  return modIds;
-};
+/**
+ * Drops the other mode's modules. Entries of modules that aren't installed are kept, their mode isn't known
+ */
+export const filterLoadOrderByGameMode = (
+  loadOrder: VortexLoadOrderStorage,
+  gameMode: GameMode,
+): VortexLoadOrderStorage =>
+  loadOrder.filter(
+    (entry) =>
+      entry.data?.moduleInfoExtended === undefined ||
+      isModuleOfGameMode(entry.data.moduleInfoExtended, gameMode),
+  );
 
 const getExcludedLoadOrder = (
   loadOrder: VortexLoadOrderStorage,
@@ -81,24 +65,58 @@ const getExcludedLoadOrder = (
   return excludedLoadOrder;
 };
 
+/**
+ * Appends the modules the saved Load Order doesn't list yet as disabled entries.
+ * Otherwise a module that was dropped from the saved Load Order (e.g. while it was being updated)
+ * or a freshly installed one would never show up
+ */
+const appendMissingModules = (
+  api: types.IExtensionApi,
+  loadOrder: VortexLoadOrderStorage,
+  moduleViewModels: vetypes.ModuleViewModel[] | undefined,
+): VortexLoadOrderStorage => {
+  const knownIds = new Set(loadOrder.map((x) => x.id));
+  const missingModules = libraryVMToVortex(
+    api,
+    (moduleViewModels ?? []).filter(
+      (x) => !knownIds.has(x.moduleInfoExtended.id),
+    ),
+  ).map<VortexLoadOrderEntry>((entry, index) => ({
+    ...entry,
+    enabled: false,
+    data: { ...entry.data!, index: loadOrder.length + index },
+  }));
+  return [...loadOrder, ...missingModules];
+};
+
+const warnSortIssues = (
+  api: types.IExtensionApi,
+  autoSort: boolean,
+  issues: string[],
+): void => {
+  if (!autoSort || issues.length === 0) {
+    return;
+  }
+  const { localize: t } = LocalizationManager.getInstance(api);
+  api.sendNotification?.({
+    type: "warning",
+    message: t(
+      `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
+      {
+        NL: "\n",
+        REASONS: issues.join(`\n`),
+      },
+    ),
+  });
+};
+
 const checkOrderByLoadOrderResult = (
   api: types.IExtensionApi,
   autoSort: boolean,
   result: vetypes.OrderByLoadOrderResult,
 ): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
-  if (autoSort && result.issues) {
-    api.sendNotification?.({
-      type: "warning",
-      message: t(
-        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
-        {
-          NL: "\n",
-          REASONS: result.issues.join(`\n`),
-        },
-      ),
-    });
+  if (result.issues) {
+    warnSortIssues(api, autoSort, result.issues);
   }
 };
 
@@ -135,8 +153,6 @@ const checkSavedLoadOrder = (
   autoSort: boolean,
   loadOrder: VortexLoadOrderStorage,
 ): void => {
-  const { localize: t } = LocalizationManager.getInstance(api);
-
   const savedLoadOrderIssues = Utils.isLoadOrderCorrect(
     loadOrder
       .filter((x) => x.enabled)
@@ -144,19 +160,7 @@ const checkSavedLoadOrder = (
         (x) => x.data!.moduleInfoExtended,
       ),
   );
-  if (autoSort && savedLoadOrderIssues.length > 0) {
-    // If there were any issues with the saved LO, the orderer will sort the LO to the nearest working state
-    api.sendNotification?.({
-      type: "warning",
-      message: t(
-        `{=pZVVdI5d}The Load Order was re-sorted with the default algorithm!{NL}Reasons:{NL}{REASONS}`,
-        {
-          NL: "\n",
-          REASONS: savedLoadOrderIssues.join(`\n`),
-        },
-      ),
-    });
-  }
+  warnSortIssues(api, autoSort, savedLoadOrderIssues);
 };
 
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
@@ -164,22 +168,22 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   allModules: Readonly<IModuleCache>,
   savedLoadOrder: PersistenceLoadOrderStorage,
 ): Promise<VortexLoadOrderStorage> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (profile === undefined) {
     return [];
   }
 
-  const autoSort = getSortOnDeployFromSettings(state, profile.id) ?? true;
+  const autoSort = bselectors.sortOnDeployForProfile(state, profile.id) ?? true;
 
   const launcherManager = VortexLauncherManager.getInstance(api);
 
   const savedLoadOrderLibrary = persistenceToLibrary(savedLoadOrder);
-  const savedLoadOrderVortex = libraryToVortex(
-    api,
-    allModules,
-    savedLoadOrderLibrary,
+  // The other mode's modules are never listed, the LauncherManager drops them from the sorted list too
+  const savedLoadOrderVortex = filterLoadOrderByGameMode(
+    libraryToVortex(api, allModules, savedLoadOrderLibrary),
+    bselectors.activeGameMode(state),
   );
 
   checkSavedLoadOrder(api, autoSort, savedLoadOrderVortex);
@@ -191,38 +195,44 @@ export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
     savedLoadOrderLibrary,
   );
   if (!checkResult(api, autoSort, result)) {
-    return savedLoadOrderVortex;
+    // The native side still returns the visible modules when the ordering fails
+    return appendMissingModules(
+      api,
+      savedLoadOrderVortex,
+      result?.orderedModuleViewModels,
+    );
   }
 
   // Not even sure this will trigger
   checkOrderByLoadOrderResult(api, autoSort, result);
 
   // Use the sorted to closest valid state Load Order
-  if (autoSort) {
+  // Also when nothing is saved yet, like a game mode used for the first time, or the list would be empty
+  if (autoSort || savedLoadOrderVortex.length === 0) {
     return libraryVMToVortex(api, result.orderedModuleViewModels);
   }
 
   // Do not use the sorted LO, but take the list of modules. It excludes modules that are not usable
-  return getExcludedLoadOrder(savedLoadOrderVortex, result);
+  return appendMissingModules(
+    api,
+    getExcludedLoadOrder(savedLoadOrderVortex, result),
+    result.orderedModuleViewModels,
+  );
 };
 
 export const toggleLoadOrderAsync = async (
   api: types.IExtensionApi,
   toggle: boolean,
 ): Promise<void> => {
-  const state = api.getState();
-
-  if (!hasPersistentLoadOrder(state.persistent)) {
-    return;
-  }
+  const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (!profile) {
     return;
   }
 
-  const currentLoadOrder = state.persistent.loadOrder[profile.id];
-  if (!currentLoadOrder) {
+  const currentLoadOrder = bselectors.bannerlordLoadOrder(state, profile.id);
+  if (currentLoadOrder.length === 0) {
     return;
   }
 
@@ -240,7 +250,5 @@ export const toggleLoadOrderAsync = async (
     allModules,
     loadOrder,
   );
-  api.store?.dispatch(
-    actionsLoadOrder.setFBLoadOrder(profile.id, orderedLoadOrder),
-  );
+  api.store?.dispatch(actions.setFBLoadOrder(profile.id, orderedLoadOrder));
 };

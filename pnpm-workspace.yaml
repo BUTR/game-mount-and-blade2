@@ -1,0 +1,20 @@
+# Nexus-Mods packages (vortex-api, collections, ...) depend on other git-hosted packages
+blockExoticSubdeps: false
+
+overrides:
+  node-gyp: ^10.0.0
+  "@types/react": "18"
+  "@types/react-dom": "18"
+  dir-compare>minimatch: 3.0.5
+  winapi-bindings: git+https://github.com/Nexus-Mods/node-winapi-bindings.git#8558bf0d118c8bdff501a4123c716d7a071eb006
+
+# Nothing here needs a build: the native extension ships prebuilt binaries and
+# the Vortex natives (leveldown, winapi-bindings) are provided by Vortex at runtime
+allowBuilds:
+  "@butr/vortexextensionnative": false
+  core-js: false
+  leveldown: false
+  winapi-bindings: false
+
+minimumReleaseAgeExclude:
+  - "@butr/vortexextensionnative@2.0.213"

@@ -1,12 +1,11 @@
-import Bluebird from "bluebird";
-import { actions, fs, selectors, types, util } from "vortex-api";
+import { actions, fs, selectors, types, util } from "@nexusmods/vortex-api";
 import path from "path";
 import { copyFile, rm } from "node:fs/promises";
-import { hasPersistentBannerlordMods } from "./utils";
 import { GAME_ID } from "../common";
-import { IAddedFiles } from "../types";
-import { vortexStoreToLibraryStore } from "../launcher";
-import { LocalizationManager } from "../localization";
+import { bselectors } from "../selectors";
+import { IAddedFiles, IStateWithBannerlord } from "../types";
+import { vortexStoreToLibraryStore } from "./store";
+import { LocalizationManager } from "../localization/manager";
 
 /**
  * Event function, be careful
@@ -15,10 +14,9 @@ export const addedFilesEventAsync = async (
   api: types.IExtensionApi,
   files: IAddedFiles[],
 ): Promise<void> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.discoveryByGame(state, GAME_ID);
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (discovery?.path === undefined) {
     // Can't do anything without a discovery path.
     return;
@@ -26,10 +24,7 @@ export const addedFilesEventAsync = async (
 
   const game = util.getGame(GAME_ID);
   const modPaths = game.getModPaths?.(discovery.path) ?? {};
-  const installPath: string | undefined = selectors.installPathForGame(
-    state,
-    game.id,
-  );
+  const installPath = selectors.installPathForGame(state, game.id);
   if (installPath === undefined) {
     // Can't do anything without a install path.
     return;
@@ -44,7 +39,7 @@ export const addedFilesEventAsync = async (
       return;
     }
 
-    const mod = state.persistent.mods[game.id]?.[entry.candidates[0]!];
+    const mod = bselectors.bannerlordModById(state, entry.candidates[0]!);
     if (!mod) {
       return;
     }
@@ -75,7 +70,7 @@ export const addedFilesEventAsync = async (
     }
   };
 
-  await Bluebird.map<IAddedFiles, void>(files, handleFileAsync);
+  await Promise.all(files.map(handleFileAsync));
 };
 
 export const installedMod = (
@@ -83,12 +78,9 @@ export const installedMod = (
   archiveId: string,
   modId: string,
 ): void => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
-  if (!hasPersistentBannerlordMods(state.persistent)) {
-    return;
-  }
-  const mod = state.persistent.mods.mountandblade2bannerlord[modId];
+  const mod = bselectors.bannerlordModById(state, modId);
   if (mod === undefined) {
     return;
   }
@@ -99,7 +91,7 @@ export const installedMod = (
   }
 
   const discovery = selectors.discoveryByGame(state, GAME_ID);
-  if (discovery === undefined) {
+  if (!discovery || discovery.store === undefined) {
     return;
   }
 

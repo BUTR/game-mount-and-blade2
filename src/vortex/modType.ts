@@ -1,12 +1,11 @@
-import { selectors, types } from "vortex-api";
+import { selectors, types } from "@nexusmods/vortex-api";
 import { SUBMODULE_FILE } from "../common";
 
-export const getInstallPathModule = (
+export const getGameInstallPath = (
   api: types.IExtensionApi,
   game: types.IGame,
 ): string => {
-  const discovery: types.IDiscoveryResult | undefined =
-    selectors.discoveryByGame(api.getState(), game.id);
+  const discovery = selectors.discoveryByGame(api.getState(), game.id);
   return discovery?.path ?? ``;
 };
 

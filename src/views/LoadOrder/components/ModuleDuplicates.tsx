@@ -1,15 +1,15 @@
-import React from "react";
-import { tooltip } from "vortex-api";
+import React, { FC } from "react";
+import { tooltip } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import { IVortexViewModelData } from "../../../types";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
 export type ModuleDuplicatesProps = {
   availableProviders: vetypes.ModuleProviderType[];
   data: IVortexViewModelData | undefined;
 };
 
-export const ModuleDuplicates = (props: ModuleDuplicatesProps): JSX.Element => {
+export const ModuleDuplicates: FC<ModuleDuplicatesProps> = (props) => {
   const { availableProviders, data } = props;
 
   const { localize: t } = useLocalization();

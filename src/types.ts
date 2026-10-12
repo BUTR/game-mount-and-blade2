@@ -1,18 +1,16 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
 import {
   AVAILABLE_STORES,
+  GAME_ID,
   OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
 } from "./common";
+import { IBannerlordSettings } from "./settings/types";
 
 export type RequiredProperties<T, P extends keyof T> = Omit<T, P> &
   Required<Pick<T, P>>;
-
-export type IStateSession = types.IState["session"];
-
-export type IStatePersistent = types.IState["persistent"];
 
 export type IModAttributes = types.IMod["attributes"];
 
@@ -31,15 +29,13 @@ export interface IBannerlordMod extends types.IMod {
   attributes?: IBannerlordModAttributes;
 }
 
-export interface IBannerlordModStorage {
-  [modId: string]: IBannerlordMod;
-}
+export interface IBannerlordModStorage extends Record<string, IBannerlordMod> {}
 
 export interface IBannerlordSession {
   useSteamBinariesOnXbox: boolean;
 }
 
-export type PersistenceLoadOrderStorage = IPersistenceLoadOrderEntry[];
+export interface PersistenceLoadOrderStorage extends Array<IPersistenceLoadOrderEntry> {}
 export interface IPersistenceLoadOrderEntry {
   id: string;
   name: string;
@@ -48,8 +44,8 @@ export interface IPersistenceLoadOrderEntry {
   index: number;
 }
 
-export type VortexLoadOrderStorage = VortexLoadOrderEntry[];
-export type VortexLoadOrderEntry = types.ILoadOrderEntry<IVortexViewModelData>;
+export interface VortexLoadOrderStorage extends Array<VortexLoadOrderEntry> {}
+export interface VortexLoadOrderEntry extends types.ILoadOrderEntry<IVortexViewModelData> {}
 export interface IVortexViewModelData {
   moduleInfoExtended: vetypes.ModuleInfoExtendedWithMetadata;
   hasSteamBinariesOnXbox: boolean | null;
@@ -57,9 +53,10 @@ export interface IVortexViewModelData {
   index: number;
 }
 
-export interface IModuleCache {
-  [moduleId: string]: vetypes.ModuleInfoExtendedWithMetadata;
-}
+export interface IModuleCache extends Record<
+  string,
+  vetypes.ModuleInfoExtendedWithMetadata
+> {}
 
 /**
  * Vortex
@@ -77,4 +74,37 @@ export const enum VortexStoreIds {
 export interface IAddedFiles {
   filePath: string;
   candidates: string[];
+}
+
+export interface IStateEx extends types.IState {
+  persistent: types.IState["persistent"] & {
+    loadOrder?: Record<string, VortexLoadOrderStorage>;
+  };
+  settings: types.IState["settings"] & {
+    interface?: types.ISettingsInterface & {
+      primaryTool?: Record<string, string>;
+    };
+  };
+}
+/**
+ * Extension of Vortex's IState with all Redux data this extension introduces.
+ * All extension-specific properties are optional since they may not be populated yet.
+ */
+export interface IStateWithBannerlord extends IStateEx {
+  persistent: IStateEx["persistent"] & {
+    mods: types.IModTable & {
+      [GAME_ID]: IBannerlordModStorage | undefined;
+    };
+  };
+  session: IStateEx["session"] & {
+    [GAME_ID]?: IBannerlordSession;
+  };
+  settings: IStateEx["settings"] & {
+    [GAME_ID]?: IBannerlordSettings;
+    interface?: types.ISettingsInterface & {
+      primaryTool?: {
+        [GAME_ID]?: string;
+      };
+    };
+  };
 }

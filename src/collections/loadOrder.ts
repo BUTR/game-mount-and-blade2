@@ -1,12 +1,9 @@
-import { selectors, types, util } from "vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { ICollectionDataWithGeneralData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID } from "../common";
 import { IBannerlordMod, IModuleCache, VortexLoadOrderStorage } from "../types";
-import {
-  actionsLoadOrder,
-  orderCurrentLoadOrderByExternalLoadOrderAsync,
-} from "../loadOrder";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder/utils";
 
 const isValidMod = (mod: types.IMod): boolean => {
   return mod !== undefined && mod.type !== "collection";
@@ -69,10 +66,7 @@ export const parseCollectionGeneralLoadOrderAsync = async (
 ): Promise<void> => {
   const state = api.getState();
 
-  const profileId: string | undefined = selectors.lastActiveProfileForGame(
-    state,
-    GAME_ID,
-  );
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
     throw new CollectionParseError(
       collection.info.name ?? "",
@@ -88,5 +82,5 @@ export const parseCollectionGeneralLoadOrderAsync = async (
     suggestedLoadOrder,
   );
 
-  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
+  api.store?.dispatch(actions.setFBLoadOrder(profileId, loadOrder));
 };

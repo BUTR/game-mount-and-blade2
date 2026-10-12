@@ -1,27 +1,25 @@
-import { actions, types } from "vortex-api";
-import { findBLSEMod } from "./utils";
-import {
-  getPersistentBannerlordMods,
-  hasSettingsInterfacePrimaryTool,
-} from "../vortex";
+import { actions, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "../common";
+import { bselectors } from "../selectors";
+import { IStateWithBannerlord } from "../types";
 
+/**
+ * BLSE is a singleplayer tool, so the primary tool is only managed in the singleplayer mode.
+ * The multiplayer mode's primary tool is managed by the game mode tools
+ */
 export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
-  const state = api.getState();
-
-  if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
+  const state = api.getState<IStateWithBannerlord>();
+  if (bselectors.activeGameMode(state) !== "singleplayer") {
     return Promise.resolve();
   }
 
-  const primaryTool =
-    state.settings.interface.primaryTool.mountandblade2bannerlord;
+  const primaryTool = bselectors.bannerlordPrimaryTool(state);
 
-  const mods = getPersistentBannerlordMods(state.persistent);
-  const blseMod = findBLSEMod(mods);
-  if (blseMod && primaryTool === undefined) {
+  const currentBlseMod = bselectors.blseMod(state);
+  if (currentBlseMod && primaryTool === undefined) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, "blse-cli"));
   }
-  if (!blseMod && primaryTool === "blse-cli") {
+  if (!currentBlseMod && primaryTool === "blse-cli") {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
 
@@ -32,21 +30,18 @@ export const didDeployBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
  * Event function, be careful
  */
 export const didPurgeBLSEAsync = (api: types.IExtensionApi): Promise<void> => {
-  const state = api.getState();
-
-  if (!hasSettingsInterfacePrimaryTool(state.settings.interface)) {
+  const state = api.getState<IStateWithBannerlord>();
+  if (bselectors.activeGameMode(state) !== "singleplayer") {
     return Promise.resolve();
   }
 
-  const primaryTool =
-    state.settings.interface.primaryTool.mountandblade2bannerlord;
+  const primaryTool = bselectors.bannerlordPrimaryTool(state);
   if (primaryTool !== "blse-cli") {
     return Promise.resolve();
   }
 
-  const mods = getPersistentBannerlordMods(state.persistent);
-  const blseMod = findBLSEMod(mods);
-  if (blseMod) {
+  const currentBlseMod = bselectors.blseMod(state);
+  if (currentBlseMod) {
     api.store?.dispatch(actions.setPrimaryTool(GAME_ID, undefined!));
   }
 

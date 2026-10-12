@@ -1,4 +1,4 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 
 export const openLoadOrderPage = (api: types.IExtensionApi): void => {
   api.events.emit("show-main-page", "file-based-loadorder");

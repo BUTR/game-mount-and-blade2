@@ -1,8 +1,7 @@
 // TODO: Translate tool titles?
-import { actions, types } from "vortex-api";
+import { actions, types } from "@nexusmods/vortex-api";
 import path from "path";
-import { getBinaryModdingPath, getBinaryPath } from "./game";
-import { isStoreSteam } from "./store";
+import { getBinaryModdingPath, getBinaryPath, isStoreSteam } from "./store";
 import {
   BANNERLORD_EXE,
   BANNERLORD_EXE_LAUNCHER,
@@ -12,12 +11,42 @@ import {
   GAME_ID,
 } from "../common";
 
-// TODO: Reuse tool creation code
+interface ToolConfig {
+  id: string;
+  name: string;
+  logo: string;
+  exe: string;
+  binaryPath: string;
+  requiredFiles?: string[];
+  custom?: boolean;
+  exclusive?: boolean;
+  hidden?: boolean;
+  defaultPrimary?: boolean;
+}
 
-const addDiscoveredTool = (
+const registerTool = (
   api: types.IExtensionApi,
-  tool: types.IDiscoveredTool,
+  discovery: types.IDiscoveryResult,
+  config: ToolConfig,
 ): void => {
+  if (discovery.path === undefined) {
+    throw new Error(`discovery.path is undefined!`);
+  }
+
+  const tool: types.IDiscoveredTool = {
+    id: config.id,
+    name: config.name,
+    logo: config.logo,
+    path: path.join(discovery.path, config.binaryPath, config.exe),
+    requiredFiles: config.requiredFiles ?? [config.exe],
+    hidden: config.hidden ?? false,
+    custom: config.custom ?? false,
+    ...(config.defaultPrimary !== undefined && {
+      defaultPrimary: config.defaultPrimary,
+    }),
+    ...(config.exclusive !== undefined && { exclusive: config.exclusive }),
+    executable: () => "",
+  };
   api.store?.dispatch(actions.addDiscoveredTool(GAME_ID, tool.id, tool, false));
 };
 
@@ -25,12 +54,14 @@ export const addBLSETools = (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
 ): void => {
-  if (discovery.path === undefined) {
-    throw new Error(`discovery.path is undefined!`);
-  }
-
+  const binaryPath = getBinaryPath(discovery.store);
   const tools = [
-    { id: "blse-cli", name: `Bannerlord Software Extender`, exe: BLSE_CLI_EXE },
+    {
+      id: "blse-cli",
+      name: `Bannerlord Software Extender`,
+      exe: BLSE_CLI_EXE,
+      defaultPrimary: true,
+    },
     {
       id: "blse-launcher",
       name: `Bannerlord Software Extender Official Launcher`,
@@ -42,20 +73,13 @@ export const addBLSETools = (
       exe: BLSE_LAUNCHEREX_EXE,
     },
   ];
-  for (const x of tools) {
-    const { id, name, exe } = x;
-    const tool: types.IDiscoveredTool = {
-      id: id,
-      name: name,
+  for (const t of tools) {
+    // Not custom: Vortex deletes custom tools instead of hiding them, and the multiplayer mode hides these
+    registerTool(api, discovery, {
+      ...t,
       logo: `blse.png`,
-      path: path.join(discovery.path, getBinaryPath(discovery.store), exe),
-      requiredFiles: [exe],
-      hidden: false,
-      custom: true,
-      defaultPrimary: id === `blse-cli`,
-      executable: () => "",
-    };
-    addDiscoveredTool(api, tool);
+      binaryPath,
+    });
   }
 };
 
@@ -63,49 +87,42 @@ export const addOfficialCLITool = (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
 ): void => {
-  if (discovery.path === undefined) {
-    throw new Error(`discovery.path is undefined!`);
-  }
-
-  const pathBase = getBinaryPath(discovery.store);
-  const pathExe = path.join(pathBase, BANNERLORD_EXE);
-
-  const tool: types.IDiscoveredTool = {
+  registerTool(api, discovery, {
     id: `vanilla-cli`,
     name: `Official Bannerlord`,
     logo: `tw_launcher.png`,
-    path: path.join(discovery.path, pathExe),
-    requiredFiles: [BANNERLORD_EXE],
-    hidden: false,
-    custom: false,
-    executable: () => "",
-  };
-  addDiscoveredTool(api, tool);
+    exe: BANNERLORD_EXE,
+    binaryPath: getBinaryPath(discovery.store),
+  });
+};
+
+/**
+ * The game executable again, as the multiplayer mode's tool. It gets the multiplayer launch arguments
+ */
+export const addOfficialMultiplayerCLITool = (
+  api: types.IExtensionApi,
+  discovery: types.IDiscoveryResult,
+): void => {
+  registerTool(api, discovery, {
+    id: `vanilla-mp-cli`,
+    name: `Official Bannerlord Multiplayer`,
+    logo: `tw_launcher.png`,
+    exe: BANNERLORD_EXE,
+    binaryPath: getBinaryPath(discovery.store),
+  });
 };
 
 export const addOfficialLauncherTool = (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
 ): void => {
-  if (discovery.path === undefined) {
-    throw new Error(`discovery.path is undefined!`);
-  }
-
-  const tool: types.IDiscoveredTool = {
+  registerTool(api, discovery, {
     id: `vanilla-launcher`,
     name: `Official Bannerlord Launcher`,
     logo: `tw_launcher.png`,
-    requiredFiles: [BANNERLORD_EXE_LAUNCHER],
-    path: path.join(
-      discovery.path,
-      getBinaryPath(discovery.store),
-      BANNERLORD_EXE_LAUNCHER,
-    ),
-    hidden: false,
-    custom: false,
-    executable: () => "",
-  };
-  addDiscoveredTool(api, tool);
+    exe: BANNERLORD_EXE_LAUNCHER,
+    binaryPath: getBinaryPath(discovery.store),
+  });
 };
 
 export const addModdingKitTool = (
@@ -113,28 +130,17 @@ export const addModdingKitTool = (
   discovery: types.IDiscoveryResult,
   hidden: boolean = false,
 ): void => {
-  if (discovery.path === undefined) {
-    throw new Error(`discovery.path is undefined!`);
-  }
-
   if (!isStoreSteam(discovery.store)) {
     return;
   }
 
-  const tool: types.IDiscoveredTool = {
+  registerTool(api, discovery, {
     id: `bannerlord-sdk`,
     name: `Modding Kit`,
     logo: `tw_launcher.png`,
-    path: path.join(
-      discovery.path,
-      getBinaryModdingPath(discovery.store),
-      BANNERLORD_EXE_LAUNCHER,
-    ),
-    requiredFiles: [BANNERLORD_EXE_LAUNCHER],
+    exe: BANNERLORD_EXE_LAUNCHER,
+    binaryPath: getBinaryModdingPath(discovery.store),
     exclusive: true,
-    hidden: hidden,
-    custom: false,
-    executable: () => "",
-  };
-  addDiscoveredTool(api, tool);
+    hidden,
+  });
 };

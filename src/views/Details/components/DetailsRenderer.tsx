@@ -1,14 +1,12 @@
-import React from "react";
-import { types } from "vortex-api";
-import { languageMap } from "../../../localization";
+import React, { FC } from "react";
+import { types } from "@nexusmods/vortex-api";
+import { languageMap } from "../../../localization/utils";
 
 export type ExternalBannerProps = {
   mod: types.IMod;
 };
 
-export const DetailsRenderer = (
-  props: ExternalBannerProps,
-): JSX.Element | null => {
+export const DetailsRenderer: FC<ExternalBannerProps> = (props) => {
   const { mod } = props;
 
   // Get the language codes array

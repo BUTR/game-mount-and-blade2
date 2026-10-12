@@ -1,15 +1,13 @@
-import React from "react";
-import { Icon, types } from "vortex-api";
+import React, { FC } from "react";
+import { Icon, types } from "@nexusmods/vortex-api";
 import { IVortexViewModelData } from "../../../types";
-import { useLocalization } from "../../../localization";
+import { useLocalization } from "../../../localization/hooks";
 
 export type OptionalBannerProps = {
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>;
 };
 
-export const OptionalBanner = (
-  props: OptionalBannerProps,
-): JSX.Element | null => {
+export const OptionalBanner: FC<OptionalBannerProps> = (props) => {
   const { item } = props;
 
   const { localize: t } = useLocalization();

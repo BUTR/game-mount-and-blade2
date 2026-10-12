@@ -1,14 +1,11 @@
-import { selectors, types } from "vortex-api";
+import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { ICollectionData, ICollectionDataWithLegacyData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID, SUB_MODS_IDS } from "../common";
-import {
-  actionsLoadOrder,
-  orderCurrentLoadOrderByExternalLoadOrderAsync,
-} from "../loadOrder";
-import { VortexLauncherManager } from "../launcher";
-import { PersistenceLoadOrderStorage } from "../types";
-import { hasPersistentBannerlordMods } from "../vortex";
+import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "../loadOrder/utils";
+import { VortexLauncherManager } from "../launcher/manager";
+import { bselectors } from "../selectors";
+import { IStateWithBannerlord, PersistenceLoadOrderStorage } from "../types";
 
 export const parseCollectionLegacyDataAsync = async (
   api: types.IExtensionApi,
@@ -25,12 +22,9 @@ const parseLegacyLoadOrderAsync = async (
   api: types.IExtensionApi,
   collection: ICollectionDataWithLegacyData,
 ): Promise<void> => {
-  const state = api.getState();
+  const state = api.getState<IStateWithBannerlord>();
 
-  const profileId: string | undefined = selectors.lastActiveProfileForGame(
-    state,
-    GAME_ID,
-  );
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   if (profileId === undefined) {
     throw new CollectionParseError(
       collection.info.name ?? "",
@@ -38,7 +32,8 @@ const parseLegacyLoadOrderAsync = async (
     );
   }
 
-  if (!hasPersistentBannerlordMods(state.persistent)) {
+  const mods = bselectors.bannerlordMods(state);
+  if (Object.keys(mods).length === 0) {
     throw new CollectionParseError(
       collection.info.name ?? "",
       "No mods were found",
@@ -52,11 +47,11 @@ const parseLegacyLoadOrderAsync = async (
   const suggestedLoadOrder =
     suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>(
       (arr, [id, entry], idx) => {
-        if (!allModules[id] && !state.persistent.mods[GAME_ID]?.[id]) {
+        if (!allModules[id] && !bselectors.bannerlordModById(state, id)) {
           return arr;
         }
 
-        const mod = state.persistent.mods[GAME_ID]?.[id];
+        const mod = bselectors.bannerlordModById(state, id);
         const modIds: string[] =
           mod?.attributes?.[SUB_MODS_IDS] !== undefined
             ? (mod.attributes[SUB_MODS_IDS] ?? [])
@@ -85,7 +80,7 @@ const parseLegacyLoadOrderAsync = async (
     suggestedLoadOrder,
   );
 
-  api.store?.dispatch(actionsLoadOrder.setFBLoadOrder(profileId, loadOrder));
+  api.store?.dispatch(actions.setFBLoadOrder(profileId, loadOrder));
 };
 
 const hasLegacyData = (

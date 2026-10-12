@@ -1,11 +1,8 @@
-import { types } from "vortex-api";
+import { types } from "@nexusmods/vortex-api";
 import { LoadOrderManager } from "./manager";
-import { LocalizationManager } from "../localization";
+import { LocalizationManager } from "../localization/manager";
 
-/**
- * Event function, be careful
- */
-export const didDeployLoadOrderAsync = async (
+const deserializeLoadOrderSafe = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
   const { localize: t } = LocalizationManager.getInstance(api);
@@ -24,13 +21,17 @@ export const didDeployLoadOrderAsync = async (
 /**
  * Event function, be careful
  */
+export const didDeployLoadOrderAsync = async (
+  api: types.IExtensionApi,
+): Promise<void> => {
+  await deserializeLoadOrderSafe(api);
+};
+
+/**
+ * Event function, be careful
+ */
 export const gamemodeActivatedLoadOrderAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
-  try {
-    const loadOrderManager = LoadOrderManager.getInstance(api);
-    await loadOrderManager.deserializeLoadOrder();
-  } catch (err) {
-    api.showErrorNotification?.("Failed to deserialize load order file", err);
-  }
+  await deserializeLoadOrderSafe(api);
 };

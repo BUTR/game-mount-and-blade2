@@ -1,4 +1,23 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.4.0
+* Added Singleplayer and Multiplayer profiles, each profile has a type that can be changed in its settings
+* - Existing profiles become Singleplayer profiles
+* - Each type has its own load order, tools and primary tool, so Play launches the active profile's type
+* - Switch to a profile of the other type from the Profiles page
+* - The Saves page is shown for Singleplayer profiles, servers are always joined with Multiplayer profiles
+* Added a Servers page that browses multiplayer servers when running the Steam or GOG version
+* - Automatically and manually download custom maps
+* - Download required mods when the server provides BUTR server info
+* - Join servers in one click when a helper mod is installed
+* - Group servers by mode or map from Display options or the Modes and Maps views
+* Improved Saves page visuals and added clan banner rendering
+* Added using a save's load order, or creating a profile for a save, on the Saves page
+* Added campaign details to the Saves page, read from the save data
+* Added grouping saves by character or game version on the Saves page, each character in its latest clan banner's colour
+* Added showing and hiding columns from Display options on the Servers and Saves pages
+* Fixed updated mods (e.g. UIExtenderEx, Harmony) disappearing from the Load Order when the order could not be sorted
+* Fixed newly installed mods not showing in the Load Order when Sort on Deploy is disabled
+---------------------------------------------------------------------------------------------------
 Version: 1.3.3
 * Restored and reduced logging
 ---------------------------------------------------------------------------------------------------

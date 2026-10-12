@@ -8,7 +8,7 @@
         "type":"bind"
         }
     ],
-    "postAttachCommand": "yarn install",
+    "postAttachCommand": "corepack pnpm install",
     "customizations": {
         "vscode": {
             "extensions": [

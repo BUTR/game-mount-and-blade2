@@ -1,18 +1,17 @@
-import React, { useContext, useEffect, useState } from "react";
-import { MainContext, tooltip } from "vortex-api";
+import React, { FC, useContext, useEffect, useState } from "react";
+import { MainContext, tooltip } from "@nexusmods/vortex-api";
 import { IVortexViewModelData } from "../../../types";
-import { IModuleCompatibilityInfo } from "../../../butr";
-import { useLocalization } from "../../../localization";
-import { useLauncher, versionToString } from "../../../launcher";
+import { IModuleCompatibilityInfo } from "../../../butr/types";
+import { useLocalization } from "../../../localization/hooks";
+import { useLauncher } from "../../../launcher/hooks";
+import { versionToString } from "../../../butr/version";
 
 export type CompatibilityInfoProps = {
   data: IVortexViewModelData | undefined;
   compatibilityInfo: IModuleCompatibilityInfo | undefined;
 };
 
-export const CompatibilityInfo = (
-  props: CompatibilityInfoProps,
-): JSX.Element => {
+export const CompatibilityInfo: FC<CompatibilityInfoProps> = (props) => {
   const { compatibilityInfo, data } = props;
 
   const context = useContext(MainContext);
