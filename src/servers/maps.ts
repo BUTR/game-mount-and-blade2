@@ -31,6 +31,11 @@ const BUSY_RETRY_DELAY_MS = 3_000;
 const BUSY_RETRY_LIMIT_MS = 180_000;
 const PROGRESS_INTERVAL_MS = 250;
 const MAX_MAP_BYTES = 4 * 1024 * 1024 * 1024;
+// Limits for what a map archive unpacks to, a zip can unpack to far more than its download size
+const MAX_EXTRACTED_BYTES = 16 * 1024 * 1024 * 1024;
+const MAX_ARCHIVE_ENTRIES = 100_000;
+// Room left on the game drive after extracting a map
+const FREE_SPACE_MARGIN_BYTES = 256 * 1024 * 1024;
 // Newly written files can be briefly locked by Windows background processes (e.g., antivirus scanners or the search indexer).
 const LOCKED_ERROR_CODES = new Set(["EPERM", "EBUSY", "EACCES", "ENOTEMPTY"]);
 const LOCKED_RETRIES = 8;
@@ -501,6 +506,89 @@ const readSceneNameAsync = async (folder: string): Promise<string | null> => {
     : null;
 };
 
+// 7-Zip lists attributes as text (lrwxrwxrwx) or as hex with the Unix mode in the high 16 bits
+const UNIX_ATTRIBUTES_PATTERN = /(?:^|\s)([0-9A-F]{8})$/i;
+const UNIX_FILE_TYPE_MASK = 0o170000;
+const UNIX_SYMLINK = 0o120000;
+
+const isSymlinkEntry = (attr: string | undefined): boolean => {
+  if (attr === undefined) {
+    return false;
+  }
+  if (/(?:^|\s)l[rwxsStT-]{9}$/.test(attr)) {
+    return true;
+  }
+  const hex = UNIX_ATTRIBUTES_PATTERN.exec(attr)?.[1];
+  return (
+    hex !== undefined &&
+    ((parseInt(hex, 16) >>> 16) & UNIX_FILE_TYPE_MASK) === UNIX_SYMLINK
+  );
+};
+
+/**
+ * Entries must stay inside the extraction folder. 7-Zip already sanitizes these, older builds Vortex may ship did not
+ */
+const isUnsafeEntryName = (name: string): boolean =>
+  path.isAbsolute(name) ||
+  /^[A-Za-z]:/.test(name) ||
+  name.split(/[\\/]/).includes("..");
+
+/**
+ * Checks the listing of a downloaded map archive before extracting it. A zip can unpack to far more than its download
+ * size, so the declared sizes must fit the limit and the drive, and no entry may be a link or point outside the folder
+ */
+const checkMapArchiveAsync = async (
+  archive: string,
+  targetFolder: string,
+  server: Pick<IServerEntry, "address" | "port">,
+): Promise<void> => {
+  const source = formatServerAddress(server);
+  let totalBytes = 0;
+  let entryCount = 0;
+  let rejected: string | null = null;
+  await new util.SevenZip().list(
+    archive,
+    { t: "zip" },
+    (entries: { name: string; size?: number; attr?: string }[]) => {
+      for (const entry of entries) {
+        entryCount++;
+        if (entry.size === undefined || !Number.isSafeInteger(entry.size)) {
+          rejected ??= `'${entry.name}' has no size`;
+          continue;
+        }
+        totalBytes += entry.size;
+        if (isUnsafeEntryName(entry.name)) {
+          rejected ??= `'${entry.name}' points outside the map folder`;
+        } else if (isSymlinkEntry(entry.attr)) {
+          rejected ??= `'${entry.name}' is a link`;
+        }
+      }
+    },
+  );
+
+  if (rejected !== null) {
+    throw new util.DataInvalid(
+      `The map archive from ${source} was not extracted: ${rejected}`,
+    );
+  }
+  if (entryCount > MAX_ARCHIVE_ENTRIES) {
+    throw new util.DataInvalid(
+      `The map archive from ${source} has ${entryCount} files, more than a map needs`,
+    );
+  }
+  if (totalBytes > MAX_EXTRACTED_BYTES) {
+    throw new util.DataInvalid(
+      `The map archive from ${source} unpacks to ${util.bytesToString(totalBytes)}, more than a map needs`,
+    );
+  }
+  const { bavail, bsize } = await fs.statfs(targetFolder);
+  if (totalBytes + FREE_SPACE_MARGIN_BYTES > bavail * bsize) {
+    throw new Error(
+      `The map unpacks to ${util.bytesToString(totalBytes)}, there is not enough free space for it in ${targetFolder}`,
+    );
+  }
+};
+
 /**
  * Downloads a custom map into `Modules/Multiplayer/SceneObj`, replacing any older downloaded version.
  * Returns the target scene directory path.
@@ -525,7 +613,9 @@ export const downloadServerMapAsync = async (
   try {
     await downloadToFileAsync(server, map.name, archive, onProgress);
     onProgress(createMapDownloadProgress("installing"));
-    await new util.SevenZip().extractFull(archive, extracted);
+    await checkMapArchiveAsync(archive, sceneObj, server);
+    // The map server always sends zip, forcing the type keeps 7-Zip from parsing anything else
+    await new util.SevenZip().extractFull(archive, extracted, { t: "zip" });
 
     const sceneName = await readSceneNameAsync(extracted);
     if (sceneName === null || !isValidMapName(sceneName)) {

@@ -13,6 +13,11 @@ import { inflateRaw } from "zlib";
 
 const inflateRawAsync = promisify(inflateRaw);
 
+// Saves are shared online, so a small file must not be able to decompress into all of the memory.
+// Real saves decompress to about eight times their size, tens of MB, these leave plenty of room
+const MAX_SAVE_FILE_BYTES = 512 * 1024 * 1024;
+const MAX_SAVE_DATA_BYTES = 1024 * 1024 * 1024;
+
 const FOLDER_OBJECT = 1;
 const FOLDER_STRUCT = 2;
 const FOLDER_CONTAINER = 3;
@@ -785,9 +790,19 @@ const readDetails = (reader: SaveReader): ISaveDetails => {
 const readSaveDetailsAsync = async (
   filePath: string,
 ): Promise<ISaveDetails> => {
+  const { size } = await fs.stat(filePath);
+  if (size > MAX_SAVE_FILE_BYTES) {
+    throw new Error(`The save is ${size} bytes, larger than a save can be`);
+  }
   const file = await fs.readFile(filePath);
   const metaDataLength = file.readInt32LE(0);
-  const body = await inflateRawAsync(file.subarray(4 + metaDataLength));
+  if (metaDataLength < 0 || 4 + metaDataLength > file.length) {
+    throw new Error("Unexpected metadata length in the save");
+  }
+  // Rejects with ERR_BUFFER_TOO_LARGE past the limit instead of allocating it
+  const body = await inflateRawAsync(file.subarray(4 + metaDataLength), {
+    maxOutputLength: MAX_SAVE_DATA_BYTES,
+  });
   const data = body
     .subarray(0, LEGACY_SIGNATURE.length)
     .equals(LEGACY_SIGNATURE)
