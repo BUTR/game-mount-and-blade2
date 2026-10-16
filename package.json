@@ -55,7 +55,7 @@
     "typescript-eslint": "8.47.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "2.0.213",
+    "@butr/vortexextensionnative": "2.0.216",
     "ticks-to-date": "^1.0.6"
   },
   "packageManager": "pnpm@12.10.1"

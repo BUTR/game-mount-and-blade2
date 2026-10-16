@@ -174,8 +174,8 @@ importers:
   .:
     dependencies:
       '@butr/vortexextensionnative':
-        specifier: 2.0.213
-        version: 2.0.213
+        specifier: 2.0.216
+        version: 2.0.216
       ticks-to-date:
         specifier: ^1.0.6
         version: 1.0.6
@@ -295,8 +295,8 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@butr/vortexextensionnative@2.0.213':
-    resolution: {integrity: sha512-MDKRQ0vc1hFH/VKgddXfBbgoM+qiEcB5+3vZI5ssPAlnonEbtkhANsz6QQ3LT1icIEbqxvMwjKKOZvu5vD84Rg==}
+  '@butr/vortexextensionnative@2.0.216':
+    resolution: {integrity: sha512-eAeSTCfSN0B+S9Z0yeRTUJvETp3bqN9D3JYfjJ8CjUERBfBtmEeTi0wQmBwB+goSpX35+UdVemgJM4n6sp/H7Q==}
     engines: {node: '>=22'}
 
   '@dependents/detective-less@5.0.3':
@@ -2088,7 +2088,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@butr/vortexextensionnative@2.0.213': {}
+  '@butr/vortexextensionnative@2.0.216': {}
 
   '@dependents/detective-less@5.0.3':
     dependencies:
