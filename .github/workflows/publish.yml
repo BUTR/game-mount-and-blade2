@@ -10,6 +10,9 @@ on:
       - "docs/**"
       - ".github/workflows/docs.yml"
 
+permissions:
+  contents: read
+
 jobs:
   get-package-version:
     if: github.ref == 'refs/heads/master'
@@ -90,6 +93,8 @@ jobs:
   sign:
     if: github.ref == 'refs/heads/master' && needs.get-package-version.outputs.version == needs.get-changelog-info.outputs.version
     needs: [get-package-version, get-changelog-info, build-and-test]
+    # Talks to code-signing with its own GitHub App token, this run's token isn't needed
+    permissions: {}
     uses: BUTR/workflows/.github/workflows/sign-certum.yml@master
     with:
       artifact_name: game-mount-and-blade2
@@ -102,8 +107,6 @@ jobs:
     name: Verify Signatures
     needs: [sign]
     runs-on: windows-latest
-    permissions:
-      contents: read
     steps:
       - name: Download the signed artifact
         uses: actions/download-artifact@v4
@@ -135,6 +138,9 @@ jobs:
   publish-on-github:
     if: github.ref == 'refs/heads/master' && needs.get-package-version.outputs.version == needs.get-changelog-info.outputs.version
     needs: [get-package-version, get-changelog-info, build-and-test, sign, verify-signatures]
+    # Creates the release and uploads the artifact to it
+    permissions:
+      contents: write
     uses: BUTR/workflows/.github/workflows/release-github.yml@master
     with:
       mod_id: game-mount-and-blade2
