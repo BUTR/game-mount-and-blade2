@@ -42,8 +42,9 @@ export const setGameParametersCallback =
       .filter((x) => x !== " " && x.length > 0)
       .join(" ");
 
-    const discovery = selectors.currentGameDiscovery(state);
-    const cliTools = Object.values(discovery?.tools ?? {}).filter(
+    const tools: Record<string, types.IDiscoveredTool> =
+      selectors.discoveryByGame(state, GAME_ID)?.tools ?? {};
+    const cliTools = Object.values(tools).filter(
       (tool) =>
         tool.id &&
         tool.id.endsWith("-cli") &&
@@ -158,13 +159,14 @@ export const sendDialogCallback =
   };
 
 /**
- * Callback: returns the game install path
+ * Callback: returns the game install path.
+ * Bannerlord's own discovery, a read that outlives a switch to another game still needs this game's folder
  */
 export const getInstallPathCallback =
   (api: types.IExtensionApi) => (): Promise<string> => {
     const state = api.getState();
 
-    const discovery = selectors.currentGameDiscovery(state);
+    const discovery = selectors.discoveryByGame(state, GAME_ID);
     const installPath = discovery?.path ?? "";
     return Promise.resolve(installPath);
   };

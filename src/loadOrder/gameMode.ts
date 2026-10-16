@@ -1,8 +1,8 @@
-import { actions, selectors, types } from "@nexusmods/vortex-api";
+import { actions, selectors, types, util } from "@nexusmods/vortex-api";
 import { LoadOrderManager } from "./manager";
 import { GameMode } from "../settings/types";
 import { bselectors } from "../selectors";
-import { IStateWithBannerlord } from "../types";
+import { IStateWithBannerlord, VortexLoadOrderStorage } from "../types";
 import { LocalizationManager } from "../localization/manager";
 import { GAME_ID, MULTIPLAYER_PROFILE_FEATURE } from "../common";
 // Not the servers index, which reaches the views
@@ -94,7 +94,15 @@ export const reloadLoadOrderAsync = async (
   if (!profile) {
     return;
   }
-  const loadOrder =
-    await LoadOrderManager.getInstance(api).deserializeLoadOrder();
+  let loadOrder: VortexLoadOrderStorage;
+  try {
+    loadOrder = await LoadOrderManager.getInstance(api).deserializeLoadOrder();
+  } catch (err) {
+    // The profile or game was switched while reading, the next profile's read takes over
+    if (err instanceof util.ProcessCanceled) {
+      return;
+    }
+    throw err;
+  }
   api.store?.dispatch(actions.setFBLoadOrder(profile.id, loadOrder));
 };

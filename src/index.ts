@@ -42,6 +42,7 @@ import { watchDocumentWhileActive } from "./profileType/documentWatcher";
 import { watchMenuItems } from "./profileType/menuItems";
 import { watchProfileCards } from "./profileType/profileCards";
 import { watchProfileTypes } from "./profileType/assignTypes";
+import { warnAboutOtherCopies } from "./vortex/duplicateExtensions";
 
 // TODO: Better dialogs with settings
 let logger: VortexLauncherManagerLogger | null = null;
@@ -255,6 +256,9 @@ const main = (context: types.IExtensionContext): boolean => {
       logger = new VortexLauncherManagerLogger();
       logger.useVortexFunctions();
     }
+
+    // Last, after everything the extension needs is registered
+    warnAboutOtherCopies(context.api);
   });
 
   return true;

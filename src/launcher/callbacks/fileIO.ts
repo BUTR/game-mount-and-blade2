@@ -3,7 +3,20 @@ import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
 import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization/manager";
-import { isFileNotFoundError } from "../../utils";
+import { isFileNotFoundError, isSymlinkLoopError } from "../../utils";
+
+/**
+ * A symbolic link that points back into itself fails every read below it, which is every module in the folder.
+ * It is the user's file system, so one warning that replaces itself is shown and nothing is reported
+ */
+const warnSymlinkLoop = (api: types.IExtensionApi, err: unknown): void => {
+  const { localize: t } = LocalizationManager.getInstance(api);
+  api.showErrorNotification?.(
+    t("A symbolic link in the game folder points back to itself"),
+    err,
+    { id: "bannerlord-symlink-loop", warning: true },
+  );
+};
 
 /**
  * Callback: reads file content at a given path
@@ -31,6 +44,10 @@ export const readFileContentCallback =
       }
     } catch (err) {
       if (isFileNotFoundError(err)) {
+        return null;
+      }
+      if (isSymlinkLoopError(err)) {
+        warnSymlinkLoop(api, err);
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
@@ -75,6 +92,10 @@ const readDirectoryEntriesCallback =
       return res;
     } catch (err) {
       if (isFileNotFoundError(err)) {
+        return null;
+      }
+      if (isSymlinkLoopError(err)) {
+        warnSymlinkLoop(api, err);
         return null;
       }
       const { localize: t } = LocalizationManager.getInstance(api);
