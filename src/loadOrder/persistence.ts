@@ -1,4 +1,4 @@
-import { selectors, types } from "@nexusmods/vortex-api";
+import { log, selectors, types, util } from "@nexusmods/vortex-api";
 import path from "path";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import {
@@ -33,8 +33,9 @@ const getActiveProfileMode = (
 ): { profileId: string; gameMode: GameMode } => {
   const state = api.getState<IStateWithBannerlord>();
   const profile = selectors.activeProfile(state);
-  if (!profile) {
-    throw new Error(`Active profile is undefined`);
+  if (profile?.gameId !== GAME_ID) {
+    // While switching profiles or games, Vortex has no active profile for a moment or one of another game
+    throw new util.ProcessCanceled(`No active Bannerlord profile`);
   }
   return {
     profileId: profile.id,
@@ -150,19 +151,14 @@ export const writeProfileLoadOrderAsync = async (
 };
 
 /**
- * Reads the active profile's load order for its game mode
+ * Reads the active profile's load order for its game mode.
+ * Without an active profile the read is canceled, an empty order would replace the profile's in Vortex
  */
 export const readLoadOrderAsync = async (
   api: types.IExtensionApi,
 ): Promise<PersistenceLoadOrderStorage> => {
-  try {
-    const { profileId, gameMode } = getActiveProfileMode(api);
-    return await readProfileLoadOrderAsync(api, profileId, gameMode);
-  } catch (err) {
-    const { localize: t } = LocalizationManager.getInstance(api);
-    api.showErrorNotification?.(t("Failed to read load order"), err);
-    return [];
-  }
+  const { profileId, gameMode } = getActiveProfileMode(api);
+  return await readProfileLoadOrderAsync(api, profileId, gameMode);
 };
 
 /**
@@ -176,6 +172,13 @@ export const writeLoadOrderAsync = async (
     const { profileId, gameMode } = getActiveProfileMode(api);
     await writeProfileLoadOrderAsync(api, profileId, gameMode, loadOrder);
   } catch (err) {
+    if (err instanceof util.ProcessCanceled) {
+      log(
+        "warn",
+        "Skipped writing the load order without an active Bannerlord profile",
+      );
+      return;
+    }
     const { localize: t } = LocalizationManager.getInstance(api);
     api.showErrorNotification?.(t("Failed to save load order"), err);
   }

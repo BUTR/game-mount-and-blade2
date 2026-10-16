@@ -1,5 +1,5 @@
 import { ComponentType } from "react";
-import { log, selectors, types } from "@nexusmods/vortex-api";
+import { log, selectors, types, util } from "@nexusmods/vortex-api";
 import {
   BannerlordModuleManager,
   Utils,
@@ -191,6 +191,16 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
 
   private deserializeLoadOrderAsync =
     async (): Promise<VortexLoadOrderStorage> => {
+      // Switching profiles or games runs reads while no Bannerlord profile is active or the game folder is unknown.
+      // There is no load order to read then, and Vortex doesn't report a canceled read
+      const state = this.api.getState();
+      if (
+        selectors.activeProfile(state)?.gameId !== GAME_ID ||
+        !selectors.discoveryByGame(state, GAME_ID)?.path
+      ) {
+        throw new util.ProcessCanceled("No load order to read");
+      }
+
       const launcherManager = VortexLauncherManager.getInstance(this.api);
 
       // Make sure the LauncherManager has the latest module list

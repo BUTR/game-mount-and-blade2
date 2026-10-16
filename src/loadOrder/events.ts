@@ -1,4 +1,4 @@
-import { types } from "@nexusmods/vortex-api";
+import { types, util } from "@nexusmods/vortex-api";
 import { LoadOrderManager } from "./manager";
 import { LocalizationManager } from "../localization/manager";
 
@@ -11,6 +11,10 @@ const deserializeLoadOrderSafe = async (
     const loadOrderManager = LoadOrderManager.getInstance(api);
     await loadOrderManager.deserializeLoadOrder();
   } catch (err) {
+    // A read canceled by a profile or game switch has nothing to report
+    if (err instanceof util.ProcessCanceled) {
+      return;
+    }
     api.showErrorNotification?.(
       t("Failed to deserialize load order file"),
       err,

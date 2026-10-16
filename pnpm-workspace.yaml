@@ -17,4 +17,4 @@ allowBuilds:
   winapi-bindings: false
 
 minimumReleaseAgeExclude:
-  - "@butr/vortexextensionnative@2.0.213"
+  - "@butr/vortexextensionnative@2.0.213 || 2.0.216"
