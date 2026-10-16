@@ -86,7 +86,8 @@ export const Settings: FC<SettingsProps> = (props) => {
           name={t(`{=QJSBiZdJ}Beta Sorting`)}
         >
           {t(
-            `{=HVhaqeb4}Uses the new sorting algorithm after v1.12.x. Disable to use the old algorithm`,
+            `{=smA2gmuG}Checks your saved load order against the modules' dependencies and tells you what is wrong, ` +
+              `instead of quietly correcting it like the game's launcher does. Disable to sort like the game's launcher`,
           )}
         </More>
       </Toggle>

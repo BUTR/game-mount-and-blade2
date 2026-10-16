@@ -6,6 +6,7 @@ import { util } from "@nexusmods/vortex-api";
 import { IServerEntry, IServerMap } from "./types";
 import { formatServerAddress } from "./utils";
 import { MODULES } from "../common";
+import { readDirectoryEntriesAsync } from "../utils";
 import { version } from "../../package.json";
 
 /**
@@ -195,12 +196,10 @@ export const readLocalScenesAsync = async (
 ): Promise<LocalScenes> => {
   const scenes: LocalScenes = new Map();
   const modulesPath = path.join(gamePath, MODULES);
-  const modules = await fs
-    .readdir(modulesPath, { withFileTypes: true })
-    .catch(() => []);
+  const modules = await readDirectoryEntriesAsync(modulesPath).catch(() => []);
   const moduleScenes = await Promise.all(
     modules
-      .filter((module) => module.isDirectory())
+      .filter((module) => module.isDirectory)
       .map((module) =>
         downloaded !== undefined &&
         module.name.toLowerCase() === MAP_MODULE.toLowerCase()

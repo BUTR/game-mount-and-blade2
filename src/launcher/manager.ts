@@ -24,6 +24,7 @@ import {
   readFileContentCallback,
   writeFileContentCallback,
 } from "./callbacks/fileIO";
+import { ensureNativeLogger } from "./logger";
 import { GAME_ID } from "../common";
 import { IModuleCache } from "../types";
 
@@ -43,6 +44,9 @@ export class VortexLauncherManager {
 
   public constructor(api: types.IExtensionApi) {
     this.api = api;
+
+    // The native library's log must reach Vortex before the library does anything
+    ensureNativeLogger();
 
     const getModuleViewModelsAsync = getModuleViewModelsCallback(
       api,

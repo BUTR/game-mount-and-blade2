@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.4.2
+* Fixed modules in symbolically linked or junctioned folders not being found, they now show in the Load Order, banners and server maps
+* Fixed the Steam Workshop warning in the Load Order showing for modules installed twice in the /Modules folder
+* Fixed 'Extension failed to initialize' for users who don't manage Bannerlord, the native library now loads only for Bannerlord
+* - When it can't load, Bannerlord shows one error explaining what to do
+* Fixed the load order file getting corrupted when it was saved twice at the same time ('Unexpected non-whitespace character after JSON')
+* 'Failed to order the module list!' now lists the reasons
+* Fixed mods installed by a FOMOD installer or by the old Vortex extension showing as 'Not managed by Vortex' in the Load Order
+* A mod without binaries for your version of the game is no longer removed silently right after installing, a notification says why
+* - Its files are now removed from the staging folder too
+* The Beta Sorting setting now explains what it does
+---------------------------------------------------------------------------------------------------
 Version: 1.4.1
 * Fixed 'Modules directory not found!' errors when switching profiles or games
 * Fixed 'Active profile is undefined' errors when switching profiles

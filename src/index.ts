@@ -24,9 +24,9 @@ import { watchActiveProfileType } from "./loadOrder/gameMode";
 import { didDeployBLSEAsync, didPurgeBLSEAsync } from "./blse/events";
 import { installBLSEAsync, testBLSEAsync } from "./blse/installer";
 import { isModTypeBLSE } from "./blse/modType";
-import { VortexLauncherManagerLogger } from "./launcher/logger";
 import { gamemodeActivatedSaveAsync } from "./save/events";
 import { addedFilesEventAsync, installedMod } from "./vortex/events";
+import { fillMissingSubModsIdsAsync } from "./vortex/subModsIds";
 import { registerVortexModTypes } from "./vortex/register";
 import { version } from "../package.json";
 import { watchNoModsProfile } from "./servers/noModsProfile";
@@ -43,9 +43,6 @@ import { watchMenuItems } from "./profileType/menuItems";
 import { watchProfileCards } from "./profileType/profileCards";
 import { watchProfileTypes } from "./profileType/assignTypes";
 import { warnAboutOtherCopies } from "./vortex/duplicateExtensions";
-
-// TODO: Better dialogs with settings
-let logger: VortexLauncherManagerLogger | null = null;
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
@@ -177,6 +174,9 @@ const main = (context: types.IExtensionContext): boolean => {
       // Vortex picks the defaultPrimary tool on activation, which is BLSE regardless of the mode
       applyGameModeTools(context.api);
 
+      // Before the load order reads them, or its modules show as not managed by Vortex
+      await fillMissingSubModsIdsAsync(context.api);
+
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
     });
@@ -199,6 +199,10 @@ const main = (context: types.IExtensionContext): boolean => {
         }
 
         installedMod(context.api, archiveId, modId);
+        // A mod another installer, like FOMOD, installed
+        fillMissingSubModsIdsAsync(context.api, [modId]).catch((err) =>
+          log("warn", "Failed to record the modules of a mod", err),
+        );
       },
     );
 
@@ -250,12 +254,6 @@ const main = (context: types.IExtensionContext): boolean => {
         await willRemoveModCollectionsAsync(context.api, modId);
       },
     );
-
-    // Logger
-    if (logger === null) {
-      logger = new VortexLauncherManagerLogger();
-      logger.useVortexFunctions();
-    }
 
     // Last, after everything the extension needs is registered
     warnAboutOtherCopies(context.api);

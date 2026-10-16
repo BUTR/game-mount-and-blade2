@@ -9,6 +9,7 @@ import {
 } from "./tools";
 import { recommendBLSEAsync } from "../blse/deploy";
 import { VortexLauncherManager } from "../launcher/manager";
+import { ensureNativeLogger } from "../launcher/logger";
 import { EPICAPP_ID, GOG_IDS, STEAMAPP_ID, XBOX_ID } from "../common";
 import { LocalizationManager } from "../localization/manager";
 
@@ -52,6 +53,9 @@ export const setupAsync = async (
   if (discovery.path === undefined) {
     throw new Error(`discovery.path is undefined!`);
   }
+
+  // The first Bannerlord-only step, everything below needs the native library
+  ensureNativeLogger();
 
   // Quickly ensure that the official Launcher is added.
   addOfficialCLITool(api, discovery);

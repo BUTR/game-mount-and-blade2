@@ -14,15 +14,18 @@ export const ModuleDuplicates: FC<ModuleDuplicatesProps> = (props) => {
 
   const { localize: t } = useLocalization();
 
-  if (availableProviders.length <= 1) {
-    return <div style={{ width: `1.5em`, height: `1.5em` }} />;
-  }
+  // The game loads the /Modules copy before the Steam Workshop one, the warning is only true when there are both.
+  // Two copies inside /Modules (Default and Vortex) aren't a Workshop conflict
+  const onWorkshopAndInModules =
+    availableProviders.includes(vetypes.ModuleProviderType.Steam) &&
+    availableProviders.some(
+      (provider) => provider !== vetypes.ModuleProviderType.Steam,
+    );
 
-  if (data?.moduleInfoExtended.moduleProviderType !== undefined) {
-    //const redundantProviders = availableProviders.filter(
-    //  (provider) => provider !== item.data?.moduleInfoExtended.moduleProviderType
-    //);
-    // tooltip={t(`The mod is also installed via ${redundantProviders.join(', ')}!`)}
+  if (
+    onWorkshopAndInModules &&
+    data?.moduleInfoExtended.moduleProviderType !== undefined
+  ) {
     return (
       <tooltip.Icon
         className="nexus-id-invalid"

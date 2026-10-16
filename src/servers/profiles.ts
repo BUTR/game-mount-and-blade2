@@ -19,8 +19,9 @@ import {
   GAME_ID,
   MULTIPLAYER_PROFILE_FEATURE,
   SUB_MODS_IDS,
-  SUBMODULE_FILE,
+  SUBMODULE_SEARCH_DEPTH,
 } from "../common";
+import { findSubModuleFilesAsync } from "../utils";
 import { versionToString } from "../butr/version";
 import { IBannerlordMod, IBannerlordModStorage, IModuleCache } from "../types";
 // Not the loadOrder index, which reaches the views and through them back here
@@ -52,8 +53,6 @@ const DESCRIPTION_PROFILE_FEATURE = "profile-description";
 export const NO_MODS_PROFILE_FEATURE = "bannerlord_server_no_mods";
 
 const PROFILE_NAME_LIMIT = 64;
-// How deep SubModule.xml can be inside a mod's staging folder: Modules/<id>/SubModule.xml
-const SUBMODULE_SEARCH_DEPTH = 3;
 
 /**
  * The profile made for a server earlier; joining A, then B, then A again reuses A's profile
@@ -116,28 +115,6 @@ export interface IStagedModule {
  * The modules in Vortex's staging folder by module id. Several mods can provide the same module
  */
 export type StagedModules = Map<string, IStagedModule[]>;
-
-const findSubModuleFilesAsync = async (
-  folder: string,
-  depth: number,
-): Promise<string[]> => {
-  const entries = await fs
-    .readdir(folder, { withFileTypes: true })
-    .catch(() => []);
-  const files: string[] = [];
-  for (const entry of entries) {
-    const entryPath = path.join(folder, entry.name);
-    if (
-      entry.isFile() &&
-      entry.name.toLowerCase() === SUBMODULE_FILE.toLowerCase()
-    ) {
-      files.push(entryPath);
-    } else if (entry.isDirectory() && depth > 0) {
-      files.push(...(await findSubModuleFilesAsync(entryPath, depth - 1)));
-    }
-  }
-  return files;
-};
 
 /**
  * The modules read from each mod's staging folder, by mod id. The mods in the state change on every attribute update,

@@ -20,6 +20,7 @@ import {
   TPAC_TEXTURE,
 } from "./tpac";
 import { MODULES } from "../common";
+import { readDirectoryEntriesAsync } from "../utils";
 
 const NATIVE = "Native";
 const SUB_MODULE = "SubModule.xml";
@@ -207,10 +208,8 @@ const readGameBannerDataAsync = async (
   gamePath: string,
 ): Promise<IGameBannerData> => {
   const modulesPath = path.join(gamePath, MODULES);
-  const folders = (
-    await fs.readdir(modulesPath, { withFileTypes: true }).catch(() => [])
-  )
-    .filter((entry) => entry.isDirectory())
+  const folders = (await readDirectoryEntriesAsync(modulesPath).catch(() => []))
+    .filter((entry) => entry.isDirectory)
     .map((entry) => entry.name)
     .sort((a, b) =>
       a === NATIVE ? -1 : b === NATIVE ? 1 : a.localeCompare(b),

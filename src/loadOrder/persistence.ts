@@ -1,6 +1,6 @@
 import { log, selectors, types, util } from "@nexusmods/vortex-api";
 import path from "path";
-import { readFile, unlink, writeFile } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
 import {
   GAME_ID,
   LOAD_ORDER_SUFFIX,
@@ -26,6 +26,31 @@ const getLoadOrderFilePath = (
 ): string => {
   const installPath = selectors.installPathForGame(api.getState(), GAME_ID);
   return path.join(installPath ?? "", loadOrderFileName);
+};
+
+/**
+ * The write in progress for each load order file.
+ * Two overlapping writes to one file both truncate it first, so the end of the longer order could remain after the
+ * shorter one: the 'Unexpected non-whitespace character after JSON' error. Writes to a file run one after another,
+ * and each replaces the file whole
+ */
+const pendingWrites = new Map<string, Promise<void>>();
+
+const queueWriteAsync = (filePath: string, contents: string): Promise<void> => {
+  const previous = pendingWrites.get(filePath) ?? Promise.resolve();
+  // A failed write was reported by its caller and doesn't stop the next one
+  const write = previous
+    .catch(() => undefined)
+    .then(() => util.writeFileAtomic(filePath, contents));
+  pendingWrites.set(filePath, write);
+  write
+    .finally(() => {
+      if (pendingWrites.get(filePath) === write) {
+        pendingWrites.delete(filePath);
+      }
+    })
+    .catch(() => undefined);
+  return write;
 };
 
 const getActiveProfileMode = (
@@ -79,6 +104,9 @@ export const readProfileLoadOrderOrThrowAsync = async (
     api,
     getLoadOrderFileName(profileId, gameMode),
   );
+  // A caller that writes the result back would otherwise undo a write that hasn't finished
+  await pendingWrites.get(loFilePath)?.catch(() => undefined);
+
   let fileContents: string;
   try {
     fileContents = await readFile(loFilePath, "utf8");
@@ -139,10 +167,9 @@ export const writeProfileLoadOrderAsync = async (
       api,
       getLoadOrderFileName(profileId, gameMode),
     );
-    await writeFile(
+    await queueWriteAsync(
       loFilePath,
       JSON.stringify(Object.values(loadOrder), null, 2),
-      { encoding: "utf8" },
     );
   } catch (err) {
     const { localize: t } = LocalizationManager.getInstance(api);

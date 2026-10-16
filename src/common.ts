@@ -11,6 +11,10 @@ export const GAME_ID = `mountandblade2bannerlord`;
 export const I18N_NAMESPACE = `game-mount-and-blade2`;
 
 export const SUBMODULE_FILE = `SubModule.xml`;
+/**
+ * How deep a mod's staging folder is searched for SubModule.xml, deep enough for 'Modules/<Module>/SubModule.xml'
+ */
+export const SUBMODULE_SEARCH_DEPTH = 3;
 
 export const SUB_MODS_IDS = `subModsIds`;
 export const AVAILABLE_STORES = `availableStores`;
