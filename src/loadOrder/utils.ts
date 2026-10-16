@@ -170,7 +170,7 @@ const checkSavedLoadOrder = (
 
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
   savedLoadOrder: PersistenceLoadOrderStorage,
 ): Promise<VortexLoadOrderStorage> => {
   const state = api.getState<IStateWithBannerlord>();

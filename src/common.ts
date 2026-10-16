@@ -17,6 +17,14 @@ export const SUBMODULE_FILE = `SubModule.xml`;
 export const SUBMODULE_SEARCH_DEPTH = 3;
 
 export const SUB_MODS_IDS = `subModsIds`;
+/**
+ * What the Servers and Saves pages need about each module of a mod, so they don't read the staging folder
+ */
+export const SUB_MODS_INFO = `subModsInfo`;
+/**
+ * Raised when the stored module entries change shape, older entries are then read from the staging folder again
+ */
+export const SUB_MODS_INFO_SCHEMA = 1;
 export const AVAILABLE_STORES = `availableStores`;
 export const STEAM_BINARIES_ON_XBOX = `steamBinariesOnXbox`;
 export const OBFUSCATED_BINARIES = `obfuscatedBinaries`;

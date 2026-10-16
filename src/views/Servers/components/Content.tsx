@@ -38,7 +38,7 @@ export type ContentProps = {
    * Rendered in place of the table when search and filter criteria yield no matching servers.
    */
   noMatches: ReactNode;
-  installedModules: Readonly<IModuleCache> | null;
+  installedModules: IModuleCache | null;
   collection: SidebarCollection;
   mods: SidebarMods;
   maps: SidebarMaps;

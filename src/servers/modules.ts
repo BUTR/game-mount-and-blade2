@@ -119,9 +119,11 @@ export const getClientModuleRequirements = (
  */
 export const checkClientModules = (
   requirements: IClientModuleRequirement[],
-  installed: Readonly<IModuleCache>,
+  installed: IModuleCache,
   staged: {
-    get: (id: string) => { module: vetypes.ModuleInfoExtended }[] | undefined;
+    get: (
+      id: string,
+    ) => { module: { version: vetypes.ApplicationVersion } }[] | undefined;
   } | null = null,
 ): IClientModuleStatus[] =>
   requirements.map((requirement) => {

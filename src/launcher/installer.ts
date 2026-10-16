@@ -15,8 +15,10 @@ import {
   OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
+  SUB_MODS_INFO,
 } from "../common";
 import { LocalizationManager } from "../localization/manager";
+import { toStagedModulesInfo } from "../vortex/moduleAttributes";
 import {
   getAvailableTranslationLanguages,
   pushTranslationLanguageAttributes,
@@ -189,6 +191,7 @@ Warning! This can lead to issues!`,
   }
 
   const subModsIds = Array<string>();
+  const subModules = Array<vetypes.ModuleInfoExtended>();
   const transformedResult: types.IInstallResult = {
     instructions: result.instructions.reduce<types.IInstruction[]>(
       (map, current) => {
@@ -201,8 +204,12 @@ Warning! This can lead to issues!`,
             });
             break;
           case "ModuleInfo":
-            if (current.moduleInfo) {
+            if (
+              current.moduleInfo &&
+              !subModsIds.includes(current.moduleInfo.id)
+            ) {
               subModsIds.push(current.moduleInfo.id);
+              subModules.push(current.moduleInfo);
             }
             break;
           case "CopyStore":
@@ -235,6 +242,12 @@ Warning! This can lead to issues!`,
     type: "attribute",
     key: SUB_MODS_IDS,
     value: subModsIds,
+  });
+  // The Servers and Saves pages read these instead of the mod's staging folder
+  transformedResult.instructions.push({
+    type: "attribute",
+    key: SUB_MODS_INFO,
+    value: toStagedModulesInfo(subModules),
   });
   transformedResult.instructions.push({
     type: "attribute",

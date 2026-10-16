@@ -44,12 +44,11 @@ export const registerCollections = (context: types.IExtensionContext): void => {
       const loadOrder = bselectors.bannerlordLoadOrder(state, profile.id);
       const mods = bselectors.bannerlordMods(state);
 
-      const includedMods = Object.values(mods)
-        .filter((mod) => includedModIds.includes(mod.id))
-        .reduce<IBannerlordModStorage>((map, obj) => {
-          map[obj.id] = obj;
-          return map;
-        }, {});
+      const includedMods: IBannerlordModStorage = Object.fromEntries(
+        Object.values(mods)
+          .filter((mod) => includedModIds.includes(mod.id))
+          .map((mod) => [mod.id, mod]),
+      );
 
       return await genCollectionGeneralDataAsync(
         profile,

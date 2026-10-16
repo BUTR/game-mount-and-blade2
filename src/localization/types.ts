@@ -1,1 +1,1 @@
-export type TranslateValues = Record<string, string | object>;
+export type TranslateValues = Readonly<Record<string, string | object>>;

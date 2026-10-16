@@ -61,7 +61,7 @@ export const genCollectionGeneralLoadOrder = (
 
 export const parseCollectionGeneralLoadOrderAsync = async (
   api: types.IExtensionApi,
-  modules: Readonly<IModuleCache>,
+  modules: IModuleCache,
   collection: ICollectionDataWithGeneralData,
 ): Promise<void> => {
   const state = api.getState();

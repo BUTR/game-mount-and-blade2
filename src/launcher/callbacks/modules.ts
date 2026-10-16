@@ -37,10 +37,7 @@ export const getLoadOrderFromVortex = (
  * Callback: returns the ViewModels currently displayed by Vortex
  */
 export const getModuleViewModelsCallback =
-  (
-    api: types.IExtensionApi,
-    getAllModulesAsync: () => Promise<Readonly<IModuleCache>>,
-  ) =>
+  (api: types.IExtensionApi, getAllModulesAsync: () => Promise<IModuleCache>) =>
   async (): Promise<vetypes.ModuleViewModel[] | null> => {
     const allModules = await getAllModulesAsync();
     const loadOrder = getLoadOrderFromVortex(api);
@@ -55,7 +52,7 @@ export const getModuleViewModelsCallback =
 export const getAllModuleViewModelsCallback =
   (
     api: types.IExtensionApi,
-    getAllModulesAsync: () => Promise<Readonly<IModuleCache>>,
+    getAllModulesAsync: () => Promise<IModuleCache>,
     getModuleViewModelsAsync: () => Promise<vetypes.ModuleViewModel[] | null>,
   ) =>
   async (): Promise<vetypes.ModuleViewModel[] | null> => {

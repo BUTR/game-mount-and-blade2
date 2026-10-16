@@ -25,6 +25,7 @@ import { resolveModDeployAsync } from "../blse/deploy";
 import { downloadAndEnableLatestModVersionAsync } from "../vortex/modDownloader";
 import { findModDownload } from "../vortex/modFinder";
 import { findModByPredicate } from "../vortex/modStorage";
+import { getRequiredDependencyIds } from "../vortex/moduleAttributes";
 import { getBinaryPath } from "../vortex/store";
 import { bselectors } from "../selectors";
 
@@ -87,7 +88,7 @@ export interface IJoinTarget {
 }
 
 export interface IJoinContext extends IJoinTarget {
-  installedModules: Readonly<IModuleCache> | null;
+  installedModules: IModuleCache | null;
   requiredModules: IClientModuleStatus[];
 }
 
@@ -133,8 +134,8 @@ export const getSharedJoinBlockers = (
  * @param stagedModuleIds the modules of every mod installed in Vortex, enabled or not
  */
 export const isServerJoinAvailable = (
-  mods: Readonly<IBannerlordModStorage> | undefined,
-  deployedModules: Readonly<IModuleCache> | null,
+  mods: IBannerlordModStorage | undefined,
+  deployedModules: IModuleCache | null,
   stagedModuleIds: { has: (id: string) => boolean } | null,
 ): boolean | null => {
   const hasServerJoinMod = Object.values(mods ?? {}).some(
@@ -222,7 +223,7 @@ export const getJoinModuleBlocker = (installedInVortex = false): string =>
  * @param serverJoinDisabled Server Join is installed in Vortex but not enabled in the current profile
  */
 export const getCurrentProfileBlockers = (
-  installedModules: Readonly<IModuleCache> | null,
+  installedModules: IModuleCache | null,
   requiredModules: IClientModuleStatus[],
   serverJoinDisabled = false,
 ): string[] => {
@@ -258,22 +259,6 @@ export const getJoinBlockers = (
 ];
 
 /**
- * The modules a module needs loaded with it when joining. Optional dependencies, incompatible modules and modules
- * that only have to load after it are left out
- */
-export const getRequiredDependencyIds = (
-  module: vetypes.ModuleInfoExtended,
-): string[] =>
-  BannerlordModuleManager.getDependenciesAll(module)
-    .filter(
-      (dependency) =>
-        !dependency.isOptional &&
-        !dependency.isIncompatible &&
-        dependency.loadType !== vetypes.LoadType.LoadAfterThis,
-    )
-    .map((dependency) => dependency.id);
-
-/**
  * Native, Multiplayer, the modules enabled in the multiplayer load order, the server's modules, everything they need
  * and the join module, in a valid load order. Optional dependencies and modules that are not installed are left out;
  * the server only enforces its own list
@@ -283,7 +268,7 @@ export const getRequiredDependencyIds = (
  */
 export const resolveJoinModules = (
   requiredIds: string[],
-  installed: Readonly<IModuleCache>,
+  installed: IModuleCache,
   loadOrderIds: string[] = [],
 ): { modules: vetypes.ModuleInfoExtended[]; missing: string[] } => {
   const selected = new Map<string, vetypes.ModuleInfoExtended>();

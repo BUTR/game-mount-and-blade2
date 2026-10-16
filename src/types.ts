@@ -6,6 +6,7 @@ import {
   OBFUSCATED_BINARIES,
   STEAM_BINARIES_ON_XBOX,
   SUB_MODS_IDS,
+  SUB_MODS_INFO,
 } from "./common";
 import { IBannerlordSettings } from "./settings/types";
 
@@ -14,12 +15,29 @@ export type RequiredProperties<T, P extends keyof T> = Omit<T, P> &
 
 export type IModAttributes = types.IMod["attributes"];
 
+/**
+ * A module a Vortex mod provides, with what is needed to plan a load order without reading its SubModule.xml.
+ * Vortex keeps mod attributes for good, so it holds only what the Servers and Saves pages read
+ */
+export interface IStagedModuleInfo {
+  id: string;
+  name: string;
+  version: vetypes.ApplicationVersion;
+  requiredDependencyIds: string[];
+}
+
+export interface IStagedModulesInfo {
+  schema: number;
+  modules: IStagedModuleInfo[];
+}
+
 export interface IBannerlordModAttributes {
   modId: number;
   modName: string;
   version: string;
   source: string;
   [SUB_MODS_IDS]?: string[];
+  [SUB_MODS_INFO]?: IStagedModulesInfo;
   [AVAILABLE_STORES]?: string[];
   [STEAM_BINARIES_ON_XBOX]?: boolean;
   [OBFUSCATED_BINARIES]?: boolean;
@@ -29,7 +47,12 @@ export interface IBannerlordMod extends types.IMod {
   attributes?: IBannerlordModAttributes;
 }
 
-export interface IBannerlordModStorage extends Record<string, IBannerlordMod> {}
+/**
+ * Bannerlord's mods by id, as Vortex's state holds them, so never changed in place
+ */
+export interface IBannerlordModStorage extends Readonly<
+  Record<string, IBannerlordMod>
+> {}
 
 export interface IBannerlordSession {
   useSteamBinariesOnXbox: boolean;
@@ -53,9 +76,11 @@ export interface IVortexViewModelData {
   index: number;
 }
 
-export interface IModuleCache extends Record<
-  string,
-  vetypes.ModuleInfoExtendedWithMetadata
+/**
+ * The modules the LauncherManager knows by id. A snapshot, a new one is read when modules change
+ */
+export interface IModuleCache extends Readonly<
+  Record<string, vetypes.ModuleInfoExtendedWithMetadata>
 > {}
 
 /**

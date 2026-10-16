@@ -30,7 +30,7 @@ const parseFloatField = (
 
 const createSaveGame = (
   api: types.IExtensionApi,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
   current: vetypes.SaveMetadata,
   currentIndex: number,
 ): ISaveGame | undefined => {
@@ -38,15 +38,34 @@ const createSaveGame = (
     return undefined;
   }
 
+  const applicationVersion =
+    current["ApplicationVersion"] !== undefined
+      ? BannerlordModuleManager.parseApplicationVersion(
+          current["ApplicationVersion"],
+        )
+      : undefined;
+
+  // The module versions by module name
+  const saveChangeSet = applicationVersion?.changeSet ?? 0;
+  const modules = Object.fromEntries(
+    current["Modules"].split(";").flatMap((module) => {
+      const moduleValue = current[`Module_${module}`];
+      if (moduleValue === undefined) {
+        return [];
+      }
+      const version =
+        BannerlordModuleManager.parseApplicationVersion(moduleValue);
+      if (version.changeSet === saveChangeSet) {
+        version.changeSet = 0;
+      }
+      return [[module, version] as const];
+    }),
+  );
+
   const saveGame: ISaveGame = {
     index: currentIndex + 1,
     name: current.Name,
-    applicationVersion:
-      current["ApplicationVersion"] !== undefined
-        ? BannerlordModuleManager.parseApplicationVersion(
-            current["ApplicationVersion"],
-          )
-        : undefined,
+    applicationVersion,
     creationTime: parseIntField(current, "CreationTime"),
     characterName: current["CharacterName"],
     mainHeroGold: parseIntField(current, "MainHeroGold"),
@@ -71,38 +90,21 @@ const createSaveGame = (
       "MainPartyWoundedMemberCount",
     ),
     version: parseIntField(current, "Version"),
-    modules: {}, // blank dictionary for now
+    modules,
   };
 
-  // build up modules dictionary?
-  const moduleNames = current["Modules"].split(";");
-
-  const saveChangeSet = saveGame.applicationVersion?.changeSet ?? 0;
-  for (const module of moduleNames) {
-    const key = module;
-    const moduleValue = current[`Module_${module}`];
-    if (moduleValue === undefined) {
-      continue;
-    }
-
-    const version =
-      BannerlordModuleManager.parseApplicationVersion(moduleValue);
-    if (version.changeSet === saveChangeSet) {
-      version.changeSet = 0;
-    }
-    saveGame.modules[key] = version;
-  }
-
-  saveGame.duplicateModules = getNameDuplicates(allModules);
-  saveGame.loadOrderIssues = getLoadOrderIssues(saveGame, allModules);
-  saveGame.missingModules = getMissingModuleNames(saveGame, allModules);
-  saveGame.mismatchedModuleVersions = getMismatchedModuleVersions(
-    api,
-    saveGame,
-    allModules,
-  );
-
-  return saveGame;
+  // The checks read the save's modules, so they run on the save before their results are added
+  return {
+    ...saveGame,
+    duplicateModules: getNameDuplicates(allModules),
+    loadOrderIssues: getLoadOrderIssues(saveGame, allModules),
+    missingModules: getMissingModuleNames(saveGame, allModules),
+    mismatchedModuleVersions: getMismatchedModuleVersions(
+      api,
+      saveGame,
+      allModules,
+    ),
+  };
 };
 
 export const getSavesAsync = async (
@@ -112,57 +114,45 @@ export const getSavesAsync = async (
 
   const launcherManager = VortexLauncherManager.getInstance(api);
 
-  const saveList: ISaveList = {
-    ["nosave"]: {
-      index: 0,
-      name: t("No Save"),
-      modules: {},
-    },
+  const noSave: ISaveGame = {
+    index: 0,
+    name: t("No Save"),
+    modules: {},
   };
 
   try {
     const allModules = await launcherManager.getAllModulesAsync();
     const saveMetadatas = await launcherManager.getSaveFilesAsync();
 
-    saveMetadatas.reduce<ISaveList>((prev, current, currentIndex) => {
+    const saves = saveMetadatas.flatMap((current, currentIndex) => {
       const save = createSaveGame(api, allModules, current, currentIndex);
-      if (!save) {
-        return prev;
-      }
-
-      prev[current.Name] = save;
-
-      return prev;
-    }, saveList);
+      return save ? [[current.Name, save] as const] : [];
+    });
+    return { ["nosave"]: noSave, ...Object.fromEntries(saves) };
   } catch (err) {
-    const { localize: t } = LocalizationManager.getInstance(api);
-    api.showErrorNotification?.(t("Failed to import added file to mod!"), err);
+    api.showErrorNotification?.(t("Failed to read the saves"), err);
   }
 
-  return saveList;
+  return { ["nosave"]: noSave };
 };
 
-export const getModulesByName = (
-  modules: Readonly<IModuleCache>,
-): ModulesByName => {
-  return Object.values(modules).reduce<ModulesByName>((map, current) => {
-    map[current.name] = current;
-    return map;
-  }, {});
-};
+export const getModulesByName = (modules: IModuleCache): ModulesByName =>
+  Object.fromEntries(
+    Object.values(modules).map((module) => [module.name, module]),
+  );
 
 /**
  * A module the save lists. Saves list modules by id, older ones by name
  */
 export const findSaveModule = (
-  allModules: Readonly<IModuleCache>,
-  allModulesByName: Readonly<ModulesByName>,
+  allModules: IModuleCache,
+  allModulesByName: ModulesByName,
   key: string,
 ): vetypes.ModuleInfoExtendedWithMetadata | undefined =>
   allModules[key] ?? allModulesByName[key];
 
 export const getNameDuplicates = (
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
 ): string[] | undefined => {
   const allModulesByName = getModulesByName(allModules);
   const moduleNames = Object.keys(allModulesByName);
@@ -180,8 +170,8 @@ export const getNameDuplicates = (
 };
 
 export const getMissingModuleNames = (
-  saveGame: Readonly<ISaveGame>,
-  allModules: Readonly<IModuleCache>,
+  saveGame: ISaveGame,
+  allModules: IModuleCache,
 ): string[] => {
   const allModulesByName = getModulesByName(allModules);
   return Object.keys(saveGame.modules).reduce<string[]>((map, current) => {
@@ -194,8 +184,8 @@ export const getMissingModuleNames = (
 
 export const getMismatchedModuleVersions = (
   api: types.IExtensionApi,
-  saveGame: Readonly<ISaveGame>,
-  allModules: Readonly<IModuleCache>,
+  saveGame: ISaveGame,
+  allModules: IModuleCache,
 ): string[] | undefined => {
   const { localize: t } = LocalizationManager.getInstance(api);
 
@@ -247,7 +237,7 @@ export const getMismatchedModuleVersions = (
 
 export const getLoadOrderIssues = (
   saveGame: ISaveGame,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
 ): string[] => {
   const allModulesByName = getModulesByName(allModules);
   const modules = Object.keys(saveGame.modules)

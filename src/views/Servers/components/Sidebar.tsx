@@ -158,7 +158,7 @@ export type SidebarActions = {
 
 export type SidebarProps = {
   row: IServerRow | null;
-  installedModules: Readonly<IModuleCache> | null;
+  installedModules: IModuleCache | null;
   collection: SidebarCollection;
   mods: SidebarMods;
   maps: SidebarMaps;

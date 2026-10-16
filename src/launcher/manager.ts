@@ -124,12 +124,9 @@ export class VortexLauncherManager {
    * Use @method {refreshModulesVortex} to reload modules from the FS.
    * @return
    */
-  public getAllModulesAsync = async (): Promise<Readonly<IModuleCache>> => {
+  public getAllModulesAsync = async (): Promise<IModuleCache> => {
     const modules = await this.launcherManager.getModulesAsync();
-    return modules.reduce<IModuleCache>((map, current) => {
-      map[current.id] = current;
-      return map;
-    }, {});
+    return Object.fromEntries(modules.map((module) => [module.id, module]));
   };
 
   /**

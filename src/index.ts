@@ -26,7 +26,7 @@ import { installBLSEAsync, testBLSEAsync } from "./blse/installer";
 import { isModTypeBLSE } from "./blse/modType";
 import { gamemodeActivatedSaveAsync } from "./save/events";
 import { addedFilesEventAsync, installedMod } from "./vortex/events";
-import { fillMissingSubModsIdsAsync } from "./vortex/subModsIds";
+import { fillModuleAttributesAsync } from "./vortex/moduleAttributes";
 import { registerVortexModTypes } from "./vortex/register";
 import { version } from "../package.json";
 import { watchNoModsProfile } from "./servers/noModsProfile";
@@ -174,11 +174,16 @@ const main = (context: types.IExtensionContext): boolean => {
       // Vortex picks the defaultPrimary tool on activation, which is BLSE regardless of the mode
       applyGameModeTools(context.api);
 
-      // Before the load order reads them, or its modules show as not managed by Vortex
-      await fillMissingSubModsIdsAsync(context.api);
+      // The module ids before the load order reads them, or its modules show as not managed by Vortex
+      await fillModuleAttributesAsync(context.api, { idsOnly: true });
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
+
+      // The module entries of mods installed before the installer kept them, nothing waits for these
+      fillModuleAttributesAsync(context.api).catch((err) =>
+        log("warn", "Failed to record the modules of mods", err),
+      );
     });
 
     // Each profile has its own mode
@@ -200,8 +205,8 @@ const main = (context: types.IExtensionContext): boolean => {
 
         installedMod(context.api, archiveId, modId);
         // A mod another installer, like FOMOD, installed
-        fillMissingSubModsIdsAsync(context.api, [modId]).catch((err) =>
-          log("warn", "Failed to record the modules of a mod", err),
+        fillModuleAttributesAsync(context.api, { modIds: [modId] }).catch(
+          (err) => log("warn", "Failed to record the modules of a mod", err),
         );
       },
     );

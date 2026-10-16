@@ -68,7 +68,7 @@ export const libraryToPersistence = (
 
 export const vortexToLibraryVM = (
   loadOrder: VortexLoadOrderStorage,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
 ): vetypes.ModuleViewModel[] => {
   const modules = loadOrder
     .map<vetypes.ModuleInfoExtendedWithMetadata>(
@@ -157,7 +157,7 @@ export const vortexToLibrary = (
 };
 export const libraryToVortex = (
   api: types.IExtensionApi,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
   loadOrder: vetypes.LoadOrder,
 ): VortexLoadOrderStorage => {
   const availableModules = Object.values(loadOrder)
