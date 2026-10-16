@@ -44,7 +44,7 @@ export const runsWithoutMods = (row: IServerRow): boolean =>
  */
 export const isReadyToJoin = (
   row: IServerRow,
-  installed: Readonly<IModuleCache> | null,
+  installed: IModuleCache | null,
 ): boolean | null => {
   if (installed === null || !hasKnownRequirements(row)) {
     return null;
@@ -59,7 +59,7 @@ export const isReadyToJoin = (
  */
 const CHECKS: Record<
   ServerCheck,
-  (row: IServerRow, installed: Readonly<IModuleCache> | null) => boolean
+  (row: IServerRow, installed: IModuleCache | null) => boolean
 > = {
   favorites: (row) => row.favorite,
   hasPlayers: (row) => (row.lobby?.PlayerCount ?? 0) > 0,
@@ -96,7 +96,7 @@ const matches = (
   row: IServerRow,
   filters: IServerFilters,
   query: string,
-  installed: Readonly<IModuleCache> | null,
+  installed: IModuleCache | null,
   withModes: boolean,
 ): boolean =>
   matchesSearch(row, query) &&
@@ -115,7 +115,7 @@ export const filterServerRows = (
   rows: Readonly<Record<string, IServerRow>>,
   filters: IServerFilters,
   search: string,
-  installed: Readonly<IModuleCache> | null,
+  installed: IModuleCache | null,
 ): Record<string, IServerRow> => {
   const query = search.trim().toLowerCase();
   if (query === "" && countActiveFilters(filters) === 0) {
@@ -136,7 +136,7 @@ export const getModeChoices = (
   rows: Readonly<Record<string, IServerRow>>,
   filters: IServerFilters,
   search: string,
-  installed: Readonly<IModuleCache> | null,
+  installed: IModuleCache | null,
 ): { mode: string; count: number }[] => {
   const query = search.trim().toLowerCase();
   const counts = new Map<string, number>(

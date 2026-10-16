@@ -24,6 +24,7 @@ import {
   readFileContentCallback,
   writeFileContentCallback,
 } from "./callbacks/fileIO";
+import { ensureNativeLogger } from "./logger";
 import { GAME_ID } from "../common";
 import { IModuleCache } from "../types";
 
@@ -43,6 +44,9 @@ export class VortexLauncherManager {
 
   public constructor(api: types.IExtensionApi) {
     this.api = api;
+
+    // The native library's log must reach Vortex before the library does anything
+    ensureNativeLogger();
 
     const getModuleViewModelsAsync = getModuleViewModelsCallback(
       api,
@@ -120,12 +124,9 @@ export class VortexLauncherManager {
    * Use @method {refreshModulesVortex} to reload modules from the FS.
    * @return
    */
-  public getAllModulesAsync = async (): Promise<Readonly<IModuleCache>> => {
+  public getAllModulesAsync = async (): Promise<IModuleCache> => {
     const modules = await this.launcherManager.getModulesAsync();
-    return modules.reduce<IModuleCache>((map, current) => {
-      map[current.id] = current;
-      return map;
-    }, {});
+    return Object.fromEntries(modules.map((module) => [module.id, module]));
   };
 
   /**

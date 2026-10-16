@@ -1,9 +1,14 @@
 import { types } from "@nexusmods/vortex-api";
 import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
-import { FileHandle, open, readdir, rm, writeFile } from "node:fs/promises";
+import { FileHandle, open, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization/manager";
-import { isFileNotFoundError, isSymlinkLoopError } from "../../utils";
+import {
+  IDirectoryEntry,
+  isFileNotFoundError,
+  isSymlinkLoopError,
+  readDirectoryEntriesAsync,
+} from "../../utils";
 
 /**
  * A symbolic link that points back into itself fails every read below it, which is every module in the folder.
@@ -80,12 +85,12 @@ export const writeFileContentCallback =
 const readDirectoryEntriesCallback =
   (
     api: types.IExtensionApi,
-    filter: (entry: { isFile(): boolean; isDirectory(): boolean }) => boolean,
+    filter: (entry: IDirectoryEntry) => boolean,
     errorMessage: string,
   ) =>
   async (directoryPath: string): Promise<string[] | null> => {
     try {
-      const dirs = await readdir(directoryPath, { withFileTypes: true });
+      const dirs = await readDirectoryEntriesAsync(directoryPath);
       const res = dirs
         .filter(filter)
         .map<string>((x) => path.join(directoryPath, x.name));
@@ -110,7 +115,7 @@ const readDirectoryEntriesCallback =
 export const readDirectoryFileListCallback = (api: types.IExtensionApi) =>
   readDirectoryEntriesCallback(
     api,
-    (x) => x.isFile(),
+    (x) => x.isFile,
     "Error reading directory file list",
   );
 
@@ -120,6 +125,6 @@ export const readDirectoryFileListCallback = (api: types.IExtensionApi) =>
 export const readDirectoryListCallback = (api: types.IExtensionApi) =>
   readDirectoryEntriesCallback(
     api,
-    (x) => x.isDirectory(),
+    (x) => x.isDirectory,
     "Error reading directory list",
   );

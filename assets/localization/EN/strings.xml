@@ -23,7 +23,7 @@
     <string id="VMIp4503" text="Unblock all .dll files on /Modules folder" />
     <string id="RDLKkiVk" text="Unblock" />
     <string id="QJSBiZdJ" text="Beta Sorting" />
-    <string id="HVhaqeb4" text="Uses the new sorting algorithm after v1.12.x. Disable to use the old algorithm" />
+    <string id="smA2gmuG" text="Checks your saved load order against the modules' dependencies and tells you what is wrong, instead of quietly correcting it like the game's launcher does. Disable to sort like the game's launcher" />
     <string id="1zt99vTt" text="Big Mode" />
     <string id="XUSDSpvf" text="Makes the launcher bigger in height" />
     <string id="IsR2rbnG" text="Restore Game Options Backup" />

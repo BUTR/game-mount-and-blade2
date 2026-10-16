@@ -223,8 +223,9 @@ export const ServersPage: FC = () => {
   const [extensions, setExtensions] = usePageState<
     Record<string, IServerExtensionResult>
   >("extensions", {});
-  const [installedModules, setInstalledModules] =
-    useState<Readonly<IModuleCache> | null>(null);
+  const [installedModules, setInstalledModules] = useState<IModuleCache | null>(
+    null,
+  );
   const [selectedId, setSelectedId] = usePageState<string | null>(
     "selectedId",
     null,
@@ -682,7 +683,7 @@ export const ServersPage: FC = () => {
   const [joiningMaps, setJoiningMaps] = usePageState("joiningMaps", false);
 
   const getRequiredStatuses = useCallback(
-    (row: IServerRow, modules: Readonly<IModuleCache>) =>
+    (row: IServerRow, modules: IModuleCache) =>
       checkClientModules(getRequiredClientModules(row), modules),
     [],
   );

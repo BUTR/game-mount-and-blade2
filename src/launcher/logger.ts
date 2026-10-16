@@ -1,5 +1,5 @@
 import { NativeLogger } from "@butr/vortexextensionnative";
-import { log } from "@nexusmods/vortex-api";
+import { log, util } from "@nexusmods/vortex-api";
 
 type LogLevel = Parameters<typeof log>[0];
 
@@ -44,3 +44,30 @@ export class VortexLauncherManagerLogger {
     log(logLevel, message);
   };
 }
+
+let nativeLogger: VortexLauncherManagerLogger | null = null;
+
+/**
+ * Routes the native library's log to Vortex's, loading the library on first use.
+ * Vortex loads the extension for every game, so this waits for Bannerlord instead of running at startup:
+ * a library that can't load then fails only Bannerlord, not every game Vortex manages
+ */
+export const ensureNativeLogger = (): void => {
+  if (nativeLogger !== null) {
+    return;
+  }
+  try {
+    const logger = new VortexLauncherManagerLogger();
+    logger.useVortexFunctions();
+    nativeLogger = logger;
+  } catch (err) {
+    log("error", "Failed to load the native library", err);
+    // Vortex shows a SetupError as 'Failed to set game mode' without a Report button
+    throw new util.SetupError(
+      `The extension's native library could not be loaded. Update Vortex, then reinstall the extension. ` +
+        `If that doesn't help, check that your antivirus didn't quarantine 'Bannerlord.LauncherManager.Native.dll' ` +
+        `or 'launchermanager.node' from the extension's folder. ` +
+        `(${err instanceof Error ? err.message : String(err)})`,
+    );
+  }
+};

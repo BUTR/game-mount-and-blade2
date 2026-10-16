@@ -2,27 +2,24 @@ import path from "path";
 import { randomBytes } from "crypto";
 import { promises as fs } from "fs";
 import { actions, types, util } from "@nexusmods/vortex-api";
-import {
-  BannerlordModuleManager,
-  types as vetypes,
-} from "@butr/vortexextensionnative";
-import {
-  getJoinModuleBlocker,
-  getRequiredDependencyIds,
-  isServerJoinMod,
-  JOIN_MODULE_ID,
-} from "./join";
+import { BannerlordModuleManager } from "@butr/vortexextensionnative";
+import { getJoinModuleBlocker, isServerJoinMod, JOIN_MODULE_ID } from "./join";
 import { IClientModuleRequirement } from "./modules";
 import { IServerRow } from "./row";
 import { formatServerAddress, sanitizeServerText } from "./utils";
-import {
-  GAME_ID,
-  MULTIPLAYER_PROFILE_FEATURE,
-  SUB_MODS_IDS,
-  SUBMODULE_FILE,
-} from "../common";
+import { GAME_ID, MULTIPLAYER_PROFILE_FEATURE, SUB_MODS_IDS } from "../common";
 import { versionToString } from "../butr/version";
-import { IBannerlordMod, IBannerlordModStorage, IModuleCache } from "../types";
+import {
+  IBannerlordMod,
+  IBannerlordModStorage,
+  IModuleCache,
+  IStagedModuleInfo,
+} from "../types";
+import {
+  getStoredModuleInfos,
+  readModModulesAsync,
+  toStagedModuleInfo,
+} from "../vortex/moduleAttributes";
 // Not the loadOrder index, which reaches the views and through them back here
 import { enableInProfileLoadOrderAsync } from "../loadOrder/persistence";
 import { enableModsAsync } from "../vortex/deploy";
@@ -52,8 +49,6 @@ const DESCRIPTION_PROFILE_FEATURE = "profile-description";
 export const NO_MODS_PROFILE_FEATURE = "bannerlord_server_no_mods";
 
 const PROFILE_NAME_LIMIT = 64;
-// How deep SubModule.xml can be inside a mod's staging folder: Modules/<id>/SubModule.xml
-const SUBMODULE_SEARCH_DEPTH = 3;
 
 /**
  * The profile made for a server earlier; joining A, then B, then A again reuses A's profile
@@ -109,7 +104,7 @@ export const getServerProfileName = (row: IServerRow): string => {
  */
 export interface IStagedModule {
   modId: string;
-  module: vetypes.ModuleInfoExtended;
+  module: IStagedModuleInfo;
 }
 
 /**
@@ -117,46 +112,23 @@ export interface IStagedModule {
  */
 export type StagedModules = Map<string, IStagedModule[]>;
 
-const findSubModuleFilesAsync = async (
-  folder: string,
-  depth: number,
-): Promise<string[]> => {
-  const entries = await fs
-    .readdir(folder, { withFileTypes: true })
-    .catch(() => []);
-  const files: string[] = [];
-  for (const entry of entries) {
-    const entryPath = path.join(folder, entry.name);
-    if (
-      entry.isFile() &&
-      entry.name.toLowerCase() === SUBMODULE_FILE.toLowerCase()
-    ) {
-      files.push(entryPath);
-    } else if (entry.isDirectory() && depth > 0) {
-      files.push(...(await findSubModuleFilesAsync(entryPath, depth - 1)));
-    }
-  }
-  return files;
-};
-
 /**
- * The modules read from each mod's staging folder, by mod id. The mods in the state change on every attribute update,
- * a mod's files only when it is installed again
+ * The modules read from each mod's staging folder, by mod id, for mods without stored module entries yet.
+ * The mods in the state change on every attribute update, a mod's files only when it is installed again
  */
 const stagedModCache = new Map<
   string,
-  { key: string; modules: vetypes.ModuleInfoExtended[] }
+  { key: string; modules: IStagedModuleInfo[] }
 >();
 
-const readModModulesAsync = async (
+const readModModuleInfosAsync = async (
   stagingPath: string,
   mod: IBannerlordMod,
   moduleIds: string[],
-): Promise<vetypes.ModuleInfoExtended[]> => {
-  const folder = path.join(stagingPath, mod.installationPath);
+): Promise<IStagedModuleInfo[]> => {
   const attributes = mod.attributes as Record<string, unknown> | undefined;
   const key = JSON.stringify([
-    folder,
+    path.join(stagingPath, mod.installationPath),
     moduleIds,
     attributes?.["version"],
     attributes?.["installTime"],
@@ -166,36 +138,24 @@ const readModModulesAsync = async (
     return cached.modules;
   }
 
-  const modules: vetypes.ModuleInfoExtended[] = [];
-  let complete = true;
-  for (const file of await findSubModuleFilesAsync(
-    folder,
-    SUBMODULE_SEARCH_DEPTH,
-  )) {
-    const xml = await fs.readFile(file, "utf8").catch(() => null);
-    if (xml === null) {
-      complete = false;
-      continue;
-    }
-    const module = BannerlordModuleManager.getModuleInfo(xml);
-    if (module !== undefined && moduleIds.includes(module.id)) {
-      modules.push(module);
-    }
-  }
+  const { modules, complete } = await readModModulesAsync(stagingPath, mod);
+  const infos = modules
+    .filter((module) => moduleIds.includes(module.id))
+    .map(toStagedModuleInfo);
   // A file that couldn't be read is tried again next time
   if (complete) {
-    stagedModCache.set(mod.id, { key, modules });
+    stagedModCache.set(mod.id, { key, modules: infos });
   }
-  return modules;
+  return infos;
 };
 
 /**
- * Reads the modules of every installed mod from the staging folder, so mods the current profile doesn't
- * deploy can still be resolved with their dependencies
+ * The modules of every installed mod, so mods the current profile doesn't deploy can still be resolved with their
+ * dependencies. Read from the mod's stored module entries, or from its staging folder until it has them
  */
 export const readStagedModulesAsync = async (
   stagingPath: string,
-  mods: Readonly<IBannerlordModStorage>,
+  mods: IBannerlordModStorage,
 ): Promise<StagedModules> => {
   const staged: StagedModules = new Map();
   for (const mod of Object.values(mods)) {
@@ -207,11 +167,12 @@ export const readStagedModulesAsync = async (
     ) {
       continue;
     }
-    for (const module of await readModModulesAsync(
-      stagingPath,
-      mod,
-      moduleIds,
-    )) {
+    const stored = getStoredModuleInfos(mod);
+    const modules =
+      stored !== undefined
+        ? stored.filter((module) => moduleIds.includes(module.id))
+        : await readModModuleInfosAsync(stagingPath, mod, moduleIds);
+    for (const module of modules) {
       const entries = staged.get(module.id) ?? [];
       entries.push({ modId: mod.id, module });
       staged.set(module.id, entries);
@@ -225,8 +186,8 @@ export const readStagedModulesAsync = async (
  * They stay in place whichever profile is deployed
  */
 export const getUnmanagedModules = (
-  deployed: Readonly<IModuleCache>,
-  mods: Readonly<IBannerlordModStorage>,
+  deployed: IModuleCache,
+  mods: IBannerlordModStorage,
 ): IModuleCache => {
   const managed = new Set(
     Object.values(mods).flatMap((mod) => mod.attributes?.[SUB_MODS_IDS] ?? []),
@@ -291,7 +252,7 @@ export const pickStagedModule = (
 export const planServerProfile = (
   requirements: IClientModuleRequirement[],
   staged: StagedModules,
-  unmanaged: Readonly<IModuleCache>,
+  unmanaged: IModuleCache,
 ): IServerProfilePlan => {
   const required = requirements.filter((requirement) => requirement.required);
   const names = new Map(
@@ -319,9 +280,10 @@ export const planServerProfile = (
     seen.add(id);
     const wanted = wantedVersions.get(id) ?? null;
 
-    let module: vetypes.ModuleInfoExtended | undefined = unmanaged[id];
-    if (module !== undefined) {
-      const version = versionToString(module.version);
+    let module: IStagedModuleInfo;
+    const unmanagedModule = unmanaged[id];
+    if (unmanagedModule !== undefined) {
+      const version = versionToString(unmanagedModule.version);
       if (wanted !== null && version !== wanted) {
         wrongVersion.push({
           id,
@@ -331,6 +293,7 @@ export const planServerProfile = (
         });
         continue;
       }
+      module = toStagedModuleInfo(unmanagedModule);
     } else {
       const candidates = staged.get(id) ?? [];
       const picked = pickStagedModule(candidates, wanted);
@@ -354,7 +317,7 @@ export const planServerProfile = (
     }
     modules.push({ id: module.id, name: module.name });
 
-    queue.push(...getRequiredDependencyIds(module));
+    queue.push(...module.requiredDependencyIds);
   }
   return { modIds: [...modIds], modules, missing, wrongVersion };
 };
@@ -364,7 +327,7 @@ export const planServerProfile = (
  */
 export const limitPlanToServerJoin = (
   plan: IServerProfilePlan,
-  mods: Readonly<IBannerlordModStorage>,
+  mods: IBannerlordModStorage,
 ): IServerProfilePlan => ({
   modIds: plan.modIds.filter(
     (modId) => mods[modId] !== undefined && isServerJoinMod(mods[modId]),

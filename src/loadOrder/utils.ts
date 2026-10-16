@@ -138,9 +138,14 @@ const checkResult = (
   ) {
     if (autoSort) {
       // The user is not expecting a sort operation, so don't give the notification
+      // The issues say why, without them the error can't be acted on or reported usefully
+      const issues = result?.issues ?? [];
       api.sendNotification?.({
         type: "error",
-        message: t(`{=sLf3eIpH}Failed to order the module list!`),
+        message: [
+          t(`{=sLf3eIpH}Failed to order the module list!`),
+          ...issues,
+        ].join("\n"),
       });
     }
     return false;
@@ -165,7 +170,7 @@ const checkSavedLoadOrder = (
 
 export const orderCurrentLoadOrderByExternalLoadOrderAsync = async (
   api: types.IExtensionApi,
-  allModules: Readonly<IModuleCache>,
+  allModules: IModuleCache,
   savedLoadOrder: PersistenceLoadOrderStorage,
 ): Promise<VortexLoadOrderStorage> => {
   const state = api.getState<IStateWithBannerlord>();

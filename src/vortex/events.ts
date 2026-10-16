@@ -1,4 +1,4 @@
-import { actions, fs, selectors, types, util } from "@nexusmods/vortex-api";
+import { fs, selectors, types, util } from "@nexusmods/vortex-api";
 import path from "path";
 import { copyFile, rm } from "node:fs/promises";
 import { GAME_ID } from "../common";
@@ -96,10 +96,23 @@ export const installedMod = (
   }
 
   const store = vortexStoreToLibraryStore(discovery.store);
-  if (supportedStores.includes(store)) {
+  // A store the extension doesn't know can't be compared with the mod's
+  if (store === "Unknown" || supportedStores.includes(store)) {
     return;
   }
 
-  // uninstall mod if store is not supported by the mod
-  api.store?.dispatch(actions.removeMod(GAME_ID, modId));
+  // The mod has no binaries for the game's store. On Xbox the player picked this in the installer's dialog,
+  // otherwise it's a surprise, and a mod that disappears right after installing reads as a Vortex bug
+  const { localize: t } = LocalizationManager.getInstance(api);
+  api.sendNotification?.({
+    type: "warning",
+    message: t(
+      `'{{name}}' was removed: it doesn't include binaries for the {{store}} version of the game`,
+      { replace: { name: util.renderModName(mod), store: store } },
+    ),
+  });
+  // Removes the mod's files too, removing only its entry would leave them in the staging folder
+  util.removeMods(api, GAME_ID, [modId]).catch((err) => {
+    api.showErrorNotification?.(t("Failed to remove the mod"), err);
+  });
 };

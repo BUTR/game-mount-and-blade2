@@ -128,7 +128,7 @@ export const getSpecialSettings = (): ModOptionsStorage => {
 };
 
 export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
-  const globalSettingsDictionary: ModOptionsStorage = {};
+  const globalSettings: [string, ModOptionsEntry][] = [];
   const gsPath = path.join(getSettingsPath(), "Global");
   await fs.ensureDirAsync(gsPath);
   await turbowalk(
@@ -141,14 +141,17 @@ export const getGlobalSettingsAsync = async (): Promise<ModOptionsStorage> => {
         const name = path.basename(relativePath);
         const extension = path.extname(relativePath);
         const modName = name.slice(0, name.length - extension.length);
-        globalSettingsDictionary[modName] = {
-          name: relativePath,
-          path: relativePath,
-          type: ModOptionsEntryType.Global,
-        };
+        globalSettings.push([
+          modName,
+          {
+            name: relativePath,
+            path: relativePath,
+            type: ModOptionsEntryType.Global,
+          },
+        ]);
       }
     },
     { recurse: true },
   );
-  return globalSettingsDictionary;
+  return Object.fromEntries(globalSettings);
 };

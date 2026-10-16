@@ -373,7 +373,7 @@ export interface IServerPing {
 /**
  * Map of server ID to ping result, or null if the server was unreachable across all probe methods.
  */
-export type ServerPings = Record<string, IServerPing | null>;
+export type ServerPings = Readonly<Record<string, IServerPing | null>>;
 
 const parsePing = (value: unknown): IServerPing | null => {
   if (typeof value !== "object" || value === null) {

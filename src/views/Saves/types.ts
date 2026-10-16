@@ -1,31 +1,31 @@
 import { types as vetypes } from "@butr/vortexextensionnative";
 
 export interface ISaveGame {
-  index: number;
-  name: string;
-  applicationVersion?: vetypes.ApplicationVersion | undefined;
-  creationTime?: number | undefined;
-  characterName?: string | undefined;
-  mainHeroGold?: number | undefined;
-  mainHeroLevel?: number | undefined;
-  dayLong?: number | undefined;
-  clanBannerCode?: string | undefined;
-  clanFiefs?: number | undefined;
-  clanInfluence?: number | undefined;
-  mainPartyFood?: number | undefined;
-  mainPartyHealthyMemberCount?: number | undefined;
-  mainPartyPrisonerMemberCount?: number | undefined;
-  mainPartyWoundedMemberCount?: number | undefined;
-  version?: number | undefined; // always a 1?
-  modules: { [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
-  duplicateModules?: string[] | undefined;
-  loadOrderIssues?: string[] | undefined;
-  missingModules?: string[] | undefined;
-  mismatchedModuleVersions?: string[] | undefined;
+  readonly index: number;
+  readonly name: string;
+  readonly applicationVersion?: vetypes.ApplicationVersion | undefined;
+  readonly creationTime?: number | undefined;
+  readonly characterName?: string | undefined;
+  readonly mainHeroGold?: number | undefined;
+  readonly mainHeroLevel?: number | undefined;
+  readonly dayLong?: number | undefined;
+  readonly clanBannerCode?: string | undefined;
+  readonly clanFiefs?: number | undefined;
+  readonly clanInfluence?: number | undefined;
+  readonly mainPartyFood?: number | undefined;
+  readonly mainPartyHealthyMemberCount?: number | undefined;
+  readonly mainPartyPrisonerMemberCount?: number | undefined;
+  readonly mainPartyWoundedMemberCount?: number | undefined;
+  readonly version?: number | undefined; // always a 1?
+  readonly modules: { readonly [name: string]: vetypes.ApplicationVersion }; // key value pair - name of module : version of module
+  readonly duplicateModules?: string[] | undefined;
+  readonly loadOrderIssues?: string[] | undefined;
+  readonly missingModules?: string[] | undefined;
+  readonly mismatchedModuleVersions?: string[] | undefined;
 }
 
 export interface ISaveList {
-  [name: string]: ISaveGame;
+  readonly [name: string]: ISaveGame;
 }
 
 export type MismatchedModule = {
@@ -38,5 +38,5 @@ export type MismatchedModuleMap = {
 };
 
 export type ModulesByName = {
-  [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
+  readonly [name: string]: vetypes.ModuleInfoExtendedWithMetadata;
 };
