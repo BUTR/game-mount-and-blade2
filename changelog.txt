@@ -4,6 +4,7 @@ Version: 1.4.1
 * Fixed "Active profile is undefined" errors when switching profiles
 * Fixed a symbolic link loop in the game folder showing an error for every file, it now shows a single warning
 * Added a warning with a Remove button when an old copy of the extension is installed next to the current one
+* The binaries are now signed, which should make AV less aggressive
 ---------------------------------------------------------------------------------------------------
 Version: 1.4.0
 * Added Singleplayer and Multiplayer profiles, each profile has a type that can be changed in its settings
