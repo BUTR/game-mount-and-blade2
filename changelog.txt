@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.4.3
+* Updated the launcher library, modules deployed by Vortex are now told apart from ones installed manually in the /Modules folder
+---------------------------------------------------------------------------------------------------
 Version: 1.4.2
 * Fixed modules in symbolically linked or junctioned folders not being found, they now show in the Load Order, banners and server maps
 * Fixed the Steam Workshop warning in the Load Order showing for modules installed twice in the /Modules folder
