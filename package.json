@@ -1,6 +1,6 @@
 {
   "name": "game-mount-and-blade-ii-bannerlord-butr",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
   "author": "BUTR Team & Nexus Mods",
   "license": "GPL-3.0+",
@@ -55,7 +55,7 @@
     "typescript-eslint": "8.47.0"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "2.0.216",
+    "@butr/vortexextensionnative": "2.0.218",
     "ticks-to-date": "^1.0.6"
   },
   "packageManager": "pnpm@12.10.1"
