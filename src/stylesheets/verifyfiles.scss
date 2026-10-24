@@ -1,0 +1,50 @@
+// The Game Files page. The look it shares with the other pages is in modern.scss, which is registered first, so the
+// rules here are scoped as #page-bannerlord-verify-files .bls-page to be as specific as the shared ones and win by coming
+// later
+
+#page-bannerlord-verify-files .bls-page {
+    // The table scrolls inside the space the summary and toolbar leave
+    .bls-verify-table {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    // A mod's name in the Source column, a link to it in the Mods page that truncates like the other cells
+    .bls-verify-mod-link {
+        max-width: 100%;
+        overflow: hidden;
+        font-size: inherit;
+        text-align: start;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Archiving, deleting or restoring, with its progress
+    .bls-verify-work {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--bls-text-subdued);
+        font-variant-numeric: tabular-nums;
+
+        .bls-progress {
+            max-width: 480px;
+        }
+    }
+
+    // The way back to the archives, then the open archive's name and file count
+    .bls-verify-archive-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        color: var(--bls-text-strong);
+        font-weight: 500;
+
+        .bls-muted {
+            flex-shrink: 0;
+            font-weight: normal;
+        }
+    }
+}

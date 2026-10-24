@@ -25,6 +25,10 @@ const GLYPHS = {
     "M64 36H124L144 56V116A8 8 0 0 1 136 124H64A8 8 0 0 1 56 116V44A8 8 0 0 1 64 36Z" +
     "M70 46H112A3 3 0 0 1 115 49V62A3 3 0 0 1 112 65H70A3 3 0 0 1 67 62V49A3 3 0 0 1 70 46Z" +
     "M85 100A15 15 0 1 0 115 100A15 15 0 1 0 85 100Z",
+  // A shield with a check mark, the game's files checked
+  verify:
+    "M100 36L140 50V82C140 102 124 117 100 124C76 117 60 102 60 82V50Z" +
+    "M80 80L94 94L121 67L127 73L94 106L74 86Z",
 } as const;
 
 export type PictogramName = keyof typeof GLYPHS;

@@ -5,7 +5,11 @@
 //
 // Scoped by the pages' ids, so these rules are as specific as the pages' own and Vortex's global styles don't win.
 // A new page using them adds its id here
-:is(#page-bannerlord-servers, #page-bannerlord-saves) {
+:is(
+    #page-bannerlord-servers,
+    #page-bannerlord-saves,
+    #page-bannerlord-verify-files
+) {
     .bls-page {
         --bls-surface-low: var(--color-surface-low, #1d1d21);
         --bls-surface-mid: var(--color-surface-mid, #29292e);
@@ -906,6 +910,8 @@
 
             > .bls-table-cell {
                 grid-column: 2 / -2;
+                // The menu of the group's actions opens below the group's row
+                overflow: visible;
             }
         }
 
@@ -942,6 +948,15 @@
             flex-shrink: 0;
             margin-left: 8px;
             color: var(--bls-translucent-moderate);
+            font-weight: normal;
+        }
+
+        // A group's buttons, at the end of its row over the actions column
+        .bls-table-group-actions {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            margin-left: auto;
             font-weight: normal;
         }
 
@@ -1092,8 +1107,14 @@
             z-index: 4;
         }
 
-        // Shown while the row is hovered, focused or selected, or its menu is open
-        .bls-table-row .bls-row-hover-only {
+        // A group's row isn't sticky, it's raised the same way while its menu is open, over the later rows' sticky cells
+        .bls-table-group:has(.bls-row-menu > [aria-expanded="true"]) {
+            position: relative;
+            z-index: 4;
+        }
+
+        // Shown while the row or group is hovered, focused or selected, or its menu is open
+        :is(.bls-table-row, .bls-table-group) .bls-row-hover-only {
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.15s;
@@ -1101,6 +1122,7 @@
 
         .bls-table-row:is(:hover, :focus-within, [aria-selected="true"])
             .bls-row-hover-only,
+        .bls-table-group:is(:hover, :focus-within) .bls-row-hover-only,
         .bls-row-hover-only[aria-expanded="true"] {
             opacity: 1;
             pointer-events: auto;

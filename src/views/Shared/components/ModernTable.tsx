@@ -110,6 +110,10 @@ export type TableGrouping = {
    * The picture and color of the group with a value, if it has any.
    */
   decorate?: (value: string) => TableGroupDecoration | undefined;
+  /**
+   * Buttons at the end of the group's row, for the group's rows.
+   */
+  actions?: (value: string) => ReactNode;
 };
 
 /**
@@ -545,6 +549,11 @@ export const ModernTable = <T,>(props: ModernTableProps<T>): JSX.Element => {
                   <span className="bls-table-group-count">
                     {section.rows.length}
                   </span>
+                  {grouping?.actions !== undefined && (
+                    <span className="bls-table-group-actions">
+                      {grouping.actions(section.value)}
+                    </span>
+                  )}
                 </div>
               </div>
             )}

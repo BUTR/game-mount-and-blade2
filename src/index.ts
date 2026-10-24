@@ -43,6 +43,7 @@ import { watchMenuItems } from "./profileType/menuItems";
 import { watchProfileCards } from "./profileType/profileCards";
 import { watchProfileTypes } from "./profileType/assignTypes";
 import { warnAboutOtherCopies } from "./vortex/duplicateExtensions";
+import { registerVerifyFiles } from "./verifyFiles/register";
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${version}`);
@@ -109,6 +110,9 @@ const main = (context: types.IExtensionContext): boolean => {
     /*options:*/ new ServersPageOptions(context),
   );
 
+  // Verify Files+
+  registerVerifyFiles(context);
+
   // Profile types
   registerProfileType(context);
 
@@ -153,6 +157,10 @@ const main = (context: types.IExtensionContext): boolean => {
       path.join(__dirname, "savegame.scss"),
     );
     context.api.setStylesheet("servers", path.join(__dirname, "servers.scss"));
+    context.api.setStylesheet(
+      "verifyfiles",
+      path.join(__dirname, "verifyfiles.scss"),
+    );
 
     watchProfileTypes(context.api);
     watchNoModsProfile(context.api);

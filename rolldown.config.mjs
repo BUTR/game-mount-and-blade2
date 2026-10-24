@@ -30,6 +30,7 @@ function getExternals() {
     "reselect",
     "re-reselect",
     "turbowalk",
+    "winapi-bindings",
   ];
 
   const ids = [
@@ -97,6 +98,8 @@ export default defineConfig({
     format: "cjs",
     sourcemap: true,
     exports: "auto",
+    // Lazily loaded modules, like node:sqlite, stay a require like the rest of the bundle, not an import() of the ESM loader
+    dynamicImportInCjs: false,
     // Emit the legacy module id: Vortex 1.x only provides `vortex-api`, Vortex 2.x accepts both.
     // This lets Vortex 1.x load the bundle far enough to reject it through `requireVersion`.
     paths: { "@nexusmods/vortex-api": "vortex-api" },
