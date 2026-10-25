@@ -1,7 +1,8 @@
-import { existsSync, promises as fs } from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import { IExpectedFile, IStoreBuild } from "./types";
-import { readFirstZipEntry } from "@bannerlord/zip/firstEntry";
+import { getPathExistsAsync, readFileIfExistsAsync } from "./fsUtils";
+import { readFirstZipEntryAsync } from "@bannerlord/zip/firstEntry";
 
 /**
  * goggame-{productId}.info, the game's and each installed DLC's
@@ -18,8 +19,8 @@ const MD5_LENGTH = 32;
  * goggame-{productId}.hashdb, a zip of a table: a header of its size, a version and the record count, then a record
  * per file of the product, its path zero padded and its MD5 as hex
  */
-export const parseHashDb = (data: Buffer): string[] => {
-  const table = readFirstZipEntry(data);
+export const parseHashDbAsync = async (data: Buffer): Promise<string[]> => {
+  const table = await readFirstZipEntryAsync(data);
   const headerSize = table.readUInt32LE(0);
   const count = table.readUInt32LE(8);
   const recordSize = count > 0 ? (table.length - headerSize) / count : 0;
@@ -75,7 +76,7 @@ const readGalaxySizesAsync = async (
   productIds: readonly string[],
 ): Promise<Map<string, number> | undefined> => {
   const databasePath = getGalaxyDatabasePath();
-  if (!existsSync(databasePath)) {
+  if (!(await getPathExistsAsync(databasePath))) {
     return undefined;
   }
   try {
@@ -132,12 +133,14 @@ export const readGogBuildAsync = async (
   const paths: string[] = [];
   const missingLists: string[] = [];
   for (const { gameId } of infos) {
-    const hashDbPath = path.join(gamePath, `goggame-${gameId}.hashdb`);
-    if (!existsSync(hashDbPath)) {
+    const hashDb = await readFileIfExistsAsync(
+      path.join(gamePath, `goggame-${gameId}.hashdb`),
+    );
+    if (hashDb === undefined) {
       missingLists.push(gameId);
       continue;
     }
-    paths.push(...parseHashDb(await fs.readFile(hashDbPath)));
+    paths.push(...(await parseHashDbAsync(hashDb)));
   }
 
   const sizes = await readGalaxySizesAsync(infos.map((info) => info.gameId));

@@ -1,5 +1,5 @@
 import { ChildProcess, execFile, spawn } from "child_process";
-import { existsSync } from "node:fs";
+import { promises as fs } from "node:fs";
 import path from "path";
 import {
   formatServerAddress,
@@ -170,10 +170,20 @@ const getDotnetHostAsync = async (
     await readRegisteredDotnetRootAsync(),
     path.join(process.env["ProgramW6432"] ?? "C:\\Program Files", "dotnet"),
   ];
-  dotnetHost = roots
-    .filter((root) => root !== undefined)
-    .map((root) => path.join(root, "dotnet.exe"))
-    .find((host) => existsSync(host));
+  for (const root of roots) {
+    if (root === undefined) {
+      continue;
+    }
+    const host = path.join(root, "dotnet.exe");
+    const exists = await fs.access(host).then(
+      () => true,
+      () => false,
+    );
+    if (exists) {
+      dotnetHost = host;
+      break;
+    }
+  }
   if (dotnetHost === undefined) {
     options.log?.("warn", "no x64 dotnet host found, using dotnet from PATH");
   }

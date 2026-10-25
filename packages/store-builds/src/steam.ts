@@ -1,9 +1,10 @@
-import { existsSync, promises as fs } from "fs";
+import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import * as winapi from "winapi-bindings";
 import { IExpectedFile, IStoreBuild } from "./types";
-import { isZip, readFirstZipEntry } from "@bannerlord/zip/firstEntry";
+import { readFileIfExistsAsync } from "./fsUtils";
+import { isZip, readFirstZipEntryAsync } from "@bannerlord/zip/firstEntry";
 
 const STEAMAPPS_FOLDER = "steamapps";
 const COMMON_FOLDER = "common";
@@ -257,10 +258,12 @@ const readFileMapping = (
  * A depot manifest as Steam caches it: sections of a magic and a length followed by a protobuf message,
  * ContentManifestPayload, ContentManifestMetadata and ContentManifestSignature
  */
-export const parseDepotManifest = (data: Buffer): ISteamDepotFile[] => {
+export const parseDepotManifestAsync = async (
+  data: Buffer,
+): Promise<ISteamDepotFile[]> => {
   // Manifests from the CDN, as DepotDownloader stores them, are zipped
   if (isZip(data)) {
-    data = readFirstZipEntry(data);
+    data = await readFirstZipEntryAsync(data);
   }
 
   const files: ISteamDepotFile[] = [];
@@ -421,22 +424,20 @@ export const readSteamBuildAsync = async (
   const files: IExpectedFile[] = [];
   const missingLists: string[] = [];
   for (const { depotId, manifestId } of appManifest.depots) {
-    let manifestPath: string | undefined;
+    let manifest: Buffer | undefined;
     for (const depotCachePath of depotCachePaths) {
-      const candidate = path.join(
-        depotCachePath,
-        `${depotId}_${manifestId}.manifest`,
+      manifest = await readFileIfExistsAsync(
+        path.join(depotCachePath, `${depotId}_${manifestId}.manifest`),
       );
-      if (existsSync(candidate)) {
-        manifestPath = candidate;
+      if (manifest !== undefined) {
         break;
       }
     }
-    if (manifestPath === undefined) {
+    if (manifest === undefined) {
       missingLists.push(depotId);
       continue;
     }
-    for (const file of parseDepotManifest(await fs.readFile(manifestPath))) {
+    for (const file of await parseDepotManifestAsync(manifest)) {
       if ((file.flags & FLAG_DIRECTORY) !== 0) {
         continue;
       }

@@ -1,4 +1,7 @@
-import { inflateRawSync } from "zlib";
+import { promisify } from "util";
+import { inflateRaw } from "zlib";
+
+const inflateRawAsync = promisify(inflateRaw);
 
 const LOCAL_HEADER_SIGNATURE = 0x04034b50;
 const CENTRAL_HEADER_SIGNATURE = 0x02014b50;
@@ -16,7 +19,7 @@ export const isZip = (data: Buffer): boolean =>
  * The first file of a zip archive. The stores zip single files, GOG its hash lists and Steam's CDN its manifests.
  * Read from the central directory, a local header can leave the sizes to a descriptor after the data
  */
-export const readFirstZipEntry = (data: Buffer): Buffer => {
+export const readFirstZipEntryAsync = async (data: Buffer): Promise<Buffer> => {
   let end = -1;
   const lowest = Math.max(
     0,
@@ -50,7 +53,8 @@ export const readFirstZipEntry = (data: Buffer): Buffer => {
     case STORED:
       return compressed;
     case DEFLATED:
-      return inflateRawSync(compressed);
+      // Off the renderer's thread, a manifest inflates to megabytes
+      return await inflateRawAsync(compressed);
     default:
       throw new Error(`The zip archive uses compression method ${method}`);
   }
