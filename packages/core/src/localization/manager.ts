@@ -1,6 +1,6 @@
 import { types, util } from "@nexusmods/vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
-import { Dirent, readdirSync, readFileSync } from "fs";
+import localizationFiles from "virtual:localization";
 import { TranslateValues } from "./types";
 import { languageMap } from "./utils";
 import { I18N_NAMESPACE } from "../common";
@@ -42,18 +42,10 @@ export class LocalizationManager {
   };
 
   private initializeLocalization = (): void => {
-    readdirSync(__dirname, { withFileTypes: true }).forEach((d: Dirent) => {
-      if (
-        d.isFile() &&
-        d.name.startsWith("localization_") &&
-        d.name.endsWith(".xml")
-      ) {
-        const content: string = readFileSync(`${__dirname}/${d.name}`, {
-          encoding: "utf8",
-        });
-        Utils.loadLocalization(content);
-      }
-    });
+    // Bundled at build time, not read from the extension's folder
+    for (const content of localizationFiles) {
+      Utils.loadLocalization(content);
+    }
     Utils.setLanguage(languageMap.getNameFromCode(util.getCurrentLanguage()));
   };
 }

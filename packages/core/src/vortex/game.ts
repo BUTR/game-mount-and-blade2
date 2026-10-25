@@ -18,6 +18,24 @@ import {
 } from "../common";
 import { MODULES } from "@bannerlord/game-layout";
 
+// Whether a game folder of an unknown store is Xbox's, checked once per folder: Vortex calls executable()
+// synchronously and often, and the check is a file system call on the renderer
+const xboxFolders = new Map<string, boolean>();
+
+const isXboxFolder = (discoveryPath: string): boolean => {
+  let isXbox = xboxFolders.get(discoveryPath);
+  if (isXbox === undefined) {
+    try {
+      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      isXbox = true;
+    } catch {
+      isXbox = false;
+    }
+    xboxFolders.set(discoveryPath, isXbox);
+  }
+  return isXbox;
+};
+
 const getExeByStore = (
   discoveryPath: string | undefined,
   api: types.IExtensionApi,
@@ -45,12 +63,7 @@ const getExeByStore = (
 
   if (discovery.store === undefined && discoveryPath !== undefined) {
     // Brute force the detection by manually checking the paths.
-    try {
-      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
-      return xbox();
-    } catch {
-      return standard();
-    }
+    return isXboxFolder(discoveryPath) ? xbox() : standard();
   }
 
   return standard();

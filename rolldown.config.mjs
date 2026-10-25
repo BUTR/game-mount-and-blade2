@@ -2,8 +2,7 @@ import { defineConfig } from "rolldown";
 import { builtinModules } from "node:module";
 import { fileURLToPath } from "node:url";
 import { readFileSync, readdirSync, globSync } from "node:fs";
-import { createHash } from "node:crypto";
-import { resolve, basename, dirname, extname } from "node:path";
+import { resolve, basename, dirname } from "node:path";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
@@ -83,11 +82,30 @@ function copyAssetsPlugin() {
           this.emitFile({ type: "asset", fileName: basename(file), source: readFileSync(file) });
         }
       }
-      for (const file of globSync("assets/localization/**/*.xml")) {
-        const content = readFileSync(file);
-        const hash = createHash("sha256").update(content).digest("hex").slice(0, 20);
-        this.emitFile({ type: "asset", fileName: `localization_${hash}${extname(file)}`, source: content });
+    },
+  };
+}
+
+const LOCALIZATION_MODULE = "virtual:localization";
+
+/**
+ * The localization XMLs as a module of strings, so the renderer doesn't read them from disk at runtime
+ */
+function localizationPlugin() {
+  return {
+    name: "localization",
+    resolveId(id) {
+      return id === LOCALIZATION_MODULE ? "\0" + LOCALIZATION_MODULE : undefined;
+    },
+    load(id) {
+      if (id !== "\0" + LOCALIZATION_MODULE) {
+        return undefined;
       }
+      const files = globSync("assets/localization/**/*.xml").sort();
+      for (const file of files) {
+        this.addWatchFile(resolve(rootDir, file));
+      }
+      return `export default ${JSON.stringify(files.map((file) => readFileSync(file, "utf8")))};`;
     },
   };
 }
@@ -116,5 +134,5 @@ export default defineConfig({
     },
   },
   resolve: { extensions: [".js", ".jsx", ".json", ".ts", ".tsx"], tsconfigFilename: "tsconfig.json" },
-  plugins: [nativeAddonPlugin(), copyAssetsPlugin()],
+  plugins: [nativeAddonPlugin(), copyAssetsPlugin(), localizationPlugin()],
 });
