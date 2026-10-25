@@ -7,7 +7,7 @@ import { countIssues, formatSaveTime } from "../utils";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 import { versionToString } from "@bannerlord/core/butr/version";
 import { useSaveDetails } from "../../details";
-import { ISaveDetails, Season } from "../../saveFile";
+import { ISaveDetails, Season } from "@bannerlord/save-file";
 
 type Localize = (key: string, values?: Record<string, string>) => string;
 

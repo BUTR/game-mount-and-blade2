@@ -1,7 +1,8 @@
 import { log, types } from "@nexusmods/vortex-api";
 import path from "path";
 import { isModTypeModule } from "./modType";
-import { GAME_ID, SUBMODULE_FILE } from "../common";
+import { MODULES, SUBMODULE_FILE } from "@bannerlord/game-layout";
+import { GAME_ID } from "../common";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 import { VortexLauncherManager } from "../launcher/manager";
@@ -167,7 +168,7 @@ export const modTranslationInstaller = async (
       /(?:^|.*\/)([^/]+)\/(ModuleData\/.*)$/i,
     );
     if (topLevelModMatch && !normalized.toLowerCase().startsWith("modules/")) {
-      destination = `Modules/${topLevelModMatch[1]}/${topLevelModMatch[2]}`;
+      destination = `${MODULES}/${topLevelModMatch[1]}/${topLevelModMatch[2]}`;
     } else if (
       !normalized.toLowerCase().startsWith("modules/") &&
       /^moduledata\//i.test(normalized)
@@ -180,7 +181,7 @@ export const modTranslationInstaller = async (
           archivePath,
         );
         if (inferredModuleId !== undefined) {
-          destination = `Modules/${inferredModuleId}/${normalized}`;
+          destination = `${MODULES}/${inferredModuleId}/${normalized}`;
           inferredTargetUsed = inferredModuleId;
         } else {
           warnedMissingTarget = true;

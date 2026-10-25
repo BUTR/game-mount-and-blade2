@@ -17,7 +17,7 @@ import {
   downloadHarmonyAsync,
 } from "./utils";
 import { BLSE_CLI_EXE } from "../common";
-import { getPathExistsAsync } from "../utils";
+import { getPathExistsAsync } from "../fsUtils";
 import { bselectors } from "../selectors";
 import { IStateWithBannerlord } from "../types";
 

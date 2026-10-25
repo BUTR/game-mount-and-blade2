@@ -18,12 +18,14 @@ import {
   TPAC_MATERIAL,
   TPAC_METAMESH,
   TPAC_TEXTURE,
-} from "./tpac";
-import { MODULES } from "@bannerlord/core/common";
-import { readDirectoryEntriesAsync } from "@bannerlord/core/utils";
+} from "@bannerlord/tpac";
+import {
+  MODULES,
+  readModuleFoldersAsync,
+  SUBMODULE_FILE,
+} from "@bannerlord/game-layout";
 
 const NATIVE = "Native";
-const SUB_MODULE = "SubModule.xml";
 const MODULE_DATA = "ModuleData";
 const BANNER_ICONS_XML_ID = "BannerIcons";
 // Save games correspond to campaigns; filter out module XML entries intended strictly for other game modes
@@ -100,7 +102,7 @@ const readModuleAsync = async (
   files: string[];
 } | null> => {
   const subModule = await fs
-    .readFile(path.join(modulePath, SUB_MODULE), "utf8")
+    .readFile(path.join(modulePath, SUBMODULE_FILE), "utf8")
     .catch(() => null);
   const readValue = (tag: string): string | undefined =>
     readAttribute(
@@ -208,12 +210,9 @@ const readGameBannerDataAsync = async (
   gamePath: string,
 ): Promise<IGameBannerData> => {
   const modulesPath = path.join(gamePath, MODULES);
-  const folders = (await readDirectoryEntriesAsync(modulesPath).catch(() => []))
-    .filter((entry) => entry.isDirectory)
-    .map((entry) => entry.name)
-    .sort((a, b) =>
-      a === NATIVE ? -1 : b === NATIVE ? 1 : a.localeCompare(b),
-    );
+  const folders = (await readModuleFoldersAsync(gamePath)).sort((a, b) =>
+    a === NATIVE ? -1 : b === NATIVE ? 1 : a.localeCompare(b),
+  );
 
   const documentsByModule = new Map<string, IBannerIconsDocument[]>();
   const idsByName = new Map<string, string>();

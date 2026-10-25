@@ -17,6 +17,7 @@
     "./components/TooltipImage": "./src/components/TooltipImage.tsx"
   },
   "dependencies": {
+    "@bannerlord/banner": "workspace:*",
     "@bannerlord/core": "workspace:*"
   }
 }

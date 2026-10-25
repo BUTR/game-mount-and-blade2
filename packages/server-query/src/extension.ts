@@ -1,6 +1,10 @@
-import { getFromServerAsync, isRecord, parseJsonBody } from "./http";
-import { IServerEntry } from "./types";
-import { sanitizeServerText } from "./utils";
+import { IServerAddress, sanitizeServerText } from "./address";
+import {
+  getFromServerAsync,
+  IServerRequestOptions,
+  isRecord,
+  parseJsonBody,
+} from "./http";
 
 /**
  * Endpoint exposed by the BUTR server extension on the dedicated server's HTTP host alongside `/maps/list`.
@@ -286,9 +290,14 @@ const isNotInstalledStatus = (statusCode: number): boolean =>
  * An absent endpoint is expected on unmodded / vanilla dedicated servers. Never rejects.
  */
 export const queryServerExtensionAsync = async (
-  server: Pick<IServerEntry, "address" | "port">,
+  server: IServerAddress,
+  options: IServerRequestOptions,
 ): Promise<IServerExtensionResult> => {
-  const response = await getFromServerAsync(server, SERVER_EXTENSION_PATH);
+  const response = await getFromServerAsync(
+    server,
+    SERVER_EXTENSION_PATH,
+    options,
+  );
   const checkedAt = Date.now();
 
   switch (response.kind) {

@@ -7,8 +7,8 @@ import {
   getBannerPrimaryColor,
   getShapeTransform,
   renderBannerAsync,
-} from "../banner/render";
-import { getBannerAssetsAsync } from "../banner/assets";
+} from "@bannerlord/banner/render";
+import { getBannerAssetsAsync } from "@bannerlord/banner/assets";
 import { GAME_ID } from "@bannerlord/core/common";
 
 export type BannerImageProps = {

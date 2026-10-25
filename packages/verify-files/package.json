@@ -7,7 +7,11 @@
     "./register": "./src/register.ts"
   },
   "dependencies": {
+    "@bannerlord/build-versions": "workspace:*",
     "@bannerlord/core": "workspace:*",
-    "@bannerlord/ui": "workspace:*"
+    "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/store-builds": "workspace:*",
+    "@bannerlord/ui": "workspace:*",
+    "@bannerlord/zip": "workspace:*"
   }
 }

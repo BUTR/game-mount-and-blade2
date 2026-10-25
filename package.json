@@ -19,10 +19,10 @@
     "build-dev": "node build.js build-dev",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
-    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src packages/core/src packages/ui/src packages/saves/src packages/servers/src packages/verify-files/src packages/collections/src",
+    "lint:cycles": "node scripts/lint-cycles.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "format": "prettier src packages --write",
-    "format:check": "prettier src packages --check",
+    "format": "prettier src \"packages/*/src/**\" --write",
+    "format:check": "prettier src \"packages/*/src/**\" --check",
     "pre-commit": "lint-staged"
   },
   "devDependencies": {

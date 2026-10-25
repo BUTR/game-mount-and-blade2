@@ -2,7 +2,10 @@ import { actions, types, util } from "@nexusmods/vortex-api";
 import { getJoinModuleBlocker, isServerJoinMod, JOIN_MODULE_ID } from "./join";
 import { IClientModuleRequirement } from "./modules";
 import { IServerRow } from "./row";
-import { formatServerAddress, sanitizeServerText } from "./utils";
+import {
+  formatServerAddress,
+  sanitizeServerText,
+} from "@bannerlord/server-query/address";
 import {
   GAME_ID,
   MULTIPLAYER_PROFILE_FEATURE,

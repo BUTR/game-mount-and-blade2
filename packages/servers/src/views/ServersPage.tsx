@@ -64,17 +64,16 @@ import {
   createPendingExtensionResult,
   IServerExtensionResult,
   queryServerExtensionAsync,
-} from "../extension";
+} from "@bannerlord/server-query/extension";
+import { createPendingResult } from "@bannerlord/server-query/query";
 import {
-  createPendingResult,
   DEFAULT_SERVER_PORT,
   formatServerAddress,
   getServerId,
   parseServerAddress,
-} from "../utils";
+} from "@bannerlord/server-query/address";
 import {
   createMapDownloadProgress,
-  downloadServerMapAsync,
   getDownloadedMaps,
   getDownloadedMapsPath,
   getServerMapStatuses,
@@ -83,18 +82,16 @@ import {
   LocalScenes,
   readDownloadedScenesAsync,
   readLocalScenesAsync,
-  removeDownloadedMapAsync,
   withDownloadedScenes,
-} from "../maps";
+} from "@bannerlord/server-maps";
+import { downloadServerMapAsync, removeDownloadedMapAsync } from "../maps";
 import {
   fetchLobbyServersAsync,
   getLastLobbyServerList,
-  ILobbyServerList,
-  LobbyError,
   pingServersAsync,
-  ServerPings,
 } from "../lobby";
-import { IServerMap, IServerQueryResult } from "../types";
+import { ILobbyServerList, LobbyError, ServerPings } from "@bannerlord/lobby";
+import { IServerMap, IServerQueryResult } from "@bannerlord/server-query/types";
 import { IServerRow } from "../row";
 import {
   findInstalledCollection,
@@ -105,7 +102,10 @@ import {
   installCollectionAsync,
   lookupCollectionAsync,
 } from "../collections";
-import { queryLobbyServerAsync, queryServerAsync } from "../query";
+import {
+  queryLobbyServerAsync,
+  queryServerAsync,
+} from "@bannerlord/server-query/query";
 import { requestedCollections, usePageState } from "./pageState";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
 import {
@@ -142,6 +142,7 @@ import {
   GAME_ID,
   MULTIPLAYER_PROFILE_FEATURE,
   SERVER_PROFILE_FEATURE,
+  USER_AGENT,
 } from "@bannerlord/core/common";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
@@ -423,14 +424,17 @@ export const ServersPage: FC = () => {
         targets.map(async (target) => {
           const probe =
             target.lobby !== null
-              ? await queryLobbyServerAsync(target, target.lobby.Map)
-              : await queryServerAsync(target);
+              ? await queryLobbyServerAsync(target, target.lobby.Map, {
+                  userAgent: USER_AGENT,
+                })
+              : await queryServerAsync(target, { userAgent: USER_AGENT });
           setProbes((previous) => ({ ...previous, [target.id]: probe }));
           // Asked where the map list answered, which is this PC for a server hosted here
           const extension = await queryServerExtensionAsync(
             probe.state === "online" && probe.endpoint !== null
               ? probe.endpoint
               : target,
+            { userAgent: USER_AGENT },
           );
           setExtensions((previous) => ({
             ...previous,

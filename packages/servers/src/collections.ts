@@ -1,6 +1,6 @@
 import type { IRevision } from "@nexusmods/nexus-api";
 import { selectors, types, util } from "@nexusmods/vortex-api";
-import { IServerExtensionCollection } from "./extension";
+import { IServerExtensionCollection } from "@bannerlord/server-query/extension";
 import { GAME_ID } from "@bannerlord/core/common";
 
 /**

@@ -10,7 +10,6 @@ export const STEAM_LOGO = path.join(__dirname, `steam.svg`);
 export const GAME_ID = `mountandblade2bannerlord`;
 export const I18N_NAMESPACE = `game-mount-and-blade2`;
 
-export const SUBMODULE_FILE = `SubModule.xml`;
 /**
  * How deep a mod's staging folder is searched for SubModule.xml, deep enough for 'Modules/<Module>/SubModule.xml'
  */
@@ -45,8 +44,6 @@ export const BLSE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${BLSE_MOD_ID
 export const HARMONY_MOD_ID = 2006;
 export const HARMONY_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${HARMONY_MOD_ID}`;
 
-export const MODULES = `Modules`;
-
 /**
  * The profile feature holding the profile's type: true for Multiplayer, Singleplayer otherwise
  */
@@ -63,6 +60,11 @@ export const SERVER_PROFILE_FEATURE = `bannerlord_server`;
  * module, so a server without mods doesn't get a profile of its own
  */
 export const NO_MODS_PROFILE_FEATURE = `bannerlord_server_no_mods`;
+
+/**
+ * What the extension sends as the User-Agent header with its requests
+ */
+export const USER_AGENT = `Vortex BUTR Extension v${__EXTENSION_VERSION__}`;
 
 export const EXTENSION_BASE_ID = `MAB2B`;
 export const GOG_IDS = [`1802539526`, `1564781494`];

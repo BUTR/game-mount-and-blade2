@@ -1,8 +1,7 @@
-import { promises as fs } from "fs";
+import { existsSync, promises as fs } from "fs";
 import path from "path";
 import { IExpectedFile, IStoreBuild } from "./types";
-import { readFirstZipEntry } from "./zip";
-import { getPathExistsAsync } from "@bannerlord/core/utils";
+import { readFirstZipEntry } from "@bannerlord/zip/firstEntry";
 
 /**
  * goggame-{productId}.info, the game's and each installed DLC's
@@ -76,7 +75,7 @@ const readGalaxySizesAsync = async (
   productIds: readonly string[],
 ): Promise<Map<string, number> | undefined> => {
   const databasePath = getGalaxyDatabasePath();
-  if (!(await getPathExistsAsync(databasePath))) {
+  if (!existsSync(databasePath)) {
     return undefined;
   }
   try {
@@ -134,7 +133,7 @@ export const readGogBuildAsync = async (
   const missingLists: string[] = [];
   for (const { gameId } of infos) {
     const hashDbPath = path.join(gamePath, `goggame-${gameId}.hashdb`);
-    if (!(await getPathExistsAsync(hashDbPath))) {
+    if (!existsSync(hashDbPath)) {
       missingLists.push(gameId);
       continue;
     }

@@ -3,7 +3,7 @@ import { RGB } from "./bannerIcons";
 import { decodeBc7Rect } from "./bc7";
 import { BANNER_SIZE, IBannerLayer, parseBannerCode } from "./code";
 import { encodePng } from "./png";
-import { ITpacTexture } from "./tpac";
+import { ITpacTexture } from "@bannerlord/tpac";
 
 // Fallback RGB for undefined color IDs, matching BannerManager.GetColor (0xDEADBEEF)
 const MISSING_COLOR: RGB = [0xad, 0xbe, 0xef];

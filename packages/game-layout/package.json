@@ -1,0 +1,12 @@
+{
+  "name": "@bannerlord/game-layout",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The game's folder layout: its Modules folder, the module folders in it, linked ones included, and their SubModule.xml",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

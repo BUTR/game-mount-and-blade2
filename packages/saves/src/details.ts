@@ -1,7 +1,28 @@
+import { promises as fs } from "fs";
 import { useContext, useEffect, useState } from "react";
 import { MainContext, types } from "@nexusmods/vortex-api";
-import { getSaveDetailsAsync, ISaveDetails } from "./saveFile";
+import { ISaveDetails, readSaveDetailsAsync } from "@bannerlord/save-file";
 import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
+
+const cache = new Map<string, Promise<ISaveDetails>>();
+
+/**
+ * The save's details, read once per version of the file. Empty when the save can't be read
+ */
+const getSaveDetailsAsync = async (filePath: string): Promise<ISaveDetails> => {
+  try {
+    const stat = await fs.stat(filePath);
+    const key = `${filePath}|${stat.mtimeMs}|${stat.size}`;
+    let details = cache.get(key);
+    if (details === undefined) {
+      details = readSaveDetailsAsync(filePath).catch(() => ({}));
+      cache.set(key, details);
+    }
+    return await details;
+  } catch {
+    return {};
+  }
+};
 
 /**
  * The details of the save with the name that its metadata doesn't have, empty when they can't be read

@@ -71,7 +71,7 @@ jobs:
           node-version: 22.19
           cache: "pnpm"
 
-      # The build publishes tools/Bannerlord.LobbyBridge (net9.0)
+      # The build publishes packages/lobby/bridge, Bannerlord.LobbyBridge (net9.0)
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"

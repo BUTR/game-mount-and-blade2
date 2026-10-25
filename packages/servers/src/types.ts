@@ -1,13 +1,12 @@
 import { GAME_ID } from "@bannerlord/core/common";
 import { IStateWithBannerlord } from "@bannerlord/core/types";
+import { IServerAddress } from "@bannerlord/server-query/address";
 
 /**
  * Dedicated server manually added to the server browser by the user.
  */
-export interface IServerEntry {
+export interface IServerEntry extends IServerAddress {
   id: string;
-  address: string;
-  port: number;
   addedAt: number;
 }
 
@@ -39,41 +38,6 @@ export const DEFAULT_SERVER_FILTERS: IServerFilters = {
   noModsNeeded: false,
   modes: [],
 };
-
-/**
- * Map entry returned by the vanilla dedicated server `GET /maps/list` endpoint.
- */
-export interface IServerMap {
-  name: string;
-  uniqueToken: string | null;
-  revision: string | null;
-}
-
-/**
- * Response payload returned by the vanilla dedicated server `GET /maps/list` endpoint.
- */
-export interface IServerMapList {
-  currentlyPlaying: string | null;
-  maps: IServerMap[];
-}
-
-export type ServerQueryState = "pending" | "online" | "unreachable" | "invalid";
-
-export interface IServerQueryResult {
-  state: ServerQueryState;
-  /**
-   * Responding endpoint address (either the public address or local loopback fallback for self-hosted servers); null until queried.
-   */
-  endpoint: Pick<IServerEntry, "address" | "port"> | null;
-  /**
-   * Indicates whether the query utilized lobby server metadata to verify loopback fallbacks for locally hosted servers.
-   */
-  withLobby: boolean;
-  responseTimeMs: number | null;
-  mapList: IServerMapList | null;
-  error: string | null;
-  checkedAt: number | null;
-}
 
 /**
  * The Servers page's part of the extension's settings

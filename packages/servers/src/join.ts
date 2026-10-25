@@ -4,10 +4,10 @@ import {
   BannerlordModuleManager,
   types as vetypes,
 } from "@butr/vortexextensionnative";
-import { ILobbyServer } from "./lobby";
+import { ILobbyServer } from "@bannerlord/lobby";
 import { IClientModuleStatus } from "./modules";
 import { IServerRow } from "./row";
-import { formatServerAddress } from "./utils";
+import { formatServerAddress } from "@bannerlord/server-query/address";
 import { BANNERLORD_EXE, GAME_ID } from "@bannerlord/core/common";
 import {
   IBannerlordMod,

@@ -283,6 +283,17 @@ importers:
         specifier: 8.47.0
         version: 8.47.0(eslint@9.39.1(jiti@2.6.1)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
 
+  packages/banner:
+    dependencies:
+      '@bannerlord/game-layout':
+        specifier: workspace:*
+        version: link:../game-layout
+      '@bannerlord/tpac':
+        specifier: workspace:*
+        version: link:../tpac
+
+  packages/build-versions: {}
+
   packages/collections:
     dependencies:
       '@bannerlord/core':
@@ -292,40 +303,107 @@ importers:
         specifier: workspace:*
         version: link:../ui
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@bannerlord/game-layout':
+        specifier: workspace:*
+        version: link:../game-layout
+      '@bannerlord/mod-analyzer':
+        specifier: workspace:*
+        version: link:../mod-analyzer
+
+  packages/game-layout: {}
+
+  packages/lobby:
+    dependencies:
+      '@bannerlord/server-query':
+        specifier: workspace:*
+        version: link:../server-query
+
+  packages/mod-analyzer: {}
+
+  packages/save-file: {}
 
   packages/saves:
     dependencies:
       '@bannerlord/core':
         specifier: workspace:*
         version: link:../core
+      '@bannerlord/save-file':
+        specifier: workspace:*
+        version: link:../save-file
       '@bannerlord/ui':
         specifier: workspace:*
         version: link:../ui
+
+  packages/server-maps:
+    dependencies:
+      '@bannerlord/game-layout':
+        specifier: workspace:*
+        version: link:../game-layout
+      '@bannerlord/server-query':
+        specifier: workspace:*
+        version: link:../server-query
+
+  packages/server-query: {}
 
   packages/servers:
     dependencies:
       '@bannerlord/core':
         specifier: workspace:*
         version: link:../core
+      '@bannerlord/lobby':
+        specifier: workspace:*
+        version: link:../lobby
+      '@bannerlord/server-maps':
+        specifier: workspace:*
+        version: link:../server-maps
+      '@bannerlord/server-query':
+        specifier: workspace:*
+        version: link:../server-query
       '@bannerlord/ui':
         specifier: workspace:*
         version: link:../ui
 
+  packages/store-builds:
+    dependencies:
+      '@bannerlord/zip':
+        specifier: workspace:*
+        version: link:../zip
+
+  packages/tpac: {}
+
   packages/ui:
     dependencies:
+      '@bannerlord/banner':
+        specifier: workspace:*
+        version: link:../banner
       '@bannerlord/core':
         specifier: workspace:*
         version: link:../core
 
   packages/verify-files:
     dependencies:
+      '@bannerlord/build-versions':
+        specifier: workspace:*
+        version: link:../build-versions
       '@bannerlord/core':
         specifier: workspace:*
         version: link:../core
+      '@bannerlord/game-layout':
+        specifier: workspace:*
+        version: link:../game-layout
+      '@bannerlord/store-builds':
+        specifier: workspace:*
+        version: link:../store-builds
       '@bannerlord/ui':
         specifier: workspace:*
         version: link:../ui
+      '@bannerlord/zip':
+        specifier: workspace:*
+        version: link:../zip
+
+  packages/zip: {}
 
 packages:
 

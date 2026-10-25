@@ -787,7 +787,10 @@ const readDetails = (reader: SaveReader): ISaveDetails => {
   return details;
 };
 
-const readSaveDetailsAsync = async (
+/**
+ * The save's details, each missing when the save doesn't have it. Rejects when the file isn't a save that can be read
+ */
+export const readSaveDetailsAsync = async (
   filePath: string,
 ): Promise<ISaveDetails> => {
   const { size } = await fs.stat(filePath);
@@ -809,26 +812,4 @@ const readSaveDetailsAsync = async (
     ? readLegacyGameData(body)
     : readGameData(body);
   return readDetails(new SaveReader(data));
-};
-
-const cache = new Map<string, Promise<ISaveDetails>>();
-
-/**
- * The save's details, read once per version of the file. Empty when the save can't be read
- */
-export const getSaveDetailsAsync = async (
-  filePath: string,
-): Promise<ISaveDetails> => {
-  try {
-    const stat = await fs.stat(filePath);
-    const key = `${filePath}|${stat.mtimeMs}|${stat.size}`;
-    let details = cache.get(key);
-    if (details === undefined) {
-      details = readSaveDetailsAsync(filePath).catch(() => ({}));
-      cache.set(key, details);
-    }
-    return await details;
-  } catch {
-    return {};
-  }
 };

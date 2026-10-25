@@ -1,6 +1,6 @@
-import { IServerQueryResult } from "../types";
+import { IServerQueryResult } from "@bannerlord/server-query/types";
 import { IServerRow } from "../row";
-import { parseServerAddress } from "../utils";
+import { parseServerAddress } from "@bannerlord/server-query/address";
 
 /**
  * Identifies the server associated with the active profile and pins it to the top of the list.

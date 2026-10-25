@@ -1,15 +1,12 @@
+import { IServerAddress } from "./address";
 import {
   getFromServerAsync,
+  IServerRequestOptions,
   isRecord,
   parseJsonBody,
   ServerHttpResult,
 } from "./http";
-import {
-  IServerEntry,
-  IServerMap,
-  IServerMapList,
-  IServerQueryResult,
-} from "./types";
+import { IServerMap, IServerMapList, IServerQueryResult } from "./types";
 
 const asStringOrNull = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null;
@@ -40,7 +37,7 @@ export const parseMapList = (text: string): IServerMapList => {
 };
 
 const toQueryResult = (
-  server: Pick<IServerEntry, "address" | "port">,
+  server: IServerAddress,
   response: ServerHttpResult,
 ): IServerQueryResult => {
   const checkedAt = Date.now();
@@ -97,9 +94,13 @@ const toQueryResult = (
  * Queries the map list endpoint of a dedicated server. Never rejects.
  */
 export const queryServerAsync = async (
-  server: Pick<IServerEntry, "address" | "port">,
+  server: IServerAddress,
+  options: IServerRequestOptions,
 ): Promise<IServerQueryResult> =>
-  toQueryResult(server, await getFromServerAsync(server, "/maps/list"));
+  toQueryResult(
+    server,
+    await getFromServerAsync(server, "/maps/list", options),
+  );
 
 const LOOPBACK_ADDRESS = "127.0.0.1";
 
@@ -111,22 +112,33 @@ const LOOPBACK_ADDRESS = "127.0.0.1";
  * response only if its active map matches the lobby listing. Never rejects.
  */
 export const queryLobbyServerAsync = async (
-  server: Pick<IServerEntry, "address" | "port">,
+  server: IServerAddress,
   lobbyMap: string,
+  options: IServerRequestOptions,
 ): Promise<IServerQueryResult> => {
   const result = {
-    ...(await queryServerAsync(server)),
+    ...(await queryServerAsync(server, options)),
     withLobby: true,
   };
   if (result.state !== "unreachable" || server.address === LOOPBACK_ADDRESS) {
     return result;
   }
-  const local = await queryServerAsync({
-    address: LOOPBACK_ADDRESS,
-    port: server.port,
-  });
+  const local = await queryServerAsync(
+    { address: LOOPBACK_ADDRESS, port: server.port },
+    options,
+  );
   return local.state === "online" &&
     local.mapList?.currentlyPlaying === lobbyMap
     ? { ...local, withLobby: true }
     : result;
 };
+
+export const createPendingResult = (): IServerQueryResult => ({
+  state: "pending",
+  endpoint: null,
+  withLobby: false,
+  responseTimeMs: null,
+  mapList: null,
+  error: null,
+  checkedAt: null,
+});

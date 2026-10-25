@@ -1,9 +1,12 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { selectors, types, util } from "@nexusmods/vortex-api";
-import { compareFiles, listGameFilesAsync } from "./compare";
-import { readGogBuildAsync } from "./gog";
-import { readSteamBuildAsync } from "./steam";
+import {
+  compareFiles,
+  listGameFilesAsync,
+} from "@bannerlord/store-builds/compare";
+import { readGogBuildAsync } from "@bannerlord/store-builds/gog";
+import { readSteamBuildAsync } from "@bannerlord/store-builds/steam";
 import { getBuildVersionAsync, getInstalledVersion } from "./buildVersions";
 import {
   IVerifyFile,
@@ -12,7 +15,8 @@ import {
   VerifyFileStatus,
   VerifyStore,
 } from "./types";
-import { GAME_ID, MODULES } from "@bannerlord/core/common";
+import { GAME_ID } from "@bannerlord/core/common";
+import { MODULES } from "@bannerlord/game-layout";
 import { bselectors } from "@bannerlord/core/selectors";
 import { IStateWithBannerlord } from "@bannerlord/core/types";
 

@@ -1,5 +1,5 @@
 import { selectors, types } from "@nexusmods/vortex-api";
-import { SUBMODULE_FILE } from "../common";
+import { SUBMODULE_FILE } from "@bannerlord/game-layout";
 
 export const getGameInstallPath = (
   api: types.IExtensionApi,

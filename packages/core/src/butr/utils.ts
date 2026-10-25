@@ -3,8 +3,8 @@ import {
   IModAnalyzerRequestModule,
   IModAnalyzerRequestQuery,
   IModAnalyzerResultModule,
-  IModuleCompatibilityInfoCache,
-} from "./types";
+} from "@bannerlord/mod-analyzer";
+import { IModuleCompatibilityInfoCache } from "./types";
 import { ModAnalyzerProxy } from "./modAnalyzerProxy";
 import { VortexLauncherManager } from "../launcher/manager";
 import { versionToString } from "./version";

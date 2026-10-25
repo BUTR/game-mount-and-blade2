@@ -1,9 +1,16 @@
 import { get } from "http";
-import { IServerEntry } from "./types";
+import { IServerAddress } from "./address";
 
 // The game client waits up to 1.8s for the map list before proceeding to join regardless.
 const REQUEST_TIMEOUT_MS = 3000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
+
+export interface IServerRequestOptions {
+  /**
+   * Sent as the User-Agent header
+   */
+  userAgent: string;
+}
 
 export type ServerHttpResult =
   | { kind: "ok"; body: string; responseTimeMs: number }
@@ -15,8 +22,9 @@ export type ServerHttpResult =
  * Never rejects.
  */
 export const getFromServerAsync = (
-  server: Pick<IServerEntry, "address" | "port">,
+  server: IServerAddress,
   path: string,
+  options: IServerRequestOptions,
 ): Promise<ServerHttpResult> =>
   new Promise((resolve) => {
     const startedAt = Date.now();
@@ -46,7 +54,7 @@ export const getFromServerAsync = (
         timeout: REQUEST_TIMEOUT_MS,
         headers: {
           Accept: "application/json",
-          "User-Agent": `Vortex BUTR Extension v${__EXTENSION_VERSION__}`,
+          "User-Agent": options.userAgent,
         },
       },
       (response) => {

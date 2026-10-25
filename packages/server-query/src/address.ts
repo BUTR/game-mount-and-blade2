@@ -1,5 +1,3 @@
-import { IServerEntry, IServerQueryResult } from "./types";
-
 /**
  * Default port used by most dedicated servers.
  * The embedded HTTP server providing map listings listens on the same TCP port as the game server.
@@ -68,22 +66,10 @@ export const parseServerAddress = (input: string): IServerAddress | null => {
   return { address, port };
 };
 
-export const formatServerAddress = (
-  server: Pick<IServerEntry, "address" | "port">,
-): string =>
+export const formatServerAddress = (server: IServerAddress): string =>
   server.address.includes(":")
     ? `[${server.address}]:${server.port}`
     : `${server.address}:${server.port}`;
 
 export const getServerId = (server: IServerAddress): string =>
   formatServerAddress(server).toLowerCase();
-
-export const createPendingResult = (): IServerQueryResult => ({
-  state: "pending",
-  endpoint: null,
-  withLobby: false,
-  responseTimeMs: null,
-  mapList: null,
-  error: null,
-  checkedAt: null,
-});

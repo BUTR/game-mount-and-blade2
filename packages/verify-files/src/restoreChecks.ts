@@ -2,8 +2,8 @@ import path from "path";
 import { IFilesArchive } from "./archive";
 import { IVerifyFilesReport } from "./types";
 import { getFolder } from "./verify";
-import { MODULES, SUBMODULE_FILE } from "@bannerlord/core/common";
-import { getPathExistsAsync } from "@bannerlord/core/utils";
+import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
+import { MODULES, SUBMODULE_FILE } from "@bannerlord/game-layout";
 
 /**
  * A module of the archive whose folder the game folder has again, restoring would mix the archived files into it

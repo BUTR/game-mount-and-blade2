@@ -8,7 +8,7 @@ import {
 } from "./components/ServerCells";
 import { StatusView } from "./components/StatusView";
 import { getStatusText } from "./utils";
-import { formatServerAddress } from "../utils";
+import { formatServerAddress } from "@bannerlord/server-query/address";
 import { IServerRow } from "../row";
 import { isOptionalLobbyModule } from "../modules";
 import {

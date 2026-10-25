@@ -19,7 +19,7 @@ import {
   IStagedModulesInfo,
   IStateWithBannerlord,
 } from "../types";
-import { findSubModuleFilesAsync } from "../utils";
+import { findSubModuleFilesAsync } from "@bannerlord/game-layout";
 
 /**
  * The modules a module needs loaded with it when joining. Optional dependencies, incompatible modules and modules

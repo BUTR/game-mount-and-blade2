@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { Icon, util } from "@nexusmods/vortex-api";
-import { getFolderSizeAsync, ILocalScene } from "../../maps";
+import { getFolderSizeAsync, ILocalScene } from "@bannerlord/server-maps";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 import {
   ModernTable,

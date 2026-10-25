@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@bannerlord/core": "workspace:*",
+    "@bannerlord/lobby": "workspace:*",
+    "@bannerlord/server-maps": "workspace:*",
+    "@bannerlord/server-query": "workspace:*",
     "@bannerlord/ui": "workspace:*"
   }
 }

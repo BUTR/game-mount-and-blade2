@@ -13,10 +13,10 @@ import {
   EPICAPP_ID,
   GAME_ID,
   GOG_IDS,
-  MODULES,
   STEAMAPP_ID,
   XBOX_ID,
 } from "../common";
+import { MODULES } from "@bannerlord/game-layout";
 
 const getExeByStore = (
   discoveryPath: string | undefined,
@@ -82,7 +82,7 @@ export class BannerlordGame implements types.IGame {
     gog: GOG_IDS.map((x) => ({ id: x })),
     epic: [{ id: EPICAPP_ID }],
   };
-  public requiredFiles: string[] = ["bin", "Modules"];
+  public requiredFiles: string[] = ["bin", MODULES];
   public parameters: string[] = [];
   public requiresCleanup = true;
   public details: { [key: string]: unknown } = {

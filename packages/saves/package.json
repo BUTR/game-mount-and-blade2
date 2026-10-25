@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@bannerlord/core": "workspace:*",
+    "@bannerlord/save-file": "workspace:*",
     "@bannerlord/ui": "workspace:*"
   }
 }

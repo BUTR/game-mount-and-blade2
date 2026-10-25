@@ -1,0 +1,17 @@
+{
+  "name": "@bannerlord/store-builds",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The files of the game build Steam or GOG installed, read from their local manifests, and comparing a folder to them",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    "./compare": "./src/compare.ts",
+    "./gog": "./src/gog.ts",
+    "./steam": "./src/steam.ts"
+  },
+  "dependencies": {
+    "@bannerlord/zip": "workspace:*"
+  }
+}

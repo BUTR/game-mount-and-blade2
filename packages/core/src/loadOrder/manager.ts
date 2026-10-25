@@ -16,8 +16,10 @@ import { readLoadOrderAsync, writeLoadOrderAsync } from "./persistence";
 import { buildCompatibilityCache } from "../butr/utils";
 import {
   IModAnalyzerRequestModule,
-  IModuleCompatibilityInfo,
   IModAnalyzerRequestQuery,
+} from "@bannerlord/mod-analyzer";
+import {
+  IModuleCompatibilityInfo,
   IModuleCompatibilityInfoCache,
   IModuleObfuscationCacheInfoCache,
 } from "../butr/types";

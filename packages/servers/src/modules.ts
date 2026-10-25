@@ -2,9 +2,9 @@ import {
   INexusModsReference,
   IServerExtensionInfo,
   normalizeModuleVersion,
-} from "./extension";
+} from "@bannerlord/server-query/extension";
 import { types as vetypes } from "@butr/vortexextensionnative";
-import { ILobbyModule } from "./lobby";
+import { ILobbyModule } from "@bannerlord/lobby";
 import { GAME_ID } from "@bannerlord/core/common";
 import { IModuleCache } from "@bannerlord/core/types";
 import { versionToString } from "@bannerlord/core/butr/version";

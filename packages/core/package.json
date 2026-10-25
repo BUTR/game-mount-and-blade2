@@ -14,6 +14,7 @@
     "./butr/utils": "./src/butr/utils.ts",
     "./butr/version": "./src/butr/version.ts",
     "./common": "./src/common.ts",
+    "./fsUtils": "./src/fsUtils.ts",
     "./launcher/actions": "./src/launcher/actions.ts",
     "./launcher/hooks": "./src/launcher/hooks.ts",
     "./launcher/manager": "./src/launcher/manager.ts",
@@ -39,7 +40,6 @@
     "./settings/types": "./src/settings/types.ts",
     "./store/redux": "./src/store/redux.ts",
     "./types": "./src/types.ts",
-    "./utils": "./src/utils.ts",
     "./vortex/deploy": "./src/vortex/deploy.ts",
     "./vortex/duplicateExtensions": "./src/vortex/duplicateExtensions.ts",
     "./vortex/events": "./src/vortex/events.ts",
@@ -55,5 +55,9 @@
     "./vortex/profiles": "./src/vortex/profiles.ts",
     "./vortex/stagedModules": "./src/vortex/stagedModules.ts",
     "./vortex/store": "./src/vortex/store.ts"
+  },
+  "dependencies": {
+    "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/mod-analyzer": "workspace:*"
   }
 }

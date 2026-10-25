@@ -1,6 +1,7 @@
-import type { IServerExtensionResult } from "./extension";
-import type { ILobbyServer, IServerPing } from "./lobby";
-import type { IServerEntry, IServerQueryResult } from "./types";
+import type { IServerExtensionResult } from "@bannerlord/server-query/extension";
+import type { ILobbyServer, IServerPing } from "@bannerlord/lobby";
+import type { IServerEntry } from "./types";
+import type { IServerQueryResult } from "@bannerlord/server-query/types";
 
 /**
  * Consolidated server row representing a lobby-listed server, a manually added server, or a merged entry of both.

@@ -9,7 +9,8 @@ import {
 import { IStateWithBannerlord, PersistenceLoadOrderStorage } from "../types";
 import { bselectors } from "../selectors";
 import { GameMode } from "../settings/types";
-import { filterEntryWithInvalidId, isFileNotFoundError } from "../utils";
+import { isFileNotFoundError } from "../fsUtils";
+import { filterEntryWithInvalidId } from "../utils";
 import { LocalizationManager } from "../localization/manager";
 
 /**

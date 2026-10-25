@@ -8,12 +8,12 @@ import {
   readZipEntriesAsync,
   verifyZipAsync,
   writeZipAsync,
-} from "./storedZip";
+} from "@bannerlord/zip/storedZip";
 import { IVerifyFile, VerifyStore } from "./types";
 import { getBuildVersionAsync } from "./buildVersions";
 import { isDeletable, removeEmptyFoldersAsync } from "./verify";
 import { GAME_ID } from "@bannerlord/core/common";
-import { getPathExistsAsync } from "@bannerlord/core/utils";
+import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
 
 const ARCHIVES_FOLDER = "verify-files";
 const MANIFEST_VERSION = 1;

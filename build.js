@@ -161,7 +161,7 @@ const publishLobbyBridge = () => {
 
   run("dotnet", [
     "publish",
-    "tools/Bannerlord.LobbyBridge/Bannerlord.LobbyBridge.csproj",
+    "packages/lobby/bridge/Bannerlord.LobbyBridge.csproj",
     "-c",
     "Release",
     "-o",

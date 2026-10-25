@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { tooltip } from "@nexusmods/vortex-api";
-import { IServerQueryResult } from "../../types";
+import { IServerQueryResult } from "@bannerlord/server-query/types";
 import { getStatusText } from "../utils";
 
 export type StatusViewProps = {

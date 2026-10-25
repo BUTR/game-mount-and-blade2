@@ -6,7 +6,7 @@ import { formatSize, openGameFolder, pathInFolder } from "./tableAttributes";
 import { IFilesArchive } from "../archive";
 import { getFolder } from "../verify";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
-import { getPathExistsAsync } from "@bannerlord/core/utils";
+import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
 import {
   ModernTableColumn,

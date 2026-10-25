@@ -6,6 +6,7 @@ import {
 } from "@butr/vortexextensionnative";
 import path from "path";
 import { readFile } from "node:fs/promises";
+import { SUBMODULE_FILE } from "@bannerlord/game-layout";
 import { vortexStoreToLibraryStore } from "../vortex/store";
 import { actionsLauncher } from "./actions";
 import {
@@ -34,9 +35,7 @@ export const installModuleAsync = async (
   launcherManager: NativeLauncherManager,
 ): Promise<types.IInstallResult> => {
   // Find all SubModule.xml files to support multiple mods per archive
-  const subModuleRelFilePaths = files.filter((x) =>
-    x.endsWith("SubModule.xml"),
-  );
+  const subModuleRelFilePaths = files.filter((x) => x.endsWith(SUBMODULE_FILE));
 
   if (subModuleRelFilePaths.length === 0) {
     const { localize: t } = LocalizationManager.getInstance(api);

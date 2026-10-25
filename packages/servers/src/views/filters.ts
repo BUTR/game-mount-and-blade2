@@ -3,7 +3,7 @@ import {
   getClientModuleRequirements,
   IClientModuleRequirement,
 } from "../modules";
-import { formatServerAddress } from "../utils";
+import { formatServerAddress } from "@bannerlord/server-query/address";
 import { IServerFilters } from "../types";
 import { IServerRow } from "../row";
 import { isOfficialServer } from "../join";

@@ -7,6 +7,27 @@ const PACKAGES_DIR = path.join(ROOT_DIR, "packages");
 const SCOPE = "@bannerlord/";
 
 /**
+ * What Vortex provides the extension at runtime, and the extension's native addon. A library takes what it needs from
+ * them as parameters, so it works outside Vortex
+ */
+const EXTENSION_RUNTIME = [
+  "@nexusmods/vortex-api",
+  "vortex-api",
+  "@nexusmods/nexus-api",
+  "electron",
+  "react",
+  "react-dom",
+  "react-redux",
+  "react-bootstrap",
+  "react-i18next",
+  "redux",
+  "redux-act",
+  "reselect",
+  "re-reselect",
+  "@butr/vortexextensionnative",
+];
+
+/**
  * The folder of the package a file belongs to: its folder under packages/, or the root for the extension itself
  * @param {string} file
  */
@@ -18,26 +39,41 @@ const getPackageRoot = (file) => {
   return path.join(PACKAGES_DIR, relative.split(path.sep)[0] ?? "");
 };
 
-/** @type {Map<string, string[]>} */
-const dependencyCache = new Map();
+/**
+ * @typedef {{ dependencies: string[]; library: boolean }} IPackageInfo
+ */
+
+/** @type {Map<string, IPackageInfo>} */
+const packageCache = new Map();
 
 /**
- * The local packages a package declares in its package.json
+ * The local packages a package declares in its package.json, and whether it is a library: logic that doesn't need
+ * Vortex or the extension, marked with "bannerlord": { "library": true }
  * @param {string} packageRoot
+ * @returns {IPackageInfo}
  */
-const getLocalDependencies = (packageRoot) => {
-  let dependencies = dependencyCache.get(packageRoot);
-  if (dependencies === undefined) {
+const getPackageInfo = (packageRoot) => {
+  let info = packageCache.get(packageRoot);
+  if (info === undefined) {
     const manifest = JSON.parse(
       readFileSync(path.join(packageRoot, "package.json"), "utf8"),
     );
-    dependencies = Object.keys(manifest.dependencies ?? {}).filter((name) =>
-      name.startsWith(SCOPE),
-    );
-    dependencyCache.set(packageRoot, dependencies);
+    info = {
+      dependencies: Object.keys(manifest.dependencies ?? {}).filter((name) =>
+        name.startsWith(SCOPE),
+      ),
+      library: manifest.bannerlord?.library === true,
+    };
+    packageCache.set(packageRoot, info);
   }
-  return dependencies;
+  return info;
 };
+
+/**
+ * @param {string} packageRoot
+ */
+const getLocalDependencies = (packageRoot) =>
+  getPackageInfo(packageRoot).dependencies;
 
 /**
  * The folder of a local package by name, packages/core for @bannerlord/core
@@ -69,7 +105,7 @@ const dependsOn = (packageRoot, otherRoot, seen = new Set()) => {
 /**
  * Keeps the local packages apart: a relative import stays in its own package, and another package is imported by
  * name only when the package.json lists it and it doesn't depend back on this one. Features don't list each other,
- * so they can't reach into each other
+ * so they can't reach into each other. Libraries only use other libraries, and nothing of Vortex or the extension
  * @type {import("eslint").Rule.RuleModule}
  */
 export default {
@@ -87,11 +123,17 @@ export default {
         "'{{name}}' is not a dependency of this package. Add it to package.json if this package may depend on it.",
       cycle:
         "'{{name}}' depends on this package, so this package can't depend on it. Move what both need to a package below them.",
+      libraryDependency:
+        "'{{name}}' is not a library, a library only depends on libraries. Take what it needs as a parameter instead.",
+      libraryRuntime:
+        "'{{name}}' is part of Vortex or the extension, a library works without them. Take what it needs as a parameter instead.",
     },
   },
   create(context) {
     const file = context.filename;
     const packageRoot = getPackageRoot(file);
+    const isLibrary =
+      packageRoot !== ROOT_DIR && getPackageInfo(packageRoot).library;
 
     /**
      * @param {import("estree").ImportDeclaration | import("estree").ExportNamedDeclaration | import("estree").ExportAllDeclaration | import("estree").ImportExpression} node
@@ -125,6 +167,30 @@ export default {
           });
         } else if (dependsOn(getNamedPackageRoot(name), packageRoot)) {
           context.report({ node: source, messageId: "cycle", data: { name } });
+        } else if (
+          isLibrary &&
+          !getPackageInfo(getNamedPackageRoot(name)).library
+        ) {
+          context.report({
+            node: source,
+            messageId: "libraryDependency",
+            data: { name },
+          });
+        }
+        return;
+      }
+
+      if (isLibrary) {
+        const name = EXTENSION_RUNTIME.find(
+          (runtime) =>
+            specifier === runtime || specifier.startsWith(`${runtime}/`),
+        );
+        if (name !== undefined) {
+          context.report({
+            node: source,
+            messageId: "libraryRuntime",
+            data: { name },
+          });
         }
       }
     };

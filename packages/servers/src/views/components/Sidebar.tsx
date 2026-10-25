@@ -12,7 +12,7 @@ import {
   IClientModuleRequirement,
   IClientModuleStatus,
 } from "../../modules";
-import { formatServerAddress } from "../../utils";
+import { formatServerAddress } from "@bannerlord/server-query/address";
 import {
   getCollectionPageUrl,
   ICollectionLookup,
@@ -24,9 +24,12 @@ import { StagedModules } from "@bannerlord/core/vortex/stagedModules";
 import {
   IServerExtensionCollection,
   IServerExtensionResult,
-} from "../../extension";
-import { IMapDownloadProgress, IServerMapStatus } from "../../maps";
-import { IServerMap } from "../../types";
+} from "@bannerlord/server-query/extension";
+import {
+  IMapDownloadProgress,
+  IServerMapStatus,
+} from "@bannerlord/server-maps";
+import { IServerMap } from "@bannerlord/server-query/types";
 import { IServerRow } from "../../row";
 import { IModuleCache } from "@bannerlord/core/types";
 import { useLocalization } from "@bannerlord/core/localization/hooks";

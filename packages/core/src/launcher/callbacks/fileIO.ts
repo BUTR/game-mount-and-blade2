@@ -3,12 +3,11 @@ import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
 import { FileHandle, open, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization/manager";
+import { isFileNotFoundError, isSymlinkLoopError } from "../../fsUtils";
 import {
   IDirectoryEntry,
-  isFileNotFoundError,
-  isSymlinkLoopError,
   readDirectoryEntriesAsync,
-} from "../../utils";
+} from "@bannerlord/game-layout";
 
 /**
  * A symbolic link that points back into itself fails every read below it, which is every module in the folder.

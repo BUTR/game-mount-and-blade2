@@ -1,10 +1,9 @@
-import { promises as fs } from "fs";
+import { existsSync, promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import * as winapi from "winapi-bindings";
 import { IExpectedFile, IStoreBuild } from "./types";
-import { isZip, readFirstZipEntry } from "./zip";
-import { getPathExistsAsync } from "@bannerlord/core/utils";
+import { isZip, readFirstZipEntry } from "@bannerlord/zip/firstEntry";
 
 const STEAMAPPS_FOLDER = "steamapps";
 const COMMON_FOLDER = "common";
@@ -428,7 +427,7 @@ export const readSteamBuildAsync = async (
         depotCachePath,
         `${depotId}_${manifestId}.manifest`,
       );
-      if (await getPathExistsAsync(candidate)) {
+      if (existsSync(candidate)) {
         manifestPath = candidate;
         break;
       }
