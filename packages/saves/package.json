@@ -1,0 +1,16 @@
+{
+  "name": "@bannerlord/saves",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Saves page, launching a save and making a profile from one",
+  "exports": {
+    "./events": "./src/events.ts",
+    "./reducers": "./src/reducers.ts",
+    "./register": "./src/register.ts",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/ui": "workspace:*"
+  }
+}

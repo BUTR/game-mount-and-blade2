@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { tooltip, types } from "@nexusmods/vortex-api";
-import { IVortexViewModelData } from "../../../types";
+import { IVortexViewModelData } from "@bannerlord/core/types";
 
 export type ValidationErrorProps = {
   invalidEntries: types.IFBLOInvalidResult[] | undefined;

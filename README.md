@@ -15,6 +15,23 @@ It provides additional functionality to enhance your experience with Mount & Bla
 
 After installing this extension via Vortex, you can access its features through the Vortex UI.
 
+## Development
+
+The extension is a pnpm workspace. Each feature is a local package, and rolldown bundles them all into `dist/index.js`:
+
+| Package | Contents |
+| --- | --- |
+| `src/` | The extension itself: registers the game, the features and the load order, and wires Vortex events to them |
+| `packages/core` | The game, its mods, load order, profiles and BLSE, which every feature builds on |
+| `packages/ui` | React components and styles shared by the pages |
+| `packages/saves` | The Saves page |
+| `packages/servers` | The Servers page |
+| `packages/verify-files` | The Game Files page |
+| `packages/collections` | The collection features |
+
+A package only imports the local packages its `package.json` lists, and only the modules in their `exports`. Features
+depend on `core` and `ui`, never on each other. `pnpm lint` enforces this with `eslint-rules/package-boundaries.mjs`.
+
 ## License
 
 This project is licensed under the [GPL-3.0 License](LICENSE.md).

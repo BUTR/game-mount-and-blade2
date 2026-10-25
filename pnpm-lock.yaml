@@ -173,6 +173,24 @@ importers:
 
   .:
     dependencies:
+      '@bannerlord/collections':
+        specifier: workspace:*
+        version: link:packages/collections
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@bannerlord/saves':
+        specifier: workspace:*
+        version: link:packages/saves
+      '@bannerlord/servers':
+        specifier: workspace:*
+        version: link:packages/servers
+      '@bannerlord/ui':
+        specifier: workspace:*
+        version: link:packages/ui
+      '@bannerlord/verify-files':
+        specifier: workspace:*
+        version: link:packages/verify-files
       '@butr/vortexextensionnative':
         specifier: 2.0.218
         version: 2.0.218
@@ -264,6 +282,50 @@ importers:
       typescript-eslint:
         specifier: 8.47.0
         version: 8.47.0(eslint@9.39.1(jiti@2.6.1)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+
+  packages/collections:
+    dependencies:
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:../core
+      '@bannerlord/ui':
+        specifier: workspace:*
+        version: link:../ui
+
+  packages/core: {}
+
+  packages/saves:
+    dependencies:
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:../core
+      '@bannerlord/ui':
+        specifier: workspace:*
+        version: link:../ui
+
+  packages/servers:
+    dependencies:
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:../core
+      '@bannerlord/ui':
+        specifier: workspace:*
+        version: link:../ui
+
+  packages/ui:
+    dependencies:
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/verify-files:
+    dependencies:
+      '@bannerlord/core':
+        specifier: workspace:*
+        version: link:../core
+      '@bannerlord/ui':
+        specifier: workspace:*
+        version: link:../ui
 
 packages:
 

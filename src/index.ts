@@ -1,52 +1,60 @@
 import { method as toBluebird } from "bluebird";
 import { log, selectors, types } from "@nexusmods/vortex-api";
 import path from "path";
-import { GAME_ID } from "./common";
-import { SavePage } from "./views/Saves/SavePage";
-import { SavePageOptions } from "./views/Saves/options";
-import { ServersPage } from "./views/Servers/ServersPage";
-import { ServersPageOptions } from "./views/Servers/options";
+import { GAME_ID } from "@bannerlord/core/common";
 import { Settings, SettingsProps } from "./views/Settings/Settings";
-import { BannerlordGame } from "./vortex/game";
-import { getGameInstallPath } from "./vortex/modType";
-import { IAddedFiles } from "./types";
+import { BannerlordGame } from "@bannerlord/core/vortex/game";
+import { getGameInstallPath } from "@bannerlord/core/vortex/modType";
+import { IAddedFiles } from "@bannerlord/core/types";
 import { reducerSession } from "./store/reducersSession";
 import { reducerSettings } from "./store/reducersSettings";
-import { actionsSettings } from "./settings/actions";
-import { registerCollections } from "./collections/register";
-import { willRemoveModCollectionsAsync } from "./collections/events";
+import { actionsSettings } from "@bannerlord/core/settings/actions";
+import { registerCollections } from "@bannerlord/collections/register";
+import { willRemoveModCollectionsAsync } from "@bannerlord/collections/events";
 import {
   didDeployLoadOrderAsync,
   gamemodeActivatedLoadOrderAsync,
-} from "./loadOrder/events";
+} from "@bannerlord/core/loadOrder/events";
 import { registerLoadOrder } from "./loadOrder/register";
-import { watchActiveProfileType } from "./loadOrder/gameMode";
-import { didDeployBLSEAsync, didPurgeBLSEAsync } from "./blse/events";
-import { installBLSEAsync, testBLSEAsync } from "./blse/installer";
-import { isModTypeBLSE } from "./blse/modType";
-import { gamemodeActivatedSaveAsync } from "./save/events";
-import { addedFilesEventAsync, installedMod } from "./vortex/events";
-import { fillModuleAttributesAsync } from "./vortex/moduleAttributes";
+import { watchActiveProfileType } from "@bannerlord/core/loadOrder/gameMode";
+import {
+  didDeployBLSEAsync,
+  didPurgeBLSEAsync,
+} from "@bannerlord/core/blse/events";
+import {
+  installBLSEAsync,
+  testBLSEAsync,
+} from "@bannerlord/core/blse/installer";
+import { isModTypeBLSE } from "@bannerlord/core/blse/modType";
+import { gamemodeActivatedSaveAsync } from "@bannerlord/saves/events";
+import { registerSaves } from "@bannerlord/saves/register";
+import {
+  addedFilesEventAsync,
+  installedMod,
+} from "@bannerlord/core/vortex/events";
+import { fillModuleAttributesAsync } from "@bannerlord/core/vortex/moduleAttributes";
 import { registerVortexModTypes } from "./vortex/register";
-import { version } from "../package.json";
-import { watchNoModsProfile } from "./servers/noModsProfile";
-import { watchProfiles } from "./servers/profileWatch";
+import {
+  registerServers,
+  watchServerProfiles,
+} from "@bannerlord/servers/register";
 import {
   applyGameModeTools,
   watchBLSEState,
   watchPrimaryTool,
-} from "./vortex/gameModeTools";
-import { watchGameModeMenu } from "./vortex/gameModeMenu";
-import { registerProfileType } from "./profileType/register";
-import { watchDocumentWhileActive } from "./profileType/documentWatcher";
-import { watchMenuItems } from "./profileType/menuItems";
-import { watchProfileCards } from "./profileType/profileCards";
-import { watchProfileTypes } from "./profileType/assignTypes";
-import { warnAboutOtherCopies } from "./vortex/duplicateExtensions";
-import { registerVerifyFiles } from "./verifyFiles/register";
+} from "@bannerlord/core/vortex/gameModeTools";
+import { watchGameModeMenu } from "@bannerlord/core/vortex/gameModeMenu";
+import { registerProfileType } from "@bannerlord/core/profileType/register";
+import { watchDocumentWhileActive } from "@bannerlord/core/profileType/documentWatcher";
+import { watchMenuItems } from "@bannerlord/core/profileType/menuItems";
+import { watchProfileCards } from "@bannerlord/core/profileType/profileCards";
+import { watchProfileTypes } from "@bannerlord/core/profileType/assignTypes";
+import { watchRemovedProfiles } from "@bannerlord/core/profileType/removedProfiles";
+import { warnAboutOtherCopies } from "@bannerlord/core/vortex/duplicateExtensions";
+import { registerVerifyFiles } from "@bannerlord/verify-files/register";
 
 const main = (context: types.IExtensionContext): boolean => {
-  log("info", `Extension Version: ${version}`);
+  log("info", `Extension Version: ${__EXTENSION_VERSION__}`);
 
   // Vortex skips the extension on older versions, including 1.x, instead of loading it
   context.requireVersion(`>=${__VORTEX_API_VERSION__}`);
@@ -85,6 +93,14 @@ const main = (context: types.IExtensionContext): boolean => {
     /*priority?:*/ 51,
   );
 
+  // The pages' shared styles, before the pages add their own
+  context.once(() => {
+    context.api.setStylesheet(
+      "bannerlord-modern",
+      path.join(__dirname, "modern.scss"),
+    );
+  });
+
   // Game
   context.registerGame(new BannerlordGame(context.api));
 
@@ -95,20 +111,10 @@ const main = (context: types.IExtensionContext): boolean => {
   registerLoadOrder(context);
 
   // Save Viewer
-  context.registerMainPage(
-    /*icon:*/ "savegame",
-    /*title:*/ "Saves",
-    /*element:*/ SavePage,
-    /*options:*/ new SavePageOptions(context),
-  );
+  registerSaves(context);
 
   // Server Browser
-  context.registerMainPage(
-    /*icon:*/ "connection",
-    /*title:*/ "Servers",
-    /*element:*/ ServersPage,
-    /*options:*/ new ServersPageOptions(context),
-  );
+  registerServers(context);
 
   // Verify Files+
   registerVerifyFiles(context);
@@ -148,23 +154,9 @@ const main = (context: types.IExtensionContext): boolean => {
   registerVortexModTypes(context);
 
   context.once(() => {
-    context.api.setStylesheet(
-      "bannerlord-modern",
-      path.join(__dirname, "modern.scss"),
-    );
-    context.api.setStylesheet(
-      "savegame",
-      path.join(__dirname, "savegame.scss"),
-    );
-    context.api.setStylesheet("servers", path.join(__dirname, "servers.scss"));
-    context.api.setStylesheet(
-      "verifyfiles",
-      path.join(__dirname, "verifyfiles.scss"),
-    );
-
     watchProfileTypes(context.api);
-    watchNoModsProfile(context.api);
-    watchProfiles(context.api);
+    watchServerProfiles(context.api);
+    watchRemovedProfiles(context.api);
     watchPrimaryTool(context.api);
     watchBLSEState(context.api);
     watchGameModeMenu(context.api);

@@ -1,9 +1,9 @@
 import React, { FC, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { More, selectors, Toggle } from "@nexusmods/vortex-api";
-import { useLocalization } from "../../localization/hooks";
-import { bselectors } from "../../selectors";
-import { IStateWithBannerlord } from "../../types";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { bselectors } from "@bannerlord/core/selectors";
+import { IStateWithBannerlord } from "@bannerlord/core/types";
 
 export type SettingsProps = {
   onSetSortOnDeploy: (profileId: string, sort: boolean) => void;

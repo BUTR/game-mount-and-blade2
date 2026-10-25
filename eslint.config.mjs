@@ -4,6 +4,7 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import prettierConfig from "eslint-config-prettier";
 import eslintReact from "@eslint-react/eslint-plugin";
+import packageBoundaries from "./eslint-rules/package-boundaries.mjs";
 
 export default defineConfig([
   {
@@ -34,7 +35,7 @@ export default defineConfig([
   },
   {
     // No barrels: re-exports hide real dependencies and create import cycles. Import from the declaring file.
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",
@@ -47,6 +48,14 @@ export default defineConfig([
           message: "Don't re-export (barrels cause import cycles). Import from the declaring file instead.",
         },
       ],
+    },
+  },
+  {
+    // Local packages only reach the packages their package.json lists
+    files: ["src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+    plugins: { bannerlord: { rules: { "package-boundaries": packageBoundaries } } },
+    rules: {
+      "bannerlord/package-boundaries": "error",
     },
   },
   {

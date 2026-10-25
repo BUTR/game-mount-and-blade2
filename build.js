@@ -107,7 +107,8 @@ const updateFromFile = (configuration) => {
     throw new Error(`Invalid configuration: ${configuration}`);
   }
 
-  exec("pnpm remove @butr/vortexextensionnative");
+  // The workspace root is the extension, -w adds to it instead of a package
+  exec("pnpm remove -w @butr/vortexextensionnative");
 
   exec("pnpm run clean", extensionPath);
   exec(`pnpm run build -- ${configuration}`, extensionPath);
@@ -126,7 +127,7 @@ const updateFromFile = (configuration) => {
     fs.copyFileSync(packedPath, path.join(ROOT_DIR, tgzFile));
     fs.unlinkSync(packedPath);
   }
-  exec(`pnpm add file:./${tgzFile}`);
+  exec(`pnpm add -w file:./${tgzFile}`);
 };
 
 const updateFromNpm = () => {

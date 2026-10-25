@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from "react";
 import { tooltip, util } from "@nexusmods/vortex-api";
-import { useLocalization } from "../../../localization/hooks";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type LoadOrderInfoPanelProps = {
   refreshAsync: () => Promise<void>;

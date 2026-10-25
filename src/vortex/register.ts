@@ -1,15 +1,18 @@
 import { method as toBluebird } from "bluebird";
 import React from "react";
 import { selectors, types } from "@nexusmods/vortex-api";
-import { GAME_ID } from "../common";
+import { GAME_ID } from "@bannerlord/core/common";
 import { DetailsRenderer } from "../views/Details/components/DetailsRenderer";
-import { VortexLauncherManager } from "../launcher/manager";
-import { getGameInstallPath, isModTypeModule } from "./modType";
+import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
+import {
+  getGameInstallPath,
+  isModTypeModule,
+} from "@bannerlord/core/vortex/modType";
 import {
   isModTranslationArchive,
   isModTypeTranslation,
   modTranslationInstaller,
-} from "./modTranslation";
+} from "@bannerlord/core/vortex/modTranslation";
 
 export const registerVortexModTypes = (
   context: types.IExtensionContext,

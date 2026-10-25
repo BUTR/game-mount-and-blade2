@@ -1,0 +1,13 @@
+{
+  "name": "@bannerlord/verify-files",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Game Files page, verifying and restoring the game's files",
+  "exports": {
+    "./register": "./src/register.ts"
+  },
+  "dependencies": {
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/ui": "workspace:*"
+  }
+}

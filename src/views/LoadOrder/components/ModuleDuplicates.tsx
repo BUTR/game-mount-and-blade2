@@ -1,8 +1,8 @@
 import React, { FC } from "react";
 import { tooltip } from "@nexusmods/vortex-api";
 import { types as vetypes } from "@butr/vortexextensionnative";
-import { IVortexViewModelData } from "../../../types";
-import { useLocalization } from "../../../localization/hooks";
+import { IVortexViewModelData } from "@bannerlord/core/types";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type ModuleDuplicatesProps = {
   availableProviders: vetypes.ModuleProviderType[];

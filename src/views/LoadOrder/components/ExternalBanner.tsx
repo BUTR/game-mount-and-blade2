@@ -1,8 +1,8 @@
 import React, { FC } from "react";
 import { Icon, types } from "@nexusmods/vortex-api";
-import { IVortexViewModelData } from "../../../types";
+import { IVortexViewModelData } from "@bannerlord/core/types";
 import { isExternal } from "../utils";
-import { useLocalization } from "../../../localization/hooks";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type ExternalBannerProps = {
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>;

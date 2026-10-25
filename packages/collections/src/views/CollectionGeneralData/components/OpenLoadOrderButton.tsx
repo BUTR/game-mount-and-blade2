@@ -1,0 +1,22 @@
+import React, { FC, useContext } from "react";
+import { Button } from "react-bootstrap";
+import { MainContext } from "@nexusmods/vortex-api";
+import { openLoadOrderPage } from "../utils";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
+
+export const OpenLoadOrderButton: FC = () => {
+  const { localize: t } = useLocalization();
+
+  const context = useContext(MainContext);
+
+  return (
+    <Button
+      id="btn-more-mods"
+      className="collection-add-mods-btn"
+      onClick={() => openLoadOrderPage(context.api)}
+      bsStyle="ghost"
+    >
+      {t("Open Load Order Page")}
+    </Button>
+  );
+};

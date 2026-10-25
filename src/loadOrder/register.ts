@@ -1,17 +1,31 @@
 import { selectors, types } from "@nexusmods/vortex-api";
-import { GAME_ID } from "../common";
-import { VortexLauncherManager } from "../launcher/manager";
-import { LoadOrderManager } from "./manager";
-import { toggleLoadOrderAsync } from "./utils";
-import { switchGameModeAsync } from "../profileType/switch";
-import { bselectors } from "../selectors";
-import { GameMode } from "../settings/types";
-import { IStateWithBannerlord } from "../types";
+import { GAME_ID } from "@bannerlord/core/common";
+import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
+import { LoadOrderManager } from "@bannerlord/core/loadOrder/manager";
+import { toggleLoadOrderAsync } from "@bannerlord/core/loadOrder/utils";
+import { switchGameModeAsync } from "@bannerlord/core/profileType/switch";
+import { bselectors } from "@bannerlord/core/selectors";
+import { GameMode } from "@bannerlord/core/settings/types";
+import { IStateWithBannerlord } from "@bannerlord/core/types";
+import { LoadOrderInfoPanel } from "../views/LoadOrder/components/LoadOrderInfoPanel";
+import { LoadOrderItemRenderer } from "../views/LoadOrder/components/LoadOrderItemRenderer";
 
 export const registerLoadOrder = (context: types.IExtensionContext): void => {
-  context.registerLoadOrder(
-    /*gameInfo:*/ LoadOrderManager.getInstance(context.api),
-  );
+  const loadOrderManager = LoadOrderManager.getInstance(context.api);
+  loadOrderManager.usageInstructions = () =>
+    LoadOrderInfoPanel({
+      refreshAsync: loadOrderManager.updateCompatibilityScoresAsync,
+    });
+  loadOrderManager.customItemRenderer = ({ className = "", item }) =>
+    LoadOrderItemRenderer({
+      item: item,
+      className: className,
+      availableProviders: loadOrderManager.getAvailableProviders(
+        item.loEntry.id,
+      ),
+      compatibilityInfo: loadOrderManager.getCompatibilityInfo(item.loEntry.id),
+    });
+  context.registerLoadOrder(/*gameInfo:*/ loadOrderManager);
 
   const isMB2 = (): boolean =>
     selectors.activeGameId(context.api.getState()) === GAME_ID;

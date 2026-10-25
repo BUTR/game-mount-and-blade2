@@ -1,7 +1,7 @@
 import { types } from "@nexusmods/vortex-api";
-import { createReducer, updateAuto } from "./redux";
-import { actionsLauncher } from "../launcher/actions";
-import { IBannerlordSession } from "../types";
+import { createReducer, updateAuto } from "@bannerlord/core/store/redux";
+import { actionsLauncher } from "@bannerlord/core/launcher/actions";
+import { IBannerlordSession } from "@bannerlord/core/types";
 
 const defaults: IBannerlordSession = {
   useSteamBinariesOnXbox: false,

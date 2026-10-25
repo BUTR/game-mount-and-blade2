@@ -8,6 +8,7 @@ import { resolve, basename, dirname, extname } from "node:path";
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
 // The package `exports` map hides package.json from `require`, so read it by path.
+const extensionPackage = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8"));
 const vortexApiPackage = JSON.parse(
   readFileSync(resolve(rootDir, "node_modules/@nexusmods/vortex-api/package.json"), "utf8"),
 );
@@ -77,7 +78,7 @@ function copyAssetsPlugin() {
   return {
     name: "copy-assets",
     generateBundle() {
-      for (const pattern of ["assets/*.{jpg,png,svg}", "src/stylesheets/*.scss"]) {
+      for (const pattern of ["assets/*.{jpg,png,svg}", "packages/*/src/stylesheets/*.scss"]) {
         for (const file of globSync(pattern)) {
           this.emitFile({ type: "asset", fileName: basename(file), source: readFileSync(file) });
         }
@@ -108,7 +109,11 @@ export default defineConfig({
   platform: "node",
   transform: {
     // The minimum Vortex version is the API version the extension is built against
-    define: { __VORTEX_API_VERSION__: JSON.stringify(vortexApiPackage.version) },
+    define: {
+      __VORTEX_API_VERSION__: JSON.stringify(vortexApiPackage.version),
+      __EXTENSION_VERSION__: JSON.stringify(extensionPackage.version),
+      __EXTENSION_NAME__: JSON.stringify(extensionPackage.config.extensionName),
+    },
   },
   resolve: { extensions: [".js", ".jsx", ".json", ".ts", ".tsx"], tsconfigFilename: "tsconfig.json" },
   plugins: [nativeAddonPlugin(), copyAssetsPlugin()],

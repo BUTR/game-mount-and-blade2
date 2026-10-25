@@ -1,0 +1,15 @@
+{
+  "name": "@bannerlord/servers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Servers page, the multiplayer server browser and joining servers",
+  "exports": {
+    "./reducers": "./src/reducers.ts",
+    "./register": "./src/register.ts",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/ui": "workspace:*"
+  }
+}

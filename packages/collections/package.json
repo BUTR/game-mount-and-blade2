@@ -1,0 +1,14 @@
+{
+  "name": "@bannerlord/collections",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The collection features: load order, mod options and requirements",
+  "exports": {
+    "./events": "./src/events.ts",
+    "./register": "./src/register.ts"
+  },
+  "dependencies": {
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/ui": "workspace:*"
+  }
+}

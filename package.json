@@ -19,9 +19,10 @@
     "build-dev": "node build.js build-dev",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
-    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src",
-    "format": "prettier src --write",
-    "format:check": "prettier src --check",
+    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src packages/core/src packages/ui/src packages/saves/src packages/servers/src packages/verify-files/src packages/collections/src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "prettier src packages --write",
+    "format:check": "prettier src packages --check",
     "pre-commit": "lint-staged"
   },
   "devDependencies": {
@@ -55,6 +56,12 @@
     "typescript-eslint": "8.47.0"
   },
   "dependencies": {
+    "@bannerlord/collections": "workspace:*",
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/saves": "workspace:*",
+    "@bannerlord/servers": "workspace:*",
+    "@bannerlord/ui": "workspace:*",
+    "@bannerlord/verify-files": "workspace:*",
     "@butr/vortexextensionnative": "2.0.218",
     "ticks-to-date": "^1.0.6"
   },

@@ -1,19 +1,28 @@
 import { actions, types } from "@nexusmods/vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
-import { createReducer, updateAuto } from "./redux";
-import { actionsSave } from "../save/actions";
-import { actionsServers } from "../servers/actions";
-import { actionsSettings } from "../settings/actions";
-import { IBannerlordSettings } from "../settings/types";
-import { languageMap } from "../localization/utils";
+import {
+  createReducer,
+  mergeReducers,
+  updateAuto,
+} from "@bannerlord/core/store/redux";
+import { actionsSettings } from "@bannerlord/core/settings/actions";
+import { IBannerlordSettings } from "@bannerlord/core/settings/types";
+import { languageMap } from "@bannerlord/core/localization/utils";
+import {
+  savesSettingsDefaults,
+  savesSettingsReducers,
+} from "@bannerlord/saves/reducers";
+import { ISavesSettings } from "@bannerlord/saves/types";
+import {
+  serversSettingsDefaults,
+  serversSettingsReducers,
+} from "@bannerlord/servers/reducers";
+import { IServersSettings } from "@bannerlord/servers/types";
 
 const defaults: IBannerlordSettings = {
   sortOnDeploy: {},
   fixCommonIssues: {},
-  saveName: {},
   betaSorting: {},
-  servers: {},
-  favoriteServers: {},
 };
 
 // Vortex API's IReducerSpec.reducers uses `any` for payload type, so we must match it
@@ -94,66 +103,10 @@ createReducer(
 
     return {
       ...state,
-      saveName: without(state.saveName ?? {}),
       sortOnDeploy: without(state.sortOnDeploy ?? {}),
       fixCommonIssues: without(state.fixCommonIssues ?? {}),
       betaSorting: without(state.betaSorting ?? {}),
     };
-  },
-  reducers,
-);
-
-createReducer(
-  actionsSave.setCurrentSave,
-  (state, payload) => {
-    const { profileId, saveId } = payload;
-
-    return updateAuto(state, {
-      saveName: { $auto: { [profileId]: { $set: saveId } } },
-    });
-  },
-  reducers,
-);
-
-createReducer(
-  actionsServers.addServer,
-  (state, payload) => {
-    return updateAuto(state, {
-      servers: { $auto: { [payload.id]: { $set: payload } } },
-    });
-  },
-  reducers,
-);
-
-createReducer(
-  actionsServers.setServerFavorite,
-  (state, payload) => {
-    const { serverId, favorite } = payload;
-
-    return updateAuto(
-      state,
-      favorite
-        ? { favoriteServers: { $auto: { [serverId]: { $set: true } } } }
-        : { favoriteServers: { $auto: { $unset: [serverId] } } },
-    );
-  },
-  reducers,
-);
-
-createReducer(
-  actionsServers.setServerFilters,
-  (state, payload) => updateAuto(state, { serverFilters: { $set: payload } }),
-  reducers,
-);
-
-createReducer(
-  actionsServers.removeServer,
-  (state, payload) => {
-    const { serverId } = payload;
-
-    return updateAuto(state, {
-      servers: { $auto: { $unset: [serverId] } },
-    });
   },
   reducers,
 );
@@ -177,9 +130,20 @@ createReducer(
   reducers,
 );
 
-const reducer: types.IReducerSpec<IBannerlordSettings> = {
-  reducers,
-  defaults,
+// The Saves and Servers pages keep their settings next to these, Vortex persists them together
+const reducer: types.IReducerSpec<
+  IBannerlordSettings & ISavesSettings & IServersSettings
+> = {
+  reducers: mergeReducers(
+    reducers,
+    savesSettingsReducers,
+    serversSettingsReducers,
+  ),
+  defaults: {
+    ...defaults,
+    ...savesSettingsDefaults,
+    ...serversSettingsDefaults,
+  },
 };
 
 // Needed because the API expects the generic IReducerSpec

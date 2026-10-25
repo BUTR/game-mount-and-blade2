@@ -10,7 +10,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "outDir": "./out",
-    "rootDir": "src",
+    "rootDir": ".",
     "declaration": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -38,5 +38,11 @@
     "allowUnreachableCode": false
   },
   "exclude": ["test", "node_modules"],
-  "include": ["src/**/*.ts", "src/**/*.tsx", "typings.custom/*.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "typings.custom/*.d.ts"
+  ]
 }
