@@ -1,14 +1,12 @@
 import path from "path";
-import { selectors, types } from "@nexusmods/vortex-api";
-import { GAME_ID } from "@bannerlord/core/common";
-import { getVerifyStore } from "./verify";
+import { types } from "@nexusmods/vortex-api";
 import { VerifyFilesPage } from "./views/VerifyFilesPage";
-import { VERIFY_FILES_PAGE_ID, VerifyFilesPageOptions } from "./views/options";
+import { VerifyFilesPageOptions } from "./views/options";
 
 export const registerVerifyFiles = (context: types.IExtensionContext): void => {
   context.registerMainPage(
     /*icon:*/ "inspect",
-    /*title:*/ "Game Files",
+    /*title:*/ "Game files",
     /*element:*/ VerifyFilesPage,
     /*options:*/ new VerifyFilesPageOptions(context),
   );
@@ -19,37 +17,4 @@ export const registerVerifyFiles = (context: types.IExtensionContext): void => {
       path.join(__dirname, "verifyfiles.scss"),
     );
   });
-
-  const openPage = (): void => {
-    context.api.events.emit("show-main-page", VERIFY_FILES_PAGE_ID);
-  };
-
-  const isVerifiableInstall = (): boolean => {
-    const state = context.api.getState();
-    return (
-      selectors.activeGameId(state) === GAME_ID &&
-      getVerifyStore(state) !== undefined
-    );
-  };
-
-  context.registerAction(
-    /*group:*/ `game-managed-buttons`,
-    /*position:*/ 160,
-    /*iconOrComponent:*/ `inspect`,
-    /*options:*/ {},
-    /*titleOrProps?:*/ `Verify Files+`,
-    /*actionOrCondition?:*/ openPage,
-    /*condition?:*/ (instanceIds?: string[]): boolean =>
-      instanceIds?.[0] === GAME_ID && isVerifiableInstall(),
-  );
-
-  context.registerAction(
-    /*group:*/ `mod-icons`,
-    /*position:*/ 300,
-    /*iconOrComponent:*/ `inspect`,
-    /*options:*/ {},
-    /*titleOrProps?:*/ `Verify Files+`,
-    /*actionOrCondition?:*/ openPage,
-    /*condition?:*/ isVerifiableInstall,
-  );
 };

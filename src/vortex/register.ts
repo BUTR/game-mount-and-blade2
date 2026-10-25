@@ -96,20 +96,24 @@ export const registerVortexModTypes = (
   );
 
   // Show detected translation languages in the Mods side panel (Details)
-  context.registerTableAttribute("mods", {
-    id: "translationLanguagesText",
-    name: "Translations Available",
-    description: "Detected languages included in this translation mod",
-    placement: "detail",
-    position: 76,
-    help: "List of languages found under ModuleData/Languages",
-    isSortable: false,
-    isGroupable: false,
-    condition: () => selectors.activeGameId(context.api.getState()) === GAME_ID,
-    calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
-    customRenderer: (mod: types.IMod, _detailCell: boolean) => {
-      return React.createElement(DetailsRenderer, { mod }, []);
+  context.registerTableAttribute(
+    /*tableId:*/ "mods",
+    /*attribute:*/ {
+      id: "translationLanguagesText",
+      name: "Translations Available",
+      description: "Detected languages included in this translation mod",
+      placement: "detail",
+      position: 76,
+      help: "List of languages found under ModuleData/Languages",
+      isSortable: false,
+      isGroupable: false,
+      condition: () =>
+        selectors.activeGameId(context.api.getState()) === GAME_ID,
+      calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
+      customRenderer: (mod: types.IMod, _detailCell: boolean) => {
+        return React.createElement(DetailsRenderer, { mod }, []);
+      },
+      edit: {},
     },
-    edit: {},
-  });
+  );
 };

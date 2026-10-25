@@ -103,13 +103,40 @@ export const sendNotificationCallback =
     return Promise.resolve();
   };
 
+let fileDialogExtensions: readonly string[] | undefined;
+
+/**
+ * Runs a launcher manager call with its file dialogs offering only the filters for the extensions ("*.bmlist").
+ * The launcher manager's dialogs offer every format it handles, this narrows them to the one the user picked
+ */
+export const withFileDialogExtensionsAsync = async <T>(
+  extensions: readonly string[],
+  action: () => Promise<T>,
+): Promise<T> => {
+  fileDialogExtensions = extensions;
+  try {
+    return await action();
+  } finally {
+    fileDialogExtensions = undefined;
+  }
+};
+
+// The launcher manager sends globs ("*.bmlist", "*.*"), Electron's dialogs want bare extensions ("bmlist", "*")
 const toVortexFileFilters = (
   filters: vetypes.FileFilter[],
 ): types.IFileFilter[] =>
-  filters.map<types.IFileFilter>((x) => ({
-    name: x.name,
-    extensions: x.extensions,
-  }));
+  filters
+    .filter(
+      (x) =>
+        fileDialogExtensions === undefined ||
+        x.extensions.some((ext) => fileDialogExtensions?.includes(ext)),
+    )
+    .map<types.IFileFilter>((x) => ({
+      name: x.name,
+      extensions: x.extensions.map((ext) =>
+        ext === "*.*" ? "*" : ext.replace(/^\*?\./, ""),
+      ),
+    }));
 
 /**
  * Callback: shows a dialog to the user
@@ -124,7 +151,8 @@ export const sendDialogCallback =
   ): Promise<string> => {
     const { localize: t } = LocalizationManager.getInstance(api);
 
-    switch (type) {
+    // The typings say "fileOpen", the native side sends the enum name lowercased ("fileopen")
+    switch (type.toLowerCase()) {
       case "warning": {
         const messageFull = message.split("--CONTENT-SPLIT--", 2).join("\n");
         const no = t("No");
@@ -144,17 +172,27 @@ export const sendDialogCallback =
             return "";
         }
       }
-      case "fileOpen": {
-        return await api.selectFile({
-          filters: toVortexFileFilters(filters),
-        });
+      // Cancelling resolves undefined, the launcher manager expects an empty string
+      case "fileopen": {
+        return (
+          (await api.selectFile({
+            title: title,
+            filters: toVortexFileFilters(filters),
+          })) ?? ""
+        );
       }
-      case "fileSave": {
-        return await api.saveFile({
-          filters: toVortexFileFilters(filters),
-          defaultPath: message,
-        });
+      case "filesave": {
+        return (
+          (await api.saveFile({
+            title: title,
+            filters: toVortexFileFilters(filters),
+            defaultPath: message,
+          })) ?? ""
+        );
       }
+      // The native side rejects anything but a string
+      default:
+        return "";
     }
   };
 

@@ -26,6 +26,7 @@ import {
   testBLSEAsync,
 } from "@bannerlord/core/blse/installer";
 import { isModTypeBLSE } from "@bannerlord/core/blse/modType";
+import { recommendBLSEAsync } from "@bannerlord/core/blse/deploy";
 import { gamemodeActivatedSaveAsync } from "@bannerlord/saves/events";
 import { registerSaves } from "@bannerlord/saves/register";
 import {
@@ -194,6 +195,17 @@ const main = (context: types.IExtensionContext): boolean => {
       }
 
       applyGameModeTools(context.api);
+
+      // The setup only recommends BLSE for the profile active on activation
+      const discovery = selectors.discoveryByGame(
+        context.api.getState(),
+        GAME_ID,
+      );
+      if (discovery?.path !== undefined) {
+        recommendBLSEAsync(context.api, discovery).catch((err) =>
+          log("warn", "Failed to check BLSE for the profile", err),
+        );
+      }
     });
 
     context.api.events.on(
@@ -225,7 +237,6 @@ const main = (context: types.IExtensionContext): boolean => {
       },
     );
 
-    // TODO: listen to profile switch events and check for BLSE
     context.api.onAsync("did-deploy", async (profileId: string) => {
       const state = context.api.getState();
 

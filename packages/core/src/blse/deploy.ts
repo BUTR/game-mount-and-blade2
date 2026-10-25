@@ -168,10 +168,19 @@ export const recommendBLSEAsync = async (
     throw new Error(`discovery.path is undefined!`);
   }
 
+  // They are about the profile checked before, which a profile switch replaces
+  api.dismissNotification?.("blse-missing");
+  api.dismissNotification?.("harmony-missing");
+
   const state = api.getState<IStateWithBannerlord>();
 
   const profile = selectors.activeProfile(state);
   if (!profile) {
+    return;
+  }
+
+  // BLSE is a singleplayer tool, and Harmony is only recommended alongside it
+  if (bselectors.activeGameMode(state) !== "singleplayer") {
     return;
   }
 

@@ -17,6 +17,7 @@ import {
   sendDialogCallback,
   sendNotificationCallback,
   setGameParametersCallback,
+  withFileDialogExtensionsAsync,
 } from "./callbacks/ui";
 import {
   readDirectoryFileListCallback,
@@ -27,6 +28,18 @@ import {
 import { ensureNativeLogger } from "./logger";
 import { GAME_ID } from "../common";
 import { IModuleCache } from "../types";
+
+/**
+ * The module list files the launcher manager reads and writes: LauncherEx's .bmlist and Novus presets
+ */
+export type ModuleListFormat = "launcherex" | "novus";
+
+const MODULE_LIST_EXTENSIONS: Readonly<
+  Record<ModuleListFormat, readonly string[]>
+> = {
+  launcherex: ["*.bmlist"],
+  novus: ["*.xml"],
+};
 
 export class VortexLauncherManager {
   private static _instance: VortexLauncherManager | undefined;
@@ -207,6 +220,29 @@ export class VortexLauncherManager {
 
   public autoSortAsync = async (): Promise<void> => {
     await this.launcherManager.sortAsync();
+  };
+
+  /**
+   * Asks for a module list file of the format and applies its load order. False if cancelled or failed
+   */
+  public importModuleListAsync = async (
+    format: ModuleListFormat,
+  ): Promise<boolean> => {
+    return await withFileDialogExtensionsAsync(
+      MODULE_LIST_EXTENSIONS[format],
+      () => this.launcherManager.moduleListHandlerImportAsync(),
+    );
+  };
+
+  /**
+   * Asks for a path and saves the enabled modules as a module list file of the format
+   */
+  public exportModuleListAsync = async (
+    format: ModuleListFormat,
+  ): Promise<void> => {
+    await withFileDialogExtensionsAsync(MODULE_LIST_EXTENSIONS[format], () =>
+      this.launcherManager.moduleListHandlerExportAsync(),
+    );
   };
 
   public getSaveFilesAsync = async (): Promise<vetypes.SaveMetadata[]> => {
