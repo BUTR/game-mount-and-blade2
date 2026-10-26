@@ -1,19 +1,20 @@
 import path from "path";
 import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Icon, tooltip } from "@nexusmods/vortex-api";
+import { tooltip } from "@nexusmods/vortex-api";
 import { FilesTable } from "./FilesTable";
-import { formatSize, openGameFolder, pathInFolder } from "./tableAttributes";
+import { openGameFolder, pathInFolder } from "./tableAttributes";
 import { IFilesArchive } from "../archive";
 import { getFolder } from "../verify";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
+import { Localize } from "@bannerlord/core/localization/types";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 import {
   ModernTableColumn,
-  RowMenu,
+  RowActions,
 } from "@bannerlord/ui/components/ModernTable";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
+import { formatSize } from "@bannerlord/ui/format";
 
 /**
  * An archived file, and whether the game folder has it again, restoring skips it then. Undefined while it's read
@@ -201,35 +202,26 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
           openGameFolder(gamePath, path.dirname(row.path));
         const restoreLabel = t("Restore {{file}}", { file: row.path });
         return (
-          <>
-            <button
-              type="button"
-              className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-              aria-label={restoreLabel}
-              title={restoreLabel}
-              disabled={busy || !isRestorable(row)}
-              onClick={(event) => {
-                event.stopPropagation();
-                restore([row]);
-              }}
-            >
-              <Icon name="undo" />
-            </button>
-            <RowMenu
-              label={t("More actions")}
-              items={[
-                ...(isRestorable(row)
-                  ? [
-                      {
-                        label: t("Restore File"),
-                        onSelect: () => restore([row]),
-                      },
-                    ]
-                  : []),
-                { label: t("Open Folder"), onSelect: openFolder },
-              ]}
-            />
-          </>
+          <RowActions
+            primary={{
+              icon: "undo",
+              label: restoreLabel,
+              disabled: busy || !isRestorable(row),
+              onSelect: () => restore([row]),
+            }}
+            menuLabel={t("More actions")}
+            items={[
+              ...(isRestorable(row)
+                ? [
+                    {
+                      label: t("Restore File"),
+                      onSelect: () => restore([row]),
+                    },
+                  ]
+                : []),
+              { label: t("Open Folder"), onSelect: openFolder },
+            ]}
+          />
         );
       },
     }),
@@ -244,33 +236,23 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
         folder: folder !== "" ? folder : t("Game folder"),
       });
       return (
-        <>
-          <button
-            type="button"
-            className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-            aria-label={openLabel}
-            title={openLabel}
-            onClick={openFolder}
-          >
-            <Icon name="open-ext" />
-          </button>
-          <RowMenu
-            label={t("More actions")}
-            items={[
-              { label: t("Open Folder"), onSelect: openFolder },
-              ...(restorable.length > 0
-                ? [
-                    {
-                      label: t("Restore {{count}} Shown Files", {
-                        count: `${restorable.length}`,
-                      }),
-                      onSelect: () => restore(restorable),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </>
+        <RowActions
+          primary={{ icon: "open-ext", label: openLabel, onSelect: openFolder }}
+          menuLabel={t("More actions")}
+          items={[
+            { label: t("Open Folder"), onSelect: openFolder },
+            ...(restorable.length > 0
+              ? [
+                  {
+                    label: t("Restore {{count}} Shown Files", {
+                      count: `${restorable.length}`,
+                    }),
+                    onSelect: () => restore(restorable),
+                  },
+                ]
+              : []),
+          ]}
+        />
       );
     },
     [t, gamePath, restore],
@@ -328,11 +310,7 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
         </div>
       }
       toolbarActions={toolbarActions}
-      empty={
-        <div className="bls-empty bls-small">
-          <h2>{t("The archive has no files")}</h2>
-        </div>
-      }
+      empty={<EmptyState title={t("The archive has no files")} />}
     />
   );
 };

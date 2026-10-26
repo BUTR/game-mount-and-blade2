@@ -1,6 +1,6 @@
 import React, { FC } from "react";
-import { Icon } from "@nexusmods/vortex-api";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type FirstRunProps = {
@@ -39,17 +39,16 @@ export const FirstRun: FC<FirstRunProps> = (props) => {
   ];
 
   return (
-    <section className="bls-empty bls-first-run">
-      <span className="bls-empty-icon bls-empty-icon-primary">
-        <Icon name="game" />
-      </span>
-      <h2>{t("Find a server to play on")}</h2>
-      <p>
-        {t(
-          "Vortex signs in to the official multiplayer lobby with your platform account, the same way the game does, " +
-            "and lists the custom servers with the mods they run.",
-        )}
-      </p>
+    <EmptyState
+      className="bls-first-run"
+      icon="game"
+      primary
+      title={t("Find a server to play on")}
+      description={t(
+        "Vortex signs in to the official multiplayer lobby with your platform account, the same way the game does, " +
+          "and lists the custom servers with the mods they run.",
+      )}
+    >
       <div className="bls-first-run-actions">
         <ActionButton
           variant="primary"
@@ -77,6 +76,6 @@ export const FirstRun: FC<FirstRunProps> = (props) => {
           </li>
         ))}
       </ol>
-    </section>
+    </EmptyState>
   );
 };

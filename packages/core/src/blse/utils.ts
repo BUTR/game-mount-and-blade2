@@ -1,5 +1,11 @@
 import { actions, selectors, types, util } from "@nexusmods/vortex-api";
-import { BLSE_MOD_ID, BLSE_URL, GAME_ID, HARMONY_MOD_ID } from "../common";
+import {
+  BLSE_MOD_ID,
+  BLSE_URL,
+  GAME_ID,
+  HARMONY_MOD_ID,
+  HARMONY_URL,
+} from "../common";
 import { deployModsAsync } from "../vortex/deploy";
 import { downloadAndEnableLatestModVersionAsync } from "../vortex/modDownloader";
 import { findModDownload } from "../vortex/modFinder";
@@ -86,7 +92,7 @@ export const downloadHarmonyAsync = async (
     await downloadAndEnableLatestModVersionAsync(api, HARMONY_MOD_ID);
   } catch (err) {
     api.showErrorNotification?.(t("Failed to download/install Harmony"), err);
-    util.opn(BLSE_URL).catch(() => null);
+    util.opn(HARMONY_URL).catch(() => null);
   } finally {
     api.dismissNotification?.("harmony-installing");
   }

@@ -25,4 +25,16 @@ declare module "winapi-bindings" {
     path: string,
     key: string,
   ): { type: REGISTRY_TYPE; value: string | string[] | number | Buffer };
+
+  // Opens the key for the callback, closed after it. Throws when the key doesn't exist
+  export function WithRegOpen(
+    hive: REGISTRY_HIVE,
+    path: string,
+    cb: (hkey: Buffer) => void,
+  ): void;
+
+  // The subkeys of a key WithRegOpen opened
+  export function RegEnumKeys(
+    hkey: Buffer,
+  ): Array<{ class: string; key: string; lastWritten: number }>;
 }

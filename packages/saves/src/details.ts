@@ -1,7 +1,10 @@
 import { promises as fs } from "fs";
 import { useContext, useEffect, useState } from "react";
 import { MainContext, types } from "@nexusmods/vortex-api";
-import { ISaveDetails, readSaveDetailsAsync } from "@bannerlord/save-file";
+import {
+  ISaveDetails,
+  readSaveDetailsInWorkerAsync,
+} from "@bannerlord/save-file";
 import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
 
 const cache = new Map<string, Promise<ISaveDetails>>();
@@ -15,7 +18,8 @@ const getSaveDetailsAsync = async (filePath: string): Promise<ISaveDetails> => {
     const key = `${filePath}|${stat.mtimeMs}|${stat.size}`;
     let details = cache.get(key);
     if (details === undefined) {
-      details = readSaveDetailsAsync(filePath).catch(() => ({}));
+      // Off the renderer's thread, decoding the save is heavy
+      details = readSaveDetailsInWorkerAsync(filePath).catch(() => ({}));
       cache.set(key, details);
     }
     return await details;

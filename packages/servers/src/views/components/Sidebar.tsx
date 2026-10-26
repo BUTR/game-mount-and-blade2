@@ -33,9 +33,10 @@ import { IServerMap } from "@bannerlord/server-query/types";
 import { IServerRow } from "../../row";
 import { IModuleCache } from "@bannerlord/core/types";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { Localize } from "@bannerlord/core/localization/types";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
+import { formatSize } from "@bannerlord/ui/format";
 import { getStatusText } from "../utils";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
 
 /**
  * Callbacks and state for installing mods advertised on Nexus Mods by the server.
@@ -885,9 +886,6 @@ const MapStatusIcon: FC<{ status: IServerMapStatus; t: Localize }> = ({
   }
 };
 
-const formatMegabytes = (bytes: number): string =>
-  `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-
 const MapProgress: FC<{ progress: IMapDownloadProgress; t: Localize }> = ({
   progress,
   t,
@@ -910,7 +908,7 @@ const MapProgress: FC<{ progress: IMapDownloadProgress; t: Localize }> = ({
   if (totalBytes === null) {
     return (
       <span className="bls-item-progress">
-        {t("Downloading, {{size}}", { size: formatMegabytes(receivedBytes) })}
+        {t("Downloading, {{size}}", { size: formatSize(receivedBytes) })}
       </span>
     );
   }
@@ -928,7 +926,7 @@ const MapProgress: FC<{ progress: IMapDownloadProgress; t: Localize }> = ({
         <span style={{ width: `${percent}%` }} />
       </span>
       <span className="bls-progress-text">
-        {`${formatMegabytes(receivedBytes)} / ${formatMegabytes(totalBytes)}`}
+        {`${formatSize(receivedBytes)} / ${formatSize(totalBytes)}`}
       </span>
     </span>
   );
@@ -1127,13 +1125,13 @@ const CheckButton: FC<{
 };
 
 const EmptySidebar: FC<{ t: Localize }> = ({ t }) => (
-  <div className="bls-empty bls-small">
-    <span className="bls-empty-icon">
-      <Icon name="game" />
-    </span>
-    <h2>{t("Select a server")}</h2>
-    <p>{t("Its required mods, custom maps and join options show up here.")}</p>
-  </div>
+  <EmptyState
+    icon="game"
+    title={t("Select a server")}
+    description={t(
+      "Its required mods, custom maps and join options show up here.",
+    )}
+  />
 );
 
 export const Sidebar: FC<SidebarProps> = (props) => {

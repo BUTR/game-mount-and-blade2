@@ -2,6 +2,7 @@ import { actions, selectors, types } from "@nexusmods/vortex-api";
 import { ICollectionData, ICollectionDataWithLegacyData } from "./types";
 import { CollectionParseError } from "./errors";
 import { GAME_ID, SUB_MODS_IDS } from "@bannerlord/core/common";
+import { isLockedEntry } from "@bannerlord/core/loadOrder/converters";
 import { orderCurrentLoadOrderByExternalLoadOrderAsync } from "@bannerlord/core/loadOrder/utils";
 import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
 import { bselectors } from "@bannerlord/core/selectors";
@@ -9,6 +10,11 @@ import {
   IStateWithBannerlord,
   PersistenceLoadOrderStorage,
 } from "@bannerlord/core/types";
+
+/**
+ * Vortex's first load order API's entry had its position too, see ILoadOrder in the Vortex API
+ */
+type LegacyLoadOrderEntry = types.ILoadOrderEntry<never> & { pos?: number };
 
 export const parseCollectionLegacyDataAsync = async (
   api: types.IExtensionApi,
@@ -46,7 +52,14 @@ const parseLegacyLoadOrderAsync = async (
   const launcherManager = VortexLauncherManager.getInstance(api);
   const allModules = await launcherManager.getAllModulesAsync();
 
-  const suggestedLoadOrderEntries = Object.entries(collection.loadOrder);
+  // The old API's entries carry their position, the object's key order isn't the load order
+  const suggestedLoadOrderEntries = Object.entries<LegacyLoadOrderEntry>(
+    collection.loadOrder,
+  ).sort(([, lhs], [, rhs]) =>
+    typeof lhs.pos === "number" && typeof rhs.pos === "number"
+      ? lhs.pos - rhs.pos
+      : 0,
+  );
   const suggestedLoadOrder =
     suggestedLoadOrderEntries.reduce<PersistenceLoadOrderStorage>(
       (arr, [id, entry], idx) => {
@@ -65,9 +78,7 @@ const parseLegacyLoadOrderAsync = async (
               id: modId,
               name: entry.name ?? id,
               isSelected: entry.enabled,
-              isDisabled:
-                entry.locked !== undefined &&
-                (entry.locked === `true` || entry.locked === `always`),
+              isDisabled: isLockedEntry(entry),
               index: idx,
             });
           }

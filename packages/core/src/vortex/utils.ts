@@ -25,24 +25,22 @@ const launchGameStoreAsync = async (
   );
 };
 
-const prepareForModdingAsync = async (
+/**
+ * What depends on the game's folder and store: the tools, their paths are absolute, and the launcher manager's store.
+ * On setup, and again when the folder or store changes, Vortex doesn't set the game up again for that
+ */
+export const applyDiscovery = (
   api: types.IExtensionApi,
   discovery: types.IDiscoveryResult,
-): Promise<void> => {
-  if (discovery.path === undefined) {
-    throw new Error(`discovery.path is undefined!`);
-  }
-
-  await recommendBLSEAsync(api, discovery);
-
-  if (isStoreSteam(discovery.store)) {
-    await launchGameStoreAsync(api, discovery.store);
-  }
+): void => {
+  addOfficialCLITool(api, discovery);
+  addOfficialMultiplayerCLITool(api, discovery);
+  addOfficialLauncherTool(api, discovery);
+  addModdingKitTool(api, discovery);
+  addBLSETools(api, discovery);
 
   if (discovery.store !== undefined) {
-    const launcherManager = VortexLauncherManager.getInstance(api);
-
-    launcherManager.setStore(discovery.store);
+    VortexLauncherManager.getInstance(api).setStore(discovery.store);
   }
 };
 
@@ -57,14 +55,13 @@ export const setupAsync = async (
   // The first Bannerlord-only step, everything below needs the native library
   ensureNativeLogger();
 
-  // Quickly ensure that the official Launcher is added.
-  addOfficialCLITool(api, discovery);
-  addOfficialMultiplayerCLITool(api, discovery);
-  addOfficialLauncherTool(api, discovery);
-  addModdingKitTool(api, discovery);
-  addBLSETools(api, discovery);
+  applyDiscovery(api, discovery);
 
-  await prepareForModdingAsync(api, discovery);
+  await recommendBLSEAsync(api, discovery);
+
+  if (isStoreSteam(discovery.store)) {
+    await launchGameStoreAsync(api, discovery.store);
+  }
 };
 
 export const findGameAsync = async (): Promise<types.IGameStoreEntry> => {

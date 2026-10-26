@@ -1,16 +1,18 @@
 import React, { FC, useMemo, useState } from "react";
-import { Icon, util } from "@nexusmods/vortex-api";
-import { formatGameVersion, formatSize } from "./tableAttributes";
+import { util } from "@nexusmods/vortex-api";
+import { formatGameVersion } from "./tableAttributes";
 import { getArchivesPath, IFilesArchive } from "../archive";
+import { getStoreName } from "../verify";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { Localize } from "@bannerlord/core/localization/types";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 import {
   ModernTable,
   ModernTableColumn,
-  RowMenu,
+  RowActions,
   TableSort,
 } from "@bannerlord/ui/components/ModernTable";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
+import { formatSize } from "@bannerlord/ui/format";
 
 const getArchiveId = (archive: IFilesArchive): string => archive.archivePath;
 
@@ -74,11 +76,11 @@ const getColumns = (t: Localize): ModernTableColumn<IFilesArchive>[] => [
       <span
         className="bls-table-truncate"
         title={t("{{store}} build {{build}}", {
-          store: archive.store === "gog" ? "GOG" : "Steam",
+          store: getStoreName(archive.store),
           build: archive.buildId,
         })}
       >
-        {`${formatGameVersion(t, { buildId: archive.buildId, ...(archive.gameVersion !== undefined ? { version: archive.gameVersion } : {}) })} (${archive.store === "gog" ? "GOG" : "Steam"})`}
+        {`${formatGameVersion(t, { buildId: archive.buildId, ...(archive.gameVersion !== undefined ? { version: archive.gameVersion } : {}) })} (${getStoreName(archive.store)})`}
       </span>
     ),
     sortValue: (archive) => archive.gameVersion ?? archive.buildId,
@@ -117,38 +119,29 @@ export const ArchivesTable: FC<ArchivesTableProps> = (props) => {
       render: (archive: IFilesArchive) => {
         const restoreLabel = t("Restore the files of this archive");
         return (
-          <>
-            <button
-              type="button"
-              className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-              aria-label={restoreLabel}
-              title={restoreLabel}
-              disabled={busy}
-              onClick={(event) => {
-                event.stopPropagation();
-                onRestore(archive);
-              }}
-            >
-              <Icon name="undo" />
-            </button>
-            <RowMenu
-              label={t("More actions")}
-              items={[
-                { label: t("Show Files"), onSelect: () => onOpen(archive) },
-                {
-                  label: t("Restore Files"),
-                  onSelect: () => onRestore(archive),
-                },
-                { label: t("Rename"), onSelect: () => onRename(archive) },
-                { label: t("Open Folder"), onSelect: openArchivesFolder },
-                {
-                  label: t("Delete Archive"),
-                  danger: true,
-                  onSelect: () => onDelete(archive),
-                },
-              ]}
-            />
-          </>
+          <RowActions
+            primary={{
+              icon: "undo",
+              label: restoreLabel,
+              disabled: busy,
+              onSelect: () => onRestore(archive),
+            }}
+            menuLabel={t("More actions")}
+            items={[
+              { label: t("Show Files"), onSelect: () => onOpen(archive) },
+              {
+                label: t("Restore Files"),
+                onSelect: () => onRestore(archive),
+              },
+              { label: t("Rename"), onSelect: () => onRename(archive) },
+              { label: t("Open Folder"), onSelect: openArchivesFolder },
+              {
+                label: t("Delete Archive"),
+                danger: true,
+                onSelect: () => onDelete(archive),
+              },
+            ]}
+          />
         );
       },
     }),
@@ -157,18 +150,14 @@ export const ArchivesTable: FC<ArchivesTableProps> = (props) => {
 
   if (archives.length === 0) {
     return (
-      <div className="bls-empty bls-small">
-        <span className="bls-empty-icon">
-          <Icon name="archive" />
-        </span>
-        <h2>{t("No archives yet")}</h2>
-        <p>
-          {t(
-            "Files you move to an archive are kept in a .zip next to Vortex's data of the game, and can be " +
-              "restored into the game folder from here.",
-          )}
-        </p>
-      </div>
+      <EmptyState
+        icon="archive"
+        title={t("No archives yet")}
+        description={t(
+          "Files you move to an archive are kept in a .zip next to Vortex's data of the game, and can be " +
+            "restored into the game folder from here.",
+        )}
+      />
     );
   }
 

@@ -154,8 +154,8 @@ export const findSaveModule = (
 export const getNameDuplicates = (
   allModules: IModuleCache,
 ): string[] | undefined => {
-  const allModulesByName = getModulesByName(allModules);
-  const moduleNames = Object.keys(allModulesByName);
+  // Keyed by id, a map by name would already have merged the duplicates
+  const moduleNames = Object.values(allModules).map((module) => module.name);
   const nameCount = new Map<string, number>();
 
   moduleNames.forEach((name) => {

@@ -8,10 +8,12 @@
   },
   "exports": {
     "./assets": "./src/assets.ts",
-    "./render": "./src/render.ts"
+    "./render": "./src/render.ts",
+    "./worker": "./src/worker.ts"
   },
   "dependencies": {
     "@bannerlord/game-layout": "workspace:*",
-    "@bannerlord/tpac": "workspace:*"
+    "@bannerlord/tpac": "workspace:*",
+    "@bannerlord/worker": "workspace:*"
   }
 }

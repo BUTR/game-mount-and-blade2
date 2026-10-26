@@ -5,6 +5,7 @@ import { IServerRow } from "./row";
 import {
   formatServerAddress,
   sanitizeServerText,
+  truncateServerText,
 } from "@bannerlord/server-query/address";
 import {
   GAME_ID,
@@ -87,7 +88,7 @@ export const getServerName = (row: IServerRow): string | undefined => {
 export const getServerProfileName = (row: IServerRow): string => {
   const label = getServerName(row) ?? formatServerAddress(row);
   return label.length > PROFILE_NAME_LIMIT
-    ? `${label.slice(0, PROFILE_NAME_LIMIT - 1)}…`
+    ? `${truncateServerText(label, PROFILE_NAME_LIMIT - 1)}…`
     : label;
 };
 

@@ -83,3 +83,37 @@ export const findSubModuleFilesAsync = async (
   }
   return files;
 };
+
+/**
+ * The game's folder in the user's Documents, where it keeps its configs and saves. The game puts it in the Documents
+ * known folder, callers pass the one their platform API gives, not a folder guessed from the home directory
+ */
+export const GAME_DOCUMENTS_FOLDER = `Mount and Blade II Bannerlord`;
+
+/**
+ * The game's configs in its documents folder
+ */
+export const CONFIGS_FOLDER = `Configs`;
+
+/**
+ * The settings of mods, as the Mod Configuration Menu keeps them in the game's configs
+ */
+export const MOD_SETTINGS_FOLDER = `ModSettings`;
+
+/**
+ * The game's folder in Documents
+ * @param documentsPath The user's Documents known folder
+ */
+export const getGameDocumentsPath = (documentsPath: string): string =>
+  nodePath.join(documentsPath, GAME_DOCUMENTS_FOLDER);
+
+/**
+ * The folder of the mods' settings, Documents/Mount and Blade II Bannerlord/Configs/ModSettings
+ * @param documentsPath The user's Documents known folder
+ */
+export const getModSettingsPath = (documentsPath: string): string =>
+  nodePath.join(
+    getGameDocumentsPath(documentsPath),
+    CONFIGS_FOLDER,
+    MOD_SETTINGS_FOLDER,
+  );

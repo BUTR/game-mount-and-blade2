@@ -166,9 +166,13 @@ const getDotnetHostAsync = async (
   if (dotnetHost !== undefined) {
     return dotnetHost;
   }
+  // The default location, on the system drive when the environment doesn't name Program Files
+  const programFiles =
+    process.env["ProgramW6432"] ??
+    `${process.env["SystemDrive"] ?? "C:"}\\Program Files`;
   const roots = [
     await readRegisteredDotnetRootAsync(),
-    path.join(process.env["ProgramW6432"] ?? "C:\\Program Files", "dotnet"),
+    path.join(programFiles, "dotnet"),
   ];
   for (const root of roots) {
     if (root === undefined) {
@@ -318,6 +322,11 @@ export interface ILobbyServersRequest {
    */
   gamePath: string;
   /**
+   * The folder of the game's executables relative to the game's folder, the store's bin folder. The bridge loads
+   * the lobby client's assemblies from it
+   */
+  binaryPath: string;
+  /**
    * The store the game was bought on, as Vortex names it
    */
   store: string | undefined;
@@ -344,13 +353,15 @@ export const fetchLobbyServersAsync = async (
   request: ILobbyServersRequest,
   options: ILobbyBridgeOptions,
 ): Promise<ILobbyServerList> => {
-  const { gamePath, store } = request;
+  const { gamePath, binaryPath, store } = request;
   const platform = getLobbyPlatform(store);
 
   const { stdout, stderr, error } = await runBridgeAsync(options, [
     "servers",
     "--game",
     gamePath,
+    "--bin",
+    binaryPath,
     "--platform",
     platform,
   ]);

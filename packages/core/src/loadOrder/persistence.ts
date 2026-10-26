@@ -131,9 +131,7 @@ export const readProfileLoadOrderOrThrowAsync = async (
   }
 
   const loadOrder: PersistenceLoadOrderStorage = JSON.parse(jsonString);
-  return loadOrder.filter(
-    (x) => x !== undefined && filterEntryWithInvalidId(x),
-  );
+  return loadOrder.filter((x) => x != null && filterEntryWithInvalidId(x));
 };
 
 /**

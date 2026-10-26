@@ -1,25 +1,19 @@
 import path from "path";
 import React from "react";
-import { Icon, tooltip, util } from "@nexusmods/vortex-api";
+import { tooltip, util } from "@nexusmods/vortex-api";
+import { Localize } from "@bannerlord/core/localization/types";
 import {
   ModernTableColumn,
-  RowMenu,
+  RowActions,
 } from "@bannerlord/ui/components/ModernTable";
-import { isDeletable } from "../verify";
-import { IVerifyFile, VerifyFileSource, VerifyFileStatus } from "../types";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
-
-export const formatSize = (bytes: number): string => {
-  const units = ["B", "KB", "MB", "GB"];
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit++;
-  }
-  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
-};
+import { formatSize } from "@bannerlord/ui/format";
+import { getFolder, isDeletable } from "../verify";
+import {
+  IVerifyFile,
+  IVerifyPackage,
+  VerifyFileSource,
+  VerifyFileStatus,
+} from "../types";
 
 /**
  * The game's version, like v1.4.8.119303, or the store's build when it isn't known
@@ -36,15 +30,21 @@ export const getStatusLabel = (t: Localize, status: VerifyFileStatus): string =>
     missing: t("Missing"),
   })[status];
 
-export const getSourceLabel = (t: Localize, file: IVerifyFile): string =>
-  file.source === "vortex" && file.modName !== undefined
+export const getSourceLabel = (
+  t: Localize,
+  file: IVerifyFile,
+  storeName: string,
+): string =>
+  (file.source === "vortex" || file.source === "manualMod") &&
+  file.modName !== undefined
     ? file.modName
     : (
         {
           vortex: t("Vortex"),
           vortexInternal: t("Vortex"),
-          store: t("GOG"),
+          store: storeName,
           game: t("The game"),
+          manualMod: t("A mod"),
           unknown: t("Unknown"),
         } satisfies Record<VerifyFileSource, string>
       )[file.source];
@@ -52,25 +52,41 @@ export const getSourceLabel = (t: Localize, file: IVerifyFile): string =>
 const getStatusTooltip = (t: Localize, file: IVerifyFile): string => {
   switch (file.status) {
     case "extra":
-      return file.source === "unknown"
-        ? t("Not part of the game and not deployed by Vortex")
-        : t("Not part of the game");
+      return file.source === "manualMod"
+        ? t(
+            "A mod copied into the game folder by hand, not installed by Vortex",
+          )
+        : file.source === "unknown"
+          ? t("Not part of the game and not deployed by Vortex")
+          : t("Not part of the game");
     case "changed":
-      return t("{{size}} instead of {{expected}}", {
-        size: formatSize(file.size ?? 0),
-        expected: formatSize(file.expectedSize ?? 0),
-      });
+      // Found by Xbox's mark of unmodified files
+      return file.size === file.expectedSize
+        ? t(
+            "Changed since the store installed it, or copied back, its size is the same",
+          )
+        : t("{{size}} instead of {{expected}}", {
+            size: formatSize(file.size ?? 0),
+            expected: formatSize(file.expectedSize ?? 0),
+          });
     case "missing":
       return t("A file of the game that isn't in the game folder");
   }
 };
 
 export const getVerifyFileId = (file: IVerifyFile): string =>
-  `${file.status}:${file.path}`;
+  `${file.status}:${file.package?.name ?? ""}:${file.path}`;
 
-// A path relative to its folder, for a row under its folder's group
-export const pathInFolder = (file: { path: string; folder: string }): string =>
-  file.folder !== "" ? file.path.slice(file.folder.length + 1) : file.path;
+// A path relative to its folder, for a row under its folder's group. A package's folder starts with its name
+export const pathInFolder = (file: {
+  path: string;
+  folder: string;
+  package?: IVerifyPackage;
+}): string => {
+  const folder =
+    file.package !== undefined ? getFolder(file.path) : file.folder;
+  return folder !== "" ? file.path.slice(folder.length + 1) : file.path;
+};
 
 /**
  * Opens a folder of the game, never a file, opening it would run it. The game folder for a folder that's missing,
@@ -90,6 +106,7 @@ export const getVerifyFileColumns = (
   t: Localize,
   groupedByFolder: boolean,
   onShowMod: (modId: string) => void,
+  storeName: string,
 ): ModernTableColumn<IVerifyFile>[] => [
   {
     id: "path",
@@ -121,7 +138,7 @@ export const getVerifyFileColumns = (
     width: "120px",
     render: (file) => (
       <span className="bls-status">
-        {file.source === "unknown" ? (
+        {file.source === "unknown" || file.source === "manualMod" ? (
           <tooltip.Icon
             name="feedback-warning"
             className="bls-warning"
@@ -147,7 +164,7 @@ export const getVerifyFileColumns = (
     label: t("Source"),
     width: "minmax(140px, 0.4fr)",
     render: (file) => {
-      const label = getSourceLabel(t, file);
+      const label = getSourceLabel(t, file, storeName);
       const modId = file.modId;
       if (modId === undefined) {
         return (
@@ -170,8 +187,8 @@ export const getVerifyFileColumns = (
         </button>
       );
     },
-    sortValue: (file) => getSourceLabel(t, file),
-    groupValue: (file) => getSourceLabel(t, file),
+    sortValue: (file) => getSourceLabel(t, file, storeName),
+    groupValue: (file) => getSourceLabel(t, file, storeName),
     toggleable: true,
   },
   {
@@ -208,46 +225,33 @@ export const getVerifyFileActions = (
   width: "68px",
   render: (file: IVerifyFile) => {
     const openFolder = (): void =>
-      openGameFolder(gamePath, path.dirname(file.path));
+      openGameFolder(file.package?.path ?? gamePath, path.dirname(file.path));
     const openLabel = t("Open the folder of {{file}}", { file: file.path });
     const modId = file.modId;
     return (
-      <>
-        <button
-          type="button"
-          className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-          aria-label={openLabel}
-          title={openLabel}
-          onClick={(event) => {
-            event.stopPropagation();
-            openFolder();
-          }}
-        >
-          <Icon name="open-ext" />
-        </button>
-        <RowMenu
-          label={t("More actions")}
-          items={[
-            { label: t("Open Folder"), onSelect: openFolder },
-            ...(modId !== undefined
-              ? [{ label: t("Show in Mods"), onSelect: () => onShowMod(modId) }]
-              : []),
-            ...(isDeletable(file)
-              ? [
-                  {
-                    label: t("Move to Archive"),
-                    onSelect: () => onArchive([file]),
-                  },
-                  {
-                    label: t("Delete File"),
-                    danger: true,
-                    onSelect: () => onDelete([file]),
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </>
+      <RowActions
+        primary={{ icon: "open-ext", label: openLabel, onSelect: openFolder }}
+        menuLabel={t("More actions")}
+        items={[
+          { label: t("Open Folder"), onSelect: openFolder },
+          ...(modId !== undefined
+            ? [{ label: t("Show in Mods"), onSelect: () => onShowMod(modId) }]
+            : []),
+          ...(isDeletable(file)
+            ? [
+                {
+                  label: t("Move to Archive"),
+                  onSelect: () => onArchive([file]),
+                },
+                {
+                  label: t("Delete File"),
+                  danger: true,
+                  onSelect: () => onDelete([file]),
+                },
+              ]
+            : []),
+        ]}
+      />
     );
   },
 });
@@ -262,46 +266,41 @@ export const getFolderActions = (
   { onArchive, onDelete }: RemoveFilesActions,
 ) => {
   const FolderActions = (folder: string, shown: IVerifyFile[]): JSX.Element => {
-    const openFolder = (): void => openGameFolder(gamePath, folder);
+    // A package's group is its folder in the package's own folder
+    const filePackage = shown[0]?.package;
+    const openFolder = (): void =>
+      filePackage !== undefined
+        ? openGameFolder(filePackage.path, getFolder(shown[0]!.path))
+        : openGameFolder(gamePath, folder);
     const openLabel = t("Open {{folder}}", {
       folder: folder !== "" ? folder : t("Game folder"),
     });
     const deletable = shown.filter(isDeletable);
     return (
-      <>
-        <button
-          type="button"
-          className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-          aria-label={openLabel}
-          title={openLabel}
-          onClick={openFolder}
-        >
-          <Icon name="open-ext" />
-        </button>
-        <RowMenu
-          label={t("More actions")}
-          items={[
-            { label: t("Open Folder"), onSelect: openFolder },
-            ...(deletable.length > 0
-              ? [
-                  {
-                    label: t("Archive {{count}} Shown Files", {
-                      count: `${deletable.length}`,
-                    }),
-                    onSelect: () => onArchive(deletable),
-                  },
-                  {
-                    label: t("Delete {{count}} Shown Files", {
-                      count: `${deletable.length}`,
-                    }),
-                    danger: true,
-                    onSelect: () => onDelete(deletable),
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </>
+      <RowActions
+        primary={{ icon: "open-ext", label: openLabel, onSelect: openFolder }}
+        menuLabel={t("More actions")}
+        items={[
+          { label: t("Open Folder"), onSelect: openFolder },
+          ...(deletable.length > 0
+            ? [
+                {
+                  label: t("Archive {{count}} Shown Files", {
+                    count: `${deletable.length}`,
+                  }),
+                  onSelect: () => onArchive(deletable),
+                },
+                {
+                  label: t("Delete {{count}} Shown Files", {
+                    count: `${deletable.length}`,
+                  }),
+                  danger: true,
+                  onSelect: () => onDelete(deletable),
+                },
+              ]
+            : []),
+        ]}
+      />
     );
   };
   return FolderActions;

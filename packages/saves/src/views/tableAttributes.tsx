@@ -7,8 +7,7 @@ import { countIssues, formatSaveTime } from "./utils";
 import { versionToString } from "@bannerlord/core/butr/version";
 import { BannerImage } from "@bannerlord/ui/components/BannerImage";
 import { ModernTableColumn } from "@bannerlord/ui/components/ModernTable";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
+import { Localize } from "@bannerlord/core/localization/types";
 
 const Text = ({ value }: { value: string }): JSX.Element => (
   <span className="bls-table-truncate" title={value}>

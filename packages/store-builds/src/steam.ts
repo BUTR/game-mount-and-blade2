@@ -1,7 +1,5 @@
 import { promises as fs } from "fs";
-import os from "os";
 import path from "path";
-import * as winapi from "winapi-bindings";
 import { IExpectedFile, IStoreBuild } from "./types";
 import { readFileIfExistsAsync } from "./fsUtils";
 import { isZip, readFirstZipEntryAsync } from "@bannerlord/zip/firstEntry";
@@ -9,6 +7,8 @@ import { isZip, readFirstZipEntryAsync } from "@bannerlord/zip/firstEntry";
 const STEAMAPPS_FOLDER = "steamapps";
 const COMMON_FOLDER = "common";
 const DEPOT_CACHE_FOLDER = "depotcache";
+const CONFIG_FOLDER = "config";
+const LIBRARY_FOLDERS_FILE = "libraryfolders.vdf";
 
 // ============================================================================
 // App manifest, steamapps/appmanifest_{appid}.acf
@@ -319,54 +319,87 @@ export const parseDepotManifestAsync = async (
 // ============================================================================
 
 /**
- * Where Steam is installed, its depotcache has the manifests of games in the other libraries too. Vortex doesn't
- * tell extensions since 2.8
+ * The library folders Steam's libraryfolders.vdf lists, Steam's own folder among them. Steam writes a block per
+ * library with its path, older versions wrote the path alone
  */
-const getSteamPaths = (): string[] => {
-  if (process.platform === "win32") {
-    const paths: string[] = [];
-    const keys = [
-      ["HKEY_CURRENT_USER", "Software\\Valve\\Steam", "SteamPath"],
-      [
-        "HKEY_LOCAL_MACHINE",
-        "SOFTWARE\\WOW6432Node\\Valve\\Steam",
-        "InstallPath",
-      ],
-    ] as const;
-    for (const [hive, key, name] of keys) {
-      try {
-        const { value } = winapi.RegGetValue(hive, key, name);
-        if (typeof value === "string") {
-          paths.push(value);
-        }
-      } catch {
-        // Not set
-      }
-    }
-    return paths;
+export const parseLibraryFolders = (text: string): string[] => {
+  const root = parseKeyValues(text)["libraryfolders"];
+  if (typeof root !== "object") {
+    return [];
   }
-
-  const home = os.homedir();
-  return [
-    path.join(home, ".steam", "steam"),
-    path.join(home, ".local", "share", "Steam"),
-    path.join(
-      home,
-      ".var",
-      "app",
-      "com.valvesoftware.Steam",
-      ".local",
-      "share",
-      "Steam",
-    ),
-  ];
+  const folders: string[] = [];
+  for (const [key, entry] of Object.entries(root)) {
+    if (!/^\d+$/.test(key)) {
+      continue;
+    }
+    const folder = typeof entry === "string" ? entry : entry["path"];
+    if (typeof folder === "string" && folder !== "") {
+      folders.push(folder);
+    }
+  }
+  return folders;
 };
 
+/**
+ * The folder as the file system has it, links followed, so a junctioned game folder matches the library it's in.
+ * The path itself when it doesn't exist
+ */
+const resolveFolderAsync = (folder: string): Promise<string> =>
+  fs.realpath(folder).catch(() => path.resolve(folder));
+
+const isSameFolder = (lhs: string, rhs: string): boolean =>
+  path.relative(lhs, rhs) === "";
+
+/**
+ * The steamapps folders the game may be registered in: the one its folder is in by Steam's layout, then every
+ * library the Steam installs list, when the game's folder is a junction or Vortex was given another path to it
+ * @param installPath The game's folder, resolved
+ */
+const findSteamAppsFoldersAsync = async (
+  installPath: string,
+  steamPaths: readonly string[],
+): Promise<string[]> => {
+  const folders: string[] = [];
+  const add = (folder: string): void => {
+    if (!folders.some((known) => isSameFolder(known, folder))) {
+      folders.push(folder);
+    }
+  };
+
+  const commonPath = path.dirname(installPath);
+  if (path.basename(commonPath).toLowerCase() === COMMON_FOLDER) {
+    add(path.dirname(commonPath));
+  }
+  for (const steamPath of steamPaths) {
+    add(path.join(steamPath, STEAMAPPS_FOLDER));
+    // Steam keeps the list in steamapps, older versions in config
+    for (const listFolder of [STEAMAPPS_FOLDER, CONFIG_FOLDER]) {
+      const text = await readFileIfExistsAsync(
+        path.join(steamPath, listFolder, LIBRARY_FOLDERS_FILE),
+      ).catch(() => undefined);
+      if (text === undefined) {
+        continue;
+      }
+      try {
+        for (const library of parseLibraryFolders(text.toString("utf8"))) {
+          add(path.join(library, STEAMAPPS_FOLDER));
+        }
+      } catch {
+        // A broken list, the other one or the layout may still find the library
+      }
+    }
+  }
+  return folders;
+};
+
+/**
+ * The app manifest in the steamapps folder whose install folder is the game's, undefined when none is
+ */
 const findAppManifestAsync = async (
   steamAppsPath: string,
-  installDir: string,
+  installPath: string,
 ): Promise<ISteamAppManifest | undefined> => {
-  const names = await fs.readdir(steamAppsPath);
+  const names = await fs.readdir(steamAppsPath).catch((): string[] => []);
   for (const name of names) {
     if (!/^appmanifest_\d+\.acf$/i.test(name)) {
       continue;
@@ -375,7 +408,15 @@ const findAppManifestAsync = async (
       const manifest = parseAppManifest(
         await fs.readFile(path.join(steamAppsPath, name), "utf8"),
       );
-      if (manifest?.installDir.toLowerCase() === installDir.toLowerCase()) {
+      if (
+        manifest !== undefined &&
+        isSameFolder(
+          await resolveFolderAsync(
+            path.join(steamAppsPath, COMMON_FOLDER, manifest.installDir),
+          ),
+          installPath,
+        )
+      ) {
         return manifest;
       }
     } catch {
@@ -387,35 +428,45 @@ const findAppManifestAsync = async (
 
 /**
  * The files of the build Steam installed into {library}/steamapps/common/{installdir}, read from the depot manifests
- * Steam keeps in its depotcache, older versions kept them in each library. No network or login needed
+ * Steam keeps in its depotcache, older versions kept them in each library. No network or login needed.
+ * The library is found from the game's folder, or from the libraries the Steam installs list when the folder is
+ * elsewhere, like a junction. The Steam paths are from getSteamPaths, of the depotcache Steam keeps for all its
+ * libraries
  */
 export const readSteamBuildAsync = async (
   gamePath: string,
+  steamPaths: readonly string[],
 ): Promise<IStoreBuild> => {
-  const installPath = path.resolve(gamePath);
-  const commonPath = path.dirname(installPath);
-  const steamAppsPath = path.dirname(commonPath);
-  if (
-    path.basename(commonPath).toLowerCase() !== COMMON_FOLDER ||
-    path.basename(steamAppsPath).toLowerCase() !== STEAMAPPS_FOLDER
-  ) {
+  const installPath = await resolveFolderAsync(gamePath);
+  const steamAppsFolders = await findSteamAppsFoldersAsync(
+    installPath,
+    steamPaths,
+  );
+  if (steamAppsFolders.length === 0) {
     throw new Error(`The game isn't in a Steam library: '${installPath}'`);
   }
 
-  const appManifest = await findAppManifestAsync(
-    steamAppsPath,
-    path.basename(installPath),
-  );
-  if (appManifest === undefined) {
+  let steamAppsPath: string | undefined;
+  let appManifest: ISteamAppManifest | undefined;
+  for (const folder of steamAppsFolders) {
+    appManifest = await findAppManifestAsync(folder, installPath);
+    if (appManifest !== undefined) {
+      steamAppsPath = folder;
+      break;
+    }
+  }
+  if (steamAppsPath === undefined || appManifest === undefined) {
     throw new Error(
-      `Steam's app manifest of the game wasn't found in '${steamAppsPath}'`,
+      `Steam's app manifest of the game wasn't found in ${steamAppsFolders
+        .map((folder) => `'${folder}'`)
+        .join(", ")}`,
     );
   }
 
   const depotCachePaths = [
     path.join(steamAppsPath, DEPOT_CACHE_FOLDER),
     path.join(path.dirname(steamAppsPath), DEPOT_CACHE_FOLDER),
-    ...getSteamPaths().flatMap((steamPath) => [
+    ...steamPaths.flatMap((steamPath) => [
       path.join(steamPath, DEPOT_CACHE_FOLDER),
       path.join(steamPath, STEAMAPPS_FOLDER, DEPOT_CACHE_FOLDER),
     ]),

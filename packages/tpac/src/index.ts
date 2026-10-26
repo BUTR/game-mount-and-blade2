@@ -161,7 +161,8 @@ export const readTpacItemsAsync = async (
 ): Promise<ITpacItem[]> => {
   const file = await fs.open(filePath, "r");
   try {
-    const intro = Buffer.alloc(40);
+    // Magic, version, GUID, item count, item headers size, reserved
+    const intro = Buffer.alloc(36);
     await readExactAsync(file, intro, 0);
     const introReader = new Reader(intro);
     if (introReader.u32() !== TPAC_MAGIC) {

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import { promisify } from "util";
 import { inflateRaw } from "zlib";
+import { runInWorkerAsync } from "@bannerlord/worker/client";
 
 /**
  * Reads campaign details the save's metadata doesn't have from the save itself, like the player clan's name.
@@ -813,3 +814,17 @@ export const readSaveDetailsAsync = async (
     : readGameData(body);
   return readDetails(new SaveReader(data));
 };
+
+/**
+ * The file name of the worker next to the bundle, see rolldown.config.mjs
+ */
+export const SAVE_DETAILS_WORKER_FILE = "saveDetailsWorker.js";
+
+/**
+ * readSaveDetailsAsync in a Web Worker next to the bundle: decoding a save's data is tens of MB of work the renderer
+ * would do while it renders
+ */
+export const readSaveDetailsInWorkerAsync = (
+  filePath: string,
+): Promise<ISaveDetails> =>
+  runInWorkerAsync(SAVE_DETAILS_WORKER_FILE, filePath, readSaveDetailsAsync);

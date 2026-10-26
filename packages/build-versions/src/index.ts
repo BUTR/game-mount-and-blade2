@@ -6,8 +6,8 @@ import path from "path";
  */
 const BUILDS_URL =
   "https://raw.githubusercontent.com/BUTR/Bannerlord.ReferenceAssemblies/master/builds/links.json";
-// The registry gains a build with each game update, read again after this long
-const REFRESH_MS = 30 * 60 * 1000;
+// A build the registry doesn't list yet would download it on every lookup, not more often than this
+const MISS_REFRESH_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 10 * 1000;
 
 interface IBuildLink {
@@ -33,7 +33,7 @@ export type BuildStore = "steam" | "gog";
 
 export interface IBuildVersionOptions {
   /**
-   * Where the registry as last read is kept, for when it can't be downloaded
+   * Where the registry as last downloaded is kept. It's read first, GitHub only refreshes it
    */
   cachePath: string;
 }
@@ -49,6 +49,9 @@ const readCacheAsync = async (
   }
 };
 
+/**
+ * The registry from GitHub, kept in the cache file. Undefined when it can't be downloaded
+ */
 const downloadAsync = async (
   cachePath: string,
 ): Promise<IBuildLinks | undefined> => {
@@ -57,29 +60,50 @@ const downloadAsync = async (
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {
-      return await readCacheAsync(cachePath);
+      return undefined;
     }
     const links: unknown = await response.json();
     if (!isBuildLinks(links)) {
-      return await readCacheAsync(cachePath);
+      return undefined;
     }
     await fs.mkdir(path.dirname(cachePath), { recursive: true });
     await fs.writeFile(cachePath, JSON.stringify(links), "utf8");
     return links;
   } catch {
     // Offline
-    return await readCacheAsync(cachePath);
+    return undefined;
   }
 };
 
-let links: { readAt: number; value: Promise<IBuildLinks | undefined> } | null =
-  null;
+// The registry as last read, from the cache file or GitHub
+let links: IBuildLinks | undefined;
+// When GitHub was last asked, this session
+let downloadedAt = 0;
+let download: Promise<IBuildLinks | undefined> | null = null;
 
-const getLinksAsync = (cachePath: string): Promise<IBuildLinks | undefined> => {
-  if (links === null || Date.now() - links.readAt > REFRESH_MS) {
-    links = { readAt: Date.now(), value: downloadAsync(cachePath) };
-  }
-  return links.value;
+const getCachedLinksAsync = async (
+  cachePath: string,
+): Promise<IBuildLinks | undefined> => {
+  links ??= await readCacheAsync(cachePath);
+  return links;
+};
+
+/**
+ * Downloads the registry once at a time, keeping it when it was downloaded
+ */
+const refreshLinksAsync = (
+  cachePath: string,
+): Promise<IBuildLinks | undefined> => {
+  download ??= downloadAsync(cachePath)
+    .then((downloaded) => {
+      links = downloaded ?? links;
+      return downloaded;
+    })
+    .finally(() => {
+      downloadedAt = Date.now();
+      download = null;
+    });
+  return download;
 };
 
 /**
@@ -96,12 +120,18 @@ export const getBuildVersionAsync = async (
   buildId: string,
   options: IBuildVersionOptions,
 ): Promise<string | undefined> => {
-  const build = (await getLinksAsync(options.cachePath))?.builds.find(
-    (candidate) =>
+  const find = (registry: IBuildLinks | undefined): IBuildLink | undefined =>
+    registry?.builds.find((candidate) =>
       store === "steam"
         ? candidate.steam?.some((id) => `${id}` === buildId) === true
         : candidate.gog?.includes(buildId) === true,
-  );
+    );
+
+  // A build's version doesn't change, the registry is downloaded only for a build newer than the cache file
+  let build = find(await getCachedLinksAsync(options.cachePath));
+  if (build === undefined && Date.now() - downloadedAt > MISS_REFRESH_MS) {
+    build = find(await refreshLinksAsync(options.cachePath));
+  }
   return build !== undefined
     ? formatVersion(build.version, build.changeSet)
     : undefined;

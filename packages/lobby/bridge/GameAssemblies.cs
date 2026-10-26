@@ -9,15 +9,19 @@ namespace Bannerlord.LobbyBridge;
 /// </summary>
 internal sealed class GameAssemblies
 {
+    private const string MarkerAssembly = "TaleWorlds.Library.dll";
+
     public string GamePath { get; }
     public string BinPath { get; }
 
-    public GameAssemblies(string gamePath)
+    /// <param name="gamePath">The game's folder</param>
+    /// <param name="binPath">The folder of the game's executables, the store's bin folder, relative to the game's folder or absolute. The caller knows the store, the bridge doesn't guess</param>
+    public GameAssemblies(string gamePath, string binPath)
     {
         GamePath = Path.GetFullPath(gamePath);
-        BinPath = Path.Combine(GamePath, "bin", "Win64_Shipping_Client");
-        if (!File.Exists(Path.Combine(BinPath, "TaleWorlds.Library.dll")))
-            throw new BridgeException($"'{GamePath}' is not a Bannerlord installation, '{BinPath}' has no TaleWorlds.Library.dll");
+        BinPath = Path.GetFullPath(Path.Combine(GamePath, binPath));
+        if (!File.Exists(Path.Combine(BinPath, MarkerAssembly)))
+            throw new BridgeException($"'{GamePath}' is not a Bannerlord installation, '{BinPath}' has no {MarkerAssembly}");
 
         AssemblyLoadContext.Default.Resolving += (_, name) =>
         {

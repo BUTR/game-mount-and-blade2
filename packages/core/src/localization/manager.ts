@@ -1,7 +1,7 @@
 import { types, util } from "@nexusmods/vortex-api";
 import { Utils } from "@butr/vortexextensionnative";
 import localizationFiles from "virtual:localization";
-import { TranslateValues } from "./types";
+import { Localize, TranslateValues } from "./types";
 import { languageMap } from "./utils";
 import { I18N_NAMESPACE } from "../common";
 
@@ -23,7 +23,7 @@ export class LocalizationManager {
     this.api = api;
   }
 
-  public localize = (
+  public localize: Localize = (
     template: string,
     values: TranslateValues = {},
   ): string => {

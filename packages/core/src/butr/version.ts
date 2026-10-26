@@ -10,7 +10,7 @@ const versionTypeToChar: Record<vetypes.ApplicationVersionType, string> = {
 };
 
 const toChar = (avt: vetypes.ApplicationVersionType): string => {
-  return versionTypeToChar[avt] || avt.toString();
+  return versionTypeToChar[avt] ?? avt.toString();
 };
 
 export const versionToString = (av: vetypes.ApplicationVersion): string =>

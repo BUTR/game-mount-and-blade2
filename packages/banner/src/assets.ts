@@ -51,6 +51,14 @@ export interface IBannerBackgroundMesh {
   height: number;
 }
 
+/**
+ * Where a texture is stored: the texture package and the texture's id in it
+ */
+export interface IBannerTextureSource {
+  filePath: string;
+  guid: string;
+}
+
 export interface IBannerAssets extends IBannerTables {
   /**
    * Resolves the texture used by a given material, or null if the material does not exist.
@@ -58,6 +66,12 @@ export interface IBannerAssets extends IBannerTables {
   getMaterialTextureAsync: (
     materialName: string,
   ) => Promise<ITpacTexture | null>;
+  /**
+   * Where the texture of a material is stored, without reading it. Null if the material does not exist.
+   */
+  getMaterialTextureSource: (
+    materialName: string,
+  ) => IBannerTextureSource | null;
   /**
    * Resolves the background mesh by name, or null if not found.
    */
@@ -83,6 +97,7 @@ interface IGameBannerData {
    */
   defaultOrder: string[];
   getMaterialTextureAsync: IBannerAssets["getMaterialTextureAsync"];
+  getMaterialTextureSource: IBannerAssets["getMaterialTextureSource"];
   getBackgroundMeshAsync: IBannerAssets["getBackgroundMeshAsync"];
 }
 
@@ -278,20 +293,31 @@ const readGameBannerDataAsync = async (
       .map((item) => [item.name, item]),
   );
 
+  const getMaterialTexture = (materialName: string): ITpacItem | undefined => {
+    const material = materials.get(materialName);
+    const textureGuid =
+      material !== undefined
+        ? readTpacMaterialTextures(material).get(DIFFUSE_SLOT)
+        : undefined;
+    return textureGuid !== undefined
+      ? texturesByGuid.get(textureGuid)
+      : undefined;
+  };
+
   return {
     documentsByModule,
     idsByName,
     defaultOrder: [...documentsByModule.keys()],
     getMaterialTextureAsync: memoize(async (materialName) => {
-      const material = materials.get(materialName);
-      const textureGuid =
-        material !== undefined
-          ? readTpacMaterialTextures(material).get(DIFFUSE_SLOT)
-          : undefined;
-      const texture =
-        textureGuid !== undefined ? texturesByGuid.get(textureGuid) : undefined;
+      const texture = getMaterialTexture(materialName);
       return texture !== undefined ? readTpacTextureAsync(texture) : null;
     }),
+    getMaterialTextureSource: (materialName) => {
+      const texture = getMaterialTexture(materialName);
+      return texture !== undefined
+        ? { filePath: texture.filePath, guid: texture.guid }
+        : null;
+    },
     getBackgroundMeshAsync: memoize(async (meshName) => {
       const metamesh = metameshes.get(meshName);
       return metamesh !== undefined ? readBackgroundMeshAsync(metamesh) : null;
@@ -300,6 +326,13 @@ const readGameBannerDataAsync = async (
 };
 
 const gameDataByPath = new Map<string, Promise<IGameBannerData>>();
+
+/**
+ * Forgets the game banner data read so far, the game's files may have changed
+ */
+export const clearBannerAssets = (): void => {
+  gameDataByPath.clear();
+};
 const assetsByOrder = new WeakMap<
   IGameBannerData,
   Map<string, IBannerAssets>
@@ -347,6 +380,7 @@ export const getBannerAssetsAsync = async (
     assets = {
       ...buildBannerTables(mergeBannerIcons(documents)),
       getMaterialTextureAsync: data.getMaterialTextureAsync,
+      getMaterialTextureSource: data.getMaterialTextureSource,
       getBackgroundMeshAsync: data.getBackgroundMeshAsync,
     };
     byOrder.set(key, assets);

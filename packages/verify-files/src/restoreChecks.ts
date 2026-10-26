@@ -96,7 +96,9 @@ export const findModuleConflictsAsync = async (
     conflicts.push({
       folder,
       deployedByVortex: report.files.some(
-        (file) => file.folder === folder && file.source === "vortex",
+        (file) =>
+          file.folder.toLowerCase() === folder.toLowerCase() &&
+          file.source === "vortex",
       ),
     });
   }

@@ -23,7 +23,10 @@ export const parseHashDbAsync = async (data: Buffer): Promise<string[]> => {
   const table = await readFirstZipEntryAsync(data);
   const headerSize = table.readUInt32LE(0);
   const count = table.readUInt32LE(8);
-  const recordSize = count > 0 ? (table.length - headerSize) / count : 0;
+  if (count === 0) {
+    return [];
+  }
+  const recordSize = (table.length - headerSize) / count;
   if (!Number.isInteger(recordSize) || recordSize <= MD5_LENGTH) {
     throw new Error("The GOG hash list has an unknown layout");
   }
@@ -59,14 +62,30 @@ const readGameInfosAsync = async (
   return infos;
 };
 
-const getGalaxyDatabasePath = (): string =>
-  path.join(
-    process.env["PROGRAMDATA"] ?? "C:\\ProgramData",
+/**
+ * Galaxy's database, in the storage folder its config names. The registry only has the client's folder, Galaxy
+ * keeps its config at this fixed place, its own default storage next to it
+ */
+const getGalaxyDatabasePathAsync = async (): Promise<string> => {
+  const galaxyPath = path.join(
+    process.env["PROGRAMDATA"] ??
+      `${process.env["SystemDrive"] ?? "C:"}\\ProgramData`,
     "GOG.com",
     "Galaxy",
-    "storage",
-    "galaxy-2.0.db",
   );
+  let storagePath = path.join(galaxyPath, "storage");
+  try {
+    const config = JSON.parse(
+      await fs.readFile(path.join(galaxyPath, "config.json"), "utf8"),
+    ) as { storagePath?: unknown };
+    if (typeof config.storagePath === "string" && config.storagePath !== "") {
+      storagePath = config.storagePath;
+    }
+  } catch {
+    // No config, the default storage
+  }
+  return path.join(storagePath, "galaxy-2.0.db");
+};
 
 /**
  * The sizes of the products' files, by their lowercased path. Galaxy keeps them for the games it installed, the
@@ -75,12 +94,12 @@ const getGalaxyDatabasePath = (): string =>
 const readGalaxySizesAsync = async (
   productIds: readonly string[],
 ): Promise<Map<string, number> | undefined> => {
-  const databasePath = getGalaxyDatabasePath();
+  const databasePath = await getGalaxyDatabasePathAsync();
   if (!(await getPathExistsAsync(databasePath))) {
     return undefined;
   }
   try {
-    // Loaded only for GOG, Node warns that it's experimental
+    // Loaded only for GOG, Node warns that it's experimental. Synchronous, the verify worker runs it off the renderer
     const { DatabaseSync } = await import("node:sqlite");
     const database = new DatabaseSync(databasePath, { readOnly: true });
     try {

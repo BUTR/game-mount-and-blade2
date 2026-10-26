@@ -1,16 +1,15 @@
-import { IBannerAssets, IBannerBackgroundMesh } from "./assets";
-import { RGB } from "./bannerIcons";
-import { decodeBc7Rect } from "./bc7";
+import {
+  IBannerAssets,
+  IBannerBackgroundMesh,
+  IBannerTextureSource,
+} from "./assets";
+import { IBannerIcon, RGB } from "./bannerIcons";
 import { BANNER_SIZE, IBannerLayer, parseBannerCode } from "./code";
-import { encodePng } from "./png";
-import { ITpacTexture } from "@bannerlord/tpac";
+import { getCachedIconMomentsAsync } from "./iconCache";
+import { colorIcon, computeIconMoments, IconMoments } from "./iconMoments";
 
 // Fallback RGB for undefined color IDs, matching BannerManager.GetColor (0xDEADBEEF)
 const MISSING_COLOR: RGB = [0xad, 0xbe, 0xef];
-// Number of rows/columns in icon texture atlases (BannerVisual.ConvertToMultiMesh uses 4x4 atlases)
-const ATLAS_CELLS = 4;
-// Downsampled resolution for rendered icon sprites (original atlas cells are 512x512)
-const ICON_RESOLUTION = 128;
 
 export type BannerShape =
   | {
@@ -34,19 +33,6 @@ export type BannerShape =
        */
       href: string;
     };
-
-const toLinear = (value: number): number =>
-  value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-
-const toSrgb = (value: number): number =>
-  value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055;
-
-// Precomputed sRGB-to-linear conversion table (matching shader INPUT_TEX_GAMMA)
-const LINEAR_BYTES = Float32Array.from({ length: 256 }, (_, byte) =>
-  toLinear(byte / 255),
-);
-
-const clamp01 = (value: number): number => Math.min(Math.max(value, 0), 1);
 
 const toHex = (color: RGB): string =>
   `#${color.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`;
@@ -89,121 +75,80 @@ const backgroundPaths = (
     .map((group) => ({ d: group.d.join(""), color: group.color }));
 };
 
-/**
- * Downsampled linear color moment statistics for an icon atlas cell.
- * Precomputing moments of texel channels (alpha, red, green) allows fast tinting and stroke
- * composition across arbitrary color combinations without re-decoding BC7 texture blocks.
- */
-interface IIconMoments {
-  ar: Float32Array;
-  ag: Float32Array;
-  arr: Float32Array;
-  arg: Float32Array;
-  agg: Float32Array;
-}
+// The moments last drawn with, by texture and cell: a few icons make most banners. About 160 KB each
+const MOMENTS_IN_MEMORY = 64;
+const recentMoments = new Map<string, IconMoments>();
 
-const readIconMoments = (
-  atlas: ITpacTexture,
-  textureIndex: number,
-): IIconMoments => {
-  const cellSize = atlas.width / ATLAS_CELLS;
-  const rgba = decodeBc7Rect(
-    atlas.pixels,
-    atlas.width,
-    (textureIndex % ATLAS_CELLS) * cellSize,
-    Math.floor(textureIndex / ATLAS_CELLS) * cellSize,
-    cellSize,
-    cellSize,
-  );
-  const pixels = ICON_RESOLUTION * ICON_RESOLUTION;
-  const moments: IIconMoments = {
-    ar: new Float32Array(pixels),
-    ag: new Float32Array(pixels),
-    arr: new Float32Array(pixels),
-    arg: new Float32Array(pixels),
-    agg: new Float32Array(pixels),
+/**
+ * Forgets the icons drawn so far, the game's files may have changed
+ */
+export const clearRecentIcons = (): void => {
+  recentMoments.clear();
+};
+
+const rememberMoments = (key: string, moments: IconMoments): void => {
+  recentMoments.delete(key);
+  recentMoments.set(key, moments);
+  if (recentMoments.size > MOMENTS_IN_MEMORY) {
+    recentMoments.delete(recentMoments.keys().next().value!);
+  }
+};
+
+/**
+ * The moments of an icon: from memory, the disk cache in `cacheDir`, or decoded from its texture as the last resort
+ */
+const getIconMomentsAsync = async (
+  assets: IBannerAssets,
+  icon: IBannerIcon,
+  cacheDir: string | undefined,
+): Promise<IconMoments | null> => {
+  const source = assets.getMaterialTextureSource(icon.materialName);
+  if (source === null) {
+    return null;
+  }
+  const key = `${source.filePath}|${source.guid}|${icon.textureIndex}`;
+  const remembered = recentMoments.get(key);
+  if (remembered !== undefined) {
+    rememberMoments(key, remembered);
+    return remembered;
+  }
+  // Banners drawn together share icons, one lookup each
+  let loading = loadingMoments.get(key);
+  if (loading === undefined) {
+    loading = loadIconMomentsAsync(assets, icon, source, cacheDir).finally(() =>
+      loadingMoments.delete(key),
+    );
+    loadingMoments.set(key, loading);
+  }
+  const moments = await loading;
+  if (moments !== null) {
+    rememberMoments(key, moments);
+  }
+  return moments;
+};
+
+const loadingMoments = new Map<string, Promise<IconMoments | null>>();
+
+const loadIconMomentsAsync = async (
+  assets: IBannerAssets,
+  icon: IBannerIcon,
+  source: IBannerTextureSource,
+  cacheDir: string | undefined,
+): Promise<IconMoments | null> => {
+  const computeAsync = async (): Promise<IconMoments | null> => {
+    const atlas = await assets.getMaterialTextureAsync(icon.materialName);
+    return atlas !== null && atlas.format === "BC7"
+      ? computeIconMoments(atlas, icon.textureIndex)
+      : null;
   };
-  const scale = cellSize / ICON_RESOLUTION;
-  const weight = 1 / (scale * scale);
-  for (let y = 0; y < cellSize; y++) {
-    const row = Math.floor(y / scale) * ICON_RESOLUTION;
-    for (let x = 0; x < cellSize; x++) {
-      const source = (y * cellSize + x) * 4;
-      const r = LINEAR_BYTES[rgba[source]!]!;
-      const g = LINEAR_BYTES[rgba[source + 1]!]!;
-      const a = (rgba[source + 3]! / 255) * weight;
-      const target = row + Math.floor(x / scale);
-      moments.ar[target] = moments.ar[target]! + a * r;
-      moments.ag[target] = moments.ag[target]! + a * g;
-      moments.arr[target] = moments.arr[target]! + a * r * r;
-      moments.arg[target] = moments.arg[target]! + a * r * g;
-      moments.agg[target] = moments.agg[target]! + a * g * g;
-    }
-  }
-  return moments;
-};
-
-/**
- * Tints an icon cell matching the `gui_color_and_stroke` shader.
- * Atlas green channel represents the primary fill; atlas red channel represents outlines and internal accents.
- * Computes premultiplied alpha in linear space and encodes the result to a PNG data URL.
- */
-const colorIcon = (
-  moments: IIconMoments,
-  color: RGB,
-  strokeColor: RGB,
-  drawStroke: boolean,
-): string => {
-  const fill = color.map((channel) => toLinear(channel / 255));
-  const outline = strokeColor.map((channel) => toLinear(channel / 255));
-  const stroke = drawStroke ? 1 : 0;
-
-  const output = new Uint8Array(ICON_RESOLUTION * ICON_RESOLUTION * 4);
-  for (let pixel = 0; pixel < ICON_RESOLUTION * ICON_RESOLUTION; pixel++) {
-    const ar = moments.ar[pixel]!;
-    const ag = moments.ag[pixel]!;
-    const arg = moments.arg[pixel]!;
-    const alpha = stroke * ar + ag;
-    // The averages of alpha·r and alpha·g
-    const alphaR = stroke * moments.arr[pixel]! + arg;
-    const alphaG = stroke * arg + moments.agg[pixel]!;
-    const target = pixel * 4;
-    for (let channel = 0; channel < 3; channel++) {
-      output[target + channel] =
-        alpha > 0
-          ? Math.round(
-              toSrgb(
-                clamp01(
-                  (outline[channel]! * alphaR + fill[channel]! * alphaG) /
-                    alpha,
-                ),
-              ) * 255,
-            )
-          : 0;
-    }
-    output[target + 3] = Math.round(clamp01(alpha) * 255);
-  }
-  const png = encodePng(output, ICON_RESOLUTION, ICON_RESOLUTION);
-  return `data:image/png;base64,${png.toString("base64")}`;
-};
-
-const momentsCache = new WeakMap<ITpacTexture, Map<number, IIconMoments>>();
-
-const getIconMoments = (
-  atlas: ITpacTexture,
-  textureIndex: number,
-): IIconMoments => {
-  let cells = momentsCache.get(atlas);
-  if (cells === undefined) {
-    cells = new Map();
-    momentsCache.set(atlas, cells);
-  }
-  let moments = cells.get(textureIndex);
-  if (moments === undefined) {
-    moments = readIconMoments(atlas, textureIndex);
-    cells.set(textureIndex, moments);
-  }
-  return moments;
+  return cacheDir !== undefined
+    ? getCachedIconMomentsAsync(
+        cacheDir,
+        source,
+        icon.textureIndex,
+        computeAsync,
+      )
+    : computeAsync();
 };
 
 const THIRD = BANNER_SIZE / 3;
@@ -249,6 +194,14 @@ export const getBannerPrimaryColor = (
 // Cache rendered icon data URLs by material/texture/colors since many banners share common icons
 const iconCache = new WeakMap<IBannerAssets, Map<string, string>>();
 
+export interface IRenderBannerOptions {
+  /**
+   * Where the icons' moments are kept between sessions, see getCachedIconMomentsAsync. Without it every icon is
+   * decoded from its texture
+   */
+  cacheDir?: string;
+}
+
 /**
  * Renders banner code layers following `BannerVisual.ConvertToMultiMesh`:
  * layer 0 renders as a background mesh; subsequent layers render as atlas icon sprites.
@@ -259,6 +212,7 @@ const iconCache = new WeakMap<IBannerAssets, Map<string, string>>();
 export const renderBannerAsync = async (
   assets: IBannerAssets,
   code: string,
+  options: IRenderBannerOptions = {},
 ): Promise<BannerShape[] | null> => {
   const layers = parseBannerCode(code);
   if (layers === null) {
@@ -306,16 +260,11 @@ export const renderBannerAsync = async (
     ].join(":");
     let href = cache.get(key);
     if (href === undefined) {
-      const atlas = await assets.getMaterialTextureAsync(icon.materialName);
-      if (atlas === null || atlas.format !== "BC7") {
+      const moments = await getIconMomentsAsync(assets, icon, options.cacheDir);
+      if (moments === null) {
         continue;
       }
-      href = colorIcon(
-        getIconMoments(atlas, icon.textureIndex),
-        color,
-        color2,
-        layer.drawStroke,
-      );
+      href = colorIcon(moments, color, color2, layer.drawStroke);
       cache.set(key, href);
     }
     shapes.push({ kind: "icon", layer, href });

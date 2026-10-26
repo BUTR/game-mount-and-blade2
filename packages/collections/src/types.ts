@@ -52,7 +52,7 @@ export interface ICollectionDataWithGeneralData
   extends ICollectionData, ICollectionGeneralData {}
 
 export interface ICollectionLegacyData {
-  loadOrder: types.ILoadOrderEntry<never>[];
+  loadOrder: Record<string, types.ILoadOrderEntry<never>>;
 }
 export interface ICollectionDataWithLegacyData
   extends ICollectionData, ICollectionLegacyData {}

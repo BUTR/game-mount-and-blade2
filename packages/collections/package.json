@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@bannerlord/core": "workspace:*",
+    "@bannerlord/game-layout": "workspace:*",
     "@bannerlord/ui": "workspace:*"
   }
 }

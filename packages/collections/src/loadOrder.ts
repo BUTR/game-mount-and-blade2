@@ -43,9 +43,8 @@ export const genCollectionGeneralLoadOrder = (
         return entry.data ? entry.enabled : false;
       }
 
-      const mod = mods.find(
-        (x) => x.attributes?.modId === parseInt(entry.modId ?? "0"),
-      );
+      // The entry's modId is the Vortex mod id (see getModuleAttributes), not the Nexus mod id
+      const mod = mods.find((x) => x.id === entry.modId);
       if (!mod) {
         return false;
       }

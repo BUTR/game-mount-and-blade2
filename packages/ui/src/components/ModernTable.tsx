@@ -12,6 +12,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Icon } from "@nexusmods/vortex-api";
 
 // mdiArrowDown, mdiArrowUp, mdiChevronDown, mdiChevronRight and mdiDotsHorizontal from Material Design Icons
 // (@mdi/js, Apache 2.0), the icons the Modern UI table uses; Vortex's own icon set has other ones
@@ -668,5 +669,57 @@ export const RowMenu: FC<{ label: string; items: RowMenuItem[] }> = ({
         </div>
       )}
     </div>
+  );
+};
+
+export type RowAction = {
+  label: string;
+  onSelect: () => void;
+  /**
+   * A Vortex icon, the button shows it alone with the label as its tooltip. Without one the button shows the label
+   */
+  icon?: string;
+  disabled?: boolean;
+  /**
+   * Over the label, like why the action is disabled
+   */
+  title?: string;
+  className?: string;
+};
+
+/**
+ * A row's actions cell, as the Modern UI Mods table has it: the main action as a button shown on hover, the rest in
+ * the row menu. Clicking the button doesn't select the row
+ */
+export const RowActions: FC<{
+  primary: RowAction;
+  menuLabel: string;
+  items: RowMenuItem[];
+}> = ({ primary, menuLabel, items }) => {
+  const iconOnly = primary.icon !== undefined;
+  return (
+    <>
+      <button
+        type="button"
+        className={[
+          iconOnly
+            ? "bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
+            : "bls-btn bls-btn-moderate bls-row-hover-only",
+          primary.className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label={iconOnly ? primary.label : undefined}
+        title={primary.title ?? (iconOnly ? primary.label : undefined)}
+        disabled={primary.disabled}
+        onClick={(event) => {
+          event.stopPropagation();
+          primary.onSelect();
+        }}
+      >
+        {iconOnly ? <Icon name={primary.icon!} /> : primary.label}
+      </button>
+      <RowMenu label={menuLabel} items={items} />
+    </>
   );
 };

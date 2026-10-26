@@ -367,6 +367,16 @@ export const decodeBc7Rect = (
   const lastBlockX = Math.floor((x + width - 1) / BLOCK_SIZE);
   const firstBlockY = Math.floor(y / BLOCK_SIZE);
   const lastBlockY = Math.floor((y + height - 1) / BLOCK_SIZE);
+  // decodeBlock reads past the end as undefined, and its mode search never ends on that
+  const needed =
+    width > 0 && height > 0
+      ? (lastBlockY * blocksPerRow + lastBlockX + 1) * BLOCK_BYTES
+      : 0;
+  if (needed > data.length) {
+    throw new RangeError(
+      `The BC7 texture is truncated, ${data.length} bytes hold less than the ${needed} the rectangle covers`,
+    );
+  }
   for (let blockY = firstBlockY; blockY <= lastBlockY; blockY++) {
     for (let blockX = firstBlockX; blockX <= lastBlockX; blockX++) {
       decodeBlock(data, (blockY * blocksPerRow + blockX) * BLOCK_BYTES, block);

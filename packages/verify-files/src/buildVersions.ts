@@ -16,13 +16,16 @@ export const getBuildVersionAsync = (
   store: VerifyStore,
   buildId: string,
 ): Promise<string | undefined> =>
-  getRegistryVersionAsync(store, buildId, {
-    cachePath: path.join(
-      util.getVortexPath("userData"),
-      GAME_ID,
-      "build-versions.json",
-    ),
-  });
+  // The registry has Steam's and GOG's builds. Epic's manifest has the version itself, Xbox's comes from the files
+  store === "steam" || store === "gog"
+    ? getRegistryVersionAsync(store, buildId, {
+        cachePath: path.join(
+          util.getVortexPath("userData"),
+          GAME_ID,
+          "build-versions.json",
+        ),
+      })
+    : Promise.resolve(undefined);
 
 /**
  * The version of the game installed in the folder, from its files, for a build the registry doesn't know yet

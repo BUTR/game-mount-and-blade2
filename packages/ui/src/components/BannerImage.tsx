@@ -4,12 +4,14 @@ import { log, selectors, types } from "@nexusmods/vortex-api";
 import {
   BANNER_VIEW_BOX,
   BannerShape,
-  getBannerPrimaryColor,
   getShapeTransform,
-  renderBannerAsync,
 } from "@bannerlord/banner/render";
-import { getBannerAssetsAsync } from "@bannerlord/banner/assets";
+import {
+  getBannerPrimaryColorInWorkerAsync,
+  renderBannerInWorkerAsync,
+} from "@bannerlord/banner/worker";
 import { GAME_ID } from "@bannerlord/core/common";
+import { getBannerCacheDir } from "../bannerCaches";
 
 export type BannerImageProps = {
   /**
@@ -58,14 +60,22 @@ export const BannerImage: FC<BannerImageProps> = ({
       return;
     }
     let cancelled = false;
-    getBannerAssetsAsync(gamePath, moduleKey?.split(MODULE_SEPARATOR))
-      .then((assets) => renderBannerAsync(assets, code))
+    renderBannerInWorkerAsync(
+      gamePath,
+      moduleKey?.split(MODULE_SEPARATOR),
+      code,
+      getBannerCacheDir(),
+    )
       .then((shapes) => {
         if (!cancelled) {
           setRendered({ key: `${moduleKey ?? ""}|${code}`, shapes });
         }
       })
       .catch((err: unknown) => {
+        // A banner of the files before a store switch, its drawing was stopped
+        if (cancelled) {
+          return;
+        }
         log("warn", "Failed to draw a banner from the game's files", {
           error: err instanceof Error ? err.message : String(err),
         });
@@ -158,17 +168,22 @@ export const useBannerColors = (
     void Promise.all(
       entries.map(async ([key, code, modules]) => {
         try {
-          const assets = await getBannerAssetsAsync(
+          const color = await getBannerPrimaryColorInWorkerAsync(
             gamePath,
             // No modules means the default order, as BannerImage has it
             modules !== "" ? modules.split(MODULE_SEPARATOR) : undefined,
+            code,
           );
-          const color = getBannerPrimaryColor(assets, code);
           return color !== null ? [[key, color] as const] : [];
         } catch (err: unknown) {
-          log("warn", "Failed to read a banner's color from the game's files", {
-            error: err instanceof Error ? err.message : String(err),
-          });
+          // A banner of the files before a store switch, its reading was stopped
+          if (!cancelled) {
+            log(
+              "warn",
+              "Failed to read a banner's color from the game's files",
+              { error: err instanceof Error ? err.message : String(err) },
+            );
+          }
           return [];
         }
       }),

@@ -21,9 +21,13 @@ export interface IStoreBuild {
    * The store's id of the game, for opening it in the store
    */
   productId: string;
+  /**
+   * The game's version as the store tells it, like v1.4.8.119303. Only Epic's does, the others are looked up by build
+   */
+  version?: string;
   files: IExpectedFile[];
   /**
-   * The parts of the build whose file list is gone, Steam's depots or GOG's products. The folder isn't compared
+   * The parts of the build whose file list is gone, Steam's depots or GOG's products, Epic has one list. The folder isn't compared
    * without them
    */
   missingLists: string[];

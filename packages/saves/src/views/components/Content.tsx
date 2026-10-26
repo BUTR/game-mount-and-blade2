@@ -1,9 +1,9 @@
 import React, { FC, ReactNode, useMemo } from "react";
-import { Icon } from "@nexusmods/vortex-api";
 import { LaunchBar } from "./LaunchBar";
 import { SaveLoadOrderActions, Sidebar } from "./Sidebar";
 import { ISaveGame } from "../types";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 import {
   ModernTable,
   ModernTableColumn,
@@ -78,17 +78,13 @@ export const Content: FC<ContentProps> = (props) => {
 
   if (loaded && !hasSaves) {
     return (
-      <div className="bls-empty bls-small">
-        <span className="bls-empty-icon">
-          <Icon name="savegame" />
-        </span>
-        <h2>{t("No saves yet")}</h2>
-        <p>
-          {t(
-            "Saves from your campaigns show up here once you have saved in the game.",
-          )}
-        </p>
-      </div>
+      <EmptyState
+        icon="savegame"
+        title={t("No saves yet")}
+        description={t(
+          "Saves from your campaigns show up here once you have saved in the game.",
+        )}
+      />
     );
   }
 

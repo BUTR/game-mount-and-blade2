@@ -8,8 +8,8 @@ import { useLocalization } from "@bannerlord/core/localization/hooks";
 import { versionToString } from "@bannerlord/core/butr/version";
 import { useSaveDetails } from "../../details";
 import { ISaveDetails, Season } from "@bannerlord/save-file";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
+import { Localize } from "@bannerlord/core/localization/types";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 
 export type SidebarProps = {
   save: ISaveGame | null;
@@ -306,17 +306,13 @@ const CampaignSection: FC<{ details: ISaveDetails; t: Localize }> = ({
 };
 
 const EmptySidebar: FC<{ t: Localize }> = ({ t }) => (
-  <div className="bls-empty bls-small">
-    <span className="bls-empty-icon">
-      <Icon name="savegame" />
-    </span>
-    <h2>{t("Select a save")}</h2>
-    <p>
-      {t(
-        "Its campaign, the mods it was made with and any problems show up here.",
-      )}
-    </p>
-  </div>
+  <EmptyState
+    icon="savegame"
+    title={t("Select a save")}
+    description={t(
+      "Its campaign, the mods it was made with and any problems show up here.",
+    )}
+  />
 );
 
 export const Sidebar: FC<SidebarProps> = (props) => {

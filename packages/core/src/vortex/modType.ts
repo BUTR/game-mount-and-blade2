@@ -9,12 +9,15 @@ export const getGameInstallPath = (
   return discovery?.path ?? ``;
 };
 
+const SUBMODULE_FILE_LOWER = SUBMODULE_FILE.toLowerCase();
+
 export const isModTypeModule = (
   instructions: types.IInstruction[],
 ): boolean => {
-  const result = instructions.some(
+  // Archives name it in any case, like the translation installer accepts
+  return instructions.some(
     (instr) =>
-      instr.type === "copy" && instr.destination?.endsWith(SUBMODULE_FILE),
+      instr.type === "copy" &&
+      instr.destination?.toLowerCase().endsWith(SUBMODULE_FILE_LOWER) === true,
   );
-  return result;
 };

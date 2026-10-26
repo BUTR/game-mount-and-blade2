@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Bannerlord.LobbyBridge;
 
-// Usage: Bannerlord.LobbyBridge servers --game <install path> [--platform steam|gog]
+// Usage: Bannerlord.LobbyBridge servers --game <install path> --bin <executables folder> [--platform steam|gog]
 //        Bannerlord.LobbyBridge ping --targets <host:port>[,<host:port>...]
 // Writes one JSON document to stdout. Diagnostics go to stderr.
 
@@ -260,16 +260,23 @@ if (args.Length > 0 && args[0] == "ping")
 
 if (args.Length == 0 || args[0] != "servers")
 {
-    Console.Error.WriteLine("Usage: Bannerlord.LobbyBridge servers --game <install path> [--platform steam|gog]");
+    Console.Error.WriteLine("Usage: Bannerlord.LobbyBridge servers --game <install path> --bin <executables folder> [--platform steam|gog]");
     Console.Error.WriteLine("       Bannerlord.LobbyBridge ping --targets <host:port>[,<host:port>...]");
     return 2;
 }
 
 var gamePath = GetOption(args, "--game");
+// The store's bin folder, relative to the game's folder. The caller knows the store, the bridge doesn't guess
+var binPath = GetOption(args, "--bin");
 var platform = GetOption(args, "--platform") ?? "steam";
 if (gamePath is null)
 {
     Console.Error.WriteLine("--game is required");
+    return 2;
+}
+if (binPath is null)
+{
+    Console.Error.WriteLine("--bin is required");
     return 2;
 }
 
@@ -315,7 +322,7 @@ try
         _ => throw new BridgeException($"Platform '{platform}' is not supported"),
     };
 
-    var game = new GameAssemblies(gamePath);
+    var game = new GameAssemblies(gamePath, binPath);
     session = new LobbySession(game, Log);
     session.Initialize(gamePlatform);
 

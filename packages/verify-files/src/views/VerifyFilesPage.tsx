@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -27,6 +28,7 @@ import {
   deleteFilesAsync,
   getFolder,
   isDeletable,
+  getStoreName,
   getVerifyStore,
   showModInModsPage,
   verifyFilesAsync,
@@ -36,10 +38,10 @@ import {
   IVerifyFilesReport,
   VerifyFileSource,
   VerifyFileStatus,
+  VerifyStore,
 } from "../types";
 import {
   formatGameVersion,
-  formatSize,
   getStatusLabel,
   getFolderActions,
   getVerifyFileActions,
@@ -51,6 +53,8 @@ import { ArchiveFiles } from "./ArchiveFiles";
 import { ArchivesTable } from "./ArchivesTable";
 import { FilesTable } from "./FilesTable";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
+import { formatSize } from "@bannerlord/ui/format";
 import {
   TableToolbar,
   ToolbarViews,
@@ -69,7 +73,7 @@ const VIEW_SOURCES: Record<
   Exclude<VerifyView, "all" | "archives">,
   VerifyFileSource[]
 > = {
-  unexpected: ["unknown"],
+  unexpected: ["unknown", "manualMod"],
   game: ["game", "store"],
   vortex: ["vortex", "vortexInternal"],
 };
@@ -126,7 +130,11 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
     (archive) => archive.archivePath === openArchivePath,
   );
 
+  // A verification started after this one replaces its result, the store or the folder may have changed meanwhile
+  const latestVerification = useRef(0);
   const verifyAsync = useCallback(async (): Promise<void> => {
+    const verification = ++latestVerification.current;
+    const isLatest = (): boolean => verification === latestVerification.current;
     setLoading(true);
     try {
       const [next, nextArchives] = await Promise.all([
@@ -134,43 +142,77 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
         // A broken archives folder doesn't keep the files from being listed
         readArchivesAsync().catch((): IFilesArchive[] => []),
       ]);
-      setReport(next);
-      setArchives(nextArchives);
-      setError(null);
+      if (isLatest()) {
+        setReport(next);
+        setArchives(nextArchives);
+        setError(null);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (isLatest()) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
-      setLoading(false);
+      if (isLatest()) {
+        setLoading(false);
+      }
     }
   }, [api]);
 
-  // Every time the page is opened, deploying or the game can have changed the files since
+  const discoveredStore = useSelector((state: IStateWithBannerlord) =>
+    getVerifyStore(state),
+  );
+
+  // Every time the page is opened, deploying or the game can have changed the files since. And when the game's
+  // store or folder changes, the report is of the build before
   useEffect(() => {
     if (active !== false) {
       void verifyAsync();
     }
-  }, [active, verifyAsync]);
+  }, [active, verifyAsync, discoveredStore, gamePath]);
 
-  const store = useSelector((state: IStateWithBannerlord) =>
-    getVerifyStore(state),
-  );
+  // The report's, its store link is too. The discovered one until there's a report
+  const store = report?.store ?? discoveredStore;
   const storeUrl = report?.storeUrl;
   const openInStore = useCallback((): void => {
     if (storeUrl !== undefined) {
       util.opn(storeUrl).catch(() => null);
     }
   }, [storeUrl]);
-  const storeActionLabel =
-    store === "gog" ? t("Open in GOG Galaxy") : t("Verify in Steam");
-  const storeActionTitle =
-    store === "gog"
-      ? t(
+  const storeAction = (
+    {
+      steam: {
+        label: t("Verify in Steam"),
+        title: t(
+          "Steam restores the missing and changed files of the game. It doesn't remove extra files",
+        ),
+      },
+      gog: {
+        label: t("Open in GOG Galaxy"),
+        title: t(
           "GOG Galaxy's Verify / Repair, in the game's settings, restores the missing and changed files of the game. " +
             "It doesn't remove extra files",
-        )
-      : t(
-          "Steam restores the missing and changed files of the game. It doesn't remove extra files",
-        );
+        ),
+      },
+      epic: {
+        label: t("Verify in Epic"),
+        title: t(
+          "The Epic Games Launcher queues a verification of the game, its notification says the game reported an " +
+            "installation problem. It restores the missing and changed files of the game. It doesn't remove extra " +
+            "files",
+        ),
+      },
+      xbox: {
+        label: t("Open in the Xbox App"),
+        title: t(
+          "The Xbox app's Verify and repair, in the game's Manage under Files, restores the missing and changed " +
+            "files of the game. It doesn't remove extra files",
+        ),
+      },
+    } satisfies Record<VerifyStore, { label: string; title: string }>
+  )[store ?? "steam"];
+  const storeActionLabel = storeAction.label;
+  const storeActionTitle = storeAction.title;
+  const storeName = getStoreName(store ?? "steam");
 
   const files = useMemo(() => report?.files ?? [], [report]);
   const viewCounts = useMemo(
@@ -562,8 +604,8 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
   );
   const getColumns = useCallback(
     (groupedByFolder: boolean) =>
-      getVerifyFileColumns(t, groupedByFolder, showMod),
-    [t, showMod],
+      getVerifyFileColumns(t, groupedByFolder, showMod, storeName),
+    [t, showMod, storeName],
   );
   const rowActions = useMemo(
     () => getVerifyFileActions(t, gamePath ?? "", showMod, removeActions),
@@ -620,7 +662,6 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
     [t, working, loading, removeAsync],
   );
 
-  const storeName = store === "gog" ? "GOG" : "Steam";
   const header = (
     <ModernPageHeader
       pictogram="verify"
@@ -765,19 +806,17 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       toolbarStart={views}
       toolbarActions={removeButtons}
       empty={
-        <div className="bls-empty bls-small">
-          <span className="bls-empty-icon">
-            <Icon name="toggle-enabled" />
-          </span>
-          <h2>{t("Nothing to show here")}</h2>
-          <p>
-            {view === "unexpected"
+        <EmptyState
+          icon="toggle-enabled"
+          title={t("Nothing to show here")}
+          description={
+            view === "unexpected"
               ? t(
                   "Every file in the game folder is part of the game, was deployed by Vortex or was created by the game.",
                 )
-              : t("The game folder has no files of this kind.")}
-          </p>
-        </div>
+              : t("The game folder has no files of this kind.")
+          }
+        />
       }
     />
   );
@@ -786,59 +825,52 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
     if (report === null) {
       if (error !== null && !loading) {
         return (
-          <div className="bls-empty bls-small">
-            <span className="bls-empty-icon">
-              <Icon name="feedback-error" />
-            </span>
-            <h2>{t("The game files couldn't be verified")}</h2>
-            <p>{error}</p>
-          </div>
+          <EmptyState
+            icon="feedback-error"
+            title={t("The game files couldn't be verified")}
+            description={error}
+          />
         );
       }
       return (
-        <div className="bls-empty bls-small" role="status">
-          <span className="bls-empty-icon">
-            <Icon name="spinner" />
-          </span>
-          <h2>{t("Verifying the game files...")}</h2>
-          <p>
-            {t("Comparing the game folder to the {{store}} build.", {
-              store: storeName,
-            })}
-          </p>
-        </div>
+        <EmptyState
+          icon="spinner"
+          status
+          title={t("Verifying the game files...")}
+          description={t("Comparing the game folder to the {{store}} build.", {
+            store: storeName,
+          })}
+        />
       );
     }
 
     if (report.missingLists.length > 0) {
       const missing = report.missingLists.join(", ");
       return (
-        <div className="bls-empty bls-small">
-          <span className="bls-empty-icon">
-            <Icon name="feedback-warning" />
-          </span>
-          <h2>
-            {t("{{store}}'s file list of this build is missing", {
-              store: storeName,
-            })}
-          </h2>
-          <p>
-            {report.store === "gog"
+        <EmptyState
+          icon="feedback-warning"
+          title={t("{{store}}'s file list of this build is missing", {
+            store: storeName,
+          })}
+          description={
+            report.store === "gog"
               ? t(
                   "GOG installs the file list of the game next to it, but the one of product {{products}} is " +
                     "gone. Repairing the game in GOG Galaxy brings it back.",
                   { products: missing },
                 )
-              : t(
-                  "Steam keeps the file list of the build it installed, but the one of depot {{depots}} is gone. " +
-                    "Verifying the game in Steam brings it back.",
+              : // Steam's, Epic's and Xbox's manifests have the whole build, a missing one is an error
+                t(
+                  "Steam doesn't always keep the file lists of the builds it installs, the one of depot {{depots}} " +
+                    "isn't on this computer. Verifying the game in Steam once downloads it, then verify here again.",
                   { depots: missing },
-                )}
-          </p>
+                )
+          }
+        >
           <ActionButton variant="subdued" onClick={openInStore}>
             {storeActionLabel}
           </ActionButton>
-        </div>
+        </EmptyState>
       );
     }
 
@@ -861,11 +893,15 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
           <div
             className="bls-summary-card"
             title={
-              report.sizesKnown
-                ? undefined
-                : t(
+              !report.sizesKnown
+                ? t(
                     "GOG Galaxy didn't install the game, so the sizes of its files and the changed files are unknown",
                   )
+                : report.store === "xbox" && !report.contentsChecked
+                  ? t(
+                      "Gaming Services' record of unmodified files couldn't be read, only files whose size changed are found",
+                    )
+                  : undefined
             }
           >
             <span className="bls-title-xs">{t("Changed")}</span>

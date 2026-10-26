@@ -13,9 +13,13 @@ import {
 } from "../types";
 import { ValidationManager } from "../validation/manager";
 
-const isLockedEntry = (entry: VortexLoadOrderEntry): boolean =>
-  entry.locked !== undefined &&
-  (entry.locked === `true` || entry.locked === `always`);
+/**
+ * Vortex's LockedState, the boolean and the string forms
+ */
+export const isLockedEntry = (
+  entry: Pick<VortexLoadOrderEntry, "locked">,
+): boolean =>
+  entry.locked === true || entry.locked === `true` || entry.locked === `always`;
 
 export const persistenceToLibrary = (
   loadOrder: PersistenceLoadOrderStorage,

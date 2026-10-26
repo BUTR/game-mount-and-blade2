@@ -50,6 +50,8 @@ import { watchDocumentWhileActive } from "@bannerlord/core/profileType/documentW
 import { watchMenuItems } from "@bannerlord/core/profileType/menuItems";
 import { watchProfileCards } from "@bannerlord/core/profileType/profileCards";
 import { watchProfileTypes } from "@bannerlord/core/profileType/assignTypes";
+import { watchGameDiscovery } from "@bannerlord/core/vortex/discoveryWatcher";
+import { watchBannerCaches } from "@bannerlord/ui/bannerCaches";
 import { watchRemovedProfiles } from "@bannerlord/core/profileType/removedProfiles";
 import { warnAboutOtherCopies } from "@bannerlord/core/vortex/duplicateExtensions";
 import { registerVerifyFiles } from "@bannerlord/verify-files/register";
@@ -166,6 +168,8 @@ const main = (context: types.IExtensionContext): boolean => {
     // After the document's watchers, only while Bannerlord is the active game
     watchDocumentWhileActive(context.api);
     watchActiveProfileType(context.api);
+    watchGameDiscovery(context.api);
+    watchBannerCaches(context.api);
 
     context.api.events.on("gamemode-activated", async (gameId: string) => {
       if (GAME_ID !== gameId) {

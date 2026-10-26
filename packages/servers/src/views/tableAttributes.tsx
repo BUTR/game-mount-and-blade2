@@ -11,13 +11,12 @@ import { getStatusText } from "./utils";
 import { formatServerAddress } from "@bannerlord/server-query/address";
 import { IServerRow } from "../row";
 import { isOptionalLobbyModule } from "../modules";
+import { Localize } from "@bannerlord/core/localization/types";
 import {
   ModernTableColumn,
-  RowMenu,
+  RowActions,
   RowMenuItem,
 } from "@bannerlord/ui/components/ModernTable";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
 
 export type ServerRowActions = {
   /**
@@ -219,21 +218,17 @@ export const getServerRowActions = (
         : []),
     ];
     return (
-      <>
-        <button
-          type="button"
-          className="bls-btn bls-btn-moderate bls-row-hover-only bls-row-join"
-          disabled={!join.enabled}
-          title={join.reason ?? undefined}
-          onClick={(event) => {
-            event.stopPropagation();
-            actions.onJoin(row);
-          }}
-        >
-          {t("Join")}
-        </button>
-        <RowMenu label={t("More actions")} items={items} />
-      </>
+      <RowActions
+        primary={{
+          label: t("Join"),
+          className: "bls-row-join",
+          disabled: !join.enabled,
+          ...(join.reason !== null ? { title: join.reason } : {}),
+          onSelect: () => actions.onJoin(row),
+        }}
+        menuLabel={t("More actions")}
+        items={items}
+      />
     );
   },
 });

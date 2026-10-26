@@ -12,6 +12,6 @@ export const gamemodeActivatedSaveAsync = async (
     await reloadSaveAsync(api);
   } catch (err) {
     const { localize: t } = LocalizationManager.getInstance(api);
-    api.showErrorNotification?.(t(""), err);
+    api.showErrorNotification?.(t("Failed to reload the save"), err);
   }
 };

@@ -17,6 +17,8 @@ overrides:
 allowBuilds:
   "@butr/vortexextensionnative": false
   core-js: false
+  # Its platform packages (@koromix/koffi-*) carry the prebuilt binary
+  koffi: false
   leveldown: false
   winapi-bindings: false
 

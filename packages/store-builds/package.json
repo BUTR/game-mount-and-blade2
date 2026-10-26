@@ -9,9 +9,14 @@
   "exports": {
     "./compare": "./src/compare.ts",
     "./gog": "./src/gog.ts",
-    "./steam": "./src/steam.ts"
+    "./steam": "./src/steam.ts",
+    "./storePaths": "./src/storePaths.ts",
+    "./verifyBuild": "./src/verifyBuild.ts",
+    "./xbox": "./src/xbox.ts"
   },
   "dependencies": {
-    "@bannerlord/zip": "workspace:*"
+    "@bannerlord/worker": "workspace:*",
+    "@bannerlord/zip": "workspace:*",
+    "koffi": "3.3.3"
   }
 }

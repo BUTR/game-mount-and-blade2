@@ -23,7 +23,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "format": "prettier src \"packages/*/src/**\" --write",
     "format:check": "prettier src \"packages/*/src/**\" --check",
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "test": "vitest run"
   },
   "devDependencies": {
     "7zip-bin": "^5.2.0",
@@ -53,7 +54,8 @@
     "rolldown": "1.0.0-rc.6",
     "semver": "7.7.4",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.47.0"
+    "typescript-eslint": "8.47.0",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@bannerlord/collections": "workspace:*",

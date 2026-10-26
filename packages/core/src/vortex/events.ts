@@ -56,7 +56,7 @@ export const addedFilesEventAsync = async (
       // Remove the target destination file if it exists.
       // this is to completely avoid a scenario where we may attempt to
       // copy the same file onto itself.
-      await rm(targetPath);
+      await rm(targetPath, { force: true });
 
       await copyFile(entry.filePath, targetPath);
 

@@ -1,6 +1,6 @@
 import React, { FC } from "react";
-import { Icon } from "@nexusmods/vortex-api";
 import { ActionButton } from "./Controls";
+import { EmptyState } from "./EmptyState";
 
 /**
  * Shown in place of a list the search and filters left empty, like the Modern UI Mods table's "No mods match"
@@ -10,13 +10,9 @@ export const NoMatches: FC<{
   resetLabel: string;
   onReset: () => void;
 }> = ({ title, resetLabel, onReset }) => (
-  <div className="bls-empty bls-small">
-    <span className="bls-empty-icon">
-      <Icon name="search" />
-    </span>
-    <h2>{title}</h2>
+  <EmptyState icon="search" title={title}>
     <ActionButton variant="subdued" onClick={onReset}>
       {resetLabel}
     </ActionButton>
-  </div>
+  </EmptyState>
 );

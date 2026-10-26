@@ -10,6 +10,6 @@ export class CollectionParseError extends Error {
     super(
       `Failed to parse game specific data for collection ${collectionName}: ${why}`,
     );
-    this.name = "CollectionGenerateError";
+    this.name = "CollectionParseError";
   }
 }

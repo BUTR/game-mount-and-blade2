@@ -131,6 +131,12 @@ export const addModdingKitTool = (
   hidden: boolean = false,
 ): void => {
   if (!isStoreSteam(discovery.store)) {
+    // Steam's only. Vortex can't remove a tool, one added for a Steam folder before a store change is hidden
+    if (discovery.tools?.["bannerlord-sdk"] !== undefined) {
+      api.store?.dispatch(
+        actions.setToolVisible(GAME_ID, "bannerlord-sdk", false),
+      );
+    }
     return;
   }
 

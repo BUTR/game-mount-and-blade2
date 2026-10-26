@@ -14,6 +14,7 @@ import { getBuildVersionAsync } from "./buildVersions";
 import { isDeletable, removeEmptyFoldersAsync } from "./verify";
 import { GAME_ID } from "@bannerlord/core/common";
 import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
+import { formatSize } from "@bannerlord/ui/format";
 
 const ARCHIVES_FOLDER = "verify-files";
 const MANIFEST_VERSION = 1;
@@ -80,8 +81,33 @@ const formatTimestamp = (date: Date): string =>
     .replace(/:/g, "-")
     .replace(/\.\d+Z$/, "");
 
-const formatGigabytes = (bytes: number): string =>
-  `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+/**
+ * A name no other archive has, its partial file created to claim it. Archives made within the same second are
+ * numbered, the rename at the end would replace the earlier one, whose files are already deleted
+ */
+const reserveArchivePathAsync = async (
+  archivesPath: string,
+  createdAt: Date,
+): Promise<{ archivePath: string; partial: fs.FileHandle }> => {
+  const baseName = `files-${formatTimestamp(createdAt)}`;
+  for (let i = 0; ; i++) {
+    const archivePath = path.join(
+      archivesPath,
+      `${baseName}${i === 0 ? "" : `-${i}`}.zip`,
+    );
+    if (await getPathExistsAsync(archivePath)) {
+      continue;
+    }
+    try {
+      const partial = await fs.open(archivePath + PARTIAL_EXTENSION, "wx");
+      return { archivePath, partial };
+    } catch (err) {
+      if (!(err instanceof Error && "code" in err && err.code === "EEXIST")) {
+        throw err;
+      }
+    }
+  }
+};
 
 /**
  * Written under another name and renamed, the file is either the old one or the whole new one
@@ -150,20 +176,19 @@ export const archiveFilesAsync = async (
   const free = bavail * bsize;
   if (free < layout.size + FREE_SPACE_MARGIN) {
     throw new Error(
-      `The archive needs ${formatGigabytes(layout.size + FREE_SPACE_MARGIN)} free on the drive of ` +
-        `'${archivesPath}', it has ${formatGigabytes(free)}`,
+      `The archive needs ${formatSize(layout.size + FREE_SPACE_MARGIN)} free on the drive of ` +
+        `'${archivesPath}', it has ${formatSize(free)}`,
     );
   }
 
   const createdAt = new Date();
-  const archivePath = path.join(
+  const { archivePath, partial } = await reserveArchivePathAsync(
     archivesPath,
-    `files-${formatTimestamp(createdAt)}.zip`,
+    createdAt,
   );
   const partialPath = archivePath + PARTIAL_EXTENSION;
   try {
     // Takes the space now, on NTFS a file is given its clusters when it grows. Fails here when the drive is full
-    const partial = await fs.open(partialPath, "wx");
     try {
       await partial.truncate(layout.size);
     } finally {

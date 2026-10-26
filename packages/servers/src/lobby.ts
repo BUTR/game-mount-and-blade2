@@ -1,5 +1,6 @@
 import { log, selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "@bannerlord/core/common";
+import { getBinaryPath } from "@bannerlord/core/vortex/store";
 import {
   fetchLobbyServersAsync as fetchServersAsync,
   getLobbyPlatform,
@@ -52,7 +53,11 @@ const fetchLobbyServersOnceAsync = async (
   await api.ext?.["awaitDotnetAssert"]?.();
 
   lastServerList = await fetchServersAsync(
-    { gamePath: discovery.path, store: discovery.store },
+    {
+      gamePath: discovery.path,
+      binaryPath: getBinaryPath(discovery.store),
+      store: discovery.store,
+    },
     bridgeOptions,
   );
   return lastServerList;

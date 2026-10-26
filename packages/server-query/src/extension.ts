@@ -1,4 +1,8 @@
-import { IServerAddress, sanitizeServerText } from "./address";
+import {
+  IServerAddress,
+  sanitizeServerText,
+  truncateServerText,
+} from "./address";
 import {
   getFromServerAsync,
   IServerRequestOptions,
@@ -104,7 +108,7 @@ const toText = (
         .replace(CONTROL_CHARACTERS_EXCEPT_LINE_FEED, "")
         .trim()
     : sanitizeServerText(value);
-  return text.length > 0 ? text.slice(0, maxLength) : null;
+  return text.length > 0 ? truncateServerText(text, maxLength) : null;
 };
 
 /**

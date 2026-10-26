@@ -26,7 +26,15 @@ const isXboxFolder = (discoveryPath: string): boolean => {
   let isXbox = xboxFolders.get(discoveryPath);
   if (isXbox === undefined) {
     try {
-      statSync(path.join(discoveryPath, BANNERLORD_EXE_XBOX));
+      // Where Xbox's executable is, the same as executable() gives for Xbox
+      statSync(
+        path.join(
+          discoveryPath,
+          "bin",
+          BINARY_FOLDER_XBOX,
+          BANNERLORD_EXE_XBOX,
+        ),
+      );
       isXbox = true;
     } catch {
       isXbox = false;
@@ -51,6 +59,15 @@ const getExeByStore = (
   const discovery = selectors.discoveryByGame(state, GAME_ID);
   if (!discovery) {
     return ``;
+  }
+
+  // Vortex asks about a folder the user picked before it sets it, the discovered store is still the old folder's
+  if (
+    discoveryPath !== undefined &&
+    discovery.path !== undefined &&
+    path.relative(discovery.path, discoveryPath) !== ""
+  ) {
+    return isXboxFolder(discoveryPath) ? xbox() : standard();
   }
 
   if (isStoreXbox(discovery.store)) {

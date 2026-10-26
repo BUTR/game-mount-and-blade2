@@ -3,8 +3,7 @@ import { actionsServers } from "../../actions";
 import { getClientModuleRequirements } from "../../modules";
 import { IServerRow } from "../../row";
 import { isOfficialServer } from "../../join";
-
-type Localize = (key: string, values?: Record<string, string>) => string;
+import { Localize } from "@bannerlord/core/localization/types";
 
 // SVGs for mdiStar and mdiStarOutline from Material Design Icons (@mdi/js, Apache-2.0); Vortex's built-in icon font lacks star icons.
 const STAR_PATH =

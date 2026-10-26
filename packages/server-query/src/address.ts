@@ -15,6 +15,14 @@ const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
 export const sanitizeServerText = (value: string): string =>
   value.replace(CONTROL_CHARACTERS, " ").trim();
 
+/**
+ * The text cut to at most maxLength UTF-16 units, without cutting a character outside the BMP (an emoji) in half
+ */
+export const truncateServerText = (value: string, maxLength: number): string =>
+  value.length > maxLength
+    ? value.slice(0, maxLength).replace(/[\uD800-\uDBFF]$/, "")
+    : value;
+
 export interface IServerAddress {
   address: string;
   port: number;

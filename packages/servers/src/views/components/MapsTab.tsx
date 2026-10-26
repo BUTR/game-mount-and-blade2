@@ -1,13 +1,16 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { Icon, util } from "@nexusmods/vortex-api";
+import { util } from "@nexusmods/vortex-api";
 import { getFolderSizeAsync, ILocalScene } from "@bannerlord/server-maps";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { Localize } from "@bannerlord/core/localization/types";
+import { EmptyState } from "@bannerlord/ui/components/EmptyState";
 import {
   ModernTable,
   ModernTableColumn,
-  RowMenu,
+  RowActions,
   TableSort,
 } from "@bannerlord/ui/components/ModernTable";
+import { formatSize } from "@bannerlord/ui/format";
 
 interface IMapRow {
   scene: ILocalScene;
@@ -37,22 +40,6 @@ const formatRevision = (revision: string | null): string => {
     ? new Date(time).toLocaleString()
     : revision;
 };
-
-const formatSize = (bytes: number | null): string => {
-  if (bytes === null) {
-    return "";
-  }
-  const units = ["B", "KB", "MB", "GB"];
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit++;
-  }
-  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
-};
-
-type Localize = (key: string, values?: Record<string, string>) => string;
 
 const getMapId = (row: IMapRow): string => row.scene.path;
 
@@ -84,7 +71,7 @@ const getColumns = (t: Localize): ModernTableColumn<IMapRow>[] => [
     label: t("Size"),
     width: "96px",
     align: "end",
-    render: (row) => formatSize(row.size),
+    render: (row) => (row.size !== null ? formatSize(row.size) : ""),
     sortValue: (row) => row.size,
     firstDirection: "desc",
   },
@@ -105,31 +92,18 @@ const getRowActions = (
     };
     const openLabel = t("Open the folder of {{map}}", { map: row.scene.name });
     return (
-      <>
-        <button
-          type="button"
-          className="bls-btn bls-btn-weak bls-btn-icon bls-row-hover-only"
-          aria-label={openLabel}
-          title={openLabel}
-          onClick={(event) => {
-            event.stopPropagation();
-            openFolder();
-          }}
-        >
-          <Icon name="open-ext" />
-        </button>
-        <RowMenu
-          label={t("More actions")}
-          items={[
-            { label: t("Open Folder"), onSelect: openFolder },
-            {
-              label: t("Remove Map"),
-              danger: true,
-              onSelect: () => void onRemove(row.scene),
-            },
-          ]}
-        />
-      </>
+      <RowActions
+        primary={{ icon: "open-ext", label: openLabel, onSelect: openFolder }}
+        menuLabel={t("More actions")}
+        items={[
+          { label: t("Open Folder"), onSelect: openFolder },
+          {
+            label: t("Remove Map"),
+            danger: true,
+            onSelect: () => void onRemove(row.scene),
+          },
+        ]}
+      />
     );
   },
 });
@@ -180,31 +154,26 @@ export const MapsTab: FC<MapsTabProps> = (props) => {
 
   if (loading) {
     return (
-      <div className="bls-empty bls-small" role="status">
-        <span className="bls-empty-icon">
-          <Icon name="spinner" />
-        </span>
-        <h2>{t("Looking for downloaded maps...")}</h2>
-        <p>{t("Reading {{folder}}.", { folder: folderText })}</p>
-      </div>
+      <EmptyState
+        icon="spinner"
+        status
+        title={t("Looking for downloaded maps...")}
+        description={t("Reading {{folder}}.", { folder: folderText })}
+      />
     );
   }
 
   if (scenes.length === 0) {
     return (
-      <div className="bls-empty bls-small">
-        <span className="bls-empty-icon">
-          <Icon name="download" />
-        </span>
-        <h2>{t("No downloaded maps yet")}</h2>
-        <p>
-          {t(
-            "Custom maps you download from a server, in Vortex or in the game, show up here. " +
-              "They are kept in {{folder}}.",
-            { folder: folderText },
-          )}
-        </p>
-      </div>
+      <EmptyState
+        icon="download"
+        title={t("No downloaded maps yet")}
+        description={t(
+          "Custom maps you download from a server, in Vortex or in the game, show up here. " +
+            "They are kept in {{folder}}.",
+          { folder: folderText },
+        )}
+      />
     );
   }
 
