@@ -13,6 +13,16 @@ const hasGameProfiles = (profiles: Profiles): boolean =>
   Object.values(profiles ?? {}).some((profile) => profile.gameId === GAME_ID);
 
 /**
+ * Managing the game adds its profile without lastActivated, the profile's first activation sets it. The profiles the
+ * profile editor adds start at 0
+ */
+const hasNeverActivatedProfile = (profiles: Profiles): boolean =>
+  Object.values(profiles ?? {}).some(
+    (profile) =>
+      profile.gameId === GAME_ID && profile.lastActivated === undefined,
+  );
+
+/**
  * Whether Vortex started managing the game since the game was last activated
  */
 let startedManaging = false;
@@ -22,6 +32,13 @@ let startedManaging = false;
  * sets the game up and activates it. Stopping to manage removes its profiles, managing it again adds one
  */
 export const watchStartManaging = (api: types.IExtensionApi): void => {
+  // Managing the game without the extension, from the stub Vortex has for the game, installs the extension and
+  // restarts. Vortex manages the game on that start, which can add the profile before the extension watches the
+  // profiles. A game already managed and activated before the extension was installed or updated isn't verified
+  if (hasNeverActivatedProfile(api.getState().persistent.profiles)) {
+    startedManaging = true;
+  }
+
   api.onStateChange?.(["persistent", "profiles"], (previous, current) => {
     if (
       !hasGameProfiles(previous as Profiles) &&

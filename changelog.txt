@@ -1,4 +1,7 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.5.1
+* We were not showing the Game Files modal when the extension was promoted from a stub
+---------------------------------------------------------------------------------------------------
 Version: 1.5.0
 * Added a Game Files page to compare your game folder against the Steam, GOG, Epic, or Xbox build
 * - Lists extra, modified, and missing files, along with their source (base game, Vortex, or manually installed mod)
