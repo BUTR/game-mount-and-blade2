@@ -28,7 +28,12 @@ vi.mock("@nexusmods/vortex-api", () => ({
 
 vi.mock("@butr/vortexextensionnative", () => ({
   Utils: { isLoadOrderCorrect: vi.fn(() => []) },
-  BannerlordModuleManager: { validateModule: vi.fn(() => []) },
+  BannerlordModuleManager: {
+    createValidator: vi.fn(() => ({
+      validateModule: vi.fn(() => []),
+      dispose: vi.fn(),
+    })),
+  },
 }));
 
 vi.mock("../selectors", () => ({

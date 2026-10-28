@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "@bannerlord/game-layout": "workspace:*",
-    "@bannerlord/mod-analyzer": "workspace:*"
+    "@bannerlord/mod-analyzer": "workspace:*",
+    "@bannerlord/read-ahead": "workspace:*"
   }
 }

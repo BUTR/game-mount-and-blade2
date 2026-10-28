@@ -6,6 +6,9 @@
   "bannerlord": {
     "library": true
   },
+  "dependencies": {
+    "@bannerlord/read-ahead": "workspace:*"
+  },
   "exports": {
     ".": "./src/index.ts"
   }

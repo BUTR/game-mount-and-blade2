@@ -22,10 +22,6 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, open: vi.fn(actual.open) };
 });
 
-vi.mock("@butr/vortexextensionnative", () => ({
-  allocWithoutOwnership: () => undefined,
-}));
-
 vi.mock("../../localization/manager", () => ({
   LocalizationManager: {
     getInstance: () => ({ localize: (template: string) => template }),

@@ -81,27 +81,26 @@ export const vortexToLibraryVM = (
     .filter((x) => x);
   const validationManager = ValidationManager.fromVortex(loadOrder);
 
-  const loadOrderConverted = loadOrder.flatMap<vetypes.ModuleViewModel>(
-    (entry) => {
+  // The list goes to LauncherManager once for every module's validation
+  const validator = BannerlordModuleManager.createValidator(modules);
+  try {
+    return loadOrder.flatMap<vetypes.ModuleViewModel>((entry) => {
       const module = allModules[entry.id];
       return entry.data && module
         ? {
             moduleInfoExtended: module,
             isValid:
               entry.enabled &&
-              !BannerlordModuleManager.validateModule(
-                modules,
-                module,
-                validationManager,
-              ).length,
+              !validator.validateModule(module, validationManager).length,
             isSelected: entry.enabled,
             isDisabled: isLockedEntry(entry),
             index: entry.data.index,
           }
         : [];
-    },
-  );
-  return loadOrderConverted;
+    });
+  } finally {
+    validator.dispose();
+  }
 };
 export const libraryVMToVortex = (
   api: types.IExtensionApi,
@@ -169,34 +168,38 @@ export const libraryToVortex = (
     .filter((x) => x);
   const validationManager = ValidationManager.fromLibrary(loadOrder);
 
-  const loadOrderConverted = Object.values(loadOrder)
-    .map<VortexLoadOrderEntry | undefined>((curr) => {
-      const module = allModules[curr.id];
-      if (!module) {
-        return undefined;
-      }
+  // The list goes to LauncherManager once for every module's validation
+  const validator = BannerlordModuleManager.createValidator(availableModules);
+  try {
+    return Object.values(loadOrder)
+      .map<VortexLoadOrderEntry | undefined>((curr) => {
+        const module = allModules[curr.id];
+        if (!module) {
+          return undefined;
+        }
 
-      const moduleValidation = BannerlordModuleManager.validateModule(
-        availableModules,
-        module,
-        validationManager,
-      );
-      const result = getModuleAttributes(api, curr.id);
-      return {
-        id: curr.id,
-        enabled: curr.isSelected,
-        name: curr.name,
-        ...(result[0]?.id !== undefined && { modId: result[0].id }),
-        data: {
-          moduleInfoExtended: module,
-          isValid: !moduleValidation.length,
-          isDisabled: false,
-          index: curr.index,
-          hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
-          hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
-        },
-      };
-    }, [])
-    .filter<VortexLoadOrderEntry>((x) => !!x);
-  return loadOrderConverted;
+        const moduleValidation = validator.validateModule(
+          module,
+          validationManager,
+        );
+        const result = getModuleAttributes(api, curr.id);
+        return {
+          id: curr.id,
+          enabled: curr.isSelected,
+          name: curr.name,
+          ...(result[0]?.id !== undefined && { modId: result[0].id }),
+          data: {
+            moduleInfoExtended: module,
+            isValid: !moduleValidation.length,
+            isDisabled: false,
+            index: curr.index,
+            hasSteamBinariesOnXbox: result[0]?.hasSteamBinariesOnXbox ?? null,
+            hasObfuscatedBinaries: result[0]?.hasObfuscatedBinaries ?? null,
+          },
+        };
+      }, [])
+      .filter<VortexLoadOrderEntry>((x) => !!x);
+  } finally {
+    validator.dispose();
+  }
 };

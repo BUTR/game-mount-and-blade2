@@ -234,18 +234,21 @@ export class LoadOrderManager implements types.ILoadOrderGameInfo {
     });
 
     const invalidResults: types.IFBLOInvalidResult[] = [];
-    for (const enabledModule of modules) {
-      const loadOrderIssues = BannerlordModuleManager.validateLoadOrder(
-        modules,
-        enabledModule,
-      );
-      for (const issue of loadOrderIssues) {
-        const localizedIssue = Utils.renderModuleIssue(issue);
-        invalidResults.push({
-          id: issue.target.id,
-          reason: localizedIssue,
-        });
+    // The list goes to LauncherManager once for every module's validation
+    const validator = BannerlordModuleManager.createValidator(modules);
+    try {
+      for (const enabledModule of modules) {
+        const loadOrderIssues = validator.validateLoadOrder(enabledModule);
+        for (const issue of loadOrderIssues) {
+          const localizedIssue = Utils.renderModuleIssue(issue);
+          invalidResults.push({
+            id: issue.target.id,
+            reason: localizedIssue,
+          });
+        }
       }
+    } finally {
+      validator.dispose();
     }
 
     // While the contract doesn't explicitly allow undefined to be returned,

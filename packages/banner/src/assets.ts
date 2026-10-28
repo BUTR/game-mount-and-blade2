@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { mapInOrderAsync } from "@bannerlord/read-ahead";
 import {
   buildBannerTables,
   IBannerIconsDocument,
@@ -229,19 +230,31 @@ const readGameBannerDataAsync = async (
     a === NATIVE ? -1 : b === NATIVE ? 1 : a.localeCompare(b),
   );
 
-  const documentsByModule = new Map<string, IBannerIconsDocument[]>();
-  const idsByName = new Map<string, string>();
-  for (const folder of folders) {
+  // The modules and their banner files are read together, then kept in the folders' order: a later module of an id
+  // or a name replaces an earlier one
+  const modules = await mapInOrderAsync(folders, async (folder) => {
     const module = await readModuleAsync(path.join(modulesPath, folder));
     if (module === null || module.files.length === 0) {
+      return null;
+    }
+    const xmls = await mapInOrderAsync(module.files, (file) =>
+      fs.readFile(file, "utf8").catch(() => null),
+    );
+    return { module, xmls };
+  });
+
+  const documentsByModule = new Map<string, IBannerIconsDocument[]>();
+  const idsByName = new Map<string, string>();
+  for (const read of modules) {
+    if (read === null) {
       continue;
     }
+    const { module, xmls } = read;
     if (module.name !== undefined) {
       idsByName.set(module.name, module.id);
     }
     const documents: IBannerIconsDocument[] = [];
-    for (const file of module.files) {
-      const xml = await fs.readFile(file, "utf8").catch(() => null);
+    for (const xml of xmls) {
       if (xml !== null) {
         documents.push(parseBannerIconsXml(xml));
       }

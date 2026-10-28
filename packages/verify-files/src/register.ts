@@ -2,6 +2,7 @@ import path from "path";
 import { types } from "@nexusmods/vortex-api";
 import { VerifyFilesPage } from "./views/VerifyFilesPage";
 import { VerifyFilesPageOptions } from "./views/options";
+import { watchGameFolderWrites } from "./keptReport";
 
 export const registerVerifyFiles = (context: types.IExtensionContext): void => {
   context.registerMainPage(
@@ -16,5 +17,7 @@ export const registerVerifyFiles = (context: types.IExtensionContext): void => {
       "verifyfiles",
       path.join(__dirname, "verifyfiles.scss"),
     );
+
+    watchGameFolderWrites(context.api);
   });
 };

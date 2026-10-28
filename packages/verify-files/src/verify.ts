@@ -224,6 +224,14 @@ const getSource = (
 };
 
 /**
+ * The files that usually break the game, neither the game's, the store's nor Vortex's
+ */
+export const UNEXPECTED_SOURCES: readonly VerifyFileSource[] = [
+  "unknown",
+  "manualMod",
+];
+
+/**
  * A module's folder, Modules/{module}, for everything in it. Its folder for any other file
  */
 export const getFolder = (filePath: string): string => {

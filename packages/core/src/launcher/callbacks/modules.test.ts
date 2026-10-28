@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { actions, selectors, types } from "@nexusmods/vortex-api";
-import {
-  BannerlordModuleManager,
-  types as vetypes,
-} from "@butr/vortexextensionnative";
+import { types as vetypes } from "@butr/vortexextensionnative";
 import {
   getAllModuleViewModelsCallback,
   getLoadOrderFromVortex,
@@ -23,8 +20,20 @@ vi.mock("@nexusmods/vortex-api", () => ({
   },
 }));
 
+const { validator } = vi.hoisted(() => ({
+  validator: {
+    validateModule: vi.fn<
+      (
+        target: vetypes.ModuleInfoExtended,
+        manager: vetypes.IValidationManager,
+      ) => vetypes.ModuleIssue[]
+    >(() => []),
+    dispose: vi.fn(),
+  },
+}));
+
 vi.mock("@butr/vortexextensionnative", () => ({
-  BannerlordModuleManager: { validateModule: vi.fn(() => []) },
+  BannerlordModuleManager: { createValidator: vi.fn(() => validator) },
 }));
 
 vi.mock("../../selectors", () => ({
@@ -54,7 +63,7 @@ const entry = (id: string, withData = true): VortexLoadOrderEntry =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(BannerlordModuleManager.validateModule).mockReturnValue([]);
+  validator.validateModule.mockReturnValue([]);
   vi.mocked(selectors.activeProfile).mockReturnValue({
     id: "p1",
   } as types.IProfile);
@@ -147,11 +156,10 @@ describe("getModuleViewModelsCallback", () => {
       entry("Uninstalled"),
       entry("NoData", false),
     ]);
-    vi.mocked(BannerlordModuleManager.validateModule).mockImplementation(
-      (_modules, target) =>
-        target.id === "Broken"
-          ? [{ target } as unknown as vetypes.ModuleIssue]
-          : [],
+    validator.validateModule.mockImplementation((target) =>
+      target.id === "Broken"
+        ? [{ target } as unknown as vetypes.ModuleIssue]
+        : [],
     );
     const allModules: IModuleCache = {
       Native: module("Native"),

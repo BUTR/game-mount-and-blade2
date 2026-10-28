@@ -24,6 +24,7 @@ import {
   restoreArchiveAsync,
 } from "../archive";
 import { findModuleConflictsAsync, getVersionMismatch } from "../restoreChecks";
+import { takeKeptReport } from "../keptReport";
 import {
   deleteFilesAsync,
   getFolder,
@@ -31,6 +32,7 @@ import {
   getStoreName,
   getVerifyStore,
   showModInModsPage,
+  UNEXPECTED_SOURCES,
   verifyFilesAsync,
 } from "../verify";
 import {
@@ -71,9 +73,9 @@ type VerifyView = "unexpected" | "game" | "vortex" | "all" | "archives";
 
 const VIEW_SOURCES: Record<
   Exclude<VerifyView, "all" | "archives">,
-  VerifyFileSource[]
+  readonly VerifyFileSource[]
 > = {
-  unexpected: ["unknown", "manualMod"],
+  unexpected: UNEXPECTED_SOURCES,
   game: ["game", "store"],
   vortex: ["vortex", "vortexInternal"],
 };
@@ -132,41 +134,49 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
 
   // A verification started after this one replaces its result, the store or the folder may have changed meanwhile
   const latestVerification = useRef(0);
-  const verifyAsync = useCallback(async (): Promise<void> => {
-    const verification = ++latestVerification.current;
-    const isLatest = (): boolean => verification === latestVerification.current;
-    setLoading(true);
-    try {
-      const [next, nextArchives] = await Promise.all([
-        verifyFilesAsync(api),
-        // A broken archives folder doesn't keep the files from being listed
-        readArchivesAsync().catch((): IFilesArchive[] => []),
-      ]);
-      if (isLatest()) {
-        setReport(next);
-        setArchives(nextArchives);
-        setError(null);
+  /**
+   * Shows the report of a verification already done instead of verifying, when given one
+   */
+  const verifyAsync = useCallback(
+    async (verified?: IVerifyFilesReport): Promise<void> => {
+      const verification = ++latestVerification.current;
+      const isLatest = (): boolean =>
+        verification === latestVerification.current;
+      setLoading(true);
+      try {
+        const [next, nextArchives] = await Promise.all([
+          verified ?? verifyFilesAsync(api),
+          // A broken archives folder doesn't keep the files from being listed
+          readArchivesAsync().catch((): IFilesArchive[] => []),
+        ]);
+        if (isLatest()) {
+          setReport(next);
+          setArchives(nextArchives);
+          setError(null);
+        }
+      } catch (err) {
+        if (isLatest()) {
+          setError(err instanceof Error ? err.message : String(err));
+        }
+      } finally {
+        if (isLatest()) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      if (isLatest()) {
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    } finally {
-      if (isLatest()) {
-        setLoading(false);
-      }
-    }
-  }, [api]);
+    },
+    [api],
+  );
 
   const discoveredStore = useSelector((state: IStateWithBannerlord) =>
     getVerifyStore(state),
   );
 
   // Every time the page is opened, deploying or the game can have changed the files since. And when the game's
-  // store or folder changes, the report is of the build before
+  // store or folder changes, the report is of the build before. The report of the verification when Vortex started
+  // managing the game is shown instead, Vortex didn't write into the folder since
   useEffect(() => {
     if (active !== false) {
-      void verifyAsync();
+      void verifyAsync(takeKeptReport(gamePath, discoveredStore));
     }
   }, [active, verifyAsync, discoveredStore, gamePath]);
 

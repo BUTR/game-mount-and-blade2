@@ -4,12 +4,14 @@
   "private": true,
   "description": "The Game Files page, verifying and restoring the game's files",
   "exports": {
-    "./register": "./src/register.ts"
+    "./register": "./src/register.ts",
+    "./startManaging": "./src/startManaging.ts"
   },
   "dependencies": {
     "@bannerlord/build-versions": "workspace:*",
     "@bannerlord/core": "workspace:*",
     "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/read-ahead": "workspace:*",
     "@bannerlord/store-builds": "workspace:*",
     "@bannerlord/ui": "workspace:*",
     "@bannerlord/zip": "workspace:*"

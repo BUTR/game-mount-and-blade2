@@ -22,9 +22,18 @@ vi.mock("@nexusmods/vortex-api", () => {
   };
 });
 
+const { validator } = vi.hoisted(() => ({
+  validator: {
+    validateLoadOrder: vi.fn<
+      (target: vetypes.ModuleInfoExtended) => vetypes.ModuleIssue[]
+    >(() => []),
+    dispose: vi.fn(),
+  },
+}));
+
 vi.mock("@butr/vortexextensionnative", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@butr/vortexextensionnative")>()),
-  BannerlordModuleManager: { validateLoadOrder: vi.fn(() => []) },
+  BannerlordModuleManager: { createValidator: vi.fn(() => validator) },
   Utils: {
     renderModuleIssue: vi.fn(
       (issue: { reason: string }) => `rendered ${issue.reason}`,
@@ -200,25 +209,25 @@ describe("validate", () => {
       [entry("Native"), entry("Off", { enabled: false })],
     );
 
-    expect(BannerlordModuleManager.validateLoadOrder).toHaveBeenCalledTimes(1);
-    const [modules, target] = vi.mocked(
-      BannerlordModuleManager.validateLoadOrder,
-    ).mock.calls[0]!;
+    expect(validator.validateLoadOrder).toHaveBeenCalledTimes(1);
+    const [modules] = vi.mocked(BannerlordModuleManager.createValidator).mock
+      .calls[0]!;
+    const [target] = validator.validateLoadOrder.mock.calls[0]!;
     expect(modules.map((x) => x.id)).toEqual(["Native"]);
     expect(target.id).toBe("Native");
+    expect(validator.dispose).toHaveBeenCalledOnce();
   });
 
   it("reports each issue on the module it targets", async () => {
-    vi.mocked(BannerlordModuleManager.validateLoadOrder).mockImplementation(
-      (_modules, target) =>
-        target.id === "SandBox"
-          ? [
-              {
-                target,
-                reason: "missing Native",
-              } as unknown as vetypes.ModuleIssue,
-            ]
-          : [],
+    validator.validateLoadOrder.mockImplementation((target) =>
+      target.id === "SandBox"
+        ? [
+            {
+              target,
+              reason: "missing Native",
+            } as unknown as vetypes.ModuleIssue,
+          ]
+        : [],
     );
     const manager = new LoadOrderManager(createApi());
 

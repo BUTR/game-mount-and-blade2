@@ -55,6 +55,10 @@ import { watchBannerCaches } from "@bannerlord/ui/bannerCaches";
 import { watchRemovedProfiles } from "@bannerlord/core/profileType/removedProfiles";
 import { warnAboutOtherCopies } from "@bannerlord/core/vortex/duplicateExtensions";
 import { registerVerifyFiles } from "@bannerlord/verify-files/register";
+import {
+  verifyIfStartedManaging,
+  watchStartManaging,
+} from "@bannerlord/verify-files/startManaging";
 
 const main = (context: types.IExtensionContext): boolean => {
   log("info", `Extension Version: ${__EXTENSION_VERSION__}`);
@@ -170,6 +174,7 @@ const main = (context: types.IExtensionContext): boolean => {
     watchActiveProfileType(context.api);
     watchGameDiscovery(context.api);
     watchBannerCaches(context.api);
+    watchStartManaging(context.api);
 
     context.api.events.on("gamemode-activated", async (gameId: string) => {
       if (GAME_ID !== gameId) {
@@ -184,6 +189,9 @@ const main = (context: types.IExtensionContext): boolean => {
 
       await gamemodeActivatedLoadOrderAsync(context.api);
       await gamemodeActivatedSaveAsync(context.api);
+
+      // After the load order, the verification reads the modules too
+      verifyIfStartedManaging(context.api);
 
       // The module entries of mods installed before the installer kept them, nothing waits for these
       fillModuleAttributesAsync(context.api).catch((err) =>

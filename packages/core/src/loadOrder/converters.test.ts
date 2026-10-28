@@ -21,8 +21,20 @@ import {
   VortexLoadOrderEntry,
 } from "../types";
 
+const { validator } = vi.hoisted(() => ({
+  validator: {
+    validateModule: vi.fn<
+      (
+        target: vetypes.ModuleInfoExtended,
+        manager: vetypes.IValidationManager,
+      ) => vetypes.ModuleIssue[]
+    >(() => []),
+    dispose: vi.fn(),
+  },
+}));
+
 vi.mock("@butr/vortexextensionnative", () => ({
-  BannerlordModuleManager: { validateModule: vi.fn(() => []) },
+  BannerlordModuleManager: { createValidator: vi.fn(() => validator) },
 }));
 
 vi.mock("../vortex/modFinder", () => ({
@@ -77,17 +89,18 @@ const cache = (...ids: string[]): IModuleCache =>
   Object.fromEntries(ids.map((id) => [id, module(id)]));
 
 const failValidationOf = (failingId: string): void => {
-  vi.mocked(BannerlordModuleManager.validateModule).mockImplementation(
-    (_modules, target) =>
-      target.id === failingId
-        ? [{ target } as unknown as vetypes.ModuleIssue]
-        : [],
+  validator.validateModule.mockImplementation((target) =>
+    target.id === failingId
+      ? [{ target } as unknown as vetypes.ModuleIssue]
+      : [],
   );
 };
 
 beforeEach(() => {
-  vi.mocked(BannerlordModuleManager.validateModule).mockReset();
-  vi.mocked(BannerlordModuleManager.validateModule).mockReturnValue([]);
+  vi.mocked(BannerlordModuleManager.createValidator).mockClear();
+  validator.validateModule.mockReset();
+  validator.validateModule.mockReturnValue([]);
+  validator.dispose.mockClear();
   vi.mocked(getModuleAttributes).mockReset();
   vi.mocked(getModuleAttributes).mockReturnValue([]);
 });
@@ -257,10 +270,11 @@ describe("vortexToLibraryVM", () => {
       cache("Native", "Off"),
     );
 
-    const [modules, , validationManager] = vi.mocked(
-      BannerlordModuleManager.validateModule,
-    ).mock.calls[0]!;
+    const [modules] = vi.mocked(BannerlordModuleManager.createValidator).mock
+      .calls[0]!;
+    const [, validationManager] = validator.validateModule.mock.calls[0]!;
     expect(modules.map((x) => x.id)).toEqual(["Native", "Off"]);
+    expect(validator.dispose).toHaveBeenCalledOnce();
     expect(validationManager.isSelected("Native")).toBe(true);
     expect(validationManager.isSelected("Off")).toBe(false);
   });
@@ -372,10 +386,11 @@ describe("libraryToVortex", () => {
       ]),
     );
 
-    const [modules, , validationManager] = vi.mocked(
-      BannerlordModuleManager.validateModule,
-    ).mock.calls[0]!;
+    const [modules] = vi.mocked(BannerlordModuleManager.createValidator).mock
+      .calls[0]!;
+    const [, validationManager] = validator.validateModule.mock.calls[0]!;
     expect(modules.map((x) => x.id)).toEqual(["Native", "Off"]);
+    expect(validator.dispose).toHaveBeenCalledOnce();
     expect(validationManager.isSelected("Native")).toBe(true);
     expect(validationManager.isSelected("Off")).toBe(false);
   });

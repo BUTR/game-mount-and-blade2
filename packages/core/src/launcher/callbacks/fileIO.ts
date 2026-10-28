@@ -1,5 +1,4 @@
 import { types } from "@nexusmods/vortex-api";
-import { allocWithoutOwnership } from "@butr/vortexextensionnative";
 import path from "path";
 import { FileHandle, open, rm, writeFile } from "node:fs/promises";
 import { LocalizationManager } from "../../localization/manager";
@@ -40,7 +39,8 @@ export const readFileContentCallback =
           const stats = await fileHandle.stat();
           length = stats.size;
         }
-        const buffer = allocWithoutOwnership(length) ?? new Uint8Array(length);
+        // The library copies what it keeps straight from this buffer
+        const buffer = new Uint8Array(length);
         await fileHandle.read(buffer, 0, length, offset);
         return buffer;
       } finally {

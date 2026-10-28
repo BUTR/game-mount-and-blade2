@@ -20,6 +20,7 @@ import {
   IStateWithBannerlord,
 } from "../types";
 import { findSubModuleFilesAsync } from "@bannerlord/game-layout";
+import { mapInOrderAsync } from "@bannerlord/read-ahead";
 
 /**
  * The modules a module needs loaded with it when joining. Optional dependencies, incompatible modules and modules
@@ -72,13 +73,14 @@ export const readModModulesAsync = async (
   mod: IBannerlordMod,
 ): Promise<{ modules: vetypes.ModuleInfoExtended[]; complete: boolean }> => {
   const folder = path.join(stagingPath, mod.installationPath);
+  const files = await findSubModuleFilesAsync(folder, SUBMODULE_SEARCH_DEPTH);
+  // Read together, parsed in the files' order: the first module of an id is kept
+  const xmls = await mapInOrderAsync(files, (file) =>
+    readFile(file, "utf8").catch(() => null),
+  );
   const modules: vetypes.ModuleInfoExtended[] = [];
   let complete = true;
-  for (const file of await findSubModuleFilesAsync(
-    folder,
-    SUBMODULE_SEARCH_DEPTH,
-  )) {
-    const xml = await readFile(file, "utf8").catch(() => null);
+  for (const xml of xmls) {
     if (xml === null) {
       complete = false;
       continue;
@@ -131,22 +133,23 @@ export const fillModuleAttributesAsync = async (
       (needsIds(mod) || (!idsOnly && needsInfo(mod))),
   );
 
-  const updates: ReturnType<typeof actions.setModAttribute>[] = [];
-  for (const mod of mods) {
+  // The mods' folders are read together
+  const updatesByMod = await mapInOrderAsync(mods, async (mod) => {
+    const modUpdates: ReturnType<typeof actions.setModAttribute>[] = [];
     try {
       const { modules, complete } = await readModModulesAsync(stagingPath, mod);
       // A file that couldn't be read is tried on the next activation, a partial list would be kept for good
       if (!complete) {
-        continue;
+        return modUpdates;
       }
       const ids = mod.attributes?.[SUB_MODS_IDS] ?? modules.map((x) => x.id);
       if (needsIds(mod) && ids.length > 0) {
-        updates.push(
+        modUpdates.push(
           actions.setModAttribute(GAME_ID, mod.id, SUB_MODS_IDS, ids),
         );
       }
       if (needsInfo(mod)) {
-        updates.push(
+        modUpdates.push(
           actions.setModAttribute(
             GAME_ID,
             mod.id,
@@ -161,7 +164,9 @@ export const fillModuleAttributesAsync = async (
         err,
       });
     }
-  }
+    return modUpdates;
+  });
+  const updates = updatesByMod.flat();
 
   if (updates.length > 0 && api.store !== undefined) {
     log("info", "Recorded the modules of mods from their staging folder", {

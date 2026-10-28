@@ -7,6 +7,7 @@ import { IFilesArchive } from "../archive";
 import { getFolder } from "../verify";
 import { useLocalization } from "@bannerlord/core/localization/hooks";
 import { getPathExistsAsync } from "@bannerlord/core/fsUtils";
+import { mapInOrderAsync } from "@bannerlord/read-ahead";
 import { Localize } from "@bannerlord/core/localization/types";
 import { ActionButton } from "@bannerlord/ui/components/Controls";
 import { EmptyState } from "@bannerlord/ui/components/EmptyState";
@@ -133,12 +134,15 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
   useEffect(() => {
     let cancelled = false;
     const readAsync = async (): Promise<void> => {
-      const paths = new Set<string>();
-      for (const file of archive.files) {
-        if (await getPathExistsAsync(path.join(gamePath, file.path))) {
-          paths.add(file.path);
-        }
-      }
+      // Checked together
+      const exists = await mapInOrderAsync(archive.files, (file) =>
+        getPathExistsAsync(path.join(gamePath, file.path)),
+      );
+      const paths = new Set(
+        archive.files
+          .filter((_, index) => exists[index])
+          .map((file) => file.path),
+      );
       if (!cancelled) {
         setPresent({ archive, paths });
       }

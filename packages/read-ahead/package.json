@@ -1,0 +1,12 @@
+{
+  "name": "@bannerlord/read-ahead",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Async IO over many items with a bounded number of calls in flight, results in the items' order",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

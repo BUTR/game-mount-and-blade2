@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/read-ahead": "workspace:*",
     "@bannerlord/tpac": "workspace:*",
     "@bannerlord/worker": "workspace:*"
   }

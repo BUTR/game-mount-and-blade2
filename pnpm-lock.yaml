@@ -192,8 +192,8 @@ importers:
         specifier: workspace:*
         version: link:packages/verify-files
       '@butr/vortexextensionnative':
-        specifier: 2.0.218
-        version: 2.0.218
+        specifier: 2.0.221
+        version: 2.0.221
       ticks-to-date:
         specifier: ^1.0.6
         version: 1.0.6
@@ -291,6 +291,9 @@ importers:
       '@bannerlord/game-layout':
         specifier: workspace:*
         version: link:../game-layout
+      '@bannerlord/read-ahead':
+        specifier: workspace:*
+        version: link:../read-ahead
       '@bannerlord/tpac':
         specifier: workspace:*
         version: link:../tpac
@@ -320,8 +323,15 @@ importers:
       '@bannerlord/mod-analyzer':
         specifier: workspace:*
         version: link:../mod-analyzer
+      '@bannerlord/read-ahead':
+        specifier: workspace:*
+        version: link:../read-ahead
 
-  packages/game-layout: {}
+  packages/game-layout:
+    dependencies:
+      '@bannerlord/read-ahead':
+        specifier: workspace:*
+        version: link:../read-ahead
 
   packages/lobby:
     dependencies:
@@ -330,6 +340,8 @@ importers:
         version: link:../server-query
 
   packages/mod-analyzer: {}
+
+  packages/read-ahead: {}
 
   packages/save-file:
     dependencies:
@@ -412,6 +424,9 @@ importers:
       '@bannerlord/game-layout':
         specifier: workspace:*
         version: link:../game-layout
+      '@bannerlord/read-ahead':
+        specifier: workspace:*
+        version: link:../read-ahead
       '@bannerlord/store-builds':
         specifier: workspace:*
         version: link:../store-builds
@@ -456,9 +471,9 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@butr/vortexextensionnative@2.0.218':
-    resolution: {integrity: sha512-l+RliLTsJ8JgGLuwLq4jpBoS7HMWMyLL3LwtB+JKcirON4qJAh3cwgGnoNBTvXZXdgryzuULpWab2jrb4kHD6A==}
-    engines: {node: '>=22'}
+  '@butr/vortexextensionnative@2.0.221':
+    resolution: {integrity: sha512-Bm5+VncXQOnKB7MJ7NPT/MOBln9cgOVx9BC+IUEfaTAdsJlb/MhfUD0vfg99aqWNbw0VDKoLN4vB7WvWRumJow==}
+    engines: {node: '>=22.14'}
 
   '@dependents/detective-less@5.0.3':
     resolution: {integrity: sha512-v6oD9Ukp+N7V4n6p5I/+mM5fIohSfkrDSGlFm5w/pYmchvbk+sMIHsLxrFJ5Lnujewj1BzWL0K84d88lwZAMQA==}
@@ -2706,7 +2721,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@butr/vortexextensionnative@2.0.218': {}
+  '@butr/vortexextensionnative@2.0.221': {}
 
   '@dependents/detective-less@5.0.3':
     dependencies:

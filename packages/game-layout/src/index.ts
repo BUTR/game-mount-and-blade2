@@ -1,5 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import nodePath from "path";
+import { mapInOrderAsync } from "@bannerlord/read-ahead";
 
 /**
  * The game's folder of modules
@@ -69,19 +70,20 @@ export const findSubModuleFilesAsync = async (
   depth: number,
 ): Promise<string[]> => {
   const entries = await readDirectoryEntriesAsync(folder).catch(() => []);
-  const files: string[] = [];
-  for (const entry of entries) {
+  // The folders below are walked together, the files keep the entries' order
+  const found = await mapInOrderAsync(entries, async (entry) => {
     const entryPath = nodePath.join(folder, entry.name);
     if (
       entry.isFile &&
       entry.name.toLowerCase() === SUBMODULE_FILE.toLowerCase()
     ) {
-      files.push(entryPath);
-    } else if (entry.isDirectory && depth > 0) {
-      files.push(...(await findSubModuleFilesAsync(entryPath, depth - 1)));
+      return [entryPath];
     }
-  }
-  return files;
+    return entry.isDirectory && depth > 0
+      ? await findSubModuleFilesAsync(entryPath, depth - 1)
+      : [];
+  });
+  return found.flat();
 };
 
 /**
