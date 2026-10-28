@@ -506,7 +506,7 @@ describe("getServerProfileBlockers", () => {
     ).toEqual([
       expect.stringMatching(/^Install the BUTR Server Join module/),
       "Install these mods in Vortex first: Mod A, Mod B.",
-      "The server needs Mod C v2.0.0.0, Vortex has v1.0.0.0, v1.5.0.0.",
+      "The server requires Mod C v2.0.0.0, but you have v1.0.0.0, v1.5.0.0 installed.",
     ]);
   });
 

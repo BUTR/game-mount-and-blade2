@@ -53,11 +53,11 @@ const askSwitchTargetAsync = async (
       text:
         candidates.length > 0
           ? t(
-              "Singleplayer and Multiplayer use separate profiles. Pick the {{mode}} profile to switch to, or create a new one.",
+              "Singleplayer and Multiplayer use separate profiles. Select a {{mode}} profile to switch to, or create a new one.",
               { mode },
             )
           : t(
-              "Singleplayer and Multiplayer use separate profiles, and there is no {{mode}} profile yet. Create one to switch to it.",
+              "Singleplayer and Multiplayer use separate profiles, and you don't have a {{mode}} profile yet. Create one to switch to {{mode}}.",
               { mode },
             ),
       choices: [

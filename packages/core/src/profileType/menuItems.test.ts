@@ -116,7 +116,7 @@ describe("watchMenuItems", () => {
       bannerlordTitle: "",
     });
     expect(buttons[1]!.title).toBe(
-      "The active profile is a Multiplayer profile. Change a profile's type on the Profiles page",
+      "The active profile is set to Multiplayer. You can change a profile's mode on the Profiles page.",
     );
   });
 
@@ -139,7 +139,7 @@ describe("watchMenuItems", () => {
       bannerlordTitle: "",
     });
     expect(buttons[0]!.title).toMatch(
-      /^Profiles\nThe active profile is a Singleplayer profile/,
+      /^Profiles\nThe active profile is set to Singleplayer/,
     );
   });
 

@@ -28,7 +28,7 @@ export const CompatibilityInfo: FC<CompatibilityInfoProps> = (props) => {
       } catch (err) {
         setGameVersion(null);
         context.api.showErrorNotification?.(
-          t("Failed to import added file to mod!"),
+          t("Failed to check module compatibility"),
           err,
         );
       }

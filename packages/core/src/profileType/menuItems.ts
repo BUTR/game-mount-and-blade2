@@ -78,10 +78,10 @@ export const watchMenuItems = (api: types.IExtensionApi): void => {
         value !== undefined
           ? isMultiplayer
             ? t(
-                "The active profile is a Multiplayer profile. Change a profile's type on the Profiles page",
+                "The active profile is set to Multiplayer. You can change a profile's mode on the Profiles page.",
               )
             : t(
-                "The active profile is a Singleplayer profile. Change a profile's type on the Profiles page",
+                "The active profile is set to Singleplayer. You can change a profile's mode on the Profiles page.",
               )
           : undefined;
       // A collapsed menu shows only icons, the tooltip names the page first as Vortex's does

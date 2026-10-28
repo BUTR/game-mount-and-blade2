@@ -439,7 +439,7 @@ const requestMapAsync = (
           response.resume();
           fail(
             new MapBusyError(
-              "The server is still preparing this map, try again in a moment",
+              "The server is still preparing this map. Please try again in a moment.",
             ),
           );
           return;
@@ -627,18 +627,18 @@ const checkMapArchiveAsync = async (
   }
   if (entryCount > MAX_ARCHIVE_ENTRIES) {
     throw new InvalidMapError(
-      `The map archive from ${source} has ${entryCount} files, more than a map needs`,
+      `The map archive from ${source} contains too many files (${entryCount})`,
     );
   }
   if (totalBytes > MAX_EXTRACTED_BYTES) {
     throw new InvalidMapError(
-      `The map archive from ${source} unpacks to ${bytesToString(totalBytes)}, more than a map needs`,
+      `The map archive from ${source} is too large when extracted (${bytesToString(totalBytes)})`,
     );
   }
   const { bavail, bsize } = await fs.statfs(targetFolder);
   if (totalBytes + FREE_SPACE_MARGIN_BYTES > bavail * bsize) {
     throw new Error(
-      `The map unpacks to ${bytesToString(totalBytes)}, there is not enough free space for it in ${targetFolder}`,
+      `The map requires ${bytesToString(totalBytes)} of disk space, which exceeds the available free space in ${targetFolder}`,
     );
   }
 };

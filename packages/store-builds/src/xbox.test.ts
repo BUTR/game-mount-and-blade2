@@ -234,7 +234,7 @@ describe("Xbox packages", () => {
       });
 
       await expect(readXboxBuildAsync(contentPath)).rejects.toThrow(
-        "of another build than the installed one",
+        "does not match the installed build",
       );
     });
 

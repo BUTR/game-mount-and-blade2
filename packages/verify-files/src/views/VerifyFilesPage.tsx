@@ -18,6 +18,7 @@ import { useSelector } from "react-redux";
 import {
   archiveFilesAsync,
   deleteArchiveAsync,
+  getArchiveSpaceAsync,
   IFilesArchive,
   readArchivesAsync,
   renameArchiveAsync,
@@ -193,29 +194,28 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       steam: {
         label: t("Verify in Steam"),
         title: t(
-          "Steam restores the missing and changed files of the game. It doesn't remove extra files",
+          "Steam restores missing and modified game files without removing extra files",
         ),
       },
       gog: {
         label: t("Open in GOG Galaxy"),
         title: t(
-          "GOG Galaxy's Verify / Repair, in the game's settings, restores the missing and changed files of the game. " +
-            "It doesn't remove extra files",
+          "Verify / Repair in GOG Galaxy's game settings restores missing and modified game files without removing " +
+            "extra files",
         ),
       },
       epic: {
         label: t("Verify in Epic"),
         title: t(
-          "The Epic Games Launcher queues a verification of the game, its notification says the game reported an " +
-            "installation problem. It restores the missing and changed files of the game. It doesn't remove extra " +
-            "files",
+          "Verifies the game in the Epic Games Launcher to restore missing and modified game files without removing " +
+            "extra files",
         ),
       },
       xbox: {
         label: t("Open in the Xbox App"),
         title: t(
-          "The Xbox app's Verify and repair, in the game's Manage under Files, restores the missing and changed " +
-            "files of the game. It doesn't remove extra files",
+          "Verify and repair in the Xbox app (Manage > Files) restores missing and modified game files without " +
+            "removing extra files",
         ),
       },
     } satisfies Record<VerifyStore, { label: string; title: string }>
@@ -301,8 +301,34 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       if (gamePath === undefined || report === null || toRemove.length === 0) {
         return;
       }
-      const confirmLabel = mode === "archive" ? t("Archive") : t("Delete");
       const count = `${toRemove.length}`;
+      // Archiving is offered only when the archive fits. When the space can't be read, archiving checks it again
+      if (mode === "archive") {
+        const space = await getArchiveSpaceAsync(toRemove).catch(
+          (): undefined => undefined,
+        );
+        if (space !== undefined && space.free < space.required) {
+          await api.showDialog?.(
+            "info",
+            t("Not Enough Disk Space"),
+            {
+              text: t(
+                "Archiving these {{count}} files requires {{required}} of free space on {{drive}} (where Vortex " +
+                  "stores archives), but only {{free}} is available. Free up space on the drive and try again.",
+                {
+                  count,
+                  required: formatSize(space.required),
+                  drive: space.drive,
+                  free: formatSize(space.free),
+                },
+              ),
+            },
+            [{ label: t("Close") }],
+          );
+          return;
+        }
+      }
+      const confirmLabel = mode === "archive" ? t("Archive") : t("Delete");
       const size = formatSize(
         toRemove.reduce((total, file) => total + (file.size ?? 0), 0),
       );
@@ -319,9 +345,9 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       const text =
         mode === "archive"
           ? t(
-              "Move these {{count}} files ({{size}}) out of the game folder into an archive? They're stored " +
-                "uncompressed, so the archive takes the same space. They're removed from the game folder only once " +
-                "the archive is complete, and can be restored from Archives.",
+              "Move these {{count}} files ({{size}}) out of the game folder into an archive? Files are stored " +
+                "uncompressed (using the same disk space) and are only removed from the game folder once the " +
+                "archive is complete. You can restore them anytime from the Archives tab.",
               { count, size },
             )
           : toRemove.length === 1
@@ -343,7 +369,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
                     id: ARCHIVE_NAME_INPUT,
                     type: "text",
                     label: t("Name (optional)"),
-                    placeholder: t("Like the mods the files are from"),
+                    placeholder: t("e.g., manual mods backup"),
                   },
                 ],
               }
@@ -427,9 +453,9 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
           t("Game Version Mismatch"),
           {
             text: t(
-              "The files of {{archive}} were archived from {{archived}}, the game is now {{installed}}. Mods " +
-                "made for one version of the game often don't work with another, and can keep it from starting. " +
-                "Restore them anyway?",
+              "The files in '{{archive}}' were archived from {{archived}}, but the installed game is now " +
+                "{{installed}}. Mods built for a different game version may cause crashes or prevent the game " +
+                "from starting. Restore them anyway?",
               {
                 archive: archiveName,
                 archived: formatGameVersion(t, mismatch.archived),
@@ -458,9 +484,9 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
           t("Modules Already in the Game Folder"),
           {
             text: t(
-              "The game folder has these modules of {{archive}} again. Restoring adds the archived files the " +
-                "folders don't have, mixing two versions of a module, which can break it. Files the folders " +
-                "have are left as they are either way.",
+              "The game folder already contains these modules from '{{archive}}'. Restoring will add any missing " +
+                "files from the archive into those folders, which may mix two different versions of a module and " +
+                "cause issues. Existing files will not be overwritten.",
               { archive: archiveName },
             ),
             message: conflicts
@@ -482,7 +508,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
             api.sendNotification?.({
               type: "info",
               message: t(
-                "Nothing to restore, the game folder has all of the modules again",
+                "Nothing to restore — all modules in this archive already exist in the game folder",
               ),
               displayMS: 5000,
             });
@@ -502,8 +528,8 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
           t("Restore Files"),
           {
             text: t(
-              "Put {{count}} files of the archive {{archive}} back into the game folder? Files the game folder " +
-                "has again are left as they are. The archive is kept.",
+              "Restore {{count}} files from '{{archive}}' to the game folder? Existing files in the game folder " +
+                "will not be overwritten, and the archive itself will be kept.",
               { count, archive: archiveName },
             ),
           },
@@ -530,7 +556,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
               skipped === 0
                 ? t("Restored {{count}} files", { count: `${restored}` })
                 : t(
-                    "Restored {{count}} files, {{skipped}} were left as the game folder has them again",
+                    "Restored {{count}} files ({{skipped}} existing files were skipped)",
                     { count: `${restored}`, skipped: `${skipped}` },
                   ),
             displayMS: 5000,
@@ -548,7 +574,9 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
         "question",
         t("Rename Archive"),
         {
-          text: t("A blank name shows the archive by its date."),
+          text: t(
+            "Leave the name blank to display the archive's creation date instead.",
+          ),
           input: [
             {
               id: ARCHIVE_NAME_INPUT,
@@ -586,7 +614,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
         t("Delete Archive"),
         {
           text: t(
-            "Delete the archive {{archive}}? Its {{count}} files can't be restored then.",
+            "Permanently delete the archive '{{archive}}'? Its {{count}} files will no longer be restorable.",
             {
               archive:
                 archive.name ?? new Date(archive.createdAt).toLocaleString(),
@@ -649,8 +677,8 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
             spin={working}
             disabled={working || loading}
             title={t(
-              "Moves the extra files the list shows into an archive, except the ones Vortex and the store " +
-                "manage. They can be restored from Archives",
+              "Moves the listed extra files into an archive (excluding files managed by Vortex or the store). " +
+                "You can restore them from the Archives tab.",
             )}
             onClick={() => void removeAsync(deletable, "archive")}
           >
@@ -679,16 +707,15 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       subtitle={
         report !== null
           ? t(
-              "The game folder compared to the files of {{version}} from {{store}}. Mods copied into the game " +
-                "folder by hand, the files that usually break the game, are listed as Unexpected.",
+              "Comparing your game folder against {{version}} ({{store}}). Manually installed mods and other files " +
+                "that can cause conflicts are listed under Unexpected.",
               {
                 store: storeName,
                 version: formatGameVersion(t, report),
               },
             )
           : t(
-              "The game folder compared to the files of the {{store}} build, to find the files that don't belong " +
-                "to it.",
+              "Comparing your game folder against the {{store}} build to find extra, modified, or missing files.",
               { store: storeName },
             )
       }
@@ -822,7 +849,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
           description={
             view === "unexpected"
               ? t(
-                  "Every file in the game folder is part of the game, was deployed by Vortex or was created by the game.",
+                  "Every file in the game folder belongs to the base game, was deployed by Vortex, or was generated by the game.",
                 )
               : t("The game folder has no files of this kind.")
           }
@@ -859,20 +886,20 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       return (
         <EmptyState
           icon="feedback-warning"
-          title={t("{{store}}'s file list of this build is missing", {
+          title={t("{{store}}'s file list for this build is missing", {
             store: storeName,
           })}
           description={
             report.store === "gog"
               ? t(
-                  "GOG installs the file list of the game next to it, but the one of product {{products}} is " +
-                    "gone. Repairing the game in GOG Galaxy brings it back.",
+                  "GOG stores its file list in the game folder, but the manifest for product {{products}} is " +
+                    "missing. Repair the game in GOG Galaxy to restore it.",
                   { products: missing },
                 )
               : // Steam's, Epic's and Xbox's manifests have the whole build, a missing one is an error
                 t(
-                  "Steam doesn't always keep the file lists of the builds it installs, the one of depot {{depots}} " +
-                    "isn't on this computer. Verifying the game in Steam once downloads it, then verify here again.",
+                  "Steam has not cached the file list for depot {{depots}} on this PC. Verify the game files in " +
+                    "Steam once to download it, then click Verify Again here.",
                   { depots: missing },
                 )
           }
@@ -905,11 +932,11 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
             title={
               !report.sizesKnown
                 ? t(
-                    "GOG Galaxy didn't install the game, so the sizes of its files and the changed files are unknown",
+                    "The game was not installed through GOG Galaxy, so expected file sizes are unavailable and modified files cannot be detected",
                   )
                 : report.store === "xbox" && !report.contentsChecked
                   ? t(
-                      "Gaming Services' record of unmodified files couldn't be read, only files whose size changed are found",
+                      "Could not read Gaming Services' unmodified file markers; only files with changed sizes can be detected",
                     )
                   : undefined
             }

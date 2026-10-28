@@ -40,7 +40,7 @@ export const collectionInstallBLSEAsync = async (
     type: "info",
     title: t("BLSE Required"),
     message: t(
-      `BLSE is required by the collection. Ensuring it is installed and it's dependencies...`,
+      `This collection requires BLSE. Installing BLSE and its dependencies...`,
     ),
   });
 

@@ -191,14 +191,14 @@ const warningNote = (
       ? [`${heading}\n${modules.map((module) => `- ${module}`).join("\n")}`]
       : [];
   const notes = [
-    ...list(t("Not installed, so left out:"), plan.missing),
-    ...list(t("In other versions than the save's:"), plan.mismatched),
+    ...list(t("Missing (not installed):"), plan.missing),
+    ...list(t("Installed version differs from save:"), plan.mismatched),
   ];
   if (notes.length === 0) {
     return "";
   }
   const warning = t(
-    "Warning: not every mod is available as the save was made with it. The game may refuse to load the save, or it may break.",
+    "Warning: Some mods required by this save are missing or have different versions. The save may fail to load or become unstable.",
   );
   return `\n\n${warning}\n\n${notes.join("\n\n")}`;
 };
@@ -225,8 +225,8 @@ export const applySaveLoadOrderAsync = async (
     {
       text:
         t(
-          "Vortex will enable the mods '{{save}}' was made with in '{{profile}}', and set its load order to the save's: " +
-            "the save's modules first in its order, the others turned off. No mod is disabled.",
+          "Vortex will enable the mods used by '{{save}}' in '{{profile}}' and apply the save's load order " +
+            "(enabling the save's modules in order and unchecking the rest). No mods will be disabled in Vortex.",
           { save: save.name, profile: profile.name },
         ) + warningNote(t, plan),
     },
@@ -291,8 +291,8 @@ export const createProfileForSaveAsync = async (
     {
       text:
         t(
-          "Vortex will create a Singleplayer profile with only the mods '{{save}}' was made with, in the save's load " +
-            "order, set it to load the save on launch, and switch to it. Your current profile is not changed.",
+          "Vortex will create a new Singleplayer profile with only the mods and load order used by '{{save}}', " +
+            "set it to load this save on launch, and switch to it. Your current profile will not be changed.",
           { save: save.name },
         ) + warningNote(t, plan),
       input: [

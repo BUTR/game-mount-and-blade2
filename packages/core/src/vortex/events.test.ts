@@ -114,7 +114,7 @@ describe("installedMod", () => {
       expect.objectContaining({
         type: "warning",
         message:
-          "'mod' was removed: it doesn't include binaries for the Xbox version of the game",
+          "'mod' was removed because it does not include binaries for the Xbox version of the game.",
       }),
     );
   });
@@ -254,7 +254,7 @@ describe("addedFilesEventAsync", () => {
 
     expect(api.showErrorNotification).toHaveBeenCalledTimes(1);
     expect(api.showErrorNotification).toHaveBeenCalledWith(
-      "Failed to import added file to mod!",
+      "Failed to import generated file into mod",
       expect.any(Error),
     );
     expect(

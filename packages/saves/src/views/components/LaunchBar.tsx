@@ -52,8 +52,8 @@ export const LaunchBar: FC<LaunchBarProps> = (props) => {
           <strong>{t("Launch straight into a save with BLSE")}</strong>
           <span className="bls-muted">
             {t(
-              "With the Bannerlord Software Extender, Vortex can start the game in the save you pick here. " +
-                "Without it the game opens at the main menu, and the list below only checks your saves against your mods.",
+              "With Bannerlord Software Extender (BLSE) installed, Vortex can launch the game directly into a selected save. " +
+                "Without BLSE, the game always starts at the main menu.",
             )}
           </span>
         </div>
@@ -73,10 +73,8 @@ export const LaunchBar: FC<LaunchBarProps> = (props) => {
     <div className="bls-launch-bar bls-small">
       <Icon name="launch-application" className="bls-launch-icon" />
       <div className="bls-launch-text">
-        <span className="bls-title-xs">{t("Launching from Vortex Loads")}</span>
-        <strong>
-          {launchSave?.name ?? t("No save, the game opens at the main menu")}
-        </strong>
+        <span className="bls-title-xs">{t("Save Loaded on Launch")}</span>
+        <strong>{launchSave?.name ?? t("None (opens to main menu)")}</strong>
       </div>
       {launchSave !== null && (
         <ActionButton variant="subdued" onClick={() => void onLaunchSave(null)}>

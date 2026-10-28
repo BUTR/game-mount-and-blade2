@@ -88,7 +88,7 @@ const warnAboutOtherCopiesOrThrow = (api: types.IExtensionApi): void => {
     type: "warning",
     title: t("Another copy of the Bannerlord extension is installed"),
     message: t(
-      "Version {{versions}} is loaded next to {{version}} and breaks the load order. Remove it and restart Vortex",
+      "Version {{versions}} is installed alongside {{version}}, which will break your load order. Remove the old extension and restart Vortex.",
       { versions, version: __EXTENSION_VERSION__ },
     ),
     actions:

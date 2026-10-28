@@ -122,7 +122,7 @@ export const PingCell: FC<{
     return (
       <span
         className="bls-muted"
-        title={t("Pinged once the lobby lists the servers")}
+        title={t("Measured after fetching the server list")}
       >
         -
       </span>
@@ -139,7 +139,7 @@ export const PingCell: FC<{
     return (
       <span
         className="bls-muted"
-        title={t("No answer to a ping or a TCP connection")}
+        title={t("No response to ping or TCP connection")}
       >
         -
       </span>
@@ -152,7 +152,7 @@ export const PingCell: FC<{
         <span
           className="bls-ping"
           title={t(
-            "Timed with a TCP connection to port {{port}}, the server doesn't answer ping",
+            "Measured via TCP on port {{port}} (server does not respond to ping)",
             { port: `${row.port}` },
           )}
         >
@@ -165,8 +165,8 @@ export const PingCell: FC<{
         <span
           className="bls-ping"
           title={t(
-            "Estimated: the server answers neither ping nor TCP, this is the round trip to {{router}}, " +
-              "the last router in its network",
+            "Estimated: Server does not respond to ping or TCP. Showing round-trip time to {{router}} " +
+              "(the last reachable hop on its route).",
             { router: ping.via ?? "" },
           )}
         >

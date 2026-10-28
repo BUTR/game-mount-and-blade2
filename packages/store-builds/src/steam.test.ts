@@ -569,7 +569,7 @@ describe("readSteamBuildAsync", () => {
     });
 
     await expect(readSteamBuildAsync(gamePath, [])).rejects.toThrow(
-      "app manifest of the game wasn't found",
+      "app manifest for the game wasn't found",
     );
   });
 

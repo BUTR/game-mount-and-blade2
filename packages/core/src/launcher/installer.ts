@@ -160,16 +160,16 @@ export const installModuleAsync = async (
       );
       const dialogResult = await api.showDialog?.(
         "question",
-        t(`Compatibility Issue With Game Pass PC Version of the Game!`),
+        t(`Compatibility Issue With Game Pass PC Version of the Game`),
         {
           message: t(
             `The following mods:
 {{ modName }}
 
-Do not provide binaries for Game Pass PC (Xbox)!
-Do you want to install binaries for Steam/GOG/Epic version of the game?
+Do not provide binaries for the Xbox Game Pass PC version of the game.
+Do you want to install the Steam/GOG/Epic binaries instead?
 
-Warning! This can lead to issues!`,
+Warning: This may cause stability issues or crashes.`,
             { replace: { modName: modName } },
           ),
         },

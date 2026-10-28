@@ -240,8 +240,8 @@ const ServerJoinGate: FC<{ join: SidebarJoin; t: Localize }> = ({
         </span>
         <span>
           {t(
-            "Server Join is a small mod that joins the server for you once the game reaches the multiplayer " +
-              "lobby. Install it once, every server uses it.",
+            "Server Join is a lightweight mod that automatically connects you to the server once the game reaches the multiplayer " +
+              "lobby. You only need to install it once.",
           )}
         </span>
       </div>
@@ -317,7 +317,7 @@ const getDisabledReason = (
   t: Localize,
 ): string | undefined =>
   join.joining
-    ? t("A server is being joined already")
+    ? t("Already joining a server")
     : blockers.length > 0
       ? blockers.join("\n")
       : undefined;
@@ -649,11 +649,14 @@ const ModuleLink: FC<{
           disabled={busy}
           title={
             serverProfile !== null
-              ? t("{{mod}} is enabled in {{profile}}, switch to it", {
-                  mod: requirement.name,
-                  profile: serverProfile,
-                })
-              : t("Enable {{mod}}, it is installed in Vortex already", {
+              ? t(
+                  "{{mod}} is enabled in '{{profile}}' — switch to that profile",
+                  {
+                    mod: requirement.name,
+                    profile: serverProfile,
+                  },
+                )
+              : t("Enable {{mod}} (already installed in Vortex)", {
                   mod: requirement.name,
                 })
           }
@@ -1036,7 +1039,7 @@ const MapsSection: FC<{
           { port: `${row.port}` },
         )}
         {row.lobby === null &&
-          ` ${t("If the server runs on this PC, refresh the lobby: once it lists the server, Vortex reaches it here.")}`}
+          ` ${t("If this server is running on your PC, refresh the lobby so Vortex can connect to it locally.")}`}
       </p>
     );
   } else if (probe.state === "invalid") {
@@ -1129,7 +1132,7 @@ const EmptySidebar: FC<{ t: Localize }> = ({ t }) => (
     icon="game"
     title={t("Select a server")}
     description={t(
-      "Its required mods, custom maps and join options show up here.",
+      "Select a server to view its required mods, custom maps, and join options.",
     )}
   />
 );
@@ -1273,7 +1276,7 @@ export const Sidebar: FC<SidebarProps> = (props) => {
         {!knowsModules && (
           <p className="bls-muted">
             {t(
-              "Unknown, the server is not listed by the lobby and has no BUTR server extension",
+              "Unknown (server is not listed in the lobby and does not run the BUTR server extension)",
             )}
           </p>
         )}
@@ -1352,17 +1355,17 @@ export const Sidebar: FC<SidebarProps> = (props) => {
           <dd>
             {row.ping === undefined
               ? row.lobby === null
-                ? t("Pinged once the lobby lists the server")
+                ? t("Measured after fetching the server list")
                 : t("Pinging...")
               : row.ping === null
-                ? t("No answer")
+                ? t("No response")
                 : row.ping.method === "tcp"
-                  ? t("{{ms}} ms, over TCP, the server doesn't answer ping", {
+                  ? t("{{ms}} ms via TCP (server does not respond to ping)", {
                       ms: `${row.ping.ms}`,
                     })
                   : row.ping.method === "route"
                     ? t(
-                        "About {{ms}} ms, estimated from {{router}}, the last router in the server's network",
+                        "~{{ms}} ms (estimated from {{router}}, the last reachable hop on its route)",
                         { ms: `${row.ping.ms}`, router: row.ping.via ?? "" },
                       )
                     : t("{{ms}} ms", { ms: `${row.ping.ms}` })}

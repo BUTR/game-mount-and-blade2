@@ -622,7 +622,7 @@ describe("with a game folder", () => {
           userAgent: "Test Agent",
           archiver,
         }),
-      ).rejects.toThrow(/unpacks to 16\.00 GB, more than a map needs/);
+      ).rejects.toThrow(/is too large when extracted \(16\.00 GB\)/);
       expect(archiver.extractFull).not.toHaveBeenCalled();
     });
 
@@ -638,7 +638,7 @@ describe("with a game folder", () => {
           userAgent: "Test Agent",
           archiver,
         }),
-      ).rejects.toThrow(/has 100001 files, more than a map needs/);
+      ).rejects.toThrow(/contains too many files \(100001\)/);
       expect(archiver.extractFull).not.toHaveBeenCalled();
     });
 
@@ -659,7 +659,7 @@ describe("with a game folder", () => {
             userAgent: "Test Agent",
             archiver,
           }),
-        ).rejects.toThrow(/not enough free space/);
+        ).rejects.toThrow(/exceeds the available free space/);
       } finally {
         statfs.mockRestore();
       }
@@ -810,7 +810,7 @@ describe("with a game folder", () => {
       let settled = false;
       const rejection = expect(promise)
         .rejects.toThrow(
-          "The server is still preparing this map, try again in a moment",
+          "The server is still preparing this map. Please try again in a moment.",
         )
         .finally(() => {
           settled = true;

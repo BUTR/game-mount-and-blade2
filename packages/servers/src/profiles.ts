@@ -230,7 +230,7 @@ export const getServerProfileBlockers = (
   }
   for (const mismatch of plan.wrongVersion) {
     blockers.push(
-      `The server needs ${mismatch.name} ${mismatch.wanted}, Vortex has ${mismatch.available.join(", ")}.`,
+      `The server requires ${mismatch.name} ${mismatch.wanted}, but you have ${mismatch.available.join(", ")} installed.`,
     );
   }
   return blockers;

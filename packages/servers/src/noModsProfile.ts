@@ -40,9 +40,9 @@ export const watchNoModsProfile = (api: types.IExtensionApi): void => {
           api.sendNotification?.({
             id: `bannerlord-no-mods-profile-type-${profile.id}`,
             type: "warning",
-            title: t("The No Mods profile stays Multiplayer"),
+            title: t("Cannot change No Mods profile to Singleplayer"),
             message: t(
-              "'{{profile}}' is shared across all unmodded servers, so it can't be changed to Singleplayer.",
+              "'{{profile}}' is shared across all unmodded servers and must remain a Multiplayer profile.",
               { profile: profile.name },
             ),
           });

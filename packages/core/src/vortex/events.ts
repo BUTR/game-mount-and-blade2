@@ -64,7 +64,7 @@ export const addedFilesEventAsync = async (
     } catch (err) {
       const { localize: t } = LocalizationManager.getInstance(api);
       api.showErrorNotification?.(
-        t("Failed to import added file to mod!"),
+        t("Failed to import generated file into mod"),
         err,
       );
     }
@@ -107,7 +107,7 @@ export const installedMod = (
   api.sendNotification?.({
     type: "warning",
     message: t(
-      `'{{name}}' was removed: it doesn't include binaries for the {{store}} version of the game`,
+      `'{{name}}' was removed because it does not include binaries for the {{store}} version of the game.`,
       { replace: { name: util.renderModName(mod), store: store } },
     ),
   });

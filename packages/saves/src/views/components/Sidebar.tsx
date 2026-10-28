@@ -182,12 +182,12 @@ const LoadOrderSection: FC<{
         <div className="bls-alert bls-small" role="status">
           <span className="bls-alert-heading">
             <Icon name="feedback-warning" />
-            {t("Not every mod is available as the save was made with it")}
+            {t("Some required mods are missing or have different versions")}
           </span>
           <span>
             {t(
-              "Some are missing or in other versions, see Compatibility above. The save's load order can still be " +
-                "used, but the game may refuse to load the save, or it may break.",
+              "Check Compatibility above for details. You can still apply this save's load order, " +
+                "but the game may fail to load the save or become unstable.",
             )}
           </span>
         </div>
@@ -195,13 +195,13 @@ const LoadOrderSection: FC<{
       {matches ? (
         <p className="bls-ok-note">
           <Icon name="toggle-enabled" className="bls-ok" />
-          {t("Your load order is the one this save was made with.")}
+          {t("Your current load order matches this save.")}
         </p>
       ) : (
         <p className="bls-muted">
           {t(
-            "Your load order differs from the one this save was made with. Use the save's here, " +
-              "or keep your profile as it is and give the save a profile of its own.",
+            "Your current load order differs from this save. You can apply the save's load order to your current profile, " +
+              "or create a dedicated profile for this save.",
           )}
         </p>
       )}
@@ -211,9 +211,7 @@ const LoadOrderSection: FC<{
         icon={actions.busy ? "spinner" : "sort-none"}
         disabled={actions.busy || matches}
         title={
-          matches
-            ? t("Your load order is the one this save was made with")
-            : undefined
+          matches ? t("Your current load order matches this save") : undefined
         }
         onClick={() => void actions.onUse(save)}
       >
@@ -310,7 +308,7 @@ const EmptySidebar: FC<{ t: Localize }> = ({ t }) => (
     icon="savegame"
     title={t("Select a save")}
     description={t(
-      "Its campaign, the mods it was made with and any problems show up here.",
+      "Select a save to view its campaign details, required mods, and any compatibility issues.",
     )}
   />
 );

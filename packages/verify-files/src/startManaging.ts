@@ -39,15 +39,15 @@ export const getStartManagingText = (
 ): string =>
   count === 1
     ? t(
-        "1 file doesn't match the {{store}} build and wasn't deployed by Vortex, like a mod copied in by hand or " +
-          "a changed game file. Such files often break the game and the mods Vortex installs. Review it on the " +
-          "Game files page, where it can be archived or deleted.",
+        "1 file in the game folder does not match the {{store}} build and was not deployed by Vortex (such as a " +
+          "manually installed mod or a modified game file). These files can cause crashes or mod conflicts. Review " +
+          "it on the Game Files page to archive or delete it.",
         { store },
       )
     : t(
-        "{{count}} files don't match the {{store}} build and weren't deployed by Vortex, like mods copied in by " +
-          "hand or changed game files. They often break the game and the mods Vortex installs. Review them on the " +
-          "Game files page, where they can be archived or deleted.",
+        "{{count}} files in the game folder do not match the {{store}} build and were not deployed by Vortex (such as " +
+          "manually installed mods or modified game files). These files can cause crashes or mod conflicts. Review " +
+          "them on the Game Files page to archive or delete them.",
         { count: `${count}`, store },
       );
 

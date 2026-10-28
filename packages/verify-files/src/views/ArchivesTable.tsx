@@ -154,8 +154,8 @@ export const ArchivesTable: FC<ArchivesTableProps> = (props) => {
         icon="archive"
         title={t("No archives yet")}
         description={t(
-          "Files you move to an archive are kept in a .zip next to Vortex's data of the game, and can be " +
-            "restored into the game folder from here.",
+          "Archived files are stored in a .zip file in Vortex's game data folder and can be " +
+            "restored to your game folder from here.",
         )}
       />
     );

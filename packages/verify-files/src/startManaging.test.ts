@@ -124,7 +124,9 @@ describe("startManaging", () => {
       .mock.calls[0]!;
     expect(shownReport.store).toBe("steam");
     expect(content.title).toBe("The Game Folder Has Unexpected Files");
-    expect(content.text).toMatch(/^5 files don't match the Steam build/);
+    expect(content.text).toMatch(
+      /^5 files in the game folder do not match the Steam build/,
+    );
     expect(content.actions).toEqual([
       { id: "close", label: "Close" },
       { id: "review", label: "Review", primary: true },
@@ -149,7 +151,9 @@ describe("startManaging", () => {
     await flushAsync();
 
     const { text } = vi.mocked(showUnexpectedFilesAsync).mock.calls[0]![3];
-    expect(text).toMatch(/^1 file doesn't match the Steam build/);
+    expect(text).toMatch(
+      /^1 file in the game folder does not match the Steam build/,
+    );
   });
 
   it("opens the Game files page from the dialog", async () => {

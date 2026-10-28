@@ -33,7 +33,7 @@ const getRestoreLabel = (t: Localize, row: ArchivedFileRow): string =>
   row.present === undefined
     ? ""
     : row.present
-      ? t("Skipped, in the game")
+      ? t("Skipped (already exists)")
       : t("Restored");
 
 const isRestorable = (row: ArchivedFileRow): boolean => row.present === false;
@@ -78,14 +78,16 @@ const getColumns = (
               name="feedback-info"
               className="bls-muted"
               tooltip={t(
-                "The game folder has this file again, restoring leaves it as it is",
+                "This file already exists in the game folder and will not be overwritten when restoring",
               )}
             />
           ) : (
             <tooltip.Icon
               name="toggle-enabled"
               className="bls-ok"
-              tooltip={t("Restoring puts this file back into the game folder")}
+              tooltip={t(
+                "Restoring will place this file back into the game folder",
+              )}
             />
           )}
           <span className="bls-status-label">{getRestoreLabel(t, row)}</span>
@@ -180,7 +182,7 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
       },
       {
         id: "skipped",
-        label: t("Skipped, in the game"),
+        label: t("Skipped (already exists)"),
         matches: (row: ArchivedFileRow) => row.present === true,
       },
     ],
@@ -272,7 +274,7 @@ export const ArchiveFiles: FC<ArchiveFilesProps> = (props) => {
           spin={busy}
           disabled={busy}
           title={t(
-            "Puts the files the list shows back into the game folder, except the ones it has again",
+            "Restores the listed files to the game folder, skipping any files that already exist",
           )}
           onClick={() => restore(restorable)}
         >

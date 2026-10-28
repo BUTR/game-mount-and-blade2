@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { log, selectors, types } from "@nexusmods/vortex-api";
-import { archiveFilesAsync } from "./archive";
+import { archiveFilesAsync, getArchiveSpaceAsync } from "./archive";
 import { IVerifyFile, IVerifyFilesReport, VerifyFileSource } from "./types";
 import { showUnexpectedFilesAsync } from "./unexpectedFilesDialog";
 import { getVerifyStore, verifyFilesAsync } from "./verify";
@@ -25,7 +25,10 @@ vi.mock("@bannerlord/core/localization/manager", () => ({
     }),
   },
 }));
-vi.mock("./archive", () => ({ archiveFilesAsync: vi.fn() }));
+vi.mock("./archive", () => ({
+  archiveFilesAsync: vi.fn(),
+  getArchiveSpaceAsync: vi.fn(),
+}));
 vi.mock("./unexpectedFilesDialog", () => ({
   showUnexpectedFilesAsync: vi.fn(),
 }));
@@ -123,6 +126,11 @@ describe("collectionInstall", () => {
       ]),
     );
     vi.mocked(showUnexpectedFilesAsync).mockResolvedValue("continue");
+    vi.mocked(getArchiveSpaceAsync).mockResolvedValue({
+      required: 300 * 1024 * 1024,
+      free: 10 * 1024 * 1024 * 1024,
+      drive: "C:\\",
+    });
     vi.mocked(archiveFilesAsync).mockResolvedValue({
       kept: [],
     } as unknown as Awaited<ReturnType<typeof archiveFilesAsync>>);
@@ -153,10 +161,12 @@ describe("collectionInstall", () => {
       "bin/Win64_Shipping_Client/mono-2.0-sgen.dll",
     ]);
     expect(content.text).toMatch(
-      /^Bannerlord Overhaul is best installed on a clean game folder, but 3 files/,
+      /^Bannerlord Overhaul works best with a clean game folder, but 3 files/,
     );
     // The changed file can't be archived, the text says how to restore it
-    expect(content.text).toContain("verifying the game in Steam restores them");
+    expect(content.text).toContain(
+      "Verify your game files in Steam to restore them",
+    );
     expect(content.actions).toEqual([
       { id: "continue", label: "Continue Without Cleaning" },
       {
@@ -255,6 +265,53 @@ describe("collectionInstall", () => {
     );
   });
 
+  it("measures the space archiving the extra files needs", async () => {
+    await willInstallMod(GAME_ID, "collection");
+
+    expect(
+      vi
+        .mocked(getArchiveSpaceAsync)
+        .mock.calls[0]![0].map((measured) => measured.path),
+    ).toEqual(["Modules/MyMod/a.dll", "Modules/Manual/b.dll"]);
+  });
+
+  it("doesn't offer archiving when the archives' drive doesn't have the space", async () => {
+    vi.mocked(getArchiveSpaceAsync).mockResolvedValue({
+      required: 300 * 1024 * 1024,
+      free: 100 * 1024 * 1024,
+      drive: "C:\\",
+    });
+
+    await willInstallMod(GAME_ID, "collection");
+
+    const content = vi.mocked(showUnexpectedFilesAsync).mock.calls[0]![3];
+    expect(content.actions).toEqual([
+      { id: "continue", label: "Continue", primary: true },
+    ]);
+    expect(content.text).toContain(
+      "Archiving requires 300.0 MB of free space on C:\\ (where Vortex stores archives), but only 100.0 MB is " +
+        "available.",
+    );
+    expect(content.text).not.toContain("Archiving moves");
+  });
+
+  it("offers archiving when the free space can't be read, archiving checks it itself", async () => {
+    vi.mocked(getArchiveSpaceAsync).mockRejectedValue(new Error("EPERM"));
+
+    await willInstallMod(GAME_ID, "collection");
+
+    const content = vi.mocked(showUnexpectedFilesAsync).mock.calls[0]![3];
+    expect(content.actions.map((action) => action.id)).toEqual([
+      "continue",
+      "archive",
+    ]);
+    expect(log).toHaveBeenCalledWith(
+      "warn",
+      "Failed to read the archives' free space",
+      expect.any(Error),
+    );
+  });
+
   it("only offers to go on when no file can be archived", async () => {
     vi.mocked(verifyFilesAsync).mockResolvedValue(
       report([file("unknown", { status: "missing" })]),
@@ -266,8 +323,11 @@ describe("collectionInstall", () => {
     expect(content.actions).toEqual([
       { id: "continue", label: "Continue", primary: true },
     ]);
-    expect(content.text).toMatch(/but 1 file in it doesn't match/);
+    expect(content.text).toMatch(
+      /but 1 file in your game folder does not match/,
+    );
     expect(content.text).not.toContain("Archiving");
+    expect(getArchiveSpaceAsync).not.toHaveBeenCalled();
   });
 
   it("doesn't show the dialog when only the game's, the store's and Vortex's files differ", async () => {

@@ -50,7 +50,7 @@ export const parseXboxSegmentMetadata = (
   // A newer format, like MSIXVC2's may be, is not guessed at
   if (data.readUInt32LE(4) > SEGMENT_METADATA_MAX_VERSION) {
     throw new Error(
-      "The Xbox package's segment metadata is of a newer format than the ones known",
+      "The Xbox package's segment metadata uses an unsupported newer format",
     );
   }
   const headerSize = data.readUInt32LE(12);
@@ -150,8 +150,8 @@ const readPackageFilesAsync = async (
     }
   }
   throw new Error(
-    `The Xbox package's file list in '${packagePath}' is of another build than the installed one. The Xbox app may ` +
-      "be updating the game, or the install is broken",
+    `The Xbox package's file list in '${packagePath}' does not match the installed build. The Xbox app may ` +
+      "be updating the game, or the installation is corrupted",
   );
 };
 

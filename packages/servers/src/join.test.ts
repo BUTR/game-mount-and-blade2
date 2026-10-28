@@ -202,7 +202,7 @@ describe("getJoinUnsupportedReason", () => {
           }),
         }),
       ),
-    ).toMatch(/doesn't allow optional mods/);
+    ).toMatch(/does not allow optional mods/);
   });
 
   it("accepts a server that lists the join module or allows optional modules", () => {
@@ -244,7 +244,7 @@ describe("getSharedJoinBlockers", () => {
     "can't join with the %s version",
     (store) => {
       expect(getSharedJoinBlockers(row(), { ...STEAM, store })).toEqual([
-        `Joining from Vortex needs the Steam or GOG version of the game, this is the ${store ?? "unknown"} version.`,
+        `Joining servers from Vortex requires the Steam or GOG version of the game (current version: ${store ?? "unknown"}).`,
       ]);
     },
   );
@@ -257,7 +257,7 @@ describe("getSharedJoinBlockers", () => {
       }),
     ).toEqual([
       "The server is not in the lobby list. Refresh the lobby to join it.",
-      "Bannerlord or another tool started from Vortex is running. Vortex doesn't deploy mods while it runs.",
+      "Bannerlord or another tool launched from Vortex is currently running. Close it before joining so Vortex can deploy mods.",
     ]);
   });
 });
@@ -336,7 +336,7 @@ describe("getCurrentProfileBlockers", () => {
   it("asks to install Server Join, or to enable it when Vortex has it", () => {
     expect(getCurrentProfileBlockers({}, [])[0]).toMatch(/^Install the BUTR/);
     expect(getCurrentProfileBlockers({}, [], true)[0]).toMatch(
-      /^Enable Server Join/,
+      /^Enable the Server Join module/,
     );
   });
 

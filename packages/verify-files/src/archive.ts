@@ -128,6 +128,49 @@ const writeFileAtomicAsync = async (
 };
 
 /**
+ * The free space of the drive the archives are on, their folder is made first
+ */
+const getArchivesFreeSpaceAsync = async (): Promise<number> => {
+  const archivesPath = getArchivesPath();
+  await fs.mkdir(archivesPath, { recursive: true });
+  const { bavail, bsize } = await fs.statfs(archivesPath);
+  return bavail * bsize;
+};
+
+export interface IArchiveSpace {
+  /**
+   * The archive's size with the space kept free besides it
+   */
+  required: number;
+  free: number;
+  /**
+   * The drive the archives are on, like C:   */
+  drive: string;
+}
+
+/**
+ * The space archiving the files needs and the space the archives' drive has, to offer archiving only when it fits.
+ * From the sizes the verifying found, archiving measures the files again and checks once more
+ */
+export const getArchiveSpaceAsync = async (
+  files: readonly IVerifyFile[],
+): Promise<IArchiveSpace> => {
+  const layout = layoutZip(
+    files.filter(isDeletable).map((file) => ({
+      name: file.path,
+      filePath: "",
+      size: file.size ?? 0,
+      mtime: new Date(0),
+    })),
+  );
+  return {
+    required: layout.size + FREE_SPACE_MARGIN,
+    free: await getArchivesFreeSpaceAsync(),
+    drive: path.parse(getArchivesPath()).root,
+  };
+};
+
+/**
  * Moves extra files of the game folder into a new zip, with their paths in the game folder. Only files that can be
  * deleted, the ones Vortex and the store don't manage.
  *
@@ -171,13 +214,11 @@ export const archiveFilesAsync = async (
   const layout = layoutZip(sources);
 
   const archivesPath = getArchivesPath();
-  await fs.mkdir(archivesPath, { recursive: true });
-  const { bavail, bsize } = await fs.statfs(archivesPath);
-  const free = bavail * bsize;
+  const free = await getArchivesFreeSpaceAsync();
   if (free < layout.size + FREE_SPACE_MARGIN) {
     throw new Error(
-      `The archive needs ${formatSize(layout.size + FREE_SPACE_MARGIN)} free on the drive of ` +
-        `'${archivesPath}', it has ${formatSize(free)}`,
+      `Archiving requires ${formatSize(layout.size + FREE_SPACE_MARGIN)} of free space on the drive containing ` +
+        `'${archivesPath}', but only ${formatSize(free)} is available`,
     );
   }
 

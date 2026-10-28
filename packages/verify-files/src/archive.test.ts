@@ -10,6 +10,7 @@ import {
 import {
   archiveFilesAsync,
   deleteArchiveAsync,
+  getArchiveSpaceAsync,
   getArchivesPath,
   IFilesArchive,
   readArchivesAsync,
@@ -278,7 +279,7 @@ describe("files archives", () => {
         await expect(
           archiveFilesAsync(gamePath, "steam", "1", [extra("a.txt")]),
         ).rejects.toThrow(
-          /^The archive needs 256\.0 MB free on the drive of '.*', it has 4\.0 KB$/,
+          /^Archiving requires 256\.0 MB of free space on the drive containing '.*', but only 4\.0 KB is available$/,
         );
       } finally {
         statfs.mockRestore();
@@ -286,6 +287,40 @@ describe("files archives", () => {
 
       expect(await readGameFileAsync("a.txt")).toBe("a");
       expect(await fs.readdir(getArchivesPath())).toEqual([]);
+    });
+  });
+
+  describe("getArchiveSpaceAsync", () => {
+    it("measures the archive of the files that can be archived, with the margin kept free", async () => {
+      const statfs = vi
+        .spyOn(fs, "statfs")
+        .mockResolvedValue({ bavail: 1000, bsize: 4096 } as Awaited<
+          ReturnType<typeof fs.statfs>
+        >);
+      try {
+        const space = await getArchiveSpaceAsync([
+          { ...extra("a.txt"), size: 10 },
+          { ...extra("Modules/B/b.dll"), size: 20 },
+          // Vortex's and changed files aren't archived
+          { ...extra("c.txt", "vortex"), size: 1000 },
+          { ...extra("d.txt"), status: "changed", size: 1000 },
+        ]);
+
+        const layout = layoutZip(
+          [
+            { name: "a.txt", size: 10 },
+            { name: "Modules/B/b.dll", size: 20 },
+          ].map((source) => ({ ...source, filePath: "", mtime: new Date(0) })),
+        );
+        expect(space).toEqual({
+          required: layout.size + 256 * 1024 * 1024,
+          free: 4096000,
+          drive: path.parse(getArchivesPath()).root,
+        });
+        expect(statfs).toHaveBeenCalledWith(getArchivesPath());
+      } finally {
+        statfs.mockRestore();
+      }
     });
   });
 

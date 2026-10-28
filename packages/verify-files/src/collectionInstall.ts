@@ -2,7 +2,12 @@ import { log, selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "@bannerlord/core/common";
 import { LocalizationManager } from "@bannerlord/core/localization/manager";
 import { Localize } from "@bannerlord/core/localization/types";
-import { archiveFilesAsync } from "./archive";
+import { formatSize } from "@bannerlord/ui/format";
+import {
+  archiveFilesAsync,
+  getArchiveSpaceAsync,
+  IArchiveSpace,
+} from "./archive";
 import { IVerifyFile, IVerifyFilesReport } from "./types";
 import { showUnexpectedFilesAsync } from "./unexpectedFilesDialog";
 import {
@@ -43,35 +48,51 @@ export const getCollectionText = (
   store: string,
   files: readonly IVerifyFile[],
   archivable: number,
+  /**
+   * The space archiving needs, when the archives' drive doesn't have it
+   */
+  missingSpace?: IArchiveSpace,
 ): string => {
   const name = collection !== "" ? collection : t("The collection");
   const parts = [
     files.length === 1
       ? t(
-          "{{collection}} is best installed on a clean game folder, but 1 file in it doesn't match the {{store}} " +
-            "build and wasn't deployed by Vortex. Such files, like mods copied in by hand, often break the " +
-            "collection's mods. The installation waits until you choose.",
+          "{{collection}} works best with a clean game folder, but 1 file in your game folder does not match the {{store}} " +
+            "build and was not deployed by Vortex. Manually installed files or modified game files can conflict with " +
+            "the collection. Choose how to handle this file before continuing.",
           { collection: name, store },
         )
       : t(
-          "{{collection}} is best installed on a clean game folder, but {{count}} files in it don't match the " +
-            "{{store}} build and weren't deployed by Vortex. Such files, like mods copied in by hand, often break " +
-            "the collection's mods. The installation waits until you choose.",
+          "{{collection}} works best with a clean game folder, but {{count}} files in your game folder do not match the " +
+            "{{store}} build and were not deployed by Vortex. Manually installed files or modified game files can conflict with " +
+            "the collection. Choose how to handle these files before continuing.",
           { collection: name, store, count: `${files.length}` },
         ),
   ];
-  if (archivable > 0) {
+  if (archivable > 0 && missingSpace !== undefined) {
     parts.push(
       t(
-        "Archiving moves the extra files out of the game folder, they can be restored from Archives on the Game " +
-          "files page.",
+        "Archiving requires {{required}} of free space on {{drive}} (where Vortex stores archives), but only " +
+          "{{free}} is available.",
+        {
+          required: formatSize(missingSpace.required),
+          drive: missingSpace.drive,
+          free: formatSize(missingSpace.free),
+        },
+      ),
+    );
+  } else if (archivable > 0) {
+    parts.push(
+      t(
+        "Archiving moves extra files out of the game folder so they can be restored later from the Archives tab on the " +
+          "Game Files page.",
       ),
     );
   }
   if (archivable < files.length) {
     parts.push(
       t(
-        "Changed and missing game files can't be archived, verifying the game in {{store}} restores them.",
+        "Modified and missing game files cannot be archived. Verify your game files in {{store}} to restore them.",
         { store },
       ),
     );
@@ -187,6 +208,19 @@ const checkBeforeCollectionAsync = async (
     return;
   }
   const archivable = unexpected.filter(isDeletable);
+  // Archiving is offered only when the archive fits. When the space can't be read, archiving checks it again itself
+  const space =
+    archivable.length > 0
+      ? await getArchiveSpaceAsync(archivable).catch(
+          (err: unknown): undefined => {
+            log("warn", "Failed to read the archives' free space", err);
+            return undefined;
+          },
+        )
+      : undefined;
+  const missingSpace =
+    space !== undefined && space.free < space.required ? space : undefined;
+  const canArchive = archivable.length > 0 && missingSpace === undefined;
   const action = await showUnexpectedFilesAsync(api, report, unexpected, {
     title: t("Clean the Game Folder Before Installing?"),
     text: getCollectionText(
@@ -195,20 +229,20 @@ const checkBeforeCollectionAsync = async (
       getStoreName(report.store),
       unexpected,
       archivable.length,
+      missingSpace,
     ),
-    actions:
-      archivable.length > 0
-        ? [
-            { id: "continue", label: t("Continue Without Cleaning") },
-            {
-              id: "archive",
-              label: t("Archive {{count}} Files and Continue", {
-                count: `${archivable.length}`,
-              }),
-              primary: true,
-            },
-          ]
-        : [{ id: "continue", label: t("Continue"), primary: true }],
+    actions: canArchive
+      ? [
+          { id: "continue", label: t("Continue Without Cleaning") },
+          {
+            id: "archive",
+            label: t("Archive {{count}} Files and Continue", {
+              count: `${archivable.length}`,
+            }),
+            primary: true,
+          },
+        ]
+      : [{ id: "continue", label: t("Continue"), primary: true }],
     dismissAction: "continue",
   });
   if (action === "archive") {

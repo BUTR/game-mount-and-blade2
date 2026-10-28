@@ -335,13 +335,13 @@ describe("readEpicBuildAsync", () => {
     await writeManifestAsync("B.manifest");
 
     await expect(readEpicBuildAsync(gamePath, undefined)).rejects.toThrow(
-      "manifest of the game wasn't found",
+      "manifest for the game wasn't found",
     );
   });
 
   it("throws without a manifest", async () => {
     await expect(readEpicBuildAsync(gamePath, epicDataPath)).rejects.toThrow(
-      "manifest of the game wasn't found",
+      "manifest for the game wasn't found",
     );
   });
 });

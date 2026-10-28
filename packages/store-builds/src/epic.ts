@@ -220,7 +220,7 @@ export const readEpicBuildAsync = async (
       );
     }
     throw new Error(
-      `The Epic Games Launcher's manifest of the game wasn't found in '${egstorePath}'`,
+      `The Epic Games Launcher's manifest for the game wasn't found in '${egstorePath}'`,
     );
   }
 

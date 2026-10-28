@@ -457,7 +457,7 @@ export const readSteamBuildAsync = async (
   }
   if (steamAppsPath === undefined || appManifest === undefined) {
     throw new Error(
-      `Steam's app manifest of the game wasn't found in ${steamAppsFolders
+      `Steam's app manifest for the game wasn't found in ${steamAppsFolders
         .map((folder) => `'${folder}'`)
         .join(", ")}`,
     );

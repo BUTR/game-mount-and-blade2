@@ -53,24 +53,20 @@ const getStatusTooltip = (t: Localize, file: IVerifyFile): string => {
   switch (file.status) {
     case "extra":
       return file.source === "manualMod"
-        ? t(
-            "A mod copied into the game folder by hand, not installed by Vortex",
-          )
+        ? t("A manually installed mod that is not managed by Vortex")
         : file.source === "unknown"
           ? t("Not part of the game and not deployed by Vortex")
           : t("Not part of the game");
     case "changed":
       // Found by Xbox's mark of unmodified files
       return file.size === file.expectedSize
-        ? t(
-            "Changed since the store installed it, or copied back, its size is the same",
-          )
+        ? t("Modified since installation (file size is unchanged)")
         : t("{{size}} instead of {{expected}}", {
             size: formatSize(file.size ?? 0),
             expected: formatSize(file.expectedSize ?? 0),
           });
     case "missing":
-      return t("A file of the game that isn't in the game folder");
+      return t("A base game file that is missing from the game folder");
   }
 };
 

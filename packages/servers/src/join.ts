@@ -66,7 +66,7 @@ export const getJoinUnsupportedReason = (row: IServerRow): string | null => {
     return null;
   }
   if (isOfficialServer(lobby)) {
-    return "Official servers are joined from the game. Vortex only joins community servers.";
+    return "Official servers must be joined from in-game. Vortex can only join community servers directly.";
   }
   // The client loads the join module, a server only accepts modules it lists unless it allows optional ones
   const listsJoinModule = (lobby.LoadedModules ?? []).some(
@@ -74,8 +74,8 @@ export const getJoinUnsupportedReason = (row: IServerRow): string | null => {
   );
   if (!listsJoinModule && !lobby.AllowsOptionalModules) {
     return (
-      "This server doesn't allow optional mods and doesn't list Server Join, so it would refuse the module " +
-      "Vortex joins with. Join it from the game."
+      "This server does not allow optional mods and does not include the Server Join module, " +
+      "so it cannot be joined directly from Vortex. Please join it from in-game."
     );
   }
   return null;
@@ -111,7 +111,7 @@ export const getSharedJoinBlockers = (
     !JOINABLE_STORES.includes(target.store)
   ) {
     blockers.push(
-      `Joining from Vortex needs the Steam or GOG version of the game, this is the ${target.store ?? "unknown"} version.`,
+      `Joining servers from Vortex requires the Steam or GOG version of the game (current version: ${target.store ?? "unknown"}).`,
     );
   }
   if (row.lobby === null) {
@@ -121,7 +121,7 @@ export const getSharedJoinBlockers = (
   }
   if (target.gameRunning) {
     blockers.push(
-      "Bannerlord or another tool started from Vortex is running. Vortex doesn't deploy mods while it runs.",
+      "Bannerlord or another tool launched from Vortex is currently running. Close it before joining so Vortex can deploy mods.",
     );
   }
   return blockers;
@@ -214,8 +214,8 @@ export const setUpServerJoinAsync = async (
  */
 export const getJoinModuleBlocker = (installedInVortex = false): string =>
   installedInVortex
-    ? `Enable Server Join (${JOIN_MODULE_ID}) in your current profile, it joins the server once the game is in the lobby.`
-    : `Install the BUTR Server Join module (${JOIN_MODULE_ID}), it joins the server once the game is in the lobby.`;
+    ? `Enable the Server Join module (${JOIN_MODULE_ID}) in your current profile to automatically join the server once the game reaches the multiplayer lobby.`
+    : `Install the BUTR Server Join module (${JOIN_MODULE_ID}) to automatically join the server once the game reaches the multiplayer lobby.`;
 
 /**
  * Why the server can't be joined with the mods deployed by the current profile

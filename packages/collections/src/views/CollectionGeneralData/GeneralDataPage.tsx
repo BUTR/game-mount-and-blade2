@@ -81,10 +81,9 @@ export const BannerlordGeneralDataPage: FC<BannerlordGeneralDataPageProps> = (
       </p>
       <p>
         {t(
-          `Enabled modules in the Load Order which are not part of the Collection will be marked as optional in the` +
-            `Collection load order and will not be mandatory for the user to have.
-            Official modules will be optional too, but the mods in your collection will require them to be installed, ` +
-            `which means that it's not possible for a user to install a collection without the official modules.`,
+          `Enabled modules in the Load Order that are not part of the collection will be marked as optional in the ` +
+            `collection's load order and will not be required by users installing it. ` +
+            `Official game modules are also marked as optional, as the mods in your collection already require them to be installed.`,
         )}
       </p>
       <LoadOrderEditInfo />

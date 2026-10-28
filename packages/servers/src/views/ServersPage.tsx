@@ -186,7 +186,7 @@ const getCurrentProfileRefusal = (
 };
 
 const SINGLEPLAYER_PROFILE_BLOCKER =
-  "The active profile is a Singleplayer profile. Servers are joined with Multiplayer profiles, switch to one on the Profiles page";
+  "The active profile is set to Singleplayer. Switch to a Multiplayer profile on the Profiles page to join servers.";
 
 // How often the player can ping every server again by hand
 const PING_COOLDOWN_MS = 10_000;
@@ -1005,7 +1005,7 @@ export const ServersPage: FC = () => {
       api.sendNotification?.({
         type: "info",
         message: t(
-          "Starting Bannerlord to join {{server}}. It joins once the game is in the multiplayer lobby.",
+          "Launching Bannerlord to join {{server}}. You will connect automatically once the game reaches the multiplayer lobby.",
           { server: row.lobby?.ServerName ?? formatServerAddress(row) },
         ),
         displayMS: 8000,
@@ -1134,25 +1134,25 @@ export const ServersPage: FC = () => {
           kind === "server"
             ? existing
               ? t(
-                  "Vortex will switch to the profile '{{profile}}' made for {{server}}, " +
-                    "make sure the mods the server needs are enabled there and start the game.",
+                  "Vortex will switch to the '{{profile}}' profile for {{server}}, " +
+                    "ensure the required mods are enabled, and launch the game.",
                   { profile: profileName, server: serverName },
                 )
               : t(
                   "Vortex will create the profile '{{profile}}' for {{server}}, " +
-                    "enable only the mods the server needs there, switch to it and start the game. " +
-                    "Joining this server again reuses the profile.",
+                    "enable only the required mods, switch to it, and launch the game. " +
+                    "Joining this server again will reuse this profile.",
                   { profile: profileName, server: serverName },
                 )
             : existing
               ? t(
-                  "{{server}} requires no mods. Vortex will switch to the default No Mods profile, " +
-                    "'{{profile}}', and start the game.",
+                  "{{server}} does not require any mods. Vortex will switch to the default No Mods profile, " +
+                    "'{{profile}}', and launch the game.",
                   { profile: profileName, server: serverName },
                 )
               : t(
-                  "{{server}} requires no mods. Vortex will set up the default No Mods profile, '{{profile}}', " +
-                    "switch to it and start the game. Every server without mods uses it from now on.",
+                  "{{server}} does not require any mods. Vortex will set up the default No Mods profile, '{{profile}}', " +
+                    "switch to it, and launch the game. All unmodded servers will use this profile.",
                   { profile: profileName, server: serverName },
                 );
         const unchanged = t(
@@ -1272,7 +1272,7 @@ export const ServersPage: FC = () => {
       api.sendNotification?.({
         type: "success",
         message: t(
-          "Switched to '{{profile}}', the profile made for this server. Add the optional mods you want, joining the server uses it.",
+          "Switched to '{{profile}}', the profile for this server. Any optional mods you enable here will be used when joining the server.",
           { profile: created.name },
         ),
         displayMS: 8000,
@@ -1332,8 +1332,8 @@ export const ServersPage: FC = () => {
         ? required[refusal ?? "none"]
         : t("{{mod}} is optional on {{server}}.", values);
       const offer = t(
-        "A profile of the server's own keeps it, and the mods the server needs, out of your other profiles. " +
-          "Vortex will create the profile '{{profile}}' with {{mod}} enabled, and joining the server uses it.",
+        "Creating a dedicated profile for this server keeps its required and optional mods separate from your other profiles. " +
+          "Vortex will create the profile '{{profile}}' with {{mod}} enabled and use it when joining this server.",
         values,
       );
       const alternative = currentAllowed
@@ -1434,9 +1434,9 @@ export const ServersPage: FC = () => {
       const where =
         existing === undefined
           ? t(
-              "A profile of the server's own keeps the collection out of your other profiles. " +
-                "Vortex will create the profile '{{profile}}', switch to it and install the collection there, " +
-                "and joining the server uses it.",
+              "Creating a dedicated profile for this server keeps the collection separate from your other profiles. " +
+                "Vortex will create the profile '{{profile}}', switch to it, install the collection there, " +
+                "and use it when joining this server.",
               { profile: getServerProfileName(selectedRow) },
             ) +
             (currentAllowed
@@ -2031,12 +2031,10 @@ export const ServersPage: FC = () => {
           }
           title={
             lobbyServerList === null
-              ? t(
-                  "Refresh the lobby first, servers are pinged once it lists them",
-                )
+              ? t("Refresh the lobby first to ping servers")
               : t(
-                  "Pings every server in the list again, the way the game does, falling back to a TCP connection " +
-                    "and then to an estimate. Once every {{seconds}} seconds.",
+                  "Re-pings all listed servers (falling back to a TCP connection or route estimate if needed). " +
+                    "Available once every {{seconds}} seconds.",
                   { seconds: `${PING_COOLDOWN_MS / 1000}` },
                 )
           }

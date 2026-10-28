@@ -379,10 +379,12 @@ describe("applySaveLoadOrderAsync", () => {
     );
 
     const { text } = dialog();
-    expect(text).toContain("Warning: not every mod is available");
-    expect(text).toContain("Not installed, so left out:\n- Gone\n- Also Gone");
     expect(text).toContain(
-      "In other versions than the save's:\n- Native (v1.2.0.0 -> v1.3.0.0)\n- A (v2.0.0.0 -> v2.1.0.0)",
+      "Warning: Some mods required by this save are missing or have different versions",
+    );
+    expect(text).toContain("Missing (not installed):\n- Gone\n- Also Gone");
+    expect(text).toContain(
+      "Installed version differs from save:\n- Native (v1.2.0.0 -> v1.3.0.0)\n- A (v2.0.0.0 -> v2.1.0.0)",
     );
   });
 
