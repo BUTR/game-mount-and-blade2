@@ -73,12 +73,15 @@ describe("startManaging", () => {
   let onProfiles: ProfilesListener;
   let api: types.IExtensionApi;
   let emit: ReturnType<typeof vi.fn>;
+  // The profiles when the extension loads
+  let loadedProfiles: Record<string, Partial<types.IProfile>>;
 
   // The flag lives in the module, each test verifies or never sets it, so the next starts without it
   beforeEach(() => {
     emit = vi.fn();
+    loadedProfiles = {};
     api = {
-      getState: () => ({}),
+      getState: () => ({ persistent: { profiles: loadedProfiles } }),
       onStateChange: (_path: string[], listener: ProfilesListener) => {
         onProfiles = listener;
       },
@@ -187,6 +190,35 @@ describe("startManaging", () => {
     // Another profile of a managed game, and the game's profiles changing
     onProfiles(profiles(GAME_ID), profiles(GAME_ID, GAME_ID));
     onProfiles(profiles(GAME_ID, GAME_ID), profiles(GAME_ID));
+    startManaging.verifyIfStartedManaging(api);
+    await flushAsync();
+
+    expect(verifyAndKeepAsync).not.toHaveBeenCalled();
+  });
+
+  it("verifies when Vortex started managing the game before the extension loaded", async () => {
+    // Installing the extension from the game's stub restarts Vortex, which adds the profile on that start
+    // Without lastActivated until it's activated
+    loadedProfiles = {
+      p0: { gameId: "skyrimse", lastActivated: 1 },
+      p1: { gameId: GAME_ID },
+    };
+    startManaging.watchStartManaging(api);
+    startManaging.verifyIfStartedManaging(api);
+    await flushAsync();
+
+    expect(verifyAndKeepAsync).toHaveBeenCalledTimes(1);
+    expect(showUnexpectedFilesAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't verify a game activated before the extension loaded", async () => {
+    // Managed before the extension was installed or updated, and a profile the profile editor added
+    loadedProfiles = {
+      p0: { gameId: GAME_ID, lastActivated: 1 },
+      p1: { gameId: GAME_ID, lastActivated: 0 },
+      p2: { gameId: "skyrimse" },
+    };
+    startManaging.watchStartManaging(api);
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
 
