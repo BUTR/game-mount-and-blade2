@@ -345,9 +345,9 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
       const text =
         mode === "archive"
           ? t(
-              "Move these {{count}} files ({{size}}) out of the game folder into an archive? Files are stored " +
-                "uncompressed (using the same disk space) and are only removed from the game folder once the " +
-                "archive is complete. You can restore them anytime from the Archives tab.",
+              "Move these {{count}} files ({{size}}) out of the game folder into an archive? Files are compressed " +
+                "when possible and are only removed from the game folder once the archive is complete. " +
+                "You can restore them anytime from the Archives tab.",
               { count, size },
             )
           : toRemove.length === 1
@@ -409,7 +409,7 @@ export const VerifyFilesPage: FC<VerifyFilesPageProps> = ({ active }) => {
             api.sendNotification?.({
               type: "warning",
               message: t(
-                "{{count}} files changed while they were archived and were left in the game folder",
+                "{{count}} files changed while being archived and were left in the game folder",
                 { count: `${kept.length}` },
               ),
             });

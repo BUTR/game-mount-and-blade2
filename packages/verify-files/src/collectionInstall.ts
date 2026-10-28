@@ -154,7 +154,7 @@ const archiveBeforeCollectionAsync = async (
       api.sendNotification?.({
         type: "warning",
         message: t(
-          "{{count}} files changed while they were archived and were left in the game folder",
+          "{{count}} files changed while being archived and were left in the game folder",
           { count: `${kept.length}` },
         ),
       });

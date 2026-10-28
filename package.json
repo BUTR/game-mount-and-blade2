@@ -64,7 +64,7 @@
     "@bannerlord/servers": "workspace:*",
     "@bannerlord/ui": "workspace:*",
     "@bannerlord/verify-files": "workspace:*",
-    "@butr/vortexextensionnative": "2.0.221",
+    "@butr/vortexextensionnative": "2.0.224",
     "ticks-to-date": "^1.0.6"
   },
   "packageManager": "pnpm@12.10.1"

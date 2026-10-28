@@ -2,11 +2,12 @@ import { appendFileSync, promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { randomBytes } from "crypto";
 import {
-  layoutZip,
+  getZipSizeBound,
   readZipEntriesAsync,
   writeZipAsync,
-} from "@bannerlord/zip/storedZip";
+} from "@bannerlord/zip/zip";
 import {
   archiveFilesAsync,
   deleteArchiveAsync,
@@ -26,7 +27,21 @@ vi.mock("@nexusmods/vortex-api", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   util: { getVortexPath: () => vortexPaths.userData },
 }));
-vi.mock("@butr/vortexextensionnative", () => ({}));
+// ISA-L's chunks, with Node's zlib: a chunk that isn't the last ends with a full flush
+vi.mock("@butr/vortexextensionnative", async () => {
+  const { constants, deflateRawSync } = await import("zlib");
+  return {
+    Compression: {
+      deflateRawChunkAsync: (chunk: Uint8Array, last: boolean) =>
+        Promise.resolve(
+          deflateRawSync(chunk, {
+            level: 1,
+            finishFlush: last ? constants.Z_FINISH : constants.Z_FULL_FLUSH,
+          }),
+        ),
+    },
+  };
+});
 vi.mock("winapi-bindings", () => ({}));
 vi.mock("./buildVersions", () => ({
   getBuildVersionAsync: vi.fn(() => Promise.resolve(undefined)),
@@ -212,8 +227,11 @@ describe("files archives", () => {
     });
 
     it("leaves the game folder and no archive behind when a file changes while it's archived", async () => {
-      await writeGameFileAsync("a.txt", "a");
-      await writeGameFileAsync("b.txt", "b");
+      // Files are read up to 4 chunks ahead of the one written, the last one is read after the first is written
+      const names = ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt"];
+      for (const name of names) {
+        await writeGameFileAsync(name, name[0]!);
+      }
       let grown = false;
 
       await expect(
@@ -221,20 +239,51 @@ describe("files archives", () => {
           gamePath,
           "steam",
           "1",
-          [extra("a.txt"), extra("b.txt")],
+          names.map((name) => extra(name)),
           {
             onProgress: () => {
               if (!grown) {
                 grown = true;
-                appendFileSync(path.join(gamePath, "b.txt"), "grown");
+                appendFileSync(path.join(gamePath, "f.txt"), "grown");
               }
             },
           },
         ),
-      ).rejects.toThrow("'b.txt' grew while it was archived");
+      ).rejects.toThrow("'f.txt' grew while being archived");
 
       expect(await readGameFileAsync("a.txt")).toBe("a");
       expect(await fs.readdir(getArchivesPath())).toEqual([]);
+    });
+
+    it("deflates what compresses, stores compressed formats and what doesn't compress", async () => {
+      const xml = Buffer.from("<Module><Name/></Module>\n".repeat(400));
+      await writeGameFileAsync("Modules/A/SubModule.xml", xml);
+      await writeGameFileAsync("Modules/A/music.ogg", xml);
+      await writeGameFileAsync("Modules/A/random.bin", randomBytes(5000));
+
+      const { archive } = await archiveFilesAsync(gamePath, "steam", "1", [
+        extra("Modules/A/SubModule.xml"),
+        extra("Modules/A/music.ogg"),
+        extra("Modules/A/random.bin"),
+      ]);
+
+      const entries = await readZipEntriesAsync(archive.archivePath);
+      expect(entries.map((entry) => [entry.name, entry.method])).toEqual([
+        ["Modules/A/SubModule.xml", 8],
+        ["Modules/A/music.ogg", 0],
+        ["Modules/A/random.bin", 0],
+      ]);
+      expect(archive.size).toBeLessThan(xml.length * 2);
+      expect((await fs.stat(archive.archivePath)).size).toBe(archive.size);
+
+      // And back as they were
+      await restoreArchiveAsync(gamePath, archive);
+      expect(
+        await fs.readFile(path.join(gamePath, "Modules/A/SubModule.xml")),
+      ).toEqual(xml);
+      expect(
+        await fs.readFile(path.join(gamePath, "Modules/A/music.ogg")),
+      ).toEqual(xml);
     });
 
     it("numbers an archive made within the same second as another, keeping both", async () => {
@@ -306,14 +355,19 @@ describe("files archives", () => {
           { ...extra("d.txt"), status: "changed", size: 1000 },
         ]);
 
-        const layout = layoutZip(
+        const bound = getZipSizeBound(
           [
             { name: "a.txt", size: 10 },
             { name: "Modules/B/b.dll", size: 20 },
-          ].map((source) => ({ ...source, filePath: "", mtime: new Date(0) })),
+          ].map((source) => ({
+            ...source,
+            filePath: "",
+            mtime: new Date(0),
+            compress: true,
+          })),
         );
         expect(space).toEqual({
-          required: layout.size + 256 * 1024 * 1024,
+          required: bound + 256 * 1024 * 1024,
           free: 4096000,
           drive: path.parse(getArchivesPath()).root,
         });
@@ -462,14 +516,14 @@ describe("files archives", () => {
     it("refuses a file outside of the game folder", async () => {
       const source = path.join(root, "evil.txt");
       await fs.writeFile(source, "evil");
-      const layout = layoutZip([
+      const sources = [
         { name: "../evil.txt", filePath: source, size: 4, mtime: new Date() },
-      ]);
+      ];
       const archivePath = path.join(root, "evil.zip");
       const file = await fs.open(archivePath, "w");
-      await file.truncate(layout.size);
+      await file.truncate(getZipSizeBound(sources));
       await file.close();
-      await writeZipAsync(archivePath, layout);
+      const size = await writeZipAsync(archivePath, sources);
       await fs.rm(source);
 
       await expect(
@@ -480,7 +534,7 @@ describe("files archives", () => {
           buildId: "1",
           files: [],
           archivePath,
-          size: layout.size,
+          size,
         }),
       ).rejects.toThrow("outside of the game folder");
       expect(await existsAsync(source)).toBe(false);

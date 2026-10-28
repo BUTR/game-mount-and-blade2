@@ -1,14 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { util } from "@nexusmods/vortex-api";
+import { Compression } from "@butr/vortexextensionnative";
 import {
   extractZipEntryAsync,
+  getZipSizeBound,
   IZipSource,
-  layoutZip,
   readZipEntriesAsync,
   verifyZipAsync,
   writeZipAsync,
-} from "@bannerlord/zip/storedZip";
+} from "@bannerlord/zip/zip";
 import { IVerifyFile, VerifyStore } from "./types";
 import { getBuildVersionAsync } from "./buildVersions";
 import { isDeletable, removeEmptyFoldersAsync } from "./verify";
@@ -22,6 +23,33 @@ const MANIFEST_VERSION = 1;
 const PARTIAL_EXTENSION = ".partial";
 // Kept free on the drive besides the archive, so archiving doesn't fill it to the last byte
 const FREE_SPACE_MARGIN = 256 * 1024 * 1024;
+
+// Formats compressed already, deflating them takes time and saves nothing. The other files are tried, the ones that
+// don't compress are stored. Not PNG: the game's compress to 60%
+const COMPRESSED_EXTENSIONS = new Set([
+  ".7z",
+  ".bank",
+  ".bik",
+  ".docx",
+  ".gif",
+  ".gz",
+  ".ivf",
+  ".jar",
+  ".jpeg",
+  ".jpg",
+  ".mp3",
+  ".mp4",
+  ".nupkg",
+  ".ogg",
+  ".pdf",
+  ".rar",
+  ".wav",
+  ".webm",
+  ".zip",
+]);
+
+const shouldCompress = (filePath: string): boolean =>
+  !COMPRESSED_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 
 /**
  * The .json next to an archive, so the page lists archives without opening them
@@ -144,7 +172,7 @@ export interface IArchiveSpace {
   required: number;
   free: number;
   /**
-   * The drive the archives are on, like C:   */
+   * The root of the drive the archives are on   */
   drive: string;
 }
 
@@ -155,16 +183,17 @@ export interface IArchiveSpace {
 export const getArchiveSpaceAsync = async (
   files: readonly IVerifyFile[],
 ): Promise<IArchiveSpace> => {
-  const layout = layoutZip(
+  const bound = getZipSizeBound(
     files.filter(isDeletable).map((file) => ({
       name: file.path,
       filePath: "",
       size: file.size ?? 0,
       mtime: new Date(0),
+      compress: shouldCompress(file.path),
     })),
   );
   return {
-    required: layout.size + FREE_SPACE_MARGIN,
+    required: bound + FREE_SPACE_MARGIN,
     free: await getArchivesFreeSpaceAsync(),
     drive: path.parse(getArchivesPath()).root,
   };
@@ -174,10 +203,11 @@ export const getArchiveSpaceAsync = async (
  * Moves extra files of the game folder into a new zip, with their paths in the game folder. Only files that can be
  * deleted, the ones Vortex and the store don't manage.
  *
- * The files are stored, not compressed, so the archive's size is known first: the drive must have the space, and the
- * archive's file is made that large before anything is written into it. The files are deleted only once the archive
- * is complete, on the disk and read back, and a file is kept when it changed since it was archived. Vortex closing
- * at any point leaves the game folder whole, with at most a partial archive the next listing removes
+ * The files are deflated with ISA-L where that saves space, in chunks, so memory stays bounded. The drive must have
+ * the space the archive can take at most, the files stored, and the archive's file is made that large before anything
+ * is written into it, then cut to the size it took. The files are deleted only once the archive is complete, on the
+ * disk and read back, and a file is kept when it changed since it was archived. Vortex closing at any point leaves the
+ * game folder whole, with at most a partial archive the next listing removes
  */
 export const archiveFilesAsync = async (
   gamePath: string,
@@ -209,15 +239,16 @@ export const archiveFilesAsync = async (
       size: stat.size,
       mtime: stat.mtime,
       mtimeMs: stat.mtimeMs,
+      compress: shouldCompress(file.path),
     });
   }
-  const layout = layoutZip(sources);
+  const bound = getZipSizeBound(sources);
 
   const archivesPath = getArchivesPath();
   const free = await getArchivesFreeSpaceAsync();
-  if (free < layout.size + FREE_SPACE_MARGIN) {
+  if (free < bound + FREE_SPACE_MARGIN) {
     throw new Error(
-      `Archiving requires ${formatSize(layout.size + FREE_SPACE_MARGIN)} of free space on the drive containing ` +
+      `Archiving requires ${formatSize(bound + FREE_SPACE_MARGIN)} of free space on the drive containing ` +
         `'${archivesPath}', but only ${formatSize(free)} is available`,
     );
   }
@@ -228,19 +259,27 @@ export const archiveFilesAsync = async (
     createdAt,
   );
   const partialPath = archivePath + PARTIAL_EXTENSION;
+  let size: number;
   try {
     // Takes the space now, on NTFS a file is given its clusters when it grows. Fails here when the drive is full
     try {
-      await partial.truncate(layout.size);
+      await partial.truncate(bound);
     } finally {
       await partial.close();
     }
     // Writing is half the work, reading it back the other half
-    const total = Math.max(1, layout.size * 2);
-    await writeZipAsync(partialPath, layout, (bytes) =>
-      onProgress?.(bytes / total),
-    );
-    await verifyZipAsync(partialPath, sources);
+    const filesSize = sources.reduce((sum, source) => sum + source.size, 0);
+    const total = Math.max(1, filesSize * 2);
+    size = await writeZipAsync(partialPath, sources, {
+      deflateChunk: Compression.deflateRawChunkAsync,
+      onProgress: (bytes) => onProgress?.(bytes / total),
+    });
+    // 1 is reported once, when the archive is complete
+    await verifyZipAsync(partialPath, sources, (bytes) => {
+      if (bytes < filesSize) {
+        onProgress?.((filesSize + bytes) / total);
+      }
+    });
     onProgress?.(1);
   } catch (err) {
     await fs.rm(partialPath, { force: true });
@@ -280,7 +319,7 @@ export const archiveFilesAsync = async (
   await removeEmptyFoldersAsync(gamePath, folders);
 
   return {
-    archive: { ...manifest, archivePath, size: layout.size },
+    archive: { ...manifest, archivePath, size },
     kept,
   };
 };

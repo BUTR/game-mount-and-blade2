@@ -2,12 +2,12 @@
   "name": "@bannerlord/zip",
   "version": "1.0.0",
   "private": true,
-  "description": "Reading zip archives and writing uncompressed ones, ZIP64 included",
+  "description": "Reading zip archives and writing stored or deflated ones, ZIP64 included",
   "bannerlord": {
     "library": true
   },
   "exports": {
     "./firstEntry": "./src/firstEntry.ts",
-    "./storedZip": "./src/storedZip.ts"
+    "./zip": "./src/zip.ts"
   }
 }

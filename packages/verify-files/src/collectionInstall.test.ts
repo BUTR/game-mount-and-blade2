@@ -246,7 +246,7 @@ describe("collectionInstall", () => {
       expect.objectContaining({
         type: "warning",
         message:
-          "1 files changed while they were archived and were left in the game folder",
+          "1 files changed while being archived and were left in the game folder",
       }),
     );
   });
