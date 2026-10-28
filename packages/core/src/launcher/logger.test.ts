@@ -84,3 +84,76 @@ describe("ensureNativeLogger", () => {
     expect(() => ensureNativeLogger()).toThrow(/Access is denied\./);
   });
 });
+
+const ADDON_PATH = String.raw`\\?\C:\Vortex\plugins\bannerlord\launchermanager.node`;
+
+// What node throws when Windows refuses the addon or one of its dependencies
+const dlopenError = (message: string): Error =>
+  Object.assign(new Error(message), { code: "ERR_DLOPEN_FAILED" });
+
+describe("describeLoadFailure", () => {
+  it.each([
+    [
+      "the English message",
+      `An Application Control policy has blocked this file.\r\n${ADDON_PATH}`,
+      "An Application Control policy has blocked this file.",
+    ],
+    [
+      "Smart App Control's reputation message",
+      `An Application Control policy has blocked this file.  Malicious binary reputation.\r\n${ADDON_PATH}`,
+      "An Application Control policy has blocked this file.  Malicious binary reputation.",
+    ],
+    [
+      "the number where Windows has no English message",
+      `error: 4551${ADDON_PATH}`,
+      "error: 4551",
+    ],
+    ["a reputation number", `error: 4580${ADDON_PATH}`, "error: 4580"],
+  ])(
+    "names an Application Control block from %s",
+    async (_, message, reason) => {
+      const { describeLoadFailure } = await loadLogger();
+
+      const description = describeLoadFailure(dlopenError(message));
+
+      expect(description).toMatch(
+        /^Windows blocked the extension's native library/,
+      );
+      expect(description).toContain("Smart App Control");
+      expect(description).toContain(`(${reason})`);
+      expect(description).not.toContain(ADDON_PATH);
+    },
+  );
+
+  it("gives the reason of another load failure without the path", async () => {
+    const { describeLoadFailure } = await loadLogger();
+
+    const description = describeLoadFailure(
+      dlopenError(`The specified module could not be found.\r\n${ADDON_PATH}`),
+    );
+
+    expect(description).toMatch(
+      /^The extension's native library could not be loaded: The specified module could not be found\. Reinstall/,
+    );
+    expect(description).not.toContain(ADDON_PATH);
+  });
+
+  it("doesn't take a neighbouring error number for a block", async () => {
+    const { describeLoadFailure } = await loadLogger();
+
+    expect(
+      describeLoadFailure(dlopenError(`error: 45510${ADDON_PATH}`)),
+    ).toMatch(/could not be loaded: error: 45510\./);
+  });
+
+  it("throws the block as the setup error", async () => {
+    const { ensureNativeLogger } = await loadLogger();
+    vi.mocked(NativeLogger).mockImplementationOnce(function () {
+      throw dlopenError(`error: 4551${ADDON_PATH}`);
+    });
+
+    expect(() => ensureNativeLogger()).toThrow(
+      /^Windows blocked the extension's native library/,
+    );
+  });
+});
