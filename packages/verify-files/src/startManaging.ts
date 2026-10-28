@@ -1,13 +1,11 @@
 import { log, selectors, types } from "@nexusmods/vortex-api";
 import { GAME_ID } from "@bannerlord/core/common";
 import { LocalizationManager } from "@bannerlord/core/localization/manager";
+import { Localize } from "@bannerlord/core/localization/types";
 import { verifyAndKeepAsync } from "./keptReport";
+import { showUnexpectedFilesAsync } from "./unexpectedFilesDialog";
 import { getStoreName, getVerifyStore, UNEXPECTED_SOURCES } from "./verify";
 import { VERIFY_FILES_PAGE_ID } from "./views/options";
-import { getStatusLabel } from "./views/tableAttributes";
-
-// The files listed in the dialog, the rest are counted
-const LISTED_FILES = 30;
 
 type Profiles = Record<string, types.IProfile> | undefined;
 
@@ -34,6 +32,25 @@ export const watchStartManaging = (api: types.IExtensionApi): void => {
   });
 };
 
+export const getStartManagingText = (
+  t: Localize,
+  count: number,
+  store: string,
+): string =>
+  count === 1
+    ? t(
+        "1 file doesn't match the {{store}} build and wasn't deployed by Vortex, like a mod copied in by hand or " +
+          "a changed game file. Such files often break the game and the mods Vortex installs. Review it on the " +
+          "Game files page, where it can be archived or deleted.",
+        { store },
+      )
+    : t(
+        "{{count}} files don't match the {{store}} build and weren't deployed by Vortex, like mods copied in by " +
+          "hand or changed game files. They often break the game and the mods Vortex installs. Review them on the " +
+          "Game files page, where they can be archived or deleted.",
+        { count: `${count}`, store },
+      );
+
 const warnAboutUnexpectedFilesAsync = async (
   api: types.IExtensionApi,
 ): Promise<void> => {
@@ -56,36 +73,20 @@ const warnAboutUnexpectedFilesAsync = async (
   }
 
   const { localize: t } = LocalizationManager.getInstance(api);
-  // Like the page's rows, a DLC's file by its package
-  const listed = unexpected
-    .slice(0, LISTED_FILES)
-    .map(
-      (file) =>
-        `${getStatusLabel(t, file.status)}: ${file.package !== undefined ? `${file.package.name} › ${file.path}` : file.path}`,
-    );
-  if (unexpected.length > LISTED_FILES) {
-    listed.push(
-      t("...and {{count}} more", {
-        count: `${unexpected.length - LISTED_FILES}`,
-      }),
-    );
-  }
-  const reviewLabel = t("Review");
-  const result = await api.showDialog?.(
-    "info",
-    t("The Game Folder Has Unexpected Files"),
-    {
-      text: t(
-        "{{count}} files don't match the {{store}} build and weren't deployed by Vortex, like mods copied in by hand " +
-          "or changed game files. They often break the game and the mods Vortex installs. Review them on the Game " +
-          "files page, where they can be archived or deleted.",
-        { count: `${unexpected.length}`, store: getStoreName(report.store) },
-      ),
-      message: listed.join("\n"),
-    },
-    [{ label: t("Close") }, { label: reviewLabel }],
-  );
-  if (result?.action === reviewLabel) {
+  const action = await showUnexpectedFilesAsync(api, report, unexpected, {
+    title: t("The Game Folder Has Unexpected Files"),
+    text: getStartManagingText(
+      t,
+      unexpected.length,
+      getStoreName(report.store),
+    ),
+    actions: [
+      { id: "close", label: t("Close") },
+      { id: "review", label: t("Review"), primary: true },
+    ],
+    dismissAction: "close",
+  });
+  if (action === "review") {
     api.events.emit("show-main-page", VERIFY_FILES_PAGE_ID);
   }
 };

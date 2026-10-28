@@ -10,6 +10,10 @@ export type ActionButtonProps = {
   disabled?: boolean;
   className?: string;
   title?: string | undefined;
+  /**
+   * Focused when shown, like a dialog's default button
+   */
+  autoFocus?: boolean;
   onClick: () => void;
   children: ReactNode;
 };
@@ -27,6 +31,7 @@ export const ActionButton: FC<ActionButtonProps> = (props) => {
     disabled,
     className,
     title,
+    autoFocus,
     onClick,
     children,
   } = props;
@@ -45,6 +50,7 @@ export const ActionButton: FC<ActionButtonProps> = (props) => {
       className={classes}
       title={title}
       disabled={disabled}
+      autoFocus={autoFocus}
       onClick={onClick}
     >
       {icon !== undefined && <Icon name={icon} spin={spin === true} />}

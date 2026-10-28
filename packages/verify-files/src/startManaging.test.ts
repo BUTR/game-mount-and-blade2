@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { log, selectors, types } from "@nexusmods/vortex-api";
 import { verifyAndKeepAsync } from "./keptReport";
+import { showUnexpectedFilesAsync } from "./unexpectedFilesDialog";
 import { getVerifyStore } from "./verify";
 import { IVerifyFile, IVerifyFilesReport, VerifyFileSource } from "./types";
 import { VERIFY_FILES_PAGE_ID } from "./views/options";
@@ -23,6 +24,9 @@ vi.mock("@bannerlord/core/localization/manager", () => ({
   },
 }));
 vi.mock("./keptReport", () => ({ verifyAndKeepAsync: vi.fn() }));
+vi.mock("./unexpectedFilesDialog", () => ({
+  showUnexpectedFilesAsync: vi.fn(),
+}));
 // The real one loads the stores' native bindings
 vi.mock("./verify", () => ({
   UNEXPECTED_SOURCES: ["unknown", "manualMod"],
@@ -31,11 +35,6 @@ vi.mock("./verify", () => ({
 }));
 vi.mock("./views/options", () => ({
   VERIFY_FILES_PAGE_ID: "bannerlord-verify-files",
-}));
-// The real one renders the page's cells
-vi.mock("./views/tableAttributes", () => ({
-  getStatusLabel: (_t: unknown, status: string) =>
-    status.charAt(0).toUpperCase() + status.slice(1),
 }));
 
 const GAME_ID = "mountandblade2bannerlord";
@@ -73,24 +72,22 @@ const flushAsync = (): Promise<void> =>
 describe("startManaging", () => {
   let onProfiles: ProfilesListener;
   let api: types.IExtensionApi;
-  let showDialog: ReturnType<typeof vi.fn>;
   let emit: ReturnType<typeof vi.fn>;
 
   // The flag lives in the module, each test verifies or never sets it, so the next starts without it
   beforeEach(() => {
-    showDialog = vi.fn(() => Promise.resolve({ action: "Close", input: {} }));
     emit = vi.fn();
     api = {
       getState: () => ({}),
       onStateChange: (_path: string[], listener: ProfilesListener) => {
         onProfiles = listener;
       },
-      showDialog,
       events: { emit },
     } as unknown as types.IExtensionApi;
 
     vi.mocked(selectors.activeGameId).mockReturnValue(GAME_ID);
     vi.mocked(getVerifyStore).mockReturnValue("steam");
+    vi.mocked(showUnexpectedFilesAsync).mockResolvedValue("close");
     vi.mocked(verifyAndKeepAsync).mockResolvedValue(
       report([
         file("unknown", { path: "Modules/MyMod/a.dll" }),
@@ -122,43 +119,41 @@ describe("startManaging", () => {
     await flushAsync();
 
     expect(verifyAndKeepAsync).toHaveBeenCalledTimes(1);
-    expect(showDialog).toHaveBeenCalledTimes(1);
-    const [type, , content] = showDialog.mock.calls[0]!;
-    expect(type).toBe("info");
-    // Vortex's files aren't counted
-    expect(content.text).toContain("5 files");
-    expect(content.text).toContain("Steam");
-    // Each file with its status, a DLC's by its package
-    expect(content.message).toBe(
-      [
-        "Extra: Modules/MyMod/a.dll",
-        "Extra: Modules/MyMod/b.dll",
-        "Changed: bin/Win64_Shipping_Client/mono-2.0-sgen.dll",
-        "Missing: War Sails › Modules/Dlc/a.dll",
-        "Extra: Modules/Manual/c.dll",
-      ].join("\n"),
-    );
+    expect(showUnexpectedFilesAsync).toHaveBeenCalledTimes(1);
+    const [, shownReport, shown, content] = vi.mocked(showUnexpectedFilesAsync)
+      .mock.calls[0]!;
+    expect(shownReport.store).toBe("steam");
+    expect(content.title).toBe("The Game Folder Has Unexpected Files");
+    expect(content.text).toMatch(/^5 files don't match the Steam build/);
+    expect(content.actions).toEqual([
+      { id: "close", label: "Close" },
+      { id: "review", label: "Review", primary: true },
+    ]);
+    expect(content.dismissAction).toBe("close");
+    // Vortex's files aren't shown
+    expect(shown.map((shownFile) => shownFile.path)).toEqual([
+      "Modules/MyMod/a.dll",
+      "Modules/MyMod/b.dll",
+      "bin/Win64_Shipping_Client/mono-2.0-sgen.dll",
+      "Modules/Dlc/a.dll",
+      "Modules/Manual/c.dll",
+    ]);
   });
 
-  it("counts the files past the listed ones", async () => {
+  it("speaks of a single file in the singular", async () => {
     vi.mocked(verifyAndKeepAsync).mockResolvedValue(
-      report(
-        Array.from({ length: 32 }, (_, index) =>
-          file("unknown", { path: `Modules/MyMod/${index}.dll` }),
-        ),
-      ),
+      report([file("unknown", { path: "bin/package_info.txt" })]),
     );
     onProfiles({}, profiles(GAME_ID));
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
 
-    const lines = showDialog.mock.calls[0]![2].message.split("\n");
-    expect(lines).toHaveLength(31);
-    expect(lines[30]).toBe("...and 2 more");
+    const { text } = vi.mocked(showUnexpectedFilesAsync).mock.calls[0]![3];
+    expect(text).toMatch(/^1 file doesn't match the Steam build/);
   });
 
   it("opens the Game files page from the dialog", async () => {
-    showDialog.mockResolvedValue({ action: "Review", input: {} });
+    vi.mocked(showUnexpectedFilesAsync).mockResolvedValue("review");
     onProfiles({}, profiles(GAME_ID));
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
@@ -171,7 +166,7 @@ describe("startManaging", () => {
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
 
-    expect(showDialog).toHaveBeenCalledTimes(1);
+    expect(showUnexpectedFilesAsync).toHaveBeenCalledTimes(1);
     expect(emit).not.toHaveBeenCalled();
   });
 
@@ -220,7 +215,7 @@ describe("startManaging", () => {
     await flushAsync();
 
     expect(verifyAndKeepAsync).not.toHaveBeenCalled();
-    expect(showDialog).not.toHaveBeenCalled();
+    expect(showUnexpectedFilesAsync).not.toHaveBeenCalled();
   });
 
   it("doesn't show the dialog when only the game's, the store's and Vortex's files differ", async () => {
@@ -236,7 +231,7 @@ describe("startManaging", () => {
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
 
-    expect(showDialog).not.toHaveBeenCalled();
+    expect(showUnexpectedFilesAsync).not.toHaveBeenCalled();
   });
 
   it("doesn't show the dialog when another game was activated while verifying", async () => {
@@ -245,7 +240,7 @@ describe("startManaging", () => {
     startManaging.verifyIfStartedManaging(api);
     await flushAsync();
 
-    expect(showDialog).not.toHaveBeenCalled();
+    expect(showUnexpectedFilesAsync).not.toHaveBeenCalled();
   });
 
   it("logs a failure to verify instead of rejecting", async () => {
@@ -259,6 +254,6 @@ describe("startManaging", () => {
       "Failed to verify the game files",
       expect.any(Error),
     );
-    expect(showDialog).not.toHaveBeenCalled();
+    expect(showUnexpectedFilesAsync).not.toHaveBeenCalled();
   });
 });

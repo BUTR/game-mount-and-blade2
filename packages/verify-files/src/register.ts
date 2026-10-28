@@ -2,7 +2,10 @@ import path from "path";
 import { types } from "@nexusmods/vortex-api";
 import { VerifyFilesPage } from "./views/VerifyFilesPage";
 import { VerifyFilesPageOptions } from "./views/options";
+import { UnexpectedFilesDialog } from "./views/UnexpectedFilesDialog";
 import { watchGameFolderWrites } from "./keptReport";
+import { watchCollectionInstalls } from "./collectionInstall";
+import { UNEXPECTED_FILES_DIALOG_ID } from "./unexpectedFilesDialog";
 
 export const registerVerifyFiles = (context: types.IExtensionContext): void => {
   context.registerMainPage(
@@ -12,6 +15,8 @@ export const registerVerifyFiles = (context: types.IExtensionContext): void => {
     /*options:*/ new VerifyFilesPageOptions(context),
   );
 
+  context.registerDialog(UNEXPECTED_FILES_DIALOG_ID, UnexpectedFilesDialog);
+
   context.once(() => {
     context.api.setStylesheet(
       "verifyfiles",
@@ -19,5 +24,6 @@ export const registerVerifyFiles = (context: types.IExtensionContext): void => {
     );
 
     watchGameFolderWrites(context.api);
+    watchCollectionInstalls(context.api);
   });
 };

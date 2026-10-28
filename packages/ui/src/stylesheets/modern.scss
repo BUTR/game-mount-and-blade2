@@ -4,11 +4,12 @@
 // fallbacks are the dark theme's values for Vortex versions without them
 //
 // Scoped by the pages' ids, so these rules are as specific as the pages' own and Vortex's global styles don't win.
-// A new page using them adds its id here
+// A new page or dialog using them adds its id here
 :is(
     #page-bannerlord-servers,
     #page-bannerlord-saves,
-    #page-bannerlord-verify-files
+    #page-bannerlord-verify-files,
+    #bannerlord-unexpected-files
 ) {
     .bls-page {
         --bls-surface-low: var(--color-surface-low, #1d1d21);
