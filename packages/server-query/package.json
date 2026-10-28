@@ -1,0 +1,15 @@
+{
+  "name": "@bannerlord/server-query",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Queries Bannerlord dedicated servers over HTTP: their map list and BUTR's server extension",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    "./address": "./src/address.ts",
+    "./extension": "./src/extension.ts",
+    "./query": "./src/query.ts",
+    "./types": "./src/types.ts"
+  }
+}

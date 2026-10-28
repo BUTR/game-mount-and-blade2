@@ -57,6 +57,19 @@ jobs:
           echo "$EOF" >> $GITHUB_OUTPUT
         shell: bash
 
+  # The release jobs are skipped when the versions differ, this makes the skip visible
+  version-mismatch:
+    if: github.ref == 'refs/heads/master' && needs.get-package-version.outputs.version != needs.get-changelog-info.outputs.version
+    needs: [get-package-version, get-changelog-info]
+    name: Version Mismatch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warn
+        env:
+          PACKAGE_VERSION: ${{ needs.get-package-version.outputs.version }}
+          CHANGELOG_VERSION: ${{ needs.get-changelog-info.outputs.version }}
+        run: echo "::warning::Not releasing, package.json is $PACKAGE_VERSION but changelog.txt is $CHANGELOG_VERSION"
+
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
@@ -71,7 +84,7 @@ jobs:
           node-version: 22.19
           cache: "pnpm"
 
-      # The build publishes tools/Bannerlord.LobbyBridge (net9.0)
+      # The build publishes packages/lobby/bridge, Bannerlord.LobbyBridge (net9.0)
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"

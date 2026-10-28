@@ -1,0 +1,16 @@
+{
+  "name": "@bannerlord/server-maps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dedicated server's custom maps: local scenes, downloading maps from servers",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/server-query": "workspace:*"
+  }
+}

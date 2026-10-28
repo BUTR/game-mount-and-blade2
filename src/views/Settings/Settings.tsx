@@ -1,9 +1,9 @@
 import React, { FC, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { More, selectors, Toggle } from "@nexusmods/vortex-api";
-import { useLocalization } from "../../localization/hooks";
-import { bselectors } from "../../selectors";
-import { IStateWithBannerlord } from "../../types";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
+import { bselectors } from "@bannerlord/core/selectors";
+import { IStateWithBannerlord } from "@bannerlord/core/types";
 
 export type SettingsProps = {
   onSetSortOnDeploy: (profileId: string, sort: boolean) => void;
@@ -64,10 +64,10 @@ export const Settings: FC<SettingsProps> = (props) => {
         {t(`Sort Bannerlord mods automatically on deployment`)}
         <More id="mnb2-sort-setting" name={t(`Running sort on deploy`)}>
           {t(
-            `Any time you deploy, Vortex will attempt to automatically sort your load order ` +
-              `for you to reduce game crashes caused by incorrect module order.\n\n` +
-              `Important: Please ensure to lock any load order entries you wish to stop from ` +
-              `shifting positions.`,
+            `Automatically sorts your load order whenever you deploy mods ` +
+              `to help prevent crashes caused by an invalid module order.\n\n` +
+              `Note: Lock any load order entries you want to keep in a ` +
+              `fixed position.`,
           )}
         </More>
       </Toggle>
@@ -86,8 +86,8 @@ export const Settings: FC<SettingsProps> = (props) => {
           name={t(`{=QJSBiZdJ}Beta Sorting`)}
         >
           {t(
-            `{=smA2gmuG}Checks your saved load order against the modules' dependencies and tells you what is wrong, ` +
-              `instead of quietly correcting it like the game's launcher does. Disable to sort like the game's launcher`,
+            `{=smA2gmuG}Validates your saved load order against module dependencies and reports any issues ` +
+              `instead of silently reordering modules like the official launcher. Disable to use the official launcher's sorting behavior.`,
           )}
         </More>
       </Toggle>

@@ -1,5 +1,5 @@
 import { types } from "@nexusmods/vortex-api";
-import { IVortexViewModelData } from "../../types";
+import { IVortexViewModelData } from "@bannerlord/core/types";
 
 export const isExternal = (
   item: types.IFBLOLoadOrderEntry<IVortexViewModelData>,

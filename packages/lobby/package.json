@@ -1,0 +1,15 @@
+{
+  "name": "@bannerlord/lobby",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The custom server list from the game's lobby and pings to servers, through Bannerlord.LobbyBridge",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@bannerlord/server-query": "workspace:*"
+  }
+}

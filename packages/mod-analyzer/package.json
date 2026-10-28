@@ -1,0 +1,12 @@
+{
+  "name": "@bannerlord/mod-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Client for BUTR's ModAnalyzer compatibility scores",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

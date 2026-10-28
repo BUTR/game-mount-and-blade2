@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { types } from "@nexusmods/vortex-api";
-import { languageMap } from "../../../localization/utils";
+import { languageMap } from "@bannerlord/core/localization/utils";
 
 export type ExternalBannerProps = {
   mod: types.IMod;

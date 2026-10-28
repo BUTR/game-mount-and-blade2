@@ -1,0 +1,13 @@
+{
+  "name": "@bannerlord/worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Running work in a Web Worker of Vortex's renderer, built next to the bundle, and on the calling thread without one",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    "./client": "./src/client.ts",
+    "./host": "./src/host.ts"
+  }
+}

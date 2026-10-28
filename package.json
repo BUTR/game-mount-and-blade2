@@ -1,6 +1,6 @@
 {
   "name": "game-mount-and-blade-ii-bannerlord-butr",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "A Vortex extension for Mount and Blade II: Bannerlord mod management.",
   "author": "BUTR Team & Nexus Mods",
   "license": "GPL-3.0+",
@@ -19,10 +19,12 @@
     "build-dev": "node build.js build-dev",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
-    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src",
-    "format": "prettier src --write",
-    "format:check": "prettier src --check",
-    "pre-commit": "lint-staged"
+    "lint:cycles": "node scripts/lint-cycles.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "prettier src \"packages/*/src/**\" --write",
+    "format:check": "prettier src \"packages/*/src/**\" --check",
+    "pre-commit": "lint-staged",
+    "test": "vitest run"
   },
   "devDependencies": {
     "7zip-bin": "^5.2.0",
@@ -52,10 +54,17 @@
     "rolldown": "1.0.0-rc.6",
     "semver": "7.7.4",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.47.0"
+    "typescript-eslint": "8.47.0",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@butr/vortexextensionnative": "2.0.218",
+    "@bannerlord/collections": "workspace:*",
+    "@bannerlord/core": "workspace:*",
+    "@bannerlord/saves": "workspace:*",
+    "@bannerlord/servers": "workspace:*",
+    "@bannerlord/ui": "workspace:*",
+    "@bannerlord/verify-files": "workspace:*",
+    "@butr/vortexextensionnative": "2.0.224",
     "ticks-to-date": "^1.0.6"
   },
   "packageManager": "pnpm@12.10.1"

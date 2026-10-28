@@ -8,14 +8,14 @@ import { ExternalBanner } from "./ExternalBanner";
 import { ModuleDuplicates } from "./ModuleDuplicates";
 import { ModuleProviderIcon } from "./ModuleProviderIcon";
 import { SteamBinariesOnXbox } from "./SteamBinariesOnXbox";
-import { CompatibilityInfo } from "../../Shared/components/CompatibilityInfo";
-import { ModuleIcon } from "../../Shared/components/ModuleIcon";
+import { CompatibilityInfo } from "@bannerlord/ui/components/CompatibilityInfo";
+import { ModuleIcon } from "@bannerlord/ui/components/ModuleIcon";
 import { isExternal, isLocked } from "../utils";
-import { IModuleCompatibilityInfo } from "../../../butr/types";
-import { versionToString } from "../../../butr/version";
-import { IFBLOItemRendererProps } from "../../../loadOrder/types";
-import { bselectors } from "../../../selectors";
-import { IStateWithBannerlord } from "../../../types";
+import { IModuleCompatibilityInfo } from "@bannerlord/core/butr/types";
+import { versionToString } from "@bannerlord/core/butr/version";
+import { IFBLOItemRendererProps } from "@bannerlord/core/loadOrder/types";
+import { bselectors } from "@bannerlord/core/selectors";
+import { IStateWithBannerlord } from "@bannerlord/core/types";
 import { ObfuscatedBinaries } from "./ObfuscatedBinaries";
 
 export type LoadOrderItemRendererProps = {

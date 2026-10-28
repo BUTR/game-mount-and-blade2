@@ -1,0 +1,12 @@
+{
+  "name": "@bannerlord/build-versions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The game version of a Steam or GOG build, from BUTR's registry of builds",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

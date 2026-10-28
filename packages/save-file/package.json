@@ -1,0 +1,15 @@
+{
+  "name": "@bannerlord/save-file",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reads campaign details from Bannerlord save files",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@bannerlord/worker": "workspace:*"
+  }
+}

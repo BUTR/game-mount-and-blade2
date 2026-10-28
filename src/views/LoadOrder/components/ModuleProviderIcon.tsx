@@ -1,9 +1,9 @@
 import React, { FC } from "react";
-import { IVortexViewModelData } from "../../../types";
-import { TooltipImage } from "../../Shared/components/TooltipImage";
-import { STEAM_LOGO } from "../../../common";
+import { IVortexViewModelData } from "@bannerlord/core/types";
+import { TooltipImage } from "@bannerlord/ui/components/TooltipImage";
+import { STEAM_LOGO } from "@bannerlord/core/common";
 import { isSteamWorksop } from "../utils";
-import { useLocalization } from "../../../localization/hooks";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type ModuleProviderIconProps = {
   data: IVortexViewModelData | undefined;

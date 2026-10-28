@@ -1,0 +1,1623 @@
+// The Modern UI look shared by the extension's pages, which put their content in a .bls-page element.
+// Values copied from Vortex's Modern UI (src/stylesheets/ui): the extension can't use its components, so their CSS is
+// rebuilt here. The Modern UI variables are used when Vortex has them, so the pages follow its light theme, the
+// fallbacks are the dark theme's values for Vortex versions without them
+//
+// Scoped by the pages' ids, so these rules are as specific as the pages' own and Vortex's global styles don't win.
+// A new page or dialog using them adds its id here
+:is(
+    #page-bannerlord-servers,
+    #page-bannerlord-saves,
+    #page-bannerlord-verify-files,
+    #bannerlord-unexpected-files
+) {
+    .bls-page {
+        --bls-surface-low: var(--color-surface-low, #1d1d21);
+        --bls-surface-mid: var(--color-surface-mid, #29292e);
+        --bls-surface-high: var(--color-surface-high, #3e3e47);
+        --bls-wash-low: var(
+            --color-surface-translucent-low,
+            rgb(255 255 255 / 5%)
+        );
+        --bls-wash-mid: var(
+            --color-surface-translucent-mid,
+            rgb(255 255 255 / 10%)
+        );
+        --bls-wash-high: var(
+            --color-surface-translucent-high,
+            rgb(255 255 255 / 20%)
+        );
+        --bls-stroke-weak: var(--color-stroke-weak, rgb(255 255 255 / 10%));
+        --bls-stroke-subdued: var(
+            --color-stroke-subdued,
+            rgb(255 255 255 / 20%)
+        );
+        --bls-text-strong: var(--color-neutral-strong, #f4f4f5);
+        --bls-text-moderate: var(--color-neutral-moderate, #d4d4d8);
+        --bls-text-subdued: var(--color-neutral-subdued, #a1a1aa);
+        --bls-text-weak: var(--color-neutral-weak, #71717a);
+        --bls-text-inverted: var(--color-neutral-inverted, #0f0f10);
+        --bls-primary: var(--color-primary-moderate, #fb923c);
+        --bls-primary-strong: var(--color-primary-strong, #fdba74);
+        --bls-primary-subdued: var(--color-primary-subdued, #f97316);
+        --bls-success: var(--color-success-moderate, #22c55e);
+        --bls-warning: var(--color-warning-moderate, #fde047);
+        --bls-danger: var(--color-danger-strong, #f87171);
+        --bls-info: var(--color-info-strong, #93c5fd);
+        --bls-focus: var(--color-focus-subdued, #3b82f6);
+        --bls-radius-sm: 4px;
+        --bls-radius-md: 6px;
+        --bls-radius-lg: 8px;
+        // body-sm, title-xs and heading-xs
+        --bls-text-sm: 12px;
+        --bls-text-md: 14px;
+        --bls-text-title: 11px;
+        --bls-text-heading: 18px;
+        --bls-stroke-moderate: var(
+            --color-stroke-moderate,
+            rgb(255 255 255 / 30%)
+        );
+        --bls-stroke-strong: var(--color-stroke-strong, rgb(255 255 255 / 60%));
+        --bls-translucent-subdued: var(
+            --color-translucent-subdued,
+            rgb(255 255 255 / 50%)
+        );
+        --bls-translucent-moderate: var(
+            --color-translucent-moderate,
+            rgb(255 255 255 / 70%)
+        );
+        --bls-translucent-strong: var(
+            --color-translucent-strong,
+            rgb(255 255 255 / 95%)
+        );
+        --bls-input-background: var(
+            --color-translucent-dark-400,
+            rgb(0 0 0 / 40%)
+        );
+        --bls-shadow-md: var(
+            --shadow-md,
+            0 4px 6px -1px rgb(0 0 0 / 10%),
+            0 2px 4px -2px rgb(0 0 0 / 10%)
+        );
+        // The Modern UI table's row tints: white at 3% on hover, translucent-100 when selected
+        --bls-row-hover: color-mix(
+            in srgb,
+            var(--bls-text-strong) 3%,
+            transparent
+        );
+        --bls-row-selected: var(
+            --color-translucent-100,
+            rgb(255 255 255 / 10%)
+        );
+        // A group's row in a grouped table
+        --bls-row-group: var(--color-translucent-50, rgb(255 255 255 / 5%));
+
+        color: var(--bls-text-moderate);
+
+        :focus-visible {
+            outline: 2px solid var(--bls-focus);
+            outline-offset: 2px;
+        }
+
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 12px 24px 24px;
+        box-sizing: border-box;
+        height: 100%;
+        min-height: 0;
+    }
+
+    // Shared pieces
+
+    .bls-page {
+        .bls-small {
+            font-size: var(--bls-text-sm);
+            line-height: 16px;
+            letter-spacing: 0.025em;
+        }
+
+        .bls-muted {
+            color: var(--bls-text-subdued);
+        }
+
+        .bls-title-xs {
+            margin: 0;
+            font-size: var(--bls-text-title);
+            line-height: 16px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--bls-text-subdued);
+        }
+
+        .bls-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 32px;
+            padding: 0 12px;
+            border-radius: var(--bls-radius-sm);
+            border: 1px solid transparent;
+            background: transparent;
+            color: inherit;
+            font-size: var(--bls-text-sm);
+            line-height: 16px;
+            letter-spacing: 0.025em;
+            white-space: nowrap;
+            text-decoration: none;
+            cursor: pointer;
+            transition:
+                color 0.15s,
+                background-color 0.15s,
+                border-color 0.15s;
+
+            &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            .icon {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        .bls-btn-primary {
+            background: var(--bls-primary);
+            color: var(--bls-text-inverted);
+            font-weight: 600;
+
+            &:enabled:hover {
+                background: var(--bls-primary-strong);
+            }
+
+            &:enabled:active {
+                background: var(--bls-primary-subdued);
+            }
+        }
+
+        .bls-btn-moderate {
+            background: var(--bls-wash-mid);
+            color: var(--bls-text-strong);
+
+            &:enabled:hover {
+                background: var(--bls-wash-high);
+            }
+
+            &:enabled:active {
+                background: var(--bls-wash-low);
+            }
+        }
+
+        .bls-btn-subdued {
+            border-color: var(--bls-stroke-weak);
+            color: var(--bls-text-moderate);
+
+            &:enabled:hover {
+                background: var(--bls-wash-mid);
+            }
+        }
+
+        .bls-btn-link {
+            min-height: 28px;
+            padding: 0 8px;
+            color: var(--bls-primary);
+
+            &:enabled:hover {
+                background: var(--bls-wash-mid);
+                color: var(--bls-primary-strong);
+            }
+        }
+
+        // The Modern UI's small buttons, as in its pickers
+        .bls-btn-small {
+            min-height: 24px;
+            padding: 0 8px;
+            gap: 4px;
+        }
+
+        .bls-btn-large {
+            min-height: 40px;
+            font-size: var(--bls-text-md);
+            line-height: 20px;
+        }
+
+        .bls-btn-block {
+            width: 100%;
+        }
+
+        .bls-pill {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-size: var(--bls-text-title);
+            line-height: 16px;
+            white-space: nowrap;
+            color: var(--bls-text-moderate);
+            background: var(--bls-wash-mid);
+        }
+
+        .bls-pill-primary {
+            color: var(--bls-primary-strong);
+            background: color-mix(in srgb, var(--bls-primary) 15%, transparent);
+        }
+
+        .bls-pill-info {
+            color: var(--bls-info);
+            background: color-mix(in srgb, var(--bls-focus) 15%, transparent);
+        }
+
+        .bls-pill-warning {
+            color: var(--bls-warning);
+            background: color-mix(in srgb, var(--bls-warning) 12%, transparent);
+        }
+
+        .bls-count {
+            font-size: var(--bls-text-sm);
+            line-height: 16px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: var(--bls-surface-mid);
+            color: var(--bls-text-subdued);
+        }
+
+        .bls-dot {
+            display: inline-block;
+            flex-shrink: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1.5px solid var(--bls-text-weak);
+
+            &.is-online,
+            &.is-available {
+                border-color: var(--bls-success);
+                background: var(--bls-success);
+            }
+        }
+
+        .bls-ok {
+            color: var(--bls-success);
+        }
+
+        .bls-warning {
+            color: var(--bls-warning);
+        }
+
+        .bls-danger {
+            color: var(--bls-danger);
+        }
+
+        .bls-faded {
+            opacity: 0.4;
+        }
+
+        .bls-progress {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bls-wash-mid);
+            overflow: hidden;
+
+            > span {
+                display: block;
+                height: 100%;
+                background: var(--bls-primary);
+            }
+        }
+
+        .bls-alert {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: var(--bls-radius-sm);
+            color: var(--bls-warning);
+            background: color-mix(in srgb, var(--bls-warning) 12%, transparent);
+            overflow-wrap: anywhere;
+
+            ul {
+                margin: 0;
+                padding-left: 22px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+
+        .bls-alert-heading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .bls-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 32px 24px;
+            text-align: center;
+
+            h2 {
+                margin: 0;
+                font-size: var(--bls-text-md);
+                line-height: 20px;
+                font-weight: 600;
+                color: var(--bls-text-strong);
+            }
+
+            p {
+                margin: 0;
+                max-width: 480px;
+                color: var(--bls-text-subdued);
+            }
+        }
+
+        .bls-empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--bls-wash-low);
+            color: var(--bls-text-subdued);
+
+            .icon {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        .bls-empty-icon-primary {
+            width: 56px;
+            height: 56px;
+            background: color-mix(in srgb, var(--bls-primary) 12%, transparent);
+            color: var(--bls-primary);
+        }
+
+        .bls-radio {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            accent-color: var(--bls-primary);
+            cursor: pointer;
+        }
+
+        .bls-alert-info {
+            color: var(--bls-info);
+            background: color-mix(in srgb, var(--bls-focus) 12%, transparent);
+
+            > span:not(.bls-alert-heading) {
+                color: var(--bls-text-moderate);
+            }
+        }
+
+        // A table cell's status: an icon and a short label. The icon has a fixed slot and the label truncates, so
+        // changing state doesn't change the cell's width
+        .bls-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 100%;
+            min-width: 0;
+            color: var(--bls-text-subdued);
+            white-space: nowrap;
+
+            // tooltip.Icon wraps the icon in a link
+            > a,
+            > .icon {
+                display: inline-flex;
+                flex-shrink: 0;
+            }
+
+            .icon {
+                width: 14px;
+                height: 14px;
+            }
+
+            // The dot is smaller than the icons, centred in the same slot
+            > .bls-dot {
+                margin-inline: 3px;
+            }
+
+            > .bls-status-label {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        // A positive one-line status: a check mark and its text
+        .bls-ok-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 0;
+
+            .icon {
+                flex-shrink: 0;
+                width: 16px;
+                height: 16px;
+            }
+        }
+    }
+
+    // Header and tabs
+
+    .bls-page {
+        // The Modern UI PageHeader: the pictogram, then the title with the actions on its right and the subtitle under
+        // them, and a hairline under it all that runs the page's full width
+        .bls-header {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: -12px -24px 0;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--bls-stroke-weak);
+
+            h1 {
+                margin: 0;
+                font-size: var(--bls-text-heading);
+                line-height: 28px;
+                font-weight: 600;
+                color: var(--bls-text-moderate);
+            }
+
+            p {
+                margin: 0;
+                font-size: var(--bls-text-md);
+                line-height: 20px;
+                color: var(--bls-text-subdued);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        .bls-pictogram {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            color: var(--bls-primary);
+        }
+
+        .bls-header-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bls-header-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+
+            h1 {
+                min-width: 0;
+            }
+        }
+
+        .bls-header-actions {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 8px;
+        }
+
+        // Quiet neutral buttons, the Modern UI's weak appearance used across its toolbars
+        .bls-btn-weak {
+            color: var(--bls-translucent-moderate);
+
+            // A link styled as a button has no enabled state
+            &:enabled:hover,
+            &:is(a):hover,
+            &[aria-expanded="true"] {
+                background: var(--bls-wash-mid);
+                color: var(--bls-translucent-strong);
+            }
+
+            &:enabled:active {
+                background: var(--bls-wash-low);
+            }
+        }
+
+        // The row above a list: views on the left, search and filters on the right
+        .bls-table-toolbar {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-height: 28px;
+        }
+
+        .bls-table-toolbar-start {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .bls-toolbar {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .bls-views {
+            display: flex;
+            gap: 4px;
+        }
+
+        .bls-btn-view {
+            min-height: 28px;
+            padding: 0 8px;
+            color: var(--bls-translucent-moderate);
+
+            &:enabled:hover {
+                background: var(--bls-wash-mid);
+                color: var(--bls-translucent-strong);
+            }
+
+            &[aria-pressed="true"] {
+                background: var(--bls-wash-mid);
+                color: var(--bls-text-strong);
+            }
+        }
+
+        // The search field opens over the controls to the button's left
+        .bls-toolbar-search {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .bls-toolbar-search-field {
+            position: absolute;
+            top: 0;
+            right: calc(100% + 4px);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            width: 240px;
+            border-radius: var(--bls-radius-sm);
+            background: var(--bls-surface-low);
+
+            > .icon {
+                position: absolute;
+                left: 12px;
+                width: 16px;
+                height: 16px;
+                color: var(--bls-text-subdued);
+                pointer-events: none;
+            }
+
+            input {
+                width: 100%;
+                min-height: 28px;
+                padding: 0 12px 0 36px;
+                border: 1px solid var(--bls-stroke-subdued);
+                border-radius: var(--bls-radius-sm);
+                background: var(--bls-input-background);
+                color: var(--bls-text-strong);
+                font-size: var(--bls-text-sm);
+                letter-spacing: 0.025em;
+
+                &::placeholder {
+                    color: var(--bls-text-subdued);
+                }
+
+                &:hover {
+                    border-color: var(--bls-stroke-moderate);
+                }
+
+                &:focus {
+                    outline: none;
+                    border-color: var(--bls-stroke-strong);
+                    background: var(--bls-wash-mid);
+                }
+            }
+        }
+
+        // The Modern UI's popover panel, with groups of checkboxes like its Display options
+        .bls-popover {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .bls-popover-panel {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            z-index: 20;
+            min-width: 280px;
+            max-width: 288px;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-sm);
+            background: var(--bls-surface-mid);
+            box-shadow: var(--bls-shadow-md);
+        }
+
+        .bls-popover-group {
+            display: flex;
+            flex-direction: column;
+            padding-block: 8px;
+
+            &:not(:last-child) {
+                border-bottom: 1px solid var(--bls-stroke-weak);
+            }
+        }
+
+        .bls-popover-title {
+            padding: 4px 16px;
+            font-size: var(--bls-text-title);
+            line-height: 16px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--bls-text-subdued);
+        }
+
+        .bls-popover-scroll {
+            max-height: 224px;
+            overflow-y: auto;
+        }
+
+        .bls-popover-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 32px;
+            margin: 0;
+            padding: 0 16px;
+            font-size: var(--bls-text-sm);
+            font-weight: normal;
+            letter-spacing: 0.025em;
+            color: var(--bls-text-moderate);
+            cursor: pointer;
+
+            &:hover {
+                background: var(--bls-wash-mid);
+                color: var(--bls-text-strong);
+            }
+
+            input {
+                width: 14px;
+                height: 14px;
+                margin: 0;
+                accent-color: var(--bls-primary);
+            }
+        }
+
+        .bls-popover-item-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        // A setting row, the Modern UI's PopoverPanelGroupItem: the label on the left, its control on the right
+        .bls-popover-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+            height: 32px;
+            padding-inline: 16px;
+
+            > * {
+                flex-shrink: 0;
+            }
+        }
+
+        .bls-popover-row-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--bls-text-subdued);
+            font-size: var(--bls-text-sm);
+            letter-spacing: 0.025em;
+        }
+
+        // The Modern UI's ModsTableColumnToggles: a title, then a small button per column, filled while the column
+        // shows and outlined while it's hidden
+        .bls-column-toggles {
+            gap: 8px;
+        }
+
+        .bls-column-toggles-title {
+            margin: 0;
+            padding-inline: 16px;
+            color: var(--bls-text-subdued);
+            font-size: var(--bls-text-sm);
+            line-height: 16px;
+            letter-spacing: 0.025em;
+        }
+
+        .bls-column-toggles-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 0 16px 8px;
+        }
+
+        .bls-column-toggle {
+            padding-inline: 6px;
+
+            &[aria-pressed="true"] {
+                background: var(--bls-wash-mid);
+                color: var(--bls-text-moderate);
+
+                &:hover,
+                &:focus-visible {
+                    background: var(--bls-wash-high);
+                }
+            }
+
+            &[aria-pressed="false"] {
+                border-color: var(--bls-stroke-weak);
+                color: var(--bls-translucent-moderate);
+
+                &:hover,
+                &:focus-visible {
+                    background: var(--bls-wash-mid);
+                    color: var(--bls-translucent-strong);
+                }
+            }
+
+            &:active {
+                background: var(--bls-wash-low);
+            }
+        }
+
+        // The Modern UI's Picker: a small button showing the chosen option, opening the list of options under it
+        .bls-picker {
+            position: relative;
+        }
+
+        .bls-popover-footer {
+            align-items: flex-end;
+            padding: 8px 16px;
+        }
+
+        .bls-link-button {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--bls-info);
+            font-size: var(--bls-text-sm);
+            cursor: pointer;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        // The tables only render rows inside a parent with a real height, so every level down to them fills the page
+        .bls-tab-panel {
+            flex: 1 1 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+
+    // The Modern UI table (Vortex's src/stylesheets/ui/elements/table.css), for ModernTable. One grid, every row a
+    // subgrid of it, with gutter tracks either side of the columns
+
+    .bls-page {
+        .bls-table {
+            --bls-table-gap: 8px;
+            --bls-table-gutter-start: calc(16px - var(--bls-table-gap));
+            --bls-table-gutter-end: calc(24px - var(--bls-table-gap));
+            --bls-table-row-tint: transparent;
+
+            display: grid;
+            align-content: start;
+            column-gap: var(--bls-table-gap);
+            height: 100%;
+            overflow: auto;
+            font-size: var(--bls-text-sm);
+            line-height: 16px;
+            letter-spacing: 0.025em;
+        }
+
+        .bls-table-head {
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: subgrid;
+            padding-bottom: 8px;
+            background: var(--bls-surface-low);
+        }
+
+        .bls-table-header,
+        .bls-table-row {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: subgrid;
+            align-items: center;
+
+            > :first-child {
+                grid-column-start: 2;
+            }
+        }
+
+        .bls-table-header {
+            height: 24px;
+            color: var(--bls-translucent-subdued);
+        }
+
+        .bls-table-header-label {
+            white-space: nowrap;
+        }
+
+        .bls-table-row {
+            height: 40px;
+            background-color: var(--bls-table-row-tint);
+            color: var(--bls-text-subdued);
+            cursor: default;
+            outline: none;
+
+            &:hover {
+                --bls-table-row-tint: var(--bls-row-hover);
+            }
+
+            &[aria-selected="true"] {
+                --bls-table-row-tint: var(--bls-row-selected);
+            }
+
+            &:focus-visible {
+                box-shadow: inset 0 0 0 2px var(--bls-focus);
+            }
+
+            .bls-table-cell[data-sorted] {
+                color: var(--bls-text-moderate);
+            }
+        }
+
+        // A group's own row in a grouped table (the Modern UI's .nxm-table-group-row): the button that collapses the
+        // group, its name and its number of rows, in one cell across the columns, as no column has a cell of its own
+        // for groups
+        .bls-table-group {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: subgrid;
+            align-items: center;
+            height: 48px;
+            margin-top: 4px;
+            border-top: 1px solid var(--bls-stroke-weak);
+            background-color: var(--bls-row-group);
+            color: var(--bls-translucent-strong);
+            font-weight: 600;
+
+            > .bls-table-cell {
+                grid-column: 2 / -2;
+                // The menu of the group's actions opens below the group's row
+                overflow: visible;
+            }
+        }
+
+        // The Modern UI's .nxm-table-group-toggle, in a 20px box
+        .bls-table-group-toggle {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            margin-right: -4px;
+            padding: 0;
+            border: 0;
+            border-radius: var(--bls-radius-sm);
+            background: none;
+            color: var(--bls-text-moderate);
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--bls-row-selected);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--bls-focus);
+            }
+        }
+
+        .bls-table-group-label {
+            margin-left: 8px;
+        }
+
+        .bls-table-group-count {
+            flex-shrink: 0;
+            margin-left: 8px;
+            color: var(--bls-translucent-moderate);
+            font-weight: normal;
+        }
+
+        // A group's buttons, at the end of its row over the actions column
+        .bls-table-group-actions {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            margin-left: auto;
+            font-weight: normal;
+        }
+
+        // A group's picture, after the toggle as the Modern UI's collection pictures are
+        .bls-table-group-image {
+            display: flex;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        // A group with a color, the Modern UI's .nxm-table-group-wash and .nxm-table-group-backdrop: a wash fading
+        // across the group's row, under its cells, and a faint tint behind the rows under it. Vortex takes the color
+        // from a pixel of the group's picture, the pages give it
+        .bls-table-group[data-group-color] {
+            position: relative;
+            isolation: isolate;
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: -1;
+                background-color: var(--bls-group-color);
+                opacity: 0.15;
+                mask-image: linear-gradient(90deg, #000, rgb(0 0 0 / 33%));
+                pointer-events: none;
+            }
+        }
+
+        .bls-table-row[data-group-color] {
+            --bls-table-group-tint: color-mix(
+                in srgb,
+                var(--bls-group-color) 5%,
+                transparent
+            );
+
+            background-image: linear-gradient(
+                var(--bls-table-group-tint),
+                var(--bls-table-group-tint)
+            );
+
+            // The actions column covers the row, so it takes the tint too
+            .bls-table-actions-cell {
+                background:
+                    linear-gradient(
+                        var(--bls-table-row-tint),
+                        var(--bls-table-row-tint)
+                    ),
+                    linear-gradient(
+                        var(--bls-table-group-tint),
+                        var(--bls-table-group-tint)
+                    ),
+                    linear-gradient(
+                        var(--bls-surface-low),
+                        var(--bls-surface-low)
+                    );
+            }
+        }
+
+        .bls-table-cell {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+
+            &[data-align="end"] {
+                justify-content: flex-end;
+                text-align: end;
+            }
+        }
+
+        .bls-table-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bls-table-sort-button {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+            height: 24px;
+            margin-left: -8px;
+            padding: 0 8px;
+            border: 0;
+            border-radius: var(--bls-radius-sm);
+            background: none;
+            color: var(--bls-translucent-moderate);
+            font: inherit;
+            white-space: nowrap;
+            cursor: pointer;
+
+            &:hover,
+            &:focus-visible {
+                background: var(--bls-wash-mid);
+                color: var(--bls-translucent-strong);
+            }
+
+            &:active {
+                background: var(--bls-wash-low);
+            }
+
+            [data-align="end"] > & {
+                margin-left: 0;
+                margin-right: -8px;
+            }
+        }
+
+        .bls-path-icon {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .bls-table-sort-icon {
+            width: 12px;
+            height: 12px;
+            color: var(--bls-translucent-strong);
+        }
+
+        // The actions column stays at the table's right edge, over the row's tint
+        .bls-table-actions-cell {
+            position: sticky;
+            right: var(--bls-table-gutter-end);
+            z-index: 2;
+            justify-content: flex-end;
+            gap: 8px;
+            overflow: visible;
+            background:
+                linear-gradient(
+                    var(--bls-table-row-tint),
+                    var(--bls-table-row-tint)
+                ),
+                linear-gradient(var(--bls-surface-low), var(--bls-surface-low));
+        }
+
+        .bls-table-header .bls-table-actions-cell {
+            background: var(--bls-surface-low);
+        }
+
+        // Each sticky cell is its own stacking context, so the cell with an open menu goes over the later rows' cells
+        // and the sticky head, or they'd paint over the menu
+        .bls-table-actions-cell:has(.bls-row-menu > [aria-expanded="true"]) {
+            z-index: 4;
+        }
+
+        // A group's row isn't sticky, it's raised the same way while its menu is open, over the later rows' sticky cells
+        .bls-table-group:has(.bls-row-menu > [aria-expanded="true"]) {
+            position: relative;
+            z-index: 4;
+        }
+
+        // Shown while the row or group is hovered, focused or selected, or its menu is open
+        :is(.bls-table-row, .bls-table-group) .bls-row-hover-only {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+        }
+
+        .bls-table-row:is(:hover, :focus-within, [aria-selected="true"])
+            .bls-row-hover-only,
+        .bls-table-group:is(:hover, :focus-within) .bls-row-hover-only,
+        .bls-row-hover-only[aria-expanded="true"] {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .bls-row-menu {
+            position: relative;
+            display: flex;
+        }
+
+        .bls-row-menu-spacer {
+            width: 28px;
+        }
+
+        .bls-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 208px;
+            padding-block: 4px;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-sm);
+            background: var(--bls-surface-mid);
+            box-shadow: var(--bls-shadow-md);
+
+            &.is-above {
+                top: auto;
+                bottom: calc(100% + 4px);
+            }
+        }
+
+        .bls-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+            margin-inline: 4px;
+            padding: 0 6px;
+            border: 0;
+            border-radius: var(--bls-radius-sm);
+            background: none;
+            color: var(--bls-text-moderate);
+            font-size: var(--bls-text-sm);
+            text-align: left;
+            white-space: nowrap;
+            cursor: pointer;
+
+            &:hover,
+            &:focus-visible {
+                background: var(--bls-wash-mid);
+                color: var(--bls-text-strong);
+            }
+
+            &.is-danger {
+                color: var(--bls-danger);
+            }
+        }
+
+        // An option's label, ahead of the check the chosen option has
+        .bls-menu-item-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bls-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+    }
+
+    // List and details
+
+    .bls-page {
+        // A list or table with the details panel beside it
+        .bls-split {
+            flex: 1 1 0;
+            min-height: 0;
+            display: flex;
+            gap: 24px;
+        }
+
+        // The tables only render rows inside a parent with a real height
+        .bls-split-main {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 100%;
+
+            > .table-container {
+                height: 100%;
+            }
+        }
+
+        // Wide enough for the Saves page's three columns of stats, with labels like Companions and Clan Members
+        .bls-details {
+            flex: 0 0 460px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: auto;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-lg);
+            background: var(--bls-surface-low);
+        }
+
+        .bls-details-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px 20px;
+            overflow-wrap: anywhere;
+
+            & + .bls-details-section {
+                border-top: 1px solid var(--bls-stroke-weak);
+            }
+
+            p {
+                margin: 0;
+            }
+        }
+
+        .bls-details-header {
+            gap: 12px;
+            padding-top: 20px;
+
+            h2 {
+                margin: 0;
+                font-size: var(--bls-text-heading);
+                line-height: 28px;
+                font-weight: 600;
+                color: var(--bls-text-strong);
+            }
+
+            h2 + p {
+                margin-top: 4px;
+            }
+        }
+
+        .bls-details-identity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            > div {
+                min-width: 0;
+            }
+        }
+
+        .bls-details-banner {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            overflow: hidden;
+            border-radius: var(--bls-radius-md);
+            box-shadow: 0 0 0 1px var(--bls-stroke-weak);
+        }
+
+        .bls-details-title {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+
+            > div {
+                min-width: 0;
+            }
+        }
+
+        .bls-btn-icon {
+            flex-shrink: 0;
+            width: 28px;
+            min-height: 28px;
+            padding: 0;
+        }
+
+        .bls-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .bls-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px 10px;
+            border-radius: var(--bls-radius-sm);
+            background: var(--bls-wash-low);
+        }
+
+        .bls-stat-value {
+            font-size: var(--bls-text-md);
+            line-height: 20px;
+            font-weight: 500;
+            color: var(--bls-text-strong);
+            font-variant-numeric: tabular-nums;
+
+            &.is-bad {
+                color: var(--bls-danger);
+            }
+        }
+
+        .bls-section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-height: 28px;
+        }
+
+        .bls-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bls-list-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            column-gap: 8px;
+            row-gap: 4px;
+            min-height: 32px;
+            padding: 2px 0;
+
+            > .icon,
+            > .bls-item-icon .icon {
+                width: 16px;
+                height: 16px;
+                flex-shrink: 0;
+            }
+
+            &.is-current .bls-item-name {
+                font-weight: 600;
+            }
+        }
+
+        .bls-item-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .bls-item-name {
+            color: var(--bls-text-strong);
+            overflow-wrap: anywhere;
+        }
+
+        .bls-item-meta {
+            color: var(--bls-text-subdued);
+
+            &.bls-warning {
+                color: var(--bls-warning);
+            }
+
+            &.bls-danger {
+                color: var(--bls-danger);
+            }
+        }
+
+        // A list item's buttons and links, kept together on the right
+        .bls-item-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .bls-progress-text {
+            white-space: nowrap;
+        }
+
+        .bls-item-progress {
+            flex-basis: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 24px;
+            color: var(--bls-text-subdued);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .bls-external {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            color: var(--bls-primary);
+
+            &:hover {
+                color: var(--bls-primary-strong);
+            }
+
+            .icon {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        .bls-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 4px;
+            padding: 12px;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-md);
+            background: var(--bls-wash-low);
+
+            .bls-card-name {
+                font-size: var(--bls-text-md);
+                line-height: 20px;
+                font-weight: 500;
+            }
+        }
+
+        .bls-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            a {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                min-height: 28px;
+                padding: 0 10px;
+                border: 1px solid var(--bls-stroke-weak);
+                border-radius: var(--bls-radius-sm);
+                color: var(--bls-text-moderate);
+
+                &:hover {
+                    background: var(--bls-wash-mid);
+                    text-decoration: none;
+                }
+            }
+        }
+
+        .bls-description {
+            white-space: pre-line;
+            line-height: 18px;
+        }
+
+        .bls-facts {
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            column-gap: 16px;
+            row-gap: 6px;
+            margin: 0;
+
+            dt {
+                font-weight: normal;
+                color: var(--bls-text-subdued);
+                white-space: nowrap;
+            }
+
+            dd {
+                margin: 0;
+                min-width: 0;
+                overflow-wrap: anywhere;
+                font-variant-numeric: tabular-nums;
+            }
+
+            // host:port must stay on one line, the panel scrolls if it does not fit
+            .bls-address {
+                white-space: nowrap;
+                overflow-wrap: normal;
+            }
+        }
+    }
+
+    // Summary cards
+
+    .bls-page {
+        .bls-summary {
+            flex: 0 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .bls-summary-card {
+            flex: 0 1 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            padding: 12px 16px;
+            border: 1px solid var(--bls-stroke-weak);
+            border-radius: var(--bls-radius-lg);
+            background: var(--bls-surface-low);
+        }
+
+        .bls-summary-value {
+            font-size: var(--bls-text-heading);
+            line-height: 28px;
+            font-weight: 600;
+            color: var(--bls-text-strong);
+        }
+    }
+}
+
+// The SP and MP badges tagged by profileCards.ts and menuItems.ts on Vortex's profile cards and the Profiles menu
+// item. Singleplayer is neutral, Multiplayer is the primary colour
+@mixin bls-type-badge {
+    flex-shrink: 0;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--color-surface-translucent-mid, rgb(255 255 255 / 10%));
+    color: var(--color-neutral-strong, #f4f4f5);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+}
+
+@mixin bls-type-badge-multiplayer {
+    background: var(--color-primary-moderate, #fb923c);
+    color: var(--color-neutral-inverted, #0f0f10);
+}
+
+// On the banner image's corner: the name below is cut off after three lines, which would cut off a badge after it
+.profile-item[data-bannerlord-type] .profile-image {
+    position: relative;
+
+    &::after {
+        @include bls-type-badge;
+        content: "SP";
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+        // Readable over any banner art
+        background: rgb(15 15 16 / 75%);
+    }
+}
+
+.profile-item[data-bannerlord-type="multiplayer"] .profile-image::after {
+    @include bls-type-badge-multiplayer;
+    content: "MP";
+}
+
+// The server a profile was made for, its address as one more row of the card's details, tagged by profileCards.ts.
+// The details are a grid of label and value cells, the pseudo-elements are two more cells, ordered after Vortex's rows
+.profile-item .profile-details[data-bannerlord-server] {
+    &::before,
+    &::after {
+        order: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &::before {
+        content: attr(data-bannerlord-server-label);
+    }
+
+    &::after {
+        content: attr(data-bannerlord-server);
+    }
+}
+
+// After the title, or in the icon's corner while the menu is collapsed
+button[data-bannerlord-badge] {
+    position: relative;
+
+    &::after {
+        @include bls-type-badge;
+        content: attr(data-bannerlord-badge);
+        margin-left: auto;
+    }
+
+    &[data-bannerlord-badge="MP"]::after {
+        @include bls-type-badge-multiplayer;
+    }
+
+    &[data-bannerlord-collapsed]::after {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        padding: 0 3px;
+        font-size: 8px;
+        line-height: 12px;
+    }
+}

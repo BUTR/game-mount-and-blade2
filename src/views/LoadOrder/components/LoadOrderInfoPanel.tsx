@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from "react";
 import { tooltip, util } from "@nexusmods/vortex-api";
-import { useLocalization } from "../../../localization/hooks";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type LoadOrderInfoPanelProps = {
   refreshAsync: () => Promise<void>;
@@ -58,8 +58,8 @@ export const LoadOrderInfoPanel: FC<LoadOrderInfoPanelProps> = (props) => {
           </li>
           <li>
             {t(
-              `Otherwise to properly run the game with the selected mods from Vortex, either run without a primary tool set or use 'Bannerlord Software Extended'` +
-                `when BLSE is installed or use 'Official Bannerlord' when BLSE is not installed.`,
+              `Otherwise, to launch the game with the mods selected in Vortex, run without a primary tool set, ` +
+                `use 'Bannerlord Software Extender' when BLSE is installed, or use 'Official Bannerlord' when BLSE is not installed.`,
             )}
           </li>
           <li>

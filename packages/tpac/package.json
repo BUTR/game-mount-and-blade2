@@ -1,0 +1,12 @@
+{
+  "name": "@bannerlord/tpac",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reads Bannerlord's .tpac asset packages",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

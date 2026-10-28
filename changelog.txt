@@ -1,4 +1,26 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.5.0
+* Added a Game Files page to compare your game folder against the Steam, GOG, Epic, or Xbox build
+* - Lists extra, modified, and missing files, along with their source (base game, Vortex, or manually installed mod)
+* - Archive or delete unexpected files (archives are compressed when possible)
+* - Restore archived files from the Archives tab without overwriting existing files
+* - Warns before restoring if the archive is from a different game version or if its modules already exist in the game folder
+* - Launch file verification in Steam, GOG Galaxy, Epic, or the Xbox app directly from the page
+* Added a check when first managing Bannerlord to detect and report unexpected files in the game folder
+* Installing a collection now checks the game folder first and offers to archive unexpected files before continuing
+* Added Import from Novus, Import from LauncherEx, and Export to LauncherEx to the Load Order page (under Bannerlord LO...)
+* BLSE and Harmony are now re-checked when switching profiles and are no longer recommended for Multiplayer profiles
+* Fixed the Harmony download notification opening the BLSE page instead
+* Fixed changing the game folder (e.g., switching from Steam to GOG) retaining tools and modules from the previous folder
+* Fixed the Xbox version not being detected when Vortex could not determine the game store
+* Fixed mods with a differently cased SubModule.xml not being recognized as modules
+* Fixed collections using the legacy load order format applying modules in the wrong order
+* Fixed mods missing from the load order when creating a collection
+* Fixed applying a collection's mod settings twice overwriting the backup of your original settings
+* - Settings added by a collection where you previously had none are now removed when restoring
+* Improved the error message shown when Windows (e.g., Smart App Control) or antivirus software blocks the extension's native library
+* Performance and memory improvements
+---------------------------------------------------------------------------------------------------
 Version: 1.4.3
 * Updated the launcher library, modules deployed by Vortex are now told apart from ones installed manually in the /Modules folder
 ---------------------------------------------------------------------------------------------------

@@ -1,0 +1,126 @@
+// The Game Files page. The look it shares with the other pages is in modern.scss, which is registered first, so the
+// rules here are scoped as #page-bannerlord-verify-files .bls-page to be as specific as the shared ones and win by coming
+// later
+
+// A mod's name in the Source column, a link to it in the Mods page that truncates like the other cells. The page's and
+// the unexpected files dialog's table
+:is(#page-bannerlord-verify-files, #bannerlord-unexpected-files)
+    .bls-page
+    .bls-verify-mod-link {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: inherit;
+    text-align: start;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#page-bannerlord-verify-files .bls-page {
+    // The table scrolls inside the space the summary and toolbar leave
+    .bls-verify-table {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    // Archiving, deleting or restoring, with its progress
+    .bls-verify-work {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--bls-text-subdued);
+        font-variant-numeric: tabular-nums;
+
+        .bls-progress {
+            max-width: 480px;
+        }
+    }
+
+    // The way back to the archives, then the open archive's name and file count
+    .bls-verify-archive-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        color: var(--bls-text-strong);
+        font-weight: 500;
+
+        .bls-muted {
+            flex-shrink: 0;
+            font-weight: normal;
+        }
+    }
+}
+
+// The unexpected files found when Vortex started managing the game, Vortex's Modern UI modal
+// (src/stylesheets/ui/elements/modal.css) at its xl size, see UnexpectedFilesDialog. Vortex's variables when it has
+// them, the fallbacks are their dark theme values
+#bannerlord-unexpected-files {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-index-modal, 1050);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+
+    .bls-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: rgb(0 0 0 / 80%);
+    }
+
+    // The page's look, in a panel as tall as its content up to the window
+    .bls-page.bls-modal-panel {
+        position: relative;
+        width: 100%;
+        max-width: 1024px;
+        height: auto;
+        max-height: 100%;
+        padding: 16px;
+        border: 1px solid var(--bls-wash-low);
+        border-radius: var(--bls-radius-lg);
+        background-color: var(--bls-surface-low);
+        box-shadow: var(
+            --shadow-xl,
+            0 24px 38px 3px rgb(0 0 0 / 14%),
+            0 9px 46px 8px rgb(0 0 0 / 12%),
+            0 11px 15px rgb(0 0 0 / 20%)
+        );
+    }
+
+    .bls-page .bls-modal-title {
+        margin: 0;
+        color: var(--bls-text-strong);
+        font-size: var(--bls-text-md);
+        font-weight: 600;
+        line-height: 20px;
+    }
+
+    .bls-page .bls-modal-text {
+        margin: 0;
+        font-size: var(--bls-text-md);
+        line-height: 20px;
+    }
+
+    // The table scrolls in the height the panel's other parts leave, as tall as its rows up to that
+    .bls-page .bls-modal-table {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        .bls-table {
+            height: auto;
+            min-height: 0;
+        }
+    }
+
+    .bls-page .bls-modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+}

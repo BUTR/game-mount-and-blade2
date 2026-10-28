@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { tooltip } from "@nexusmods/vortex-api";
-import { useLocalization } from "../../../localization/hooks";
+import { useLocalization } from "@bannerlord/core/localization/hooks";
 
 export type SteamBinariesOnXboxProps = {
   hasSteamBinariesOnXbox: boolean;

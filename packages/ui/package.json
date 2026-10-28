@@ -1,0 +1,26 @@
+{
+  "name": "@bannerlord/ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React components and styles shared by the extension's pages",
+  "exports": {
+    "./bannerCaches": "./src/bannerCaches.ts",
+    "./components/BannerImage": "./src/components/BannerImage.tsx",
+    "./components/EmptyState": "./src/components/EmptyState.tsx",
+    "./components/ColumnToggles": "./src/components/ColumnToggles.tsx",
+    "./components/CompatibilityInfo": "./src/components/CompatibilityInfo.tsx",
+    "./components/Controls": "./src/components/Controls.tsx",
+    "./components/LoadOrderEntry": "./src/components/LoadOrderEntry.tsx",
+    "./components/ModernPageHeader": "./src/components/ModernPageHeader.tsx",
+    "./components/ModernTable": "./src/components/ModernTable.tsx",
+    "./components/ModuleIcon": "./src/components/ModuleIcon.tsx",
+    "./components/NoMatches": "./src/components/NoMatches.tsx",
+    "./components/TableToolbar": "./src/components/TableToolbar.tsx",
+    "./components/TooltipImage": "./src/components/TooltipImage.tsx",
+    "./format": "./src/format.ts"
+  },
+  "dependencies": {
+    "@bannerlord/banner": "workspace:*",
+    "@bannerlord/core": "workspace:*"
+  }
+}

@@ -1,15 +1,18 @@
 import { method as toBluebird } from "bluebird";
 import React from "react";
 import { selectors, types } from "@nexusmods/vortex-api";
-import { GAME_ID } from "../common";
+import { GAME_ID } from "@bannerlord/core/common";
 import { DetailsRenderer } from "../views/Details/components/DetailsRenderer";
-import { VortexLauncherManager } from "../launcher/manager";
-import { getGameInstallPath, isModTypeModule } from "./modType";
+import { VortexLauncherManager } from "@bannerlord/core/launcher/manager";
+import {
+  getGameInstallPath,
+  isModTypeModule,
+} from "@bannerlord/core/vortex/modType";
 import {
   isModTranslationArchive,
   isModTypeTranslation,
   modTranslationInstaller,
-} from "./modTranslation";
+} from "@bannerlord/core/vortex/modTranslation";
 
 export const registerVortexModTypes = (
   context: types.IExtensionContext,
@@ -93,20 +96,24 @@ export const registerVortexModTypes = (
   );
 
   // Show detected translation languages in the Mods side panel (Details)
-  context.registerTableAttribute("mods", {
-    id: "translationLanguagesText",
-    name: "Translations Available",
-    description: "Detected languages included in this translation mod",
-    placement: "detail",
-    position: 76,
-    help: "List of languages found under ModuleData/Languages",
-    isSortable: false,
-    isGroupable: false,
-    condition: () => selectors.activeGameId(context.api.getState()) === GAME_ID,
-    calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
-    customRenderer: (mod: types.IMod, _detailCell: boolean) => {
-      return React.createElement(DetailsRenderer, { mod }, []);
+  context.registerTableAttribute(
+    /*tableId:*/ "mods",
+    /*attribute:*/ {
+      id: "translationLanguagesText",
+      name: "Translations Available",
+      description: "Detected languages included in this translation mod",
+      placement: "detail",
+      position: 76,
+      help: "List of languages found under ModuleData/Languages",
+      isSortable: false,
+      isGroupable: false,
+      condition: () =>
+        selectors.activeGameId(context.api.getState()) === GAME_ID,
+      calc: (mod: types.IMod) => mod?.attributes?.["translationLanguagesText"],
+      customRenderer: (mod: types.IMod, _detailCell: boolean) => {
+        return React.createElement(DetailsRenderer, { mod }, []);
+      },
+      edit: {},
     },
-    edit: {},
-  });
+  );
 };

@@ -1,0 +1,20 @@
+{
+  "name": "@bannerlord/banner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Parses and renders Bannerlord banner codes from the game's assets",
+  "bannerlord": {
+    "library": true
+  },
+  "exports": {
+    "./assets": "./src/assets.ts",
+    "./render": "./src/render.ts",
+    "./worker": "./src/worker.ts"
+  },
+  "dependencies": {
+    "@bannerlord/game-layout": "workspace:*",
+    "@bannerlord/read-ahead": "workspace:*",
+    "@bannerlord/tpac": "workspace:*",
+    "@bannerlord/worker": "workspace:*"
+  }
+}

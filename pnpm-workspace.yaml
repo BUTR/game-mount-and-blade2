@@ -1,3 +1,7 @@
+# The extension's features, bundled into the extension by rolldown
+packages:
+  - packages/*
+
 # Nexus-Mods packages (vortex-api, collections, ...) depend on other git-hosted packages
 blockExoticSubdeps: false
 
@@ -13,8 +17,10 @@ overrides:
 allowBuilds:
   "@butr/vortexextensionnative": false
   core-js: false
+  # Its platform packages (@koromix/koffi-*) carry the prebuilt binary
+  koffi: false
   leveldown: false
   winapi-bindings: false
 
 minimumReleaseAgeExclude:
-  - "@butr/vortexextensionnative@2.0.213 || 2.0.216 || 2.0.218"
+  - "@butr/vortexextensionnative"
